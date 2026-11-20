@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   User, Trophy, Settings, Award, Shield, Flame, Sparkles,
-  Edit2, Check, ArrowRight, LogOut, LogIn, ChevronRight, Globe,
+  Edit2, Check, ArrowRight, LogOut, LogIn, ChevronRight, ChevronDown, Globe,
   BarChart3, Sun, Moon, SunMoon, Contrast, Monitor
 } from 'lucide-react';
 import { calculateUserRanking } from '../data/leaderboardData.js';
@@ -24,7 +24,36 @@ export function ProfileView({
   onSignOut,
   onSignIn
 }) {
-  const [activeSubTab, setActiveSubTab] = useState(initialSubTab); // 'overview' | 'rankings' | 'settings'
+  // Accordion state: by default, stats & rankings are closed, settings is open by default
+  const [openSections, setOpenSections] = useState({
+    stats: false,
+    rankings: false,
+    settings: true,
+  });
+
+  // Achievements section inside Statistics is closed by default
+  const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
+
+  // Sync if initialSubTab changes from external navigation (e.g., clicking header gear)
+  useEffect(() => {
+    if (initialSubTab === 'rankings') {
+      setOpenSections(prev => ({ ...prev, rankings: true }));
+    } else if (initialSubTab === 'settings') {
+      setOpenSections(prev => ({ ...prev, settings: true }));
+    } else if (initialSubTab === 'overview') {
+      setOpenSections(prev => ({ ...prev, stats: true }));
+    }
+  }, [initialSubTab]);
+
+  const toggleSection = (sectionKey) => {
+    sound.playClick();
+    triggerHaptic('move');
+    setOpenSections(prev => ({
+      ...prev,
+      [sectionKey]: !prev[sectionKey]
+    }));
+  };
+
   const [selectedAvatar, setSelectedAvatar] = useState(user?.avatar || '');
   const [isEditingAvatar, setIsEditingAvatar] = useState(false);
   const [avatarCategory, setAvatarCategory] = useState('all');
@@ -45,12 +74,6 @@ export function ProfileView({
   const winRate = user?.stats?.played > 0
     ? Math.round(((user?.stats?.won || 0) / user.stats.played) * 100)
     : 0;
-
-  const handleSubTabChange = (tab) => {
-    sound.playClick();
-    triggerHaptic('move');
-    setActiveSubTab(tab);
-  };
 
   const handleSaveAvatar = () => {
     triggerHaptic('move');
@@ -154,28 +177,17 @@ export function ProfileView({
               </button>
             )}
 
-            {user ? (
+            {user && (
               <button
                 onClick={() => {
                   triggerHaptic('move');
                   if (onSignOut) onSignOut();
                 }}
-                className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-red-500/20 border border-slate-700 hover:border-red-500/40 text-slate-300 hover:text-red-400 text-xs font-bold transition-colors flex items-center gap-1.5"
+                className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-red-500/20 border border-slate-700 hover:border-red-500/40 text-slate-300 hover:text-red-400 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
                 title="Sign Out"
               >
                 <LogOut className="w-3.5 h-3.5" />
                 <span>Sign Out</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => {
-                  triggerHaptic('move');
-                  if (onSignIn) onSignIn();
-                }}
-                className="px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition-transform active:scale-95 flex items-center gap-1.5 shadow-md shadow-amber-500/20"
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>Sign In</span>
               </button>
             )}
           </div>
@@ -436,32 +448,22 @@ export function ProfileView({
         </div>
       </div>
 
-      {/* ================= 4 VERTICAL ACTION BUTTONS (NORMAL COMPACT SIZE) ================= */}
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between px-1">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-            <Sparkles className="w-3 h-3 text-amber-400" />
-            <span>Profile Navigation</span>
-          </span>
-          <span className="text-[10px] font-mono text-slate-500">
-            Tap to view
-          </span>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          {/* 1. STATS BUTTON */}
+      {/* ================= 3 INLINE ACCORDION OPTIONS ================= */}
+      <div className="space-y-3">
+        {/* ----------------- 1. STATISTICS & RECORDS ----------------- */}
+        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-md transition-all">
           <button
             type="button"
-            onClick={() => handleSubTabChange('overview')}
-            className={`w-full rounded-xl px-3.5 py-2.5 flex items-center justify-between transition-all cursor-pointer select-none active:scale-[0.99] border text-left ${
-              activeSubTab === 'overview'
-                ? 'bg-amber-500/15 border-amber-500/50 shadow-md ring-1 ring-amber-400/30'
-                : 'bg-slate-900/90 hover:bg-slate-850 border-slate-800 hover:border-slate-700'
+            onClick={() => toggleSection('stats')}
+            className={`w-full px-4 py-3.5 flex items-center justify-between text-left transition-colors cursor-pointer select-none active:scale-[0.99] ${
+              openSections.stats
+                ? 'bg-amber-500/10 border-b border-amber-500/25'
+                : 'hover:bg-slate-850'
             }`}
           >
             <div className="flex items-center gap-3 min-w-0">
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
-                activeSubTab === 'overview'
+                openSections.stats
                   ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
                   : 'bg-slate-950 border-slate-800 text-slate-400'
               }`}>
@@ -471,7 +473,7 @@ export function ProfileView({
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-xs sm:text-sm font-bold text-white tracking-tight truncate">
-                    Player Statistics & Record
+                    Statistics & Records
                   </span>
                   <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
                     {userElo} Elo
@@ -484,31 +486,200 @@ export function ProfileView({
             </div>
 
             <div className="flex items-center gap-1.5 shrink-0 ml-2">
-              {activeSubTab === 'overview' ? (
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500 text-slate-950 flex items-center gap-1">
-                  <Check className="w-2.5 h-2.5 stroke-[3]" />
-                  <span>Open</span>
-                </span>
-              ) : null}
-              <ChevronRight className={`w-4 h-4 transition-transform duration-200 ${
-                activeSubTab === 'overview' ? 'text-amber-400 rotate-90' : 'text-slate-500'
+              <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                openSections.stats ? 'bg-amber-500 text-slate-950 font-black' : 'bg-slate-800 text-slate-400'
+              }`}>
+                {openSections.stats ? 'Opened' : 'Closed'}
+              </span>
+              <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${
+                openSections.stats ? 'text-amber-400 rotate-180' : 'text-slate-500'
               }`} />
             </div>
           </button>
 
-          {/* 2. RANKINGS BUTTON */}
+          {/* Expanded Content directly under Statistics & Records button */}
+          {openSections.stats && (
+            <div className="p-3.5 sm:p-5 space-y-4 bg-slate-950/60 animate-fade-in border-t border-slate-800/80">
+              {/* Quick Player Ranking Standing Banner */}
+              <div className="p-4 bg-gradient-to-br from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800 rounded-2xl space-y-3 shadow-md">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Trophy className="w-4 h-4 text-amber-400" />
+                    <span>Player Standing & Global Rank</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      sound.playClick();
+                      triggerHaptic('move');
+                      setOpenSections(prev => ({ ...prev, rankings: true }));
+                    }}
+                    className="text-xs font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1 hover:underline cursor-pointer"
+                  >
+                    <span>View in Leaderboard</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                  <div className="p-3 bg-slate-950/80 border border-slate-800/80 rounded-xl space-y-0.5">
+                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">World Standing</span>
+                    <div className="text-lg sm:text-xl font-black font-mono text-white">
+                      #{userRank.toLocaleString()}
+                    </div>
+                    <span className="text-[10px] text-slate-500 block">of {totalPlayers.toLocaleString()} players</span>
+                  </div>
+
+                  <div className="p-3 bg-slate-950/80 border border-slate-800/80 rounded-xl space-y-0.5">
+                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">National Rank</span>
+                    <div className="text-lg sm:text-xl font-black font-mono text-amber-300">
+                      #{countryRank.toLocaleString()}
+                    </div>
+                    <span className="text-[10px] text-slate-500 block">in {user?.countryName || user?.country || 'India 🇮🇳'}</span>
+                  </div>
+
+                  <div className="col-span-2 sm:col-span-1 p-3 bg-slate-950/80 border border-slate-800/80 rounded-xl space-y-0.5 flex flex-col justify-center">
+                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Competitive Tier</span>
+                    <div className="text-base font-black text-emerald-400">
+                      Top {((100 - parseFloat(percentile))).toFixed(1)}%
+                    </div>
+                    <span className="text-[10px] text-slate-500 block">{percentile}% global lead</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ratings Breakdown Grid */}
+              <div className="space-y-2">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">
+                  Elo Ratings by Time Control
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">
+                  {[
+                    { label: 'Bullet', rating: user?.ratings?.bullet || 1050, icon: '⚡' },
+                    { label: 'Blitz', rating: user?.ratings?.blitz || 1120, icon: '🔥' },
+                    { label: 'Rapid', rating: user?.ratings?.rapid || 1078, icon: '⏳' },
+                    { label: 'Classical', rating: user?.ratings?.classical || 1190, icon: '🏛️' }
+                  ].map((item) => (
+                    <div key={item.label} className="p-3 bg-slate-900/90 border border-slate-800 rounded-xl shadow-xs">
+                      <div className="flex items-center justify-between text-slate-400 mb-1">
+                        <span className="text-[10px] uppercase font-bold">{item.label}</span>
+                        <span className="text-xs">{item.icon}</span>
+                      </div>
+                      <div className="text-xl font-black font-mono text-amber-400">{item.rating}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Career Stats */}
+              <div className="space-y-2">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">
+                  Career Performance Record
+                </h3>
+                <div className="grid grid-cols-3 gap-2.5 p-3.5 bg-slate-900/90 border border-slate-800 rounded-2xl text-center shadow-xs">
+                  <div>
+                    <span className="text-[11px] text-slate-400 block font-semibold">Total Matches</span>
+                    <span className="text-lg sm:text-xl font-bold font-mono text-white">{user?.stats?.played || 18}</span>
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-slate-400 block font-semibold">Win Rate</span>
+                    <span className="text-lg sm:text-xl font-bold font-mono text-emerald-400">{winRate || 68}%</span>
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-slate-400 block font-semibold">Best Streak</span>
+                    <span className="text-lg sm:text-xl font-bold font-mono text-orange-400">{user?.stats?.winStreak || 5} 🔥</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Collapsible Achievements Section (Closed by default) */}
+              <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl overflow-hidden shadow-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    sound.playClick();
+                    triggerHaptic('move');
+                    setIsAchievementsOpen(prev => !prev);
+                  }}
+                  className="w-full p-3.5 flex items-center justify-between text-left hover:bg-slate-800/50 transition-colors cursor-pointer select-none active:scale-[0.99]"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center text-sm shadow-xs">
+                      🏆
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs sm:text-sm font-bold text-white block">
+                          Achievements & Badges
+                        </span>
+                        <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                          {unlockedSet.size}/{ACHIEVEMENTS_DATA.length}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 block">
+                        Tap to {isAchievementsOpen ? 'collapse' : 'view full achievements shelf'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg border transition-colors ${
+                      isAchievementsOpen
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                        : 'bg-slate-800 text-slate-300 border-slate-700'
+                    }`}>
+                      {isAchievementsOpen ? 'Hide' : 'Open Achievements'}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${
+                      isAchievementsOpen ? 'text-amber-400 rotate-180' : 'text-slate-400'
+                    }`} />
+                  </div>
+                </button>
+
+                {isAchievementsOpen && (
+                  <div className="p-3.5 border-t border-slate-800/80 bg-slate-950/60 animate-fade-in space-y-2.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                      {ACHIEVEMENTS_DATA.map((ach) => {
+                        const unlocked = unlockedSet.has(ach.id);
+                        return (
+                          <div
+                            key={ach.id}
+                            className={`p-2.5 rounded-xl border flex items-center gap-2.5 transition-all ${
+                              unlocked
+                                ? 'bg-amber-500/10 border-amber-500/40 text-amber-300 shadow-xs'
+                                : 'bg-slate-950/40 border-slate-800/80 text-slate-600 opacity-60'
+                            }`}
+                          >
+                            <span className="text-xl shrink-0">{ach.icon}</span>
+                            <div className="min-w-0">
+                              <span className="text-xs font-bold block truncate">{ach.name}</span>
+                              <span className="text-[9px] text-slate-400 block truncate">{ach.desc}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ----------------- 2. RANKINGS & LEADERBOARD ----------------- */}
+        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-md transition-all">
           <button
             type="button"
-            onClick={() => handleSubTabChange('rankings')}
-            className={`w-full rounded-xl px-3.5 py-2.5 flex items-center justify-between transition-all cursor-pointer select-none active:scale-[0.99] border text-left ${
-              activeSubTab === 'rankings'
-                ? 'bg-emerald-500/15 border-emerald-500/50 shadow-md ring-1 ring-emerald-400/30'
-                : 'bg-slate-900/90 hover:bg-slate-850 border-slate-800 hover:border-slate-700'
+            onClick={() => toggleSection('rankings')}
+            className={`w-full px-4 py-3.5 flex items-center justify-between text-left transition-colors cursor-pointer select-none active:scale-[0.99] ${
+              openSections.rankings
+                ? 'bg-emerald-500/10 border-b border-emerald-500/25'
+                : 'hover:bg-slate-850'
             }`}
           >
             <div className="flex items-center gap-3 min-w-0">
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
-                activeSubTab === 'rankings'
+                openSections.rankings
                   ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
                   : 'bg-slate-950 border-slate-800 text-slate-400'
               }`}>
@@ -518,7 +689,7 @@ export function ProfileView({
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-xs sm:text-sm font-bold text-white tracking-tight truncate">
-                    Global Rankings & Leaderboard
+                    Rankings & Leaderboard
                   </span>
                   <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
                     #{userRank.toLocaleString()}
@@ -531,31 +702,39 @@ export function ProfileView({
             </div>
 
             <div className="flex items-center gap-1.5 shrink-0 ml-2">
-              {activeSubTab === 'rankings' ? (
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500 text-slate-950 flex items-center gap-1">
-                  <Check className="w-2.5 h-2.5 stroke-[3]" />
-                  <span>Open</span>
-                </span>
-              ) : null}
-              <ChevronRight className={`w-4 h-4 transition-transform duration-200 ${
-                activeSubTab === 'rankings' ? 'text-emerald-400 rotate-90' : 'text-slate-500'
+              <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                openSections.rankings ? 'bg-emerald-500 text-slate-950 font-black' : 'bg-slate-800 text-slate-400'
+              }`}>
+                {openSections.rankings ? 'Opened' : 'Closed'}
+              </span>
+              <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${
+                openSections.rankings ? 'text-emerald-400 rotate-180' : 'text-slate-500'
               }`} />
             </div>
           </button>
 
-          {/* 3. SETTINGS BUTTON */}
+          {/* Expanded Content directly under Rankings & Leaderboard button */}
+          {openSections.rankings && (
+            <div className="p-2.5 sm:p-4 bg-slate-950/60 animate-fade-in border-t border-slate-800/80">
+              <LeaderboardView currentUser={user} />
+            </div>
+          )}
+        </div>
+
+        {/* ----------------- 3. SETTINGS & PREFERENCES ----------------- */}
+        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-md transition-all">
           <button
             type="button"
-            onClick={() => handleSubTabChange('settings')}
-            className={`w-full rounded-xl px-3.5 py-2.5 flex items-center justify-between transition-all cursor-pointer select-none active:scale-[0.99] border text-left ${
-              activeSubTab === 'settings'
-                ? 'bg-sky-500/15 border-sky-500/50 shadow-md ring-1 ring-sky-400/30'
-                : 'bg-slate-900/90 hover:bg-slate-850 border-slate-800 hover:border-slate-700'
+            onClick={() => toggleSection('settings')}
+            className={`w-full px-4 py-3.5 flex items-center justify-between text-left transition-colors cursor-pointer select-none active:scale-[0.99] ${
+              openSections.settings
+                ? 'bg-sky-500/10 border-b border-sky-500/25'
+                : 'hover:bg-slate-850'
             }`}
           >
             <div className="flex items-center gap-3 min-w-0">
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
-                activeSubTab === 'settings'
+                openSections.settings
                   ? 'bg-sky-500/20 border-sky-500/50 text-sky-400'
                   : 'bg-slate-950 border-slate-800 text-slate-400'
               }`}>
@@ -565,7 +744,7 @@ export function ProfileView({
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-xs sm:text-sm font-bold text-white tracking-tight truncate">
-                    Arena Settings & Preferences
+                    Settings & Preferences
                   </span>
                   <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30 capitalize shrink-0">
                     {settings?.appTheme || 'dark'}
@@ -578,236 +757,30 @@ export function ProfileView({
             </div>
 
             <div className="flex items-center gap-1.5 shrink-0 ml-2">
-              {activeSubTab === 'settings' ? (
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-sky-500 text-slate-950 flex items-center gap-1">
-                  <Check className="w-2.5 h-2.5 stroke-[3]" />
-                  <span>Open</span>
-                </span>
-              ) : null}
-              <ChevronRight className={`w-4 h-4 transition-transform duration-200 ${
-                activeSubTab === 'settings' ? 'text-sky-400 rotate-90' : 'text-slate-500'
+              <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                openSections.settings ? 'bg-sky-500 text-slate-950 font-black' : 'bg-slate-800 text-slate-400'
+              }`}>
+                {openSections.settings ? 'Opened' : 'Closed'}
+              </span>
+              <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${
+                openSections.settings ? 'text-sky-400 rotate-180' : 'text-slate-500'
               }`} />
             </div>
           </button>
 
-          {/* 4. DEDICATED SIGN IN / SIGN OUT BUTTON */}
-          {user ? (
-            <button
-              type="button"
-              onClick={() => {
-                sound.playClick();
-                triggerHaptic('move');
-                if (onSignOut) onSignOut();
-              }}
-              className="w-full rounded-xl px-3.5 py-2.5 flex items-center justify-between transition-all cursor-pointer select-none active:scale-[0.99] border text-left bg-rose-500/10 hover:bg-rose-500/15 border-rose-500/30 hover:border-rose-500/40"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border bg-rose-500/20 border-rose-500/40 text-rose-400">
-                  <LogOut className="w-4 h-4" />
-                </div>
-
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs sm:text-sm font-bold text-rose-300 tracking-tight truncate">
-                      Sign Out of Account
-                    </span>
-                    <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 shrink-0">
-                      Active
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-slate-400 truncate">
-                    {user.email || user.username}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                <span className="px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 text-[10px] font-bold border border-rose-500/40">
-                  Sign Out
-                </span>
-              </div>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => {
-                sound.playClick();
-                triggerHaptic('move');
-                if (onSignIn) onSignIn();
-              }}
-              className="w-full rounded-xl px-3.5 py-2.5 flex items-center justify-between transition-all cursor-pointer select-none active:scale-[0.99] border text-left bg-amber-500/10 hover:bg-amber-500/15 border-amber-500/30 hover:border-amber-500/50"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border bg-amber-500 text-slate-950 font-black">
-                  <LogIn className="w-4 h-4" />
-                </div>
-
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs sm:text-sm font-bold text-amber-300 tracking-tight truncate">
-                      Sign In with Google / Gmail
-                    </span>
-                    <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
-                      Guest
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-slate-400 truncate">
-                    Sync ratings, history & achievements
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                <span className="px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 text-[10px] font-black shadow-sm">
-                  Sign In
-                </span>
-              </div>
-            </button>
+          {/* Expanded Content directly under Settings & Preferences button */}
+          {openSections.settings && (
+            <div className="p-2 sm:p-4 bg-slate-950/60 animate-fade-in border-t border-slate-800/80">
+              <SettingsModal
+                isOpen={true}
+                isEmbedded={true}
+                settings={settings}
+                onUpdateSettings={onUpdateSettings}
+              />
+            </div>
           )}
         </div>
       </div>
-
-      {/* ================= VIEW 1: OVERVIEW & STATS ================= */}
-      {activeSubTab === 'overview' && (
-        <div className="space-y-6 animate-fade-in">
-          {/* Quick Player Ranking Standing Banner */}
-          <div className="p-4 sm:p-5 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border border-slate-800 rounded-3xl space-y-3 shadow-xl">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Trophy className="w-4 h-4 text-amber-400" />
-                <span>Player Standing & Global Rank</span>
-              </span>
-              <button
-                onClick={() => handleSubTabChange('rankings')}
-                className="text-xs font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1 hover:underline"
-              >
-                <span>Open Full Leaderboard</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <div className="p-3.5 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-0.5">
-                <span className="text-[10px] text-slate-400 uppercase font-semibold block">World Standing</span>
-                <div className="text-xl font-black font-mono text-white">
-                  #{userRank.toLocaleString()}
-                </div>
-                <span className="text-[10px] text-slate-500 block">of {totalPlayers.toLocaleString()} players</span>
-              </div>
-
-              <div className="p-3.5 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-0.5">
-                <span className="text-[10px] text-slate-400 uppercase font-semibold block">National Rank</span>
-                <div className="text-xl font-black font-mono text-amber-300">
-                  #{countryRank.toLocaleString()}
-                </div>
-                <span className="text-[10px] text-slate-500 block">in {user?.countryName || user?.country || 'India 🇮🇳'}</span>
-              </div>
-
-              <div className="col-span-2 sm:col-span-1 p-3.5 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-0.5 flex flex-col justify-center">
-                <span className="text-[10px] text-slate-400 uppercase font-semibold block">Competitive Tier</span>
-                <div className="text-base font-black text-emerald-400">
-                  Top {((100 - parseFloat(percentile))).toFixed(1)}%
-                </div>
-                <span className="text-[10px] text-slate-500 block">{percentile}% global lead</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Ratings Breakdown Grid */}
-          <div className="space-y-2">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">
-              Elo Ratings by Time Control
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-              {[
-                { label: 'Bullet', rating: user?.ratings?.bullet || 1050, icon: '⚡' },
-                { label: 'Blitz', rating: user?.ratings?.blitz || 1120, icon: '🔥' },
-                { label: 'Rapid', rating: user?.ratings?.rapid || 1078, icon: '⏳' },
-                { label: 'Classical', rating: user?.ratings?.classical || 1190, icon: '🏛️' }
-              ].map((item) => (
-                <div key={item.label} className="p-3.5 bg-slate-900/90 border border-slate-800 rounded-2xl shadow-sm">
-                  <div className="flex items-center justify-between text-slate-400 mb-1">
-                    <span className="text-[11px] uppercase font-bold">{item.label}</span>
-                    <span className="text-sm">{item.icon}</span>
-                  </div>
-                  <div className="text-2xl font-black font-mono text-amber-400">{item.rating}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Career Stats */}
-          <div className="space-y-2">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">
-              Career Performance Record
-            </h3>
-            <div className="grid grid-cols-3 gap-3 p-4 bg-slate-900/90 border border-slate-800 rounded-3xl text-center shadow-md">
-              <div>
-                <span className="text-xs text-slate-400 block font-semibold">Total Matches</span>
-                <span className="text-xl sm:text-2xl font-bold font-mono text-white">{user?.stats?.played || 18}</span>
-              </div>
-              <div>
-                <span className="text-xs text-slate-400 block font-semibold">Win Rate</span>
-                <span className="text-xl sm:text-2xl font-bold font-mono text-emerald-400">{winRate || 68}%</span>
-              </div>
-              <div>
-                <span className="text-xs text-slate-400 block font-semibold">Best Streak</span>
-                <span className="text-xl sm:text-2xl font-bold font-mono text-orange-400">{user?.stats?.winStreak || 5} 🔥</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Unlocked Achievements Shelf */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Unlocked Achievements ({unlockedSet.size} / {ACHIEVEMENTS_DATA.length})
-              </h3>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {ACHIEVEMENTS_DATA.map((ach) => {
-                const unlocked = unlockedSet.has(ach.id);
-                return (
-                  <div
-                    key={ach.id}
-                    className={`p-3 rounded-2xl border flex items-center gap-3 transition-all ${
-                      unlocked
-                        ? 'bg-amber-500/10 border-amber-500/40 text-amber-300 shadow-sm'
-                        : 'bg-slate-950/40 border-slate-800/80 text-slate-600 opacity-60'
-                    }`}
-                  >
-                    <span className="text-2xl">{ach.icon}</span>
-                    <div className="min-w-0">
-                      <span className="text-xs font-bold block truncate">{ach.name}</span>
-                      <span className="text-[10px] text-slate-400 block truncate">{ach.desc}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================= VIEW 2: RANKINGS & LEADERBOARD ================= */}
-      {activeSubTab === 'rankings' && (
-        <div className="animate-fade-in">
-          <LeaderboardView currentUser={user} />
-        </div>
-      )}
-
-      {/* ================= VIEW 3: SETTINGS ================= */}
-      {activeSubTab === 'settings' && (
-        <div className="animate-fade-in">
-          <SettingsModal
-            isOpen={true}
-            isEmbedded={true}
-            settings={settings}
-            onUpdateSettings={onUpdateSettings}
-          />
-        </div>
-      )}
 
       {/* ================= DEDICATED ACCOUNT AUTH SECTION AT THE VERY LAST ================= */}
       <div className="bg-gradient-to-br from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden mt-6">
