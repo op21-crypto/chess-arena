@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Chess } from 'chess.js';
 import {
   ArrowLeft, RotateCw, Undo, Lightbulb, Settings, X, Check,
-  Volume2, VolumeX, Eye, Camera, User, HelpCircle, Bell, Trophy
+  Volume2, VolumeX, Eye, Camera, User, HelpCircle, Bell
 } from 'lucide-react';
 import { PieceIcon } from './PieceIcons.jsx';
 import { sound } from '../utils/audio.js';
 import { triggerHaptic } from '../utils/device.js';
 
-// Realistic wooden themes matching Screenshot 1 & 2
+// Realistic wooden and stone themes
 const OFFLINE_THEMES = [
   {
     id: 'wood_walnut',
@@ -61,7 +61,7 @@ export function OfflineBoardView({ onBack }) {
   // Game State
   const [chess, setChess] = useState(() => new Chess());
   const [fen, setFen] = useState(() => chess.fen());
-  const [moveHistory, setMoveHistory] = useState([]); // List of { from, to, san, piece, color, captured }
+  const [moveHistory, setMoveHistory] = useState([]); // List of move objects
   const [lastMove, setLastMove] = useState(null); // { from, to }
   const [selectedSquare, setSelectedSquare] = useState(null);
   const [legalMoves, setLegalMoves] = useState([]);
@@ -69,7 +69,7 @@ export function OfflineBoardView({ onBack }) {
   const [showRestartConfirm, setShowRestartConfirm] = useState(false);
   const [showGameOverModal, setShowGameOverModal] = useState(false);
 
-  // Offline Settings State (matching Screenshot 2)
+  // Offline Settings State
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
   const [themeId, setThemeId] = useState('wood_walnut');
   const [viewMode, setViewMode] = useState('face-to-face'); // 'face-to-face' | 'auto-flip' | '2d'
@@ -195,8 +195,7 @@ export function OfflineBoardView({ onBack }) {
           setShowGameOverModal(true);
         }
       }
-    } catch (err) {
-      // Invalid move
+    } catch {
       setSelectedSquare(null);
       setLegalMoves([]);
     }
@@ -255,13 +254,13 @@ export function OfflineBoardView({ onBack }) {
     return null;
   }, [fen, chess]);
 
-  // Turn announcement text matching Screenshot 1: e.g. "4.White's Move"
+  // Turn announcement text
   const moveNumber = Math.floor(moveHistory.length / 2) + 1;
   const turnLabel = `${moveNumber}.${turn === 'w' ? "White's Move" : "Black's Move"}`;
 
   return (
     <div
-      className="relative min-h-screen w-full flex flex-col justify-between overflow-hidden select-none"
+      className="relative h-screen h-[100dvh] w-full flex flex-col justify-between overflow-hidden select-none"
       style={{
         backgroundColor: '#2b2724',
         backgroundImage: `
@@ -288,7 +287,7 @@ export function OfflineBoardView({ onBack }) {
                 <button
                   key={pType}
                   onClick={() => executeMove({ ...promotionPending, promotion: pType })}
-                  className="p-3 bg-slate-800 hover:bg-amber-500/20 hover:border-amber-400 border border-slate-700 rounded-2xl transition-transform hover:scale-110 active:scale-95"
+                  className="p-3 bg-slate-800 hover:bg-amber-500/20 hover:border-amber-400 border border-slate-700 rounded-2xl transition-transform hover:scale-110 active:scale-95 cursor-pointer"
                 >
                   <PieceIcon piece={pType} color={turn} size={48} />
                 </button>
@@ -312,13 +311,13 @@ export function OfflineBoardView({ onBack }) {
             <div className="flex gap-2.5 pt-2">
               <button
                 onClick={() => setShowRestartConfirm(false)}
-                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl"
+                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleResetGame}
-                className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-amber-500/20"
+                className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-amber-500/20 cursor-pointer"
               >
                 New Game
               </button>
@@ -353,13 +352,13 @@ export function OfflineBoardView({ onBack }) {
             <div className="flex gap-2.5 pt-2">
               <button
                 onClick={() => setShowGameOverModal(false)}
-                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl"
+                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl cursor-pointer"
               >
                 Review Board
               </button>
               <button
                 onClick={handleResetGame}
-                className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-amber-500/20"
+                className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-amber-500/20 cursor-pointer"
               >
                 Play Again
               </button>
@@ -368,207 +367,306 @@ export function OfflineBoardView({ onBack }) {
         </div>
       )}
 
-      {/* Main Playing Area with Left Toolbar and Center Chessboard */}
-      <div className="flex-1 flex items-center justify-center relative p-2 sm:p-4">
-        {/* Left Circular Floating Toolbar (matching Screenshot 1) */}
-        <div className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 flex flex-col gap-3.5 sm:gap-4 z-30">
-          {/* 1. Back / Exit */}
-          <button
-            onClick={onBack}
-            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/85 border-2 border-amber-400/90 text-amber-400 flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all"
-            title="Back to Home Screen"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
+      {/* 1. TOP APP BAR (Exit, Turn Status Pill, Quick Controls) */}
+      <header className="w-full max-w-md mx-auto px-3 pt-2 pb-1 flex items-center justify-between z-30 shrink-0">
+        <button
+          onClick={onBack}
+          className="p-2 rounded-xl bg-black/75 border border-amber-400/80 text-amber-400 hover:text-white flex items-center gap-1.5 shadow-md active:scale-95 transition-transform cursor-pointer"
+          title="Exit to Lobby"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-[11px] font-black uppercase">Exit</span>
+        </button>
 
-          {/* 2. Restart / New Match */}
-          <button
-            onClick={() => setShowRestartConfirm(true)}
-            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/85 border-2 border-amber-400/90 text-amber-400 flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all"
-            title="Restart Match"
-          >
-            <RotateCw className="w-5 h-5" />
-          </button>
+        {/* Turn Status Pill */}
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/85 border border-amber-500/50 shadow-lg">
+          <span className={`w-2.5 h-2.5 rounded-full border ${turn === 'w' ? 'bg-white border-slate-300 shadow-xs' : 'bg-slate-900 border-white shadow-xs'}`} />
+          <span className="text-white font-mono font-bold text-xs">
+            {turnLabel}
+          </span>
+          {chess.inCheck() && (
+            <span className="px-1.5 py-0.5 rounded bg-rose-500 text-white font-black text-[9px] animate-pulse">
+              CHECK
+            </span>
+          )}
+        </div>
 
-          {/* 3. Undo Move */}
-          <button
-            onClick={handleUndo}
-            disabled={moveHistory.length === 0}
-            className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/85 border-2 flex items-center justify-center shadow-2xl transition-all ${
-              moveHistory.length > 0
-                ? 'border-amber-400/90 text-amber-400 hover:scale-110 active:scale-95 cursor-pointer'
-                : 'border-slate-700/60 text-slate-600 opacity-40 cursor-not-allowed'
-            }`}
-            title="Undo Move"
-          >
-            <Undo className="w-5 h-5" />
-          </button>
-
-          {/* 4. Help / Toggle Legal Moves */}
+        {/* Top Right Quick Controls */}
+        <div className="flex items-center gap-1.5">
           <button
             onClick={() => {
-              setHelpEnabled(!helpEnabled);
+              setSoundEnabled(!soundEnabled);
               triggerHaptic('move');
             }}
-            className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/85 border-2 flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all ${
-              helpEnabled
-                ? 'border-amber-400 text-amber-300 shadow-amber-500/20'
-                : 'border-slate-700/80 text-slate-500'
+            className={`p-2 rounded-xl border transition-all cursor-pointer ${
+              soundEnabled
+                ? 'bg-amber-500/20 border-amber-400 text-amber-300'
+                : 'bg-black/60 border-slate-700 text-slate-500'
             }`}
-            title={helpEnabled ? 'Legal Moves Hints ON' : 'Legal Moves Hints OFF'}
+            title={soundEnabled ? 'Sound ON' : 'Sound OFF'}
           >
-            <Lightbulb className="w-5 h-5" />
+            {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
           </button>
 
-          {/* 5. Settings Gear (Opens Screenshot 2 Drawer) */}
           <button
             onClick={() => setShowSettingsDrawer(true)}
-            className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/85 border-2 border-amber-400/90 text-amber-400 flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all"
-            title="Board Settings"
+            className="p-2 rounded-xl bg-black/75 border border-amber-400/80 text-amber-400 hover:text-white flex items-center justify-center shadow-md active:scale-95 transition-transform cursor-pointer"
+            title="Settings & Themes"
           >
-            <Settings className="w-5 h-5" />
+            <Settings className="w-4 h-4" />
           </button>
         </div>
+      </header>
 
-        {/* Center Chessboard Container (Matching Screenshot 1 & 2) */}
-        <div className="flex flex-col items-center justify-center my-auto ml-12 sm:ml-0">
-          <div
-            className="relative rounded-2xl overflow-hidden shadow-2xl border-8 sm:border-12 transition-colors duration-200"
-            style={{
-              borderColor: activeTheme.border,
-              width: 'min(calc(100vw - 80px), 520px)',
-              height: 'min(calc(100vw - 80px), 520px)',
-              aspectRatio: '1 / 1'
-            }}
-          >
-            {/* Outer Wood Bevel Frame Accent */}
-            <div className="grid grid-cols-8 grid-rows-8 w-full h-full">
-              {ranks.map((rank, rankIdx) => {
-                return files.map((file, fileIdx) => {
-                  const square = `${file}${rank}`;
-                  const isDark = (rankIdx + fileIdx) % 2 === 1;
-                  const piece = chess.get(square);
-                  const isSelected = selectedSquare === square;
-                  const isCheck = checkSquare === square;
-                  const isLastMoveSquare = lastMove && (lastMove.from === square || lastMove.to === square);
-                  const legalMoveTarget = helpEnabled && legalMoves.find(m => m.to === square);
-
-                  // Face-to-Face Rotation Logic (matching Screenshot 1: Black pieces face top player!)
-                  const isRotated = viewMode === 'face-to-face' && piece && piece.color === 'b';
-
-                  const squareBg = isDark ? activeTheme.dark : activeTheme.light;
-
-                  return (
-                    <div
-                      key={square}
-                      onClick={() => handleSquareClick(square)}
-                      className="relative flex items-center justify-center cursor-pointer select-none transition-colors duration-150"
-                      style={{ backgroundColor: squareBg }}
-                    >
-                      {/* Last Move Corner Brackets (Exact feature shown in Screenshot 1!) */}
-                      {isLastMoveSquare && (
-                        <div className="absolute inset-1 pointer-events-none z-20 flex flex-col justify-between">
-                          <div className="flex justify-between">
-                            <span className="w-2.5 h-2.5 border-t-2 border-l-2 border-white/95 rounded-tl-xs shadow-xs" />
-                            <span className="w-2.5 h-2.5 border-t-2 border-r-2 border-white/95 rounded-tr-xs shadow-xs" />
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="w-2.5 h-2.5 border-b-2 border-l-2 border-white/95 rounded-bl-xs shadow-xs" />
-                            <span className="w-2.5 h-2.5 border-b-2 border-r-2 border-white/95 rounded-br-xs shadow-xs" />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Selected Square Highlight */}
-                      {isSelected && (
-                        <div className="absolute inset-0 bg-amber-400/40 ring-2 ring-amber-400 pointer-events-none z-10" />
-                      )}
-
-                      {/* In-Check King Glow */}
-                      {isCheck && (
-                        <div className="absolute inset-0 bg-rose-600/50 ring-4 ring-rose-500 animate-pulse pointer-events-none z-10" />
-                      )}
-
-                      {/* Legal Move Indicators */}
-                      {legalMoveTarget && (
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                          {piece ? (
-                            <div className="w-full h-full border-4 border-amber-400/80 rounded-full animate-pulse" />
-                          ) : (
-                            <div className="w-3.5 h-3.5 md:w-4 md:h-4 rounded-full bg-amber-400/70 shadow-md ring-2 ring-amber-500/50" />
-                          )}
-                        </div>
-                      )}
-
-                      {/* Piece Rendering (With Face-to-Face rotation if enabled!) */}
-                      {piece && (
-                        <div
-                          className={`z-10 transition-transform duration-200 transform ${
-                            isRotated ? 'rotate-180 scale-100' : 'rotate-0'
-                          } hover:scale-105 active:scale-95`}
-                        >
-                          <PieceIcon
-                            piece={piece.type}
-                            color={piece.color}
-                            size={typeof window !== 'undefined' && window.innerWidth < 450 ? 36 : 48}
-                          />
-                        </div>
-                      )}
-
-                      {/* Coordinates (A-H on bottom/top rank, 1-8 on left/right edge) */}
-                      {rankIdx === 7 && (
-                        <span
-                          className={`absolute bottom-0.5 right-1 text-[9px] font-bold opacity-60 select-none pointer-events-none ${
-                            isDark ? 'text-amber-100' : 'text-stone-900'
-                          }`}
-                        >
-                          {file}
-                        </span>
-                      )}
-                      {fileIdx === 0 && (
-                        <span
-                          className={`absolute top-0.5 left-1 text-[9px] font-bold opacity-60 select-none pointer-events-none ${
-                            isDark ? 'text-amber-100' : 'text-stone-900'
-                          }`}
-                        >
-                          {rank}
-                        </span>
-                      )}
-                    </div>
-                  );
-                });
-              })}
-            </div>
+      {/* 2. TOP OPPONENT PLAYER BAR (Black) - Rotated 180° in Face-to-Face Mode */}
+      <div
+        className={`w-full max-w-md mx-auto px-3 py-1 flex items-center justify-between text-xs z-20 shrink-0 transition-transform ${
+          viewMode === 'face-to-face' ? 'rotate-180' : ''
+        }`}
+      >
+        <div className="flex items-center gap-2 bg-black/75 border border-slate-700/80 px-2.5 py-1 rounded-xl shadow-xs">
+          <div className={`w-6 h-6 rounded-lg bg-slate-900 border flex items-center justify-center text-sm ${turn === 'b' ? 'border-amber-400 ring-2 ring-amber-400/50' : 'border-slate-700'}`}>
+            ♚
+          </div>
+          <div>
+            <span className="text-white font-bold text-xs block leading-tight">
+              {viewMode === 'face-to-face' ? 'Player 2' : (playAs === 'black' ? 'You (Black)' : 'Black')}
+            </span>
+            <span className="text-[10px] text-slate-400 block leading-none">
+              {turn === 'b' ? 'Thinking...' : 'Waiting'}
+            </span>
           </div>
         </div>
-      </div>
 
-      {/* Bottom Bar matching Screenshot 1 ("Two Players" on left, Move indicator on right) */}
-      <div className="w-full px-4 py-2.5 flex items-center justify-between text-xs font-semibold z-20">
-        {/* Left Badge: "Two Players" */}
-        <div className="px-3.5 py-1.5 rounded-xl bg-black/75 border border-slate-700/60 text-slate-300 font-bold flex items-center gap-1.5 shadow-lg backdrop-blur-xs">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>Two Players</span>
-        </div>
-
-        {/* Right Info: Turn Status + Captured Pieces (e.g. "4.White's Move") */}
-        <div className="flex items-center gap-3 bg-black/75 border border-slate-700/60 px-4 py-1.5 rounded-xl shadow-lg backdrop-blur-xs">
-          {/* Small Captured Pieces Indicator */}
-          {capturedPieces[turn === 'w' ? 'w' : 'b'].length > 0 && (
-            <div className="flex items-center gap-0.5 text-slate-400 text-xs mr-1">
-              <span>+{capturedPieces[turn === 'w' ? 'w' : 'b'].length}</span>
-              <span className="text-[10px]">♟</span>
+        {/* Captured Pieces by Black */}
+        <div className="flex items-center gap-1 bg-black/60 px-2 py-1 rounded-lg border border-slate-800 min-h-[26px]">
+          {capturedPieces.b.length > 0 ? (
+            <div className="flex items-center gap-0.5 flex-wrap max-w-[150px]">
+              {capturedPieces.b.map((p, idx) => (
+                <span key={idx} className="text-white font-mono text-[11px] drop-shadow-xs">
+                  {p === 'p' ? '♟' : p === 'n' ? '♞' : p === 'b' ? '♝' : p === 'r' ? '♜' : '♛'}
+                </span>
+              ))}
             </div>
+          ) : (
+            <span className="text-[10px] text-slate-500 italic">No captures</span>
           )}
+        </div>
+      </div>
 
-          <div className="flex items-center gap-1.5 text-white font-mono font-bold text-xs">
-            <span className={`w-2.5 h-2.5 rounded-full border ${turn === 'w' ? 'bg-white border-slate-400' : 'bg-slate-900 border-white'}`} />
-            <span>{turnLabel}</span>
+      {/* 3. CENTER CHESSBOARD (Maximized for Vertical Android Screen, Edge-to-Edge) */}
+      <div className="flex-1 w-full flex items-center justify-center px-1.5 py-1 z-10 overflow-hidden">
+        <div
+          className="relative rounded-2xl overflow-hidden shadow-2xl transition-colors duration-200"
+          style={{
+            borderColor: activeTheme.border,
+            borderWidth: 'min(10px, 2.2vw)',
+            borderStyle: 'solid',
+            width: 'min(calc(100vw - 12px), calc(100dvh - 220px))',
+            height: 'min(calc(100vw - 12px), calc(100dvh - 220px))',
+            aspectRatio: '1 / 1'
+          }}
+        >
+          <div className="grid grid-cols-8 grid-rows-8 w-full h-full">
+            {ranks.map((rank, rankIdx) => {
+              return files.map((file, fileIdx) => {
+                const square = `${file}${rank}`;
+                const isDark = (rankIdx + fileIdx) % 2 === 1;
+                const piece = chess.get(square);
+                const isSelected = selectedSquare === square;
+                const isCheck = checkSquare === square;
+                const isLastMoveSquare = lastMove && (lastMove.from === square || lastMove.to === square);
+                const legalMoveTarget = helpEnabled && legalMoves.find(m => m.to === square);
+
+                // Face-to-Face Rotation: Black pieces face top player
+                const isRotated = viewMode === 'face-to-face' && piece && piece.color === 'b';
+                const squareBg = isDark ? activeTheme.dark : activeTheme.light;
+
+                return (
+                  <div
+                    key={square}
+                    onClick={() => handleSquareClick(square)}
+                    className="relative flex items-center justify-center cursor-pointer select-none transition-colors duration-150"
+                    style={{ backgroundColor: squareBg }}
+                  >
+                    {/* Last Move Corner Brackets */}
+                    {isLastMoveSquare && (
+                      <div className="absolute inset-1 pointer-events-none z-20 flex flex-col justify-between">
+                        <div className="flex justify-between">
+                          <span className="w-2.5 h-2.5 border-t-2 border-l-2 border-white/95 rounded-tl-xs shadow-xs" />
+                          <span className="w-2.5 h-2.5 border-t-2 border-r-2 border-white/95 rounded-tr-xs shadow-xs" />
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="w-2.5 h-2.5 border-b-2 border-l-2 border-white/95 rounded-bl-xs shadow-xs" />
+                          <span className="w-2.5 h-2.5 border-b-2 border-r-2 border-white/95 rounded-br-xs shadow-xs" />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Selected Square Highlight */}
+                    {isSelected && (
+                      <div className="absolute inset-0 bg-amber-400/40 ring-2 ring-amber-400 pointer-events-none z-10" />
+                    )}
+
+                    {/* In-Check King Glow */}
+                    {isCheck && (
+                      <div className="absolute inset-0 bg-rose-600/50 ring-4 ring-rose-500 animate-pulse pointer-events-none z-10" />
+                    )}
+
+                    {/* Legal Move Indicators */}
+                    {legalMoveTarget && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                        {piece ? (
+                          <div className="w-full h-full border-4 border-amber-400/80 rounded-full animate-pulse" />
+                        ) : (
+                          <div className="w-3.5 h-3.5 md:w-4 md:h-4 rounded-full bg-amber-400/70 shadow-md ring-2 ring-amber-500/50" />
+                        )}
+                      </div>
+                    )}
+
+                    {/* Piece Rendering */}
+                    {piece && (
+                      <div
+                        className={`z-10 transition-transform duration-200 transform ${
+                          isRotated ? 'rotate-180 scale-100' : 'rotate-0'
+                        } hover:scale-105 active:scale-95`}
+                      >
+                        <PieceIcon
+                          piece={piece.type}
+                          color={piece.color}
+                          size={typeof window !== 'undefined' && window.innerWidth < 450 ? 38 : 48}
+                        />
+                      </div>
+                    )}
+
+                    {/* Coordinates */}
+                    {rankIdx === 7 && (
+                      <span
+                        className={`absolute bottom-0.5 right-1 text-[9px] font-bold opacity-60 select-none pointer-events-none ${
+                          isDark ? 'text-amber-100' : 'text-stone-900'
+                        }`}
+                      >
+                        {file}
+                      </span>
+                    )}
+                    {fileIdx === 0 && (
+                      <span
+                        className={`absolute top-0.5 left-1 text-[9px] font-bold opacity-60 select-none pointer-events-none ${
+                          isDark ? 'text-amber-100' : 'text-stone-900'
+                        }`}
+                      >
+                        {rank}
+                      </span>
+                    )}
+                  </div>
+                );
+              });
+            })}
           </div>
         </div>
       </div>
 
-      {/* Settings Drawer (Exact replica of Screenshot 2) */}
+      {/* 4. BOTTOM USER PLAYER BAR (White) */}
+      <div className="w-full max-w-md mx-auto px-3 py-1 flex items-center justify-between text-xs z-20 shrink-0">
+        <div className="flex items-center gap-2 bg-black/75 border border-slate-700/80 px-2.5 py-1 rounded-xl shadow-xs">
+          <div className={`w-6 h-6 rounded-lg bg-white border flex items-center justify-center text-sm ${turn === 'w' ? 'border-amber-400 ring-2 ring-amber-400/50' : 'border-slate-300'}`}>
+            ♔
+          </div>
+          <div>
+            <span className="text-white font-bold text-xs block leading-tight">
+              {viewMode === 'face-to-face' ? 'Player 1' : (playAs === 'white' ? 'You (White)' : 'White')}
+            </span>
+            <span className="text-[10px] text-slate-400 block leading-none">
+              {turn === 'w' ? 'Thinking...' : 'Waiting'}
+            </span>
+          </div>
+        </div>
+
+        {/* Captured Pieces by White */}
+        <div className="flex items-center gap-1 bg-black/60 px-2 py-1 rounded-lg border border-slate-800 min-h-[26px]">
+          {capturedPieces.w.length > 0 ? (
+            <div className="flex items-center gap-0.5 flex-wrap max-w-[150px]">
+              {capturedPieces.w.map((p, idx) => (
+                <span key={idx} className="text-amber-200 font-mono text-[11px] drop-shadow-xs">
+                  {p === 'p' ? '♟' : p === 'n' ? '♞' : p === 'b' ? '♝' : p === 'r' ? '♜' : '♛'}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <span className="text-[10px] text-slate-500 italic">No captures</span>
+          )}
+        </div>
+      </div>
+
+      {/* 5. BOTTOM HORIZONTAL ACTION BAR (Thumb-friendly control bar) */}
+      <footer className="w-full max-w-md mx-auto px-3 pt-1.5 pb-3 flex items-center justify-around gap-2 z-30 shrink-0">
+        {/* Restart / New Match */}
+        <button
+          onClick={() => setShowRestartConfirm(true)}
+          className="flex-1 max-w-[70px] h-11 rounded-2xl bg-black/85 border border-amber-400/80 hover:border-amber-300 text-amber-400 flex flex-col items-center justify-center gap-0.5 shadow-lg active:scale-95 transition-transform cursor-pointer"
+          title="Restart Match"
+        >
+          <RotateCw className="w-4 h-4" />
+          <span className="text-[9px] font-black uppercase tracking-wider">New</span>
+        </button>
+
+        {/* Undo Move */}
+        <button
+          onClick={handleUndo}
+          disabled={moveHistory.length === 0}
+          className={`flex-1 max-w-[70px] h-11 rounded-2xl bg-black/85 border flex flex-col items-center justify-center gap-0.5 shadow-lg transition-transform ${
+            moveHistory.length > 0
+              ? 'border-amber-400/80 text-amber-400 hover:border-amber-300 active:scale-95 cursor-pointer'
+              : 'border-slate-800 text-slate-600 opacity-40 cursor-not-allowed'
+          }`}
+          title="Undo Move"
+        >
+          <Undo className="w-4 h-4" />
+          <span className="text-[9px] font-black uppercase tracking-wider">Undo</span>
+        </button>
+
+        {/* Legal Move Hints */}
+        <button
+          onClick={() => {
+            setHelpEnabled(!helpEnabled);
+            triggerHaptic('move');
+          }}
+          className={`flex-1 max-w-[70px] h-11 rounded-2xl border flex flex-col items-center justify-center gap-0.5 shadow-lg transition-transform cursor-pointer ${
+            helpEnabled
+              ? 'bg-amber-500/20 border-amber-400 text-amber-300 active:scale-95'
+              : 'bg-black/85 border-slate-700/80 text-slate-500'
+          }`}
+          title="Toggle Legal Move Hints"
+        >
+          <Lightbulb className="w-4 h-4" />
+          <span className="text-[9px] font-black uppercase tracking-wider">Hints</span>
+        </button>
+
+        {/* Flip Board Orientation */}
+        <button
+          onClick={() => {
+            setPlayAs(playAs === 'black' ? 'white' : 'black');
+            triggerHaptic('move');
+          }}
+          className="flex-1 max-w-[70px] h-11 rounded-2xl bg-black/85 border border-amber-400/80 hover:border-amber-300 text-amber-400 flex flex-col items-center justify-center gap-0.5 shadow-lg active:scale-95 transition-transform cursor-pointer"
+          title="Flip Board Orientation"
+        >
+          <span className="text-sm leading-none">🔁</span>
+          <span className="text-[9px] font-black uppercase tracking-wider">Flip</span>
+        </button>
+
+        {/* Board Settings & Themes */}
+        <button
+          onClick={() => setShowSettingsDrawer(true)}
+          className="flex-1 max-w-[70px] h-11 rounded-2xl bg-black/85 border border-amber-400/80 hover:border-amber-300 text-amber-400 flex flex-col items-center justify-center gap-0.5 shadow-lg active:scale-95 transition-transform cursor-pointer"
+          title="Board Settings & Themes"
+        >
+          <Settings className="w-4 h-4" />
+          <span className="text-[9px] font-black uppercase tracking-wider">Themes</span>
+        </button>
+      </footer>
+
+      {/* Settings Drawer */}
       {showSettingsDrawer && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex justify-end animate-fade-in">
           {/* Backdrop close area */}
@@ -584,13 +682,13 @@ export function OfflineBoardView({ onBack }) {
               </div>
               <button
                 onClick={() => setShowSettingsDrawer(false)}
-                className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Row 1: Theme (Horizontal scroll of board styles with checkmark) */}
+            {/* Row 1: Theme */}
             <div className="space-y-2.5">
               <div className="flex items-center gap-2 text-slate-300 text-xs font-bold">
                 <Eye className="w-4 h-4 text-amber-400" />
@@ -614,7 +712,6 @@ export function OfflineBoardView({ onBack }) {
                       }`}
                       style={{ backgroundColor: th.border }}
                     >
-                      {/* Mini chessboard pattern */}
                       <div className="w-full h-8 rounded grid grid-cols-4 grid-rows-2 overflow-hidden border border-black/20">
                         {[0, 1, 0, 1, 1, 0, 1, 0].map((val, idx) => (
                           <div
@@ -638,7 +735,7 @@ export function OfflineBoardView({ onBack }) {
               </div>
             </div>
 
-            {/* Row 2: View (Face-to-Face | Auto Flip | Standard 2D) */}
+            {/* Row 2: View */}
             <div className="flex items-center justify-between pt-1">
               <div className="flex items-center gap-2 text-slate-300 text-xs font-bold">
                 <Camera className="w-4 h-4 text-amber-400" />
@@ -657,7 +754,7 @@ export function OfflineBoardView({ onBack }) {
                       setViewMode(mode.id);
                       triggerHaptic('move');
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       viewMode === mode.id
                         ? 'bg-amber-500 text-slate-950 shadow-md'
                         : 'text-slate-400 hover:text-white'
@@ -669,7 +766,7 @@ export function OfflineBoardView({ onBack }) {
               </div>
             </div>
 
-            {/* Row 3: Play As (White | Black | By turns) */}
+            {/* Row 3: Play As */}
             <div className="flex items-center justify-between pt-1">
               <div className="flex items-center gap-2 text-slate-300 text-xs font-bold">
                 <User className="w-4 h-4 text-amber-400" />
@@ -688,7 +785,7 @@ export function OfflineBoardView({ onBack }) {
                       setPlayAs(mode.id);
                       triggerHaptic('move');
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       playAs === mode.id
                         ? 'bg-amber-500 text-slate-950 shadow-md'
                         : 'text-slate-400 hover:text-white'
@@ -700,7 +797,7 @@ export function OfflineBoardView({ onBack }) {
               </div>
             </div>
 
-            {/* Row 4: Sound / Vibe (On | Off) */}
+            {/* Row 4: Sound / Vibe */}
             <div className="flex items-center justify-between pt-1">
               <div className="flex items-center gap-2 text-slate-300 text-xs font-bold">
                 <Volume2 className="w-4 h-4 text-amber-400" />
@@ -713,7 +810,7 @@ export function OfflineBoardView({ onBack }) {
                     setSoundEnabled(true);
                     triggerHaptic('move');
                   }}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     soundEnabled ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400'
                   }`}
                 >
@@ -721,7 +818,7 @@ export function OfflineBoardView({ onBack }) {
                 </button>
                 <button
                   onClick={() => setSoundEnabled(false)}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     !soundEnabled ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400'
                   }`}
                 >
@@ -730,11 +827,11 @@ export function OfflineBoardView({ onBack }) {
               </div>
             </div>
 
-            {/* Row 5: Help / Move Hints (On | Off) */}
+            {/* Row 5: Help / Move Hints */}
             <div className="flex items-center justify-between pt-1">
               <div className="flex items-center gap-2 text-slate-300 text-xs font-bold">
                 <HelpCircle className="w-4 h-4 text-amber-400" />
-                <span>Help</span>
+                <span>Hints</span>
               </div>
 
               <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
@@ -743,7 +840,7 @@ export function OfflineBoardView({ onBack }) {
                     setHelpEnabled(true);
                     triggerHaptic('move');
                   }}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     helpEnabled ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400'
                   }`}
                 >
@@ -751,7 +848,7 @@ export function OfflineBoardView({ onBack }) {
                 </button>
                 <button
                   onClick={() => setHelpEnabled(false)}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     !helpEnabled ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400'
                   }`}
                 >
@@ -760,7 +857,7 @@ export function OfflineBoardView({ onBack }) {
               </div>
             </div>
 
-            {/* Row 6: Notification / Turn Alert (On | Off) */}
+            {/* Row 6: Notification / Turn Alert */}
             <div className="flex items-center justify-between pt-1">
               <div className="flex items-center gap-2 text-slate-300 text-xs font-bold">
                 <Bell className="w-4 h-4 text-amber-400" />
@@ -773,7 +870,7 @@ export function OfflineBoardView({ onBack }) {
                     setNotificationEnabled(true);
                     triggerHaptic('move');
                   }}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     notificationEnabled ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400'
                   }`}
                 >
@@ -781,7 +878,7 @@ export function OfflineBoardView({ onBack }) {
                 </button>
                 <button
                   onClick={() => setNotificationEnabled(false)}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     !notificationEnabled ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400'
                   }`}
                 >
@@ -793,7 +890,7 @@ export function OfflineBoardView({ onBack }) {
             <div className="pt-4 border-t border-slate-800 flex justify-end">
               <button
                 onClick={() => setShowSettingsDrawer(false)}
-                className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-lg transition-transform active:scale-95"
+                className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-lg transition-transform active:scale-95 cursor-pointer"
               >
                 Apply & Close
               </button>
