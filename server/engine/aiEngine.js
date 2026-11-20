@@ -1,4 +1,5 @@
 import stockfishFactory from 'stockfish';
+import { getLocalAIMove } from '../../client/src/utils/aiEngine.js';
 
 class StockfishEngine {
   constructor() {
@@ -49,6 +50,19 @@ class StockfishEngine {
   // Get best move for a given FEN and AI difficulty level (1 to 5)
   getAIMove(fen, level = 2) {
     return new Promise((resolve) => {
+      let isResolved = false;
+
+      // Safety timeout: If Stockfish does not respond within 1200ms, use fast local minimax
+      const timer = setTimeout(() => {
+        if (!isResolved) {
+          isResolved = true;
+          this.currentTask = null;
+          const fallback = getLocalAIMove(fen, level);
+          resolve(fallback || { from: 'e2', to: 'e4', uci: 'e2e4' });
+          this.processNextInQueue();
+        }
+      }, 1200);
+
       // Skill level mapping (0 to 20 in UCI)
       const uciSkills = [0, 4, 10, 15, 20];
       const depths = [2, 4, 8, 12, 16];
@@ -64,7 +78,9 @@ class StockfishEngine {
           this.sendCommand(`go depth ${depth}`);
         },
         onLine: (line) => {
-          if (line.startsWith('bestmove')) {
+          if (line.startsWith('bestmove') && !isResolved) {
+            clearTimeout(timer);
+            isResolved = true;
             const parts = line.split(' ');
             bestMove = parts[1];
             this.currentTask = null;

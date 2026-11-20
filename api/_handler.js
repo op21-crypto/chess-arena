@@ -20,6 +20,8 @@ app.use((req, res, next) => {
     req.url = '/api/' + req.query.path.join('/');
   } else if (typeof req.query?.path === 'string') {
     req.url = '/api/' + req.query.path;
+  } else if (req.url && !req.url.startsWith('/api') && !req.url.startsWith('/auth')) {
+    req.url = '/api' + (req.url.startsWith('/') ? req.url : '/' + req.url);
   }
   next();
 });
