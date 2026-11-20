@@ -32,23 +32,27 @@ export function MatchmakingModal({ isOpen, onClose, onStartMatchmaking, isSearch
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-700 rounded-3xl p-6 max-w-md w-full space-y-6 shadow-2xl relative">
+    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fade-in">
+      <div className="bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border border-slate-700/80 rounded-3xl p-5 max-w-sm sm:max-w-md w-full space-y-4 shadow-2xl relative text-slate-100">
         <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800"
+          onClick={() => {
+            sound.playClick();
+            onClose();
+          }}
+          className="absolute top-4 right-4 p-1.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-400 hover:text-white transition-colors"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </button>
 
         <div className="space-y-1">
-          <h3 className="text-xl font-bold text-white flex items-center gap-2">
-            <span>Play Online Multiplayer</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+          <h3 className="text-lg font-black text-white flex items-center gap-2">
+            <Swords className="w-5 h-5 text-amber-400" />
+            <span>Play Online</span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase tracking-wider">
               Rated Matchmaking
             </span>
           </h3>
-          <p className="text-xs text-slate-400">Select time control to queue against an opponent with matched ELO</p>
+          <p className="text-xs text-slate-400">Choose your time control to find a rated opponent worldwide</p>
         </div>
 
         {isSearching ? (
@@ -61,41 +65,60 @@ export function MatchmakingModal({ isOpen, onClose, onStartMatchmaking, isSearch
             </div>
             <div className="text-center space-y-1">
               <span className="text-sm font-bold text-white block">Finding Opponent...</span>
-              <span className="text-xs text-slate-400 font-mono">
+              <span className="text-xs text-amber-400 font-mono font-bold">
                 {selectedPreset.name} • {selectedPreset.format.toUpperCase()}
               </span>
             </div>
             <button
-              onClick={onCancelMatchmaking}
-              className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-xl transition-colors"
+              onClick={() => {
+                sound.playClick();
+                triggerHaptic('move');
+                onCancelMatchmaking();
+              }}
+              className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-xl transition-colors cursor-pointer"
             >
               Cancel Queue
             </button>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 pt-1">
             <div className="grid grid-cols-4 gap-2">
-              {TIME_PRESETS.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => setSelectedPreset(p)}
-                  className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1 transition-all ${
-                    selectedPreset.id === p.id
-                      ? 'bg-amber-500 text-slate-950 border-amber-400 font-bold shadow-lg shadow-amber-500/20 scale-102'
-                      : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-300'
-                  }`}
-                >
-                  <span className="text-lg">{p.icon}</span>
-                  <span className="text-xs font-mono">{p.name}</span>
-                </button>
-              ))}
+              {TIME_PRESETS.map((p) => {
+                const isSelected = selectedPreset.id === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => {
+                      sound.playClick();
+                      triggerHaptic('move');
+                      setSelectedPreset(p);
+                    }}
+                    className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1 transition-all cursor-pointer active:scale-95 ${
+                      isSelected
+                        ? 'bg-amber-500 text-slate-950 border-amber-400 font-bold shadow-lg shadow-amber-500/25 ring-2 ring-amber-400/40'
+                        : 'bg-slate-950/70 border-slate-800 hover:border-slate-700 text-slate-300'
+                    }`}
+                  >
+                    <span className="text-lg">{p.icon}</span>
+                    <span className="text-xs font-mono font-bold">{p.name}</span>
+                    <span className={`text-[9px] uppercase font-semibold ${isSelected ? 'text-slate-900' : 'text-slate-500'}`}>
+                      {p.format}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             <button
-              onClick={() => onStartMatchmaking(selectedPreset)}
-              className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm rounded-2xl transition-all shadow-xl shadow-amber-500/10 transform active:scale-98"
+              onClick={() => {
+                sound.playMove();
+                triggerHaptic('impact');
+                onStartMatchmaking(selectedPreset);
+              }}
+              className="w-full py-3.5 bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black text-sm rounded-2xl transition-all shadow-xl shadow-amber-500/25 transform active:scale-98 cursor-pointer flex items-center justify-center gap-2"
             >
-              Find Match Now
+              <Swords className="w-4.5 h-4.5" />
+              <span>Find Match Now ({selectedPreset.name})</span>
             </button>
           </div>
         )}

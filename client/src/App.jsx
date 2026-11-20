@@ -1208,8 +1208,8 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* 4 Game Mode Buttons (Up to Down) */}
-                  <div className="space-y-3 pt-1">
+                  {/* 4 Game Mode Buttons (Unified, Sleek & Non-Bulky) */}
+                  <div className="space-y-2.5 pt-1">
                     {/* 1st: Play with Stockfish */}
                     <button
                       onClick={() => {
@@ -1217,25 +1217,25 @@ export default function App() {
                         triggerHaptic('move');
                         setShowAIModal(true);
                       }}
-                      className="w-full text-left p-4 sm:p-4.5 rounded-2xl bg-gradient-to-r from-indigo-950/60 via-slate-900/90 to-purple-950/40 hover:from-indigo-900/70 hover:to-purple-900/50 border border-indigo-500/30 hover:border-indigo-400/60 shadow-lg shadow-indigo-950/20 transition-all duration-200 transform hover:-translate-y-0.5 active:scale-98 group cursor-pointer relative overflow-hidden"
+                      className="w-full text-left p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-indigo-950/60 via-slate-900/90 to-purple-950/40 hover:from-indigo-900/70 hover:to-purple-900/50 border border-indigo-500/30 hover:border-indigo-400/60 shadow-lg shadow-indigo-950/20 transition-all duration-200 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden"
                     >
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+                      <div className="absolute top-0 right-0 w-28 h-28 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
                       <div className="flex items-center justify-between gap-3 relative z-10">
-                        <div className="flex items-center gap-3.5 sm:gap-4">
-                          <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 border border-indigo-500/40 flex items-center justify-center text-indigo-400 shadow-md group-hover:scale-105 group-hover:bg-indigo-500/25 transition-transform shrink-0">
-                            <Bot className="w-6 h-6" />
+                        <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+                          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-indigo-500/15 border border-indigo-500/40 flex items-center justify-center text-indigo-400 shadow-md group-hover:scale-105 group-hover:bg-indigo-500/25 transition-transform shrink-0">
+                            <Bot className="w-5 h-5 sm:w-6 sm:h-6" />
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="text-base sm:text-lg font-black text-white group-hover:text-indigo-200 transition-colors">
+                              <span className="text-sm sm:text-base font-black text-white group-hover:text-indigo-200 transition-colors truncate">
                                 Play with Stockfish
                               </span>
-                              <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-bold uppercase tracking-wider">
+                              <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-bold uppercase tracking-wider shrink-0">
                                 AI Bot
                               </span>
                             </div>
-                            <p className="text-xs text-slate-400 mt-0.5 font-medium line-clamp-1">
-                              Practice against engine bots • Levels 1 to 8 (800–2600+ Elo)
+                            <p className="text-xs text-slate-400 mt-0.5 font-medium truncate">
+                              Practice against engine bots (800–2500+ Elo)
                             </p>
                           </div>
                         </div>
@@ -1246,32 +1246,33 @@ export default function App() {
                       </div>
                     </button>
 
-                    {/* 2nd: Play Friends (Voice) */}
+                    {/* 2nd: Play with Friends (Chat & Voice Room) */}
                     <button
                       onClick={() => {
                         sound.playClick();
                         triggerHaptic('move');
                         setShowFriendRoomModal(true);
                       }}
-                      className="w-full text-left p-4 sm:p-4.5 rounded-2xl bg-gradient-to-r from-emerald-950/60 via-slate-900/90 to-teal-950/40 hover:from-emerald-900/70 hover:to-teal-900/50 border border-emerald-500/30 hover:border-emerald-400/60 shadow-lg shadow-emerald-950/20 transition-all duration-200 transform hover:-translate-y-0.5 active:scale-98 group cursor-pointer relative overflow-hidden"
+                      className="w-full text-left p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-950/60 via-slate-900/90 to-teal-950/40 hover:from-emerald-900/70 hover:to-teal-900/50 border border-emerald-500/30 hover:border-emerald-400/60 shadow-lg shadow-emerald-950/20 transition-all duration-200 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden"
                     >
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+                      <div className="absolute top-0 right-0 w-28 h-28 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
                       <div className="flex items-center justify-between gap-3 relative z-10">
-                        <div className="flex items-center gap-3.5 sm:gap-4">
-                          <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-md group-hover:scale-105 group-hover:bg-emerald-500/25 transition-transform shrink-0">
-                            <Mic className="w-6 h-6" />
+                        <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+                          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-md group-hover:scale-105 group-hover:bg-emerald-500/25 transition-transform shrink-0">
+                            <Users className="w-5 h-5 sm:w-6 sm:h-6" />
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="text-base sm:text-lg font-black text-white group-hover:text-emerald-200 transition-colors">
-                                Play Friends (Voice 🎙️)
+                              <span className="text-sm sm:text-base font-black text-white group-hover:text-emerald-200 transition-colors truncate">
+                                Play with Friends
                               </span>
-                              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider">
-                                Live Audio
+                              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider shrink-0 flex items-center gap-1">
+                                <span>Chat & Voice</span>
+                                <span className="text-[9px]">💬🎙️</span>
                               </span>
                             </div>
-                            <p className="text-xs text-slate-400 mt-0.5 font-medium line-clamp-1">
-                              Create a private room & talk in real-time with voice chat
+                            <p className="text-xs text-slate-400 mt-0.5 font-medium truncate">
+                              Private rooms with live chat, voice & invites
                             </p>
                           </div>
                         </div>
@@ -1282,106 +1283,93 @@ export default function App() {
                       </div>
                     </button>
 
-                    {/* 3rd: Play Online (With Time Controls + CTA) */}
-                    <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-950/40 via-slate-900/90 to-orange-950/40 border border-amber-500/35 shadow-xl shadow-amber-950/20 relative overflow-hidden space-y-3">
-                      <div className="absolute top-0 right-0 w-36 h-36 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+                    {/* 3rd: Play Online (Simple, Clean Button like 1 & 2 -> Opens Time Selection Modal) */}
+                    <button
+                      onClick={() => {
+                        sound.playClick();
+                        triggerHaptic('move');
+                        setShowMatchmakingModal(true);
+                      }}
+                      className="w-full text-left p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-950/60 via-slate-900/90 to-orange-950/40 hover:from-amber-900/70 hover:to-orange-900/50 border border-amber-500/35 hover:border-amber-400/60 shadow-lg shadow-amber-950/20 transition-all duration-200 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden"
+                    >
+                      <div className="absolute top-0 right-0 w-28 h-28 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
                       <div className="flex items-center justify-between gap-3 relative z-10">
-                        <div className="flex items-center gap-3.5 sm:gap-4">
-                          <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shadow-md shrink-0">
-                            <Swords className="w-6 h-6" />
+                        <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+                          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shadow-md group-hover:scale-105 group-hover:bg-amber-500/30 transition-transform shrink-0">
+                            <Swords className="w-5 h-5 sm:w-6 sm:h-6" />
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="text-base sm:text-lg font-black text-white">
+                              <span className="text-sm sm:text-base font-black text-white group-hover:text-amber-200 transition-colors truncate">
                                 Play Online
                               </span>
-                              <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold uppercase tracking-wider">
+                              <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold uppercase tracking-wider shrink-0">
                                 Rated FIDE
                               </span>
                             </div>
-                            <p className="text-xs text-slate-400 mt-0.5 font-medium line-clamp-1">
-                              Instant rated matchmaking with players worldwide
+                            <p className="text-xs text-slate-400 mt-0.5 font-medium truncate">
+                              Choose time control & match with global players
                             </p>
                           </div>
                         </div>
-                        <span className="text-xs text-amber-400 font-mono font-bold bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-lg shrink-0">
-                          {selectedHomeTime.icon} {selectedHomeTime.label}
-                        </span>
+                        <div className="flex items-center gap-1 text-amber-400 text-xs font-bold shrink-0">
+                          <span className="hidden sm:inline">Choose Time</span>
+                          <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        </div>
                       </div>
+                    </button>
 
-                      {/* Time Control Quick Selector */}
-                      <div className="grid grid-cols-6 gap-1.5 relative z-10">
-                        {HOME_TIME_CONTROLS.map((item) => {
-                          const isSelected = selectedHomeTime.id === item.id;
-                          return (
-                            <button
-                              key={item.id}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedHomeTime(item);
-                                sound.playMove();
-                                triggerHaptic('move');
-                              }}
-                              className={`py-2 px-1 rounded-xl border text-center transition-all cursor-pointer active:scale-95 flex flex-col items-center justify-center ${
-                                isSelected
-                                  ? 'bg-amber-500 text-slate-950 font-black border-amber-300 shadow-md shadow-amber-500/30'
-                                  : 'bg-slate-950/70 border-slate-800 hover:border-slate-700 text-slate-300'
-                              }`}
-                              title={`${item.label} ${item.type}`}
-                            >
-                              <span className="text-[11px] sm:text-xs font-black truncate leading-tight">
-                                {item.label}
-                              </span>
-                              <span className={`text-[9px] uppercase font-bold truncate ${
-                                isSelected ? 'text-slate-950' : 'text-slate-400'
-                              }`}>
-                                {item.type}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {/* Main Play Online CTA */}
-                      <button
-                        onClick={() => {
-                          sound.playClick();
-                          triggerHaptic('move');
-                          handleStartMatchmaking(selectedHomeTime);
-                        }}
-                        className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black text-sm sm:text-base shadow-lg shadow-amber-500/25 transition-all transform hover:-translate-y-0.5 active:scale-98 cursor-pointer relative z-10"
-                      >
-                        <Swords className="w-5 h-5 fill-slate-950" />
-                        <span>Play Online ({selectedHomeTime.label} {selectedHomeTime.type})</span>
-                      </button>
-                    </div>
-
-                    {/* 4th: Offline Chess Board */}
+                    {/* 4th: Offline Chess Board (With 4x4 Mini Chessboard Picture Graphic) */}
                     <button
                       onClick={() => {
                         sound.playClick();
                         triggerHaptic('move');
                         setActiveTab('offline');
                       }}
-                      className="w-full text-left p-4 sm:p-4.5 rounded-2xl bg-gradient-to-r from-slate-900/90 via-slate-900/95 to-slate-950/90 hover:from-slate-850 hover:to-slate-900 border border-slate-800 hover:border-amber-500/40 shadow-lg shadow-slate-950/30 transition-all duration-200 transform hover:-translate-y-0.5 active:scale-98 group cursor-pointer relative overflow-hidden"
+                      className="w-full text-left p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-slate-900/90 via-slate-900/95 to-slate-950/90 hover:from-slate-850 hover:to-slate-900 border border-slate-800 hover:border-amber-500/40 shadow-lg shadow-slate-950/30 transition-all duration-200 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden"
                     >
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
+                      <div className="absolute top-0 right-0 w-28 h-28 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
                       <div className="flex items-center justify-between gap-3 relative z-10">
-                        <div className="flex items-center gap-3.5 sm:gap-4">
-                          <div className="w-12 h-12 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex items-center justify-center text-amber-400 shadow-md group-hover:scale-105 group-hover:border-amber-500/40 transition-transform shrink-0">
-                            <Smartphone className="w-6 h-6" />
+                        <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+                          {/* 4x4 Mini Chessboard Picture */}
+                          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-amber-950/90 border border-amber-500/40 p-1.5 shadow-md flex items-center justify-center shrink-0 group-hover:scale-105 group-hover:border-amber-400 transition-transform">
+                            <div className="w-full h-full grid grid-cols-4 grid-rows-4 rounded-sm overflow-hidden border border-amber-900/80 shadow-inner">
+                              {[
+                                0, 1, 0, 1,
+                                1, 0, 1, 0,
+                                0, 1, 0, 1,
+                                1, 0, 1, 0
+                              ].map((val, idx) => {
+                                const isDark = val === 1;
+                                return (
+                                  <div
+                                    key={idx}
+                                    className={`w-full h-full flex items-center justify-center ${
+                                      isDark ? 'bg-amber-900' : 'bg-amber-100'
+                                    }`}
+                                  >
+                                    {idx === 9 && (
+                                      <span className="text-[7px] leading-none select-none text-slate-900 font-bold">♟</span>
+                                    )}
+                                    {idx === 6 && (
+                                      <span className="text-[7px] leading-none select-none text-amber-950 font-bold">♙</span>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="text-base sm:text-lg font-black text-white group-hover:text-amber-200 transition-colors">
+                              <span className="text-sm sm:text-base font-black text-white group-hover:text-amber-200 transition-colors truncate">
                                 Offline Chess Board
                               </span>
-                              <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 text-[10px] font-bold uppercase tracking-wider">
+                              <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 text-[10px] font-bold uppercase tracking-wider shrink-0">
                                 Pass & Play 👥
                               </span>
                             </div>
-                            <p className="text-xs text-slate-400 mt-0.5 font-medium line-clamp-1">
-                              Play face-to-face on 1 phone • Vertical full screen board
+                            <p className="text-xs text-slate-400 mt-0.5 font-medium truncate">
+                              Play face-to-face on 1 phone (No internet needed)
                             </p>
                           </div>
                         </div>
