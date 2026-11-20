@@ -1,0 +1,589 @@
+{
+  "users": {
+    "admin_001": {
+      "id": "admin_001",
+      "username": "GrandmasterAdmin",
+      "email": "admin@chessarena.com",
+      "passwordHash": "$2b$10$nu2bvmqrSj/mrkr0qMrnsOwneNj00.zfcIztHm7TfVHDhXnFkF.Sq",
+      "role": "admin",
+      "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+      "country": "IS",
+      "countryName": "Iceland",
+      "ratings": {
+        "bullet": 2420,
+        "blitz": 2480,
+        "rapid": 2510,
+        "classical": 2550,
+        "puzzle": 2600
+      },
+      "highestRating": 2550,
+      "stats": {
+        "played": 420,
+        "won": 310,
+        "lost": 75,
+        "drawn": 35,
+        "winStreak": 12,
+        "currentStreak": 4
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-01-01",
+          "rating": 2350,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-02-01",
+          "rating": 2410,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-01",
+          "rating": 2480,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-01",
+          "rating": 2510,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "blitz_master",
+        "rapid_master",
+        "king_badge",
+        "queen_badge"
+      ],
+      "createdAt": "2026-11-20T02:43:42.296Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "player_magnus": {
+      "id": "player_magnus",
+      "username": "VikingKing",
+      "email": "magnus@chessarena.com",
+      "passwordHash": "$2b$10$nu2bvmqrSj/mrkr0qMrnsOwneNj00.zfcIztHm7TfVHDhXnFkF.Sq",
+      "role": "user",
+      "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+      "country": "NO",
+      "countryName": "Norway",
+      "ratings": {
+        "bullet": 2850,
+        "blitz": 2890,
+        "rapid": 2840,
+        "classical": 2860,
+        "puzzle": 2940
+      },
+      "highestRating": 2890,
+      "stats": {
+        "played": 280,
+        "won": 195,
+        "lost": 55,
+        "drawn": 30,
+        "winStreak": 9,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2780,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2820,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2840,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T02:43:42.313Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "player_hikaru": {
+      "id": "player_hikaru",
+      "username": "SpeedDemon",
+      "email": "hikaru@chessarena.com",
+      "passwordHash": "$2b$10$nu2bvmqrSj/mrkr0qMrnsOwneNj00.zfcIztHm7TfVHDhXnFkF.Sq",
+      "role": "user",
+      "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
+      "country": "US",
+      "countryName": "United States",
+      "ratings": {
+        "bullet": 2920,
+        "blitz": 2870,
+        "rapid": 2790,
+        "classical": 2780,
+        "puzzle": 2890
+      },
+      "highestRating": 2920,
+      "stats": {
+        "played": 280,
+        "won": 195,
+        "lost": 55,
+        "drawn": 30,
+        "winStreak": 9,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2730,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2770,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2790,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T02:43:42.314Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "player_gukesh": {
+      "id": "player_gukesh",
+      "username": "YouthMaster",
+      "email": "gukesh@chessarena.com",
+      "passwordHash": "$2b$10$nu2bvmqrSj/mrkr0qMrnsOwneNj00.zfcIztHm7TfVHDhXnFkF.Sq",
+      "role": "user",
+      "avatar": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150",
+      "country": "IN",
+      "countryName": "India",
+      "ratings": {
+        "bullet": 2710,
+        "blitz": 2750,
+        "rapid": 2810,
+        "classical": 2830,
+        "puzzle": 2910
+      },
+      "highestRating": 2830,
+      "stats": {
+        "played": 280,
+        "won": 195,
+        "lost": 55,
+        "drawn": 30,
+        "winStreak": 9,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2750,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2790,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2810,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T02:43:42.314Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "player_judit": {
+      "id": "player_judit",
+      "username": "TacticalQueen",
+      "email": "judit@chessarena.com",
+      "passwordHash": "$2b$10$nu2bvmqrSj/mrkr0qMrnsOwneNj00.zfcIztHm7TfVHDhXnFkF.Sq",
+      "role": "user",
+      "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150",
+      "country": "HU",
+      "countryName": "Hungary",
+      "ratings": {
+        "bullet": 2680,
+        "blitz": 2720,
+        "rapid": 2750,
+        "classical": 2760,
+        "puzzle": 2850
+      },
+      "highestRating": 2760,
+      "stats": {
+        "played": 280,
+        "won": 195,
+        "lost": 55,
+        "drawn": 30,
+        "winStreak": 9,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2690,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2730,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2750,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T02:43:42.314Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "player_anna": {
+      "id": "player_anna",
+      "username": "ChessQueenAnna",
+      "email": "anna@chessarena.com",
+      "passwordHash": "$2b$10$nu2bvmqrSj/mrkr0qMrnsOwneNj00.zfcIztHm7TfVHDhXnFkF.Sq",
+      "role": "user",
+      "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
+      "country": "CA",
+      "countryName": "Canada",
+      "ratings": {
+        "bullet": 2280,
+        "blitz": 2310,
+        "rapid": 2350,
+        "classical": 2320,
+        "puzzle": 2450
+      },
+      "highestRating": 2350,
+      "stats": {
+        "played": 280,
+        "won": 195,
+        "lost": 55,
+        "drawn": 30,
+        "winStreak": 9,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2290,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2330,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2350,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T02:43:42.314Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "player_fabiano": {
+      "id": "player_fabiano",
+      "username": "DeepCalculator",
+      "email": "fabi@chessarena.com",
+      "passwordHash": "$2b$10$nu2bvmqrSj/mrkr0qMrnsOwneNj00.zfcIztHm7TfVHDhXnFkF.Sq",
+      "role": "user",
+      "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150",
+      "country": "US",
+      "countryName": "United States",
+      "ratings": {
+        "bullet": 2730,
+        "blitz": 2790,
+        "rapid": 2810,
+        "classical": 2840,
+        "puzzle": 2910
+      },
+      "highestRating": 2840,
+      "stats": {
+        "played": 280,
+        "won": 195,
+        "lost": 55,
+        "drawn": 30,
+        "winStreak": 9,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2750,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2790,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2810,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T02:43:42.314Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "u_1795145375523_4mb8": {
+      "role": "user",
+      "country": "US",
+      "countryName": "United States",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Ommmm107",
+      "ratings": {
+        "bullet": 1200,
+        "blitz": 1200,
+        "rapid": 1200,
+        "classical": 1200,
+        "puzzle": 1200
+      },
+      "highestRating": 1200,
+      "stats": {
+        "played": 0,
+        "won": 0,
+        "lost": 0,
+        "drawn": 0,
+        "winStreak": 0,
+        "currentStreak": 0
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-11-20",
+          "rating": 1200,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [],
+      "createdAt": "2026-11-20T03:29:35.524Z",
+      "isOnline": true,
+      "banned": false,
+      "id": "u_1795145375523_4mb8",
+      "username": "Ommmm107",
+      "email": "op21plus@gmail.com",
+      "passwordHash": "$2b$10$RaQPGERka9BhO6GxfK28uOW3FWmyNxPN2zPnPnX5lkQWRlXlV8ud."
+    }
+  },
+  "games": {},
+  "tournaments": {
+    "tourney_1795142622594_p9fj": {
+      "id": "tourney_1795142622594_p9fj",
+      "name": "Arena Blitz Championship 2026",
+      "format": "knockout",
+      "timeControl": {
+        "baseMinutes": 3,
+        "incrementSeconds": 2
+      },
+      "maxPlayers": 8,
+      "description": "Elite 8-player knockout showdown with grandmaster prestige.",
+      "createdBy": "admin_001",
+      "isPublic": true,
+      "status": "open",
+      "participants": [
+        {
+          "id": "player_magnus",
+          "username": "VikingKing",
+          "elo": 2840,
+          "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+          "score": 0
+        },
+        {
+          "id": "player_hikaru",
+          "username": "SpeedDemon",
+          "elo": 2790,
+          "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
+          "score": 0
+        },
+        {
+          "id": "player_gukesh",
+          "username": "YouthMaster",
+          "elo": 2810,
+          "avatar": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150",
+          "score": 0
+        },
+        {
+          "id": "player_judit",
+          "username": "TacticalQueen",
+          "elo": 2750,
+          "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150",
+          "score": 0
+        }
+      ],
+      "rounds": [],
+      "currentRound": 0,
+      "winner": null,
+      "createdAt": "2026-11-20T02:43:42.594Z"
+    },
+    "tourney_1795142622595_4k0a": {
+      "id": "tourney_1795142622595_4k0a",
+      "name": "Grand Prix Rapid Open",
+      "format": "round-robin",
+      "timeControl": {
+        "baseMinutes": 10,
+        "incrementSeconds": 0
+      },
+      "maxPlayers": 6,
+      "description": "Every player battles everyone! Supreme test of endurance and tactical grit.",
+      "createdBy": "admin_001",
+      "isPublic": true,
+      "status": "open",
+      "participants": [
+        {
+          "id": "player_magnus",
+          "username": "VikingKing",
+          "elo": 2840,
+          "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+          "score": 0
+        },
+        {
+          "id": "player_hikaru",
+          "username": "SpeedDemon",
+          "elo": 2790,
+          "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
+          "score": 0
+        },
+        {
+          "id": "player_gukesh",
+          "username": "YouthMaster",
+          "elo": 2810,
+          "avatar": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150",
+          "score": 0
+        }
+      ],
+      "rounds": [],
+      "currentRound": 0,
+      "winner": null,
+      "createdAt": "2026-11-20T02:43:42.595Z"
+    },
+    "tourney_1795142622596_cld4": {
+      "id": "tourney_1795142622596_cld4",
+      "name": "Swiss Masters Arena Trophy",
+      "format": "swiss",
+      "timeControl": {
+        "baseMinutes": 5,
+        "incrementSeconds": 3
+      },
+      "maxPlayers": 12,
+      "description": "Swiss-system tournament matching players with identical scores each round.",
+      "createdBy": "admin_001",
+      "isPublic": true,
+      "status": "open",
+      "participants": [
+        {
+          "id": "player_magnus",
+          "username": "VikingKing",
+          "elo": 2840,
+          "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+          "score": 0
+        },
+        {
+          "id": "player_hikaru",
+          "username": "SpeedDemon",
+          "elo": 2790,
+          "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
+          "score": 0
+        },
+        {
+          "id": "player_gukesh",
+          "username": "YouthMaster",
+          "elo": 2810,
+          "avatar": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150",
+          "score": 0
+        },
+        {
+          "id": "player_judit",
+          "username": "TacticalQueen",
+          "elo": 2750,
+          "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150",
+          "score": 0
+        }
+      ],
+      "rounds": [],
+      "currentRound": 0,
+      "winner": null,
+      "createdAt": "2026-11-20T02:43:42.596Z"
+    }
+  },
+  "friendships": [],
+  "notifications": {},
+  "reports": []
+}
