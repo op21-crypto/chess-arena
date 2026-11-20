@@ -14,7 +14,6 @@ import { MatchmakingModal, FriendRoomModal, PlayAIModal } from './components/Pla
 import { AuthModal } from './components/AuthModal.jsx';
 import { ProfileModal } from './components/ProfileModal.jsx';
 import { ProfileView } from './components/ProfileView.jsx';
-import { FriendsDrawer } from './components/FriendsDrawer.jsx';
 import { PlayView } from './components/PlayView.jsx';
 import { OfflineBoardView } from './components/OfflineBoardView.jsx';
 import { PuzzleView } from './components/PuzzleView.jsx';
@@ -60,10 +59,21 @@ const DEFAULT_SETTINGS = {
   enablePremoves: true
 };
 
+export const HOME_TIME_CONTROLS = [
+  { id: '1m', label: '1 min', type: 'Bullet', icon: '⚡', format: 'bullet', baseMinutes: 1, incrementSeconds: 0 },
+  { id: '3m', label: '3 min', type: 'Blitz', icon: '🔥', format: 'blitz', baseMinutes: 3, incrementSeconds: 0, popular: true },
+  { id: '5m', label: '5 min', type: 'Blitz', icon: '⏱️', format: 'blitz', baseMinutes: 5, incrementSeconds: 0 },
+  { id: '10m', label: '10 min', type: 'Rapid', icon: '🎯', format: 'rapid', baseMinutes: 10, incrementSeconds: 0 },
+  { id: '15m', label: '15 min', type: 'Rapid', icon: '⌛', format: 'rapid', baseMinutes: 15, incrementSeconds: 0 },
+  { id: '30m', label: '30 min', type: 'Classical', icon: '🏛️', format: 'classical', baseMinutes: 30, incrementSeconds: 0 }
+];
+
 export default function App() {
   // Navigation & View State (5 Primary: Home, Play Online, Puzzles, Learn, Profile)
   const [activeTab, setActiveTab] = useState('home'); // 'home' | 'play' | 'game' | 'puzzles' | 'lessons' | 'profile' | 'admin'
   const [profileSubTab, setProfileSubTab] = useState('overview'); // 'overview' | 'rankings' | 'settings'
+  const [selectedHomeTime, setSelectedHomeTime] = useState(HOME_TIME_CONTROLS[1]); // Default 3 min Blitz
+  const [incomingChallenge, setIncomingChallenge] = useState(null);
   const [settings, setSettings] = useState(() => {
     try {
       const saved = safeStorage.getItem('chess_arena_settings');
@@ -85,7 +95,6 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [showFriendsDrawer, setShowFriendsDrawer] = useState(false);
   const [showStreakModal, setShowStreakModal] = useState(false);
 
   // Resilient guest user initializer (ensures Firefox/mobile users are never blocked)
@@ -228,6 +237,18 @@ export default function App() {
         setActiveTab('game');
         sound.playMove();
       }
+    });
+
+    // Friend Challenge Socket Events
+    socket.on('incoming_challenge', (data) => {
+      setIncomingChallenge(data);
+      sound.playCheck();
+      triggerHaptic('capture');
+    });
+
+    socket.on('challenge_accepted', () => {
+      setShowFriendRoomModal(false);
+      setIncomingChallenge(null);
     });
 
     // Move synchronization
@@ -392,6 +413,7 @@ export default function App() {
   const handleStartMatchmaking = (preset) => {
     const activeUser = getOrCreateUser();
     setIsSearchingMatch(true);
+    setShowMatchmakingModal(true);
     socketRef.current?.emit('join_matchmaking', {
       format: preset.format,
       timeControl: { baseMinutes: preset.baseMinutes, incrementSeconds: preset.incrementSeconds }
@@ -1026,22 +1048,6 @@ export default function App() {
               <span className="sm:hidden font-mono text-[11px]">7d</span>
             </button>
 
-            {/* Friends Drawer Toggle */}
-            {currentUser && (
-              <button
-                onClick={() => setShowFriendsDrawer(true)}
-                className={`p-2 rounded-xl border transition-colors relative ${
-                  isLight
-                    ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-amber-600'
-                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-amber-400'
-                }`}
-                title="Friends & Social"
-              >
-                <Users className="w-4 h-4" />
-                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-slate-950" />
-              </button>
-            )}
-
             {/* Profile Avatar / Login Button */}
             {currentUser ? (
               <div className="flex items-center gap-1.5 md:gap-2">
@@ -1165,49 +1171,81 @@ export default function App() {
                       Play real-time chess with grandmasters and enthusiasts worldwide. Official FIDE clock rules, rated matchmaking, and anti-cheat validation.
                     </p>
 
-                    {/* Quick-Play Time Controls (1-Tap Direct Launch) */}
+                    {/* Quick-Play Time Controls (Fully Selectable Grid) */}
                     <div className="space-y-2 pt-1">
-                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                        Quick Play Time Controls
-                      </span>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        {[
-                          { label: '1 min', type: 'Bullet', icon: '⚡', format: 'bullet', baseMinutes: 1, incrementSeconds: 0 },
-                          { label: '3 min', type: 'Blitz', icon: '🔥', format: 'blitz', baseMinutes: 3, incrementSeconds: 0, popular: true },
-                          { label: '5 min', type: 'Blitz', icon: '⏱️', format: 'blitz', baseMinutes: 5, incrementSeconds: 0 },
-                          { label: '10 min', type: 'Rapid', icon: '🎯', format: 'rapid', baseMinutes: 10, incrementSeconds: 0 }
-                        ].map((item) => (
-                          <button
-                            key={item.label}
-                            onClick={() => handleStartMatchmaking(item)}
-                            className={`p-2.5 rounded-2xl border text-center transition-all group relative overflow-hidden active:scale-95 ${
-                              item.popular
-                                ? 'bg-amber-500/15 border-amber-500/60 shadow-md shadow-amber-500/10'
-                                : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
-                            }`}
-                          >
-                            {item.popular && (
-                              <span className="absolute top-1 right-1 px-1 py-0.2 rounded bg-amber-500 text-slate-950 font-black text-[8px] uppercase">
-                                Hot
-                              </span>
-                            )}
-                            <div className="text-sm font-black text-white group-hover:text-amber-400 transition-colors">
-                              {item.icon} {item.label}
-                            </div>
-                            <div className="text-[10px] text-slate-400 font-semibold">{item.type}</div>
-                          </button>
-                        ))}
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                          Select Time Control
+                        </span>
+                        <span className="text-xs text-amber-400 font-mono font-bold flex items-center gap-1.5">
+                          <span className="text-slate-400 text-[11px] font-normal">Active:</span>
+                          <span className="text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-lg flex items-center gap-1">
+                            <span>{selectedHomeTime.icon}</span>
+                            <span>{selectedHomeTime.label}</span>
+                            <span>•</span>
+                            <span>{selectedHomeTime.type}</span>
+                          </span>
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                        {HOME_TIME_CONTROLS.map((item) => {
+                          const isSelected = selectedHomeTime.id === item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              onClick={() => {
+                                if (isSelected) {
+                                  handleStartMatchmaking(item);
+                                } else {
+                                  setSelectedHomeTime(item);
+                                  sound.playMove();
+                                  triggerHaptic('move');
+                                }
+                              }}
+                              className={`p-2 sm:p-2.5 rounded-2xl border text-center transition-all group relative overflow-hidden active:scale-95 cursor-pointer ${
+                                isSelected
+                                  ? 'bg-gradient-to-b from-amber-400 via-amber-500 to-amber-600 text-slate-950 font-black border-amber-300 ring-2 ring-amber-400/80 shadow-lg shadow-amber-500/30 scale-102'
+                                  : 'bg-slate-950/70 border-slate-800 hover:border-slate-700 text-slate-300'
+                              }`}
+                              title={isSelected ? 'Double-click to start matchmaking' : `Select ${item.label} ${item.type}`}
+                            >
+                              {item.popular && !isSelected && (
+                                <span className="absolute top-1 right-1 px-1 py-0.2 rounded bg-amber-500 text-slate-950 font-black text-[8px] uppercase">
+                                  Hot
+                                </span>
+                              )}
+                              {isSelected && (
+                                <span className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-slate-950 text-amber-400 font-black text-[9px] flex items-center justify-center">
+                                  ✓
+                                </span>
+                              )}
+                              <div className={`text-xs sm:text-sm font-black transition-colors ${
+                                isSelected ? 'text-slate-950 font-black' : 'text-white group-hover:text-amber-400'
+                              }`}>
+                                {item.icon} {item.label}
+                              </div>
+                              <div className={`text-[9px] sm:text-[10px] font-semibold ${
+                                isSelected ? 'text-slate-900 font-bold' : 'text-slate-400'
+                              }`}>
+                                {item.type}
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
 
                     {/* Primary Action Buttons */}
                     <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
                       <button
-                        onClick={() => setActiveTab('play')}
+                        onClick={() => {
+                          handleStartMatchmaking(selectedHomeTime);
+                        }}
                         className="w-full sm:w-auto flex items-center justify-center gap-3 py-4 px-8 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black text-base shadow-xl shadow-amber-500/25 transition-all transform hover:-translate-y-0.5 active:scale-95"
                       >
                         <Swords className="w-5 h-5 fill-slate-950" />
-                        <span>Play Online Now</span>
+                        <span>Play Online Now ({selectedHomeTime.label} {selectedHomeTime.type})</span>
                       </button>
 
                       <button
@@ -1765,26 +1803,13 @@ export default function App() {
         onClose={() => setShowStreakModal(false)}
       />
 
-      <FriendsDrawer
-        isOpen={showFriendsDrawer}
-        currentUser={currentUser}
-        onClose={() => setShowFriendsDrawer(false)}
-        onChallengeFriend={friend => {
-          setShowFriendsDrawer(false);
-          setShowMatchmakingModal(false);
-          handleCreateFriendRoom({
-            timeControl: { baseMinutes: 5, incrementSeconds: 0 },
-            colorPreference: 'random'
-          });
-        }}
-      />
-
       <MatchmakingModal
         isOpen={showMatchmakingModal}
         onClose={() => setShowMatchmakingModal(false)}
         onStartMatchmaking={handleStartMatchmaking}
         isSearching={isSearchingMatch}
         onCancelMatchmaking={handleCancelMatchmaking}
+        initialPreset={selectedHomeTime}
       />
 
       <FriendRoomModal
@@ -1793,6 +1818,7 @@ export default function App() {
           setShowFriendRoomModal(false);
           setCreatedRoomInfo(null);
         }}
+        currentUser={currentUser}
         onCreateRoom={handleCreateFriendRoom}
         onJoinRoom={handleJoinFriendRoom}
         createdRoom={createdRoomInfo}
@@ -1800,7 +1826,56 @@ export default function App() {
           setActiveTab('game');
           setShowFriendRoomModal(false);
         }}
+        onChallengeFriend={(friend) => {
+          handleCreateFriendRoom({
+            timeControl: { baseMinutes: 5, incrementSeconds: 0 },
+            colorPreference: 'random'
+          });
+          socketRef.current?.emit('challenge_friend', {
+            friendId: friend.id,
+            config: { timeControl: { baseMinutes: 5, incrementSeconds: 0 }, format: 'blitz' }
+          });
+        }}
+        onOpenAuth={() => setShowAuthModal(true)}
       />
+
+      {/* Incoming Challenge Toast */}
+      {incomingChallenge && (
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 border-2 border-amber-500 rounded-3xl p-4 shadow-2xl flex items-center gap-4 animate-bounce-in max-w-sm w-full mx-4">
+          <div className="w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/40 text-xl shrink-0">
+            ⚔️
+          </div>
+          <div className="flex-1 min-w-0">
+            <span className="text-xs font-black text-white block truncate">
+              {incomingChallenge.from?.username}
+            </span>
+            <span className="text-[11px] text-amber-300">
+              Challenged you to a {incomingChallenge.config?.timeControl?.baseMinutes || 5}m match!
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={() => {
+                socketRef.current?.emit('accept_challenge', {
+                  challengeId: incomingChallenge.challengeId,
+                  fromUserId: incomingChallenge.from?.id,
+                  config: incomingChallenge.config
+                });
+                setIncomingChallenge(null);
+              }}
+              className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl shadow-md"
+            >
+              Accept
+            </button>
+            <button
+              onClick={() => setIncomingChallenge(null)}
+              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <PlayAIModal
         isOpen={showAIModal}
