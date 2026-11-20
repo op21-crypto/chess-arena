@@ -915,8 +915,8 @@ export default function App() {
             </div>
           </div>
 
-          {/* Navigation Links (Visible on desktop/tablet) */}
-          <nav className={`hidden md:flex items-center gap-1 p-1 rounded-2xl border transition-colors ${
+          {/* Navigation Links (Visible on desktop/wide tablet) */}
+          <nav className={`hidden lg:flex items-center gap-1 p-1 rounded-2xl border transition-colors ${
             isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-900/80 border-slate-800'
           }`}>
             {[
@@ -924,7 +924,7 @@ export default function App() {
               { id: 'play', label: 'Play Online', icon: Swords },
               { id: 'puzzles', label: 'Puzzles', icon: Flame },
               { id: 'lessons', label: 'Learn', icon: BookOpen },
-              { id: 'profile', label: 'Profile', icon: User },
+              { id: 'leaderboard', label: 'Rankings', icon: Shield },
               ...(currentUser?.role === 'admin' ? [{ id: 'admin', label: 'Admin', icon: Sparkles }] : [])
             ].map(tab => {
               const Icon = tab.icon;
@@ -1650,7 +1650,7 @@ export default function App() {
         {activeTab === 'admin' && <AdminView />}
       </main>
 
-      {/* Floating Bottom Navigation for Mobile (5 Primary Tabs: Home, Play, Puzzles, Learn, Profile) */}
+      {/* Floating Bottom Navigation for Mobile (5 Primary Tabs: Home, Play, Puzzles, Learn, Rankings) */}
       <footer className={`md:hidden sticky bottom-0 z-40 backdrop-blur-md border-t px-2 py-2 flex items-center justify-around transition-colors ${
         isLight ? 'bg-white/95 border-slate-200' : 'bg-slate-950/90 border-slate-800'
       }`}>
@@ -1659,18 +1659,13 @@ export default function App() {
           { id: 'play', label: 'Play', icon: Swords },
           { id: 'puzzles', label: 'Puzzles', icon: Flame },
           { id: 'lessons', label: 'Learn', icon: BookOpen },
-          { id: 'profile', label: 'Profile', icon: User }
+          { id: 'leaderboard', label: 'Rankings', icon: Shield }
         ].map(tab => {
           const Icon = tab.icon;
           return (
             <button
               key={tab.id}
-              onClick={() => {
-                if (tab.id === 'profile') {
-                  setProfileSubTab('overview');
-                }
-                setActiveTab(tab.id);
-              }}
+              onClick={() => setActiveTab(tab.id)}
               className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl text-[10px] font-bold ${
                 activeTab === tab.id
                   ? 'text-amber-500'

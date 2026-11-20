@@ -294,7 +294,7 @@ export function LessonView({ onBack }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#edf3f8] text-slate-800 flex flex-col justify-between selection:bg-sky-200">
+    <div className="min-h-screen bg-[#edf3f8] text-slate-800 flex flex-col justify-between selection:bg-sky-200 pb-20 md:pb-6">
       {/* Top Navigation Bar (matching screenshots) */}
       <header className="sticky top-0 z-30 bg-[#dbeafe] border-b border-sky-200 px-4 py-2.5 shadow-xs">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
@@ -488,19 +488,27 @@ export function LessonView({ onBack }) {
           </div>
         )}
 
-        {/* The Chessboard (Properly bounded so it never collapses to a dot) */}
-        <div className="w-full max-w-[min(100vw-32px,440px)] mx-auto my-2">
-          <Chessboard
-            fen={activeMode === 'lesson' ? (currentStep?.fen || "8/8/8/8/8/8/8/8 w - - 0 1") : (currentPractice?.fen || "8/8/8/8/8/8/8/8 w - - 0 1")}
-            playerColor="w"
-            disabled={activeMode === 'lesson'}
-            onSquareClick={activeMode === 'practice' ? handlePracticeSquareClick : undefined}
-            boardTheme="cappuccino"
-            highlightSquares={activeMode === 'lesson' ? (currentStep?.highlightSquares || []) : (currentPractice?.highlightSquares || [])}
-            successSquares={successSquares}
-            errorSquares={errorSquares}
-            showCoordinates={true}
-          />
+        {/* The Chessboard (Explicitly sized & bounded with flex centered container so it never collapses) */}
+        <div className="w-full flex justify-center items-center my-1.5 shrink-0">
+          <div
+            className="flex justify-center items-center shadow-2xl rounded-2xl overflow-hidden"
+            style={{
+              width: 'min(calc(100vw - 32px), 430px)',
+              height: 'min(calc(100vw - 32px), 430px)'
+            }}
+          >
+            <Chessboard
+              fen={activeMode === 'lesson' ? (currentStep?.fen || "8/8/8/8/8/8/8/8 w - - 0 1") : (currentPractice?.fen || "8/8/8/8/8/8/8/8 w - - 0 1")}
+              playerColor="w"
+              disabled={activeMode === 'lesson'}
+              onSquareClick={activeMode === 'practice' ? handlePracticeSquareClick : undefined}
+              boardTheme="cappuccino"
+              highlightSquares={activeMode === 'lesson' ? (currentStep?.highlightSquares || []) : (currentPractice?.highlightSquares || [])}
+              successSquares={successSquares}
+              errorSquares={errorSquares}
+              showCoordinates={true}
+            />
+          </div>
         </div>
       </main>
 

@@ -228,10 +228,14 @@ export function Chessboard({
         </div>
       )}
 
-      {/* Chessboard Grid Container */}
+      {/* Chessboard Grid Container (Strictly bounded with aspect-ratio so it never collapses) */}
       <div 
-        className="w-full max-w-[min(100vw-32px,520px)] aspect-square rounded-2xl overflow-hidden shadow-2xl border-4 transition-colors duration-200"
-        style={{ borderColor: theme.border }}
+        className="w-full max-w-[min(100vw-32px,520px)] aspect-square rounded-2xl overflow-hidden shadow-2xl border-4 transition-colors duration-200 shrink-0"
+        style={{
+          borderColor: theme.border,
+          width: 'min(calc(100vw - 32px), 520px)',
+          aspectRatio: '1 / 1'
+        }}
       >
         <div className="grid grid-cols-8 grid-rows-8 w-full h-full">
           {ranks.map((rank, rankIdx) => {

@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
+import { RAW_LEADERBOARD_PLAYERS } from '../data/leaderboardData.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -114,6 +115,9 @@ function loadDb() {
     try {
       const raw = fs.readFileSync(SEED_FILE, 'utf-8');
       db = JSON.parse(raw);
+      if (!db.users || Object.keys(db.users).length < 50) {
+        seedDatabase();
+      }
       ensureAdminUser();
       saveDb();
       return;
@@ -185,50 +189,60 @@ function seedDatabase() {
     banned: false
   };
 
-  // Seed competitive leaderboard players
-  const seedPlayers = [
-    { id: 'player_magnus', username: 'VikingKing', email: 'magnus@chessarena.com', country: 'NO', countryName: 'Norway', bullet: 2850, blitz: 2890, rapid: 2840, classical: 2860, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150' },
-    { id: 'player_hikaru', username: 'SpeedDemon', email: 'hikaru@chessarena.com', country: 'US', countryName: 'United States', bullet: 2920, blitz: 2870, rapid: 2790, classical: 2780, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150' },
-    { id: 'player_gukesh', username: 'YouthMaster', email: 'gukesh@chessarena.com', country: 'IN', countryName: 'India', bullet: 2710, blitz: 2750, rapid: 2810, classical: 2830, avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150' },
-    { id: 'player_judit', username: 'TacticalQueen', email: 'judit@chessarena.com', country: 'HU', countryName: 'Hungary', bullet: 2680, blitz: 2720, rapid: 2750, classical: 2760, avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150' },
-    { id: 'player_anna', username: 'ChessQueenAnna', email: 'anna@chessarena.com', country: 'CA', countryName: 'Canada', bullet: 2280, blitz: 2310, rapid: 2350, classical: 2320, avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150' },
-    { id: 'player_fabiano', username: 'DeepCalculator', email: 'fabi@chessarena.com', country: 'US', countryName: 'United States', bullet: 2730, blitz: 2790, rapid: 2810, classical: 2840, avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150' }
-  ];
+  // Seed competitive leaderboard players (72 Grandmasters across 10 Countries, 7+ per country)
+  const seedPlayers = Array.isArray(RAW_LEADERBOARD_PLAYERS) && RAW_LEADERBOARD_PLAYERS.length > 0
+    ? RAW_LEADERBOARD_PLAYERS
+    : [
+        { id: 'player_magnus', username: 'VikingKing', email: 'magnus@chessarena.com', country: 'NO', countryName: 'Norway', ratings: { bullet: 2850, blitz: 2890, rapid: 2840, classical: 2860 }, stats: { won: 195, lost: 55, played: 280 }, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150' },
+        { id: 'player_hikaru', username: 'SpeedDemon', email: 'hikaru@chessarena.com', country: 'US', countryName: 'United States', ratings: { bullet: 2920, blitz: 2870, rapid: 2790, classical: 2780 }, stats: { won: 190, lost: 60, played: 275 }, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150' },
+        { id: 'player_gukesh', username: 'YouthMaster', email: 'gukesh@chessarena.com', country: 'IN', countryName: 'India', ratings: { bullet: 2710, blitz: 2750, rapid: 2810, classical: 2830 }, stats: { won: 185, lost: 45, played: 250 }, avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150' },
+        { id: 'player_judit', username: 'TacticalQueen', email: 'judit@chessarena.com', country: 'ES', countryName: 'Spain', ratings: { bullet: 2680, blitz: 2720, rapid: 2750, classical: 2760 }, stats: { won: 175, lost: 65, played: 260 }, avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150' },
+        { id: 'player_anna', username: 'ChessQueenAnna', email: 'anna@chessarena.com', country: 'CA', countryName: 'Canada', ratings: { bullet: 2280, blitz: 2310, rapid: 2350, classical: 2320 }, stats: { won: 160, lost: 70, played: 250 }, avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150' },
+        { id: 'player_fabiano', username: 'DeepCalculator', email: 'fabi@chessarena.com', country: 'US', countryName: 'United States', ratings: { bullet: 2730, blitz: 2790, rapid: 2810, classical: 2840 }, stats: { won: 180, lost: 50, played: 250 }, avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150' }
+      ];
 
   seedPlayers.forEach(p => {
+    const bullet = p.ratings?.bullet || p.bullet || 2400;
+    const blitz = p.ratings?.blitz || p.blitz || 2400;
+    const rapid = p.ratings?.rapid || p.rapid || 2400;
+    const classical = p.ratings?.classical || p.classical || 2400;
+    const wonCount = p.stats?.won || 150;
+    const lostCount = p.stats?.lost || 50;
+    const playedCount = p.stats?.played || wonCount + lostCount;
+
     db.users[p.id] = {
       id: p.id,
       username: p.username,
-      email: p.email,
+      email: p.email || `${p.username.toLowerCase()}@chessarena.com`,
       passwordHash,
       role: 'user',
       avatar: p.avatar,
       country: p.country,
       countryName: p.countryName,
       ratings: {
-        bullet: p.bullet,
-        blitz: p.blitz,
-        rapid: p.rapid,
-        classical: p.classical,
-        puzzle: p.rapid + 100
+        bullet,
+        blitz,
+        rapid,
+        classical,
+        puzzle: rapid + 100
       },
-      highestRating: Math.max(p.bullet, p.blitz, p.rapid, p.classical),
+      highestRating: Math.max(bullet, blitz, rapid, classical),
       stats: {
-        played: 280,
-        won: 195,
-        lost: 55,
-        drawn: 30,
-        winStreak: 9,
+        played: playedCount,
+        won: wonCount,
+        lost: lostCount,
+        drawn: Math.max(0, playedCount - wonCount - lostCount),
+        winStreak: 8,
         currentStreak: 3
       },
       ratingHistory: [
-        { date: '2026-02-10', rating: p.rapid - 60, format: 'rapid' },
-        { date: '2026-03-15', rating: p.rapid - 20, format: 'rapid' },
-        { date: '2026-04-20', rating: p.rapid, format: 'rapid' }
+        { date: '2026-02-10', rating: rapid - 60, format: 'rapid' },
+        { date: '2026-03-15', rating: rapid - 20, format: 'rapid' },
+        { date: '2026-04-20', rating: rapid, format: 'rapid' }
       ],
       achievements: ['first_win', 'checkmate_pro', 'wins_10', 'games_100', 'streak_master', 'tactical_genius', 'rapid_master', 'queen_badge', 'knight_badge'],
       createdAt: new Date().toISOString(),
-      isOnline: false,
+      isOnline: Boolean(p.isOnline),
       banned: false
     };
   });

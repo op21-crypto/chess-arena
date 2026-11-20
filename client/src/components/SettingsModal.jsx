@@ -625,49 +625,49 @@ export function SettingsModal({
           </div>
         )}
 
-        {/* ================= SUB-MODAL: PIECE CARVING PICKER ================= */}
+        {/* ================= SUB-MODAL: PIECE CARVING PICKER (Exact styling matching Image 1) ================= */}
         {activeSubModal === 'piece_picker' && renderSubModal(
           'Select Chess Pieces Style',
           null,
-          <div className="flex-1 overflow-y-auto py-3 space-y-2.5">
+          <div className="flex-1 overflow-y-auto py-3 space-y-4 px-1">
             {Object.keys(PIECE_THEMES).map((key) => {
               const p = PIECE_THEMES[key];
               const isSelected = settings.pieceTheme === key;
               return (
-                <button
-                  key={key}
-                  onClick={() => {
-                    triggerHaptic('move');
-                    onUpdateSettings({ ...settings, pieceTheme: key });
-                    setActiveSubModal(null);
-                  }}
-                  className={`w-full p-3 rounded-2xl border transition-all text-left space-y-2 ${
-                    isSelected
-                      ? 'bg-amber-500/15 border-amber-500/60 shadow-md'
-                      : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white">{p.name}</span>
-                    {isSelected && <Check className="w-4 h-4 text-amber-400" />}
+                <div key={key} className="space-y-1.5">
+                  {/* Theme Title Centered Above Box (Matching Image 1) */}
+                  <div className={`text-xs sm:text-sm font-bold text-center transition-colors ${
+                    isSelected ? 'text-amber-400 font-extrabold' : 'text-slate-300'
+                  }`}>
+                    {p.name}
                   </div>
 
-                  <div className="flex items-center justify-between p-2 bg-slate-950/70 rounded-xl border border-slate-800/80">
+                  {/* Piece Showcase Rounded Box */}
+                  <button
+                    onClick={() => {
+                      triggerHaptic('move');
+                      onUpdateSettings({ ...settings, pieceTheme: key });
+                      setActiveSubModal(null);
+                    }}
+                    className={`w-full p-2.5 sm:p-3 rounded-2xl border transition-all flex items-center justify-around cursor-pointer active:scale-98 ${
+                      isSelected
+                        ? 'bg-amber-500/10 border-2 border-amber-400 shadow-lg shadow-amber-500/10 ring-2 ring-amber-400/20'
+                        : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 hover:bg-slate-900'
+                    }`}
+                  >
                     {['k', 'q', 'r', 'b', 'n', 'p'].map((pieceType, pIdx) => (
-                      <div key={pIdx} className="w-7 h-7 flex items-center justify-center">
+                      <div key={pIdx} className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center">
                         <PieceIcon
                           piece={pieceType}
                           color={pIdx % 2 === 0 ? 'w' : 'b'}
-                          size={26}
+                          size={32}
                           theme={key}
                           colorPalette={settings.pieceColorPalette || 'classic'}
                         />
                       </div>
                     ))}
-                  </div>
-
-                  <p className="text-[10px] text-slate-400 truncate">{p.desc}</p>
-                </button>
+                  </button>
+                </div>
               );
             })}
           </div>

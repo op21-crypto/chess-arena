@@ -1,10 +1,4177 @@
 {
   "users": {
+    "admin_001": {
+      "id": "admin_001",
+      "username": "GrandmasterAdmin",
+      "email": "admin@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "admin",
+      "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+      "country": "IS",
+      "countryName": "Iceland",
+      "ratings": {
+        "bullet": 2420,
+        "blitz": 2480,
+        "rapid": 2510,
+        "classical": 2550,
+        "puzzle": 2600
+      },
+      "highestRating": 2550,
+      "stats": {
+        "played": 420,
+        "won": 310,
+        "lost": 75,
+        "drawn": 35,
+        "winStreak": 12,
+        "currentStreak": 4
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-01-01",
+          "rating": 2350,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-02-01",
+          "rating": 2410,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-01",
+          "rating": 2480,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-01",
+          "rating": 2510,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "blitz_master",
+        "rapid_master",
+        "king_badge",
+        "queen_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.463Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_no_1": {
+      "id": "p_no_1",
+      "username": "VikingKing",
+      "email": "vikingking@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+      "country": "NO",
+      "countryName": "Norway",
+      "ratings": {
+        "bullet": 2890,
+        "blitz": 2885,
+        "rapid": 2840,
+        "classical": 2865,
+        "puzzle": 2940
+      },
+      "highestRating": 2890,
+      "stats": {
+        "played": 350,
+        "won": 295,
+        "lost": 55,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2780,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2820,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2840,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.489Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_no_2": {
+      "id": "p_no_2",
+      "username": "AryanTari",
+      "email": "aryantari@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
+      "country": "NO",
+      "countryName": "Norway",
+      "ratings": {
+        "bullet": 2680,
+        "blitz": 2675,
+        "rapid": 2640,
+        "classical": 2655,
+        "puzzle": 2740
+      },
+      "highestRating": 2680,
+      "stats": {
+        "played": 260,
+        "won": 195,
+        "lost": 65,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2580,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2620,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2640,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.490Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_no_3": {
+      "id": "p_no_3",
+      "username": "NordicShield",
+      "email": "nordicshield@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Christiansen",
+      "country": "NO",
+      "countryName": "Norway",
+      "ratings": {
+        "bullet": 2620,
+        "blitz": 2610,
+        "rapid": 2595,
+        "classical": 2605,
+        "puzzle": 2695
+      },
+      "highestRating": 2620,
+      "stats": {
+        "played": 250,
+        "won": 180,
+        "lost": 70,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2535,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2575,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2595,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.490Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_no_4": {
+      "id": "p_no_4",
+      "username": "FrodeUrk",
+      "email": "frodeurk@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=FrodeUrk",
+      "country": "NO",
+      "countryName": "Norway",
+      "ratings": {
+        "bullet": 2560,
+        "blitz": 2555,
+        "rapid": 2540,
+        "classical": 2550,
+        "puzzle": 2640
+      },
+      "highestRating": 2560,
+      "stats": {
+        "played": 240,
+        "won": 165,
+        "lost": 75,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2480,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2520,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2540,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.491Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_no_5": {
+      "id": "p_no_5",
+      "username": "HammerTactics",
+      "email": "hammertactics@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150",
+      "country": "NO",
+      "countryName": "Norway",
+      "ratings": {
+        "bullet": 2650,
+        "blitz": 2640,
+        "rapid": 2630,
+        "classical": 2635,
+        "puzzle": 2730
+      },
+      "highestRating": 2650,
+      "stats": {
+        "played": 295,
+        "won": 210,
+        "lost": 85,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2570,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2610,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2630,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.491Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_no_6": {
+      "id": "p_no_6",
+      "username": "OsloBishop",
+      "email": "oslobishop@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=OsloBishop",
+      "country": "NO",
+      "countryName": "Norway",
+      "ratings": {
+        "bullet": 2490,
+        "blitz": 2480,
+        "rapid": 2470,
+        "classical": 2475,
+        "puzzle": 2570
+      },
+      "highestRating": 2490,
+      "stats": {
+        "played": 230,
+        "won": 150,
+        "lost": 80,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2410,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2450,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2470,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.492Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_no_7": {
+      "id": "p_no_7",
+      "username": "FjordGambit",
+      "email": "fjordgambit@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=FjordGambit",
+      "country": "NO",
+      "countryName": "Norway",
+      "ratings": {
+        "bullet": 2430,
+        "blitz": 2420,
+        "rapid": 2415,
+        "classical": 2425,
+        "puzzle": 2515
+      },
+      "highestRating": 2430,
+      "stats": {
+        "played": 230,
+        "won": 140,
+        "lost": 90,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2355,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2395,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2415,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.492Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_in_1": {
+      "id": "p_in_1",
+      "username": "YouthMaster",
+      "email": "youthmaster@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150",
+      "country": "IN",
+      "countryName": "India",
+      "ratings": {
+        "bullet": 2790,
+        "blitz": 2800,
+        "rapid": 2810,
+        "classical": 2835,
+        "puzzle": 2910
+      },
+      "highestRating": 2835,
+      "stats": {
+        "played": 320,
+        "won": 270,
+        "lost": 50,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2750,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2790,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2810,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.492Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_in_2": {
+      "id": "p_in_2",
+      "username": "PraggThunder",
+      "email": "praggthunder@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Pragg",
+      "country": "IN",
+      "countryName": "India",
+      "ratings": {
+        "bullet": 2780,
+        "blitz": 2795,
+        "rapid": 2805,
+        "classical": 2810,
+        "puzzle": 2905
+      },
+      "highestRating": 2810,
+      "stats": {
+        "played": 315,
+        "won": 260,
+        "lost": 55,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2745,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2785,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2805,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.493Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_in_3": {
+      "id": "p_in_3",
+      "username": "ArjunStrike",
+      "email": "arjunstrike@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Arjun",
+      "country": "IN",
+      "countryName": "India",
+      "ratings": {
+        "bullet": 2800,
+        "blitz": 2810,
+        "rapid": 2795,
+        "classical": 2805,
+        "puzzle": 2895
+      },
+      "highestRating": 2810,
+      "stats": {
+        "played": 340,
+        "won": 280,
+        "lost": 60,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2735,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2775,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2795,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.494Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_in_4": {
+      "id": "p_in_4",
+      "username": "MadrasTiger",
+      "email": "madrastiger@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+      "country": "IN",
+      "countryName": "India",
+      "ratings": {
+        "bullet": 2740,
+        "blitz": 2755,
+        "rapid": 2760,
+        "classical": 2775,
+        "puzzle": 2860
+      },
+      "highestRating": 2775,
+      "stats": {
+        "played": 470,
+        "won": 380,
+        "lost": 90,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2700,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2740,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2760,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.494Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_in_5": {
+      "id": "p_in_5",
+      "username": "ViditGujrathi",
+      "email": "viditgujrathi@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Vidit",
+      "country": "IN",
+      "countryName": "India",
+      "ratings": {
+        "bullet": 2720,
+        "blitz": 2730,
+        "rapid": 2740,
+        "classical": 2745,
+        "puzzle": 2840
+      },
+      "highestRating": 2745,
+      "stats": {
+        "played": 305,
+        "won": 230,
+        "lost": 75,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2680,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2720,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2740,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.494Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_in_6": {
+      "id": "p_in_6",
+      "username": "NihalLightning",
+      "email": "nihallightning@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Nihal",
+      "country": "IN",
+      "countryName": "India",
+      "ratings": {
+        "bullet": 2850,
+        "blitz": 2820,
+        "rapid": 2715,
+        "classical": 2690,
+        "puzzle": 2815
+      },
+      "highestRating": 2850,
+      "stats": {
+        "played": 370,
+        "won": 290,
+        "lost": 80,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2655,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2695,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2715,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.494Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_in_7": {
+      "id": "p_in_7",
+      "username": "HumpyQueen",
+      "email": "humpyqueen@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150",
+      "country": "IN",
+      "countryName": "India",
+      "ratings": {
+        "bullet": 2560,
+        "blitz": 2580,
+        "rapid": 2590,
+        "classical": 2600,
+        "puzzle": 2690
+      },
+      "highestRating": 2600,
+      "stats": {
+        "played": 270,
+        "won": 200,
+        "lost": 70,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2530,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2570,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2590,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.494Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_in_8": {
+      "id": "p_in_8",
+      "username": "HarikrishnaP",
+      "email": "harikrishnap@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Harikrishna",
+      "country": "IN",
+      "countryName": "India",
+      "ratings": {
+        "bullet": 2690,
+        "blitz": 2700,
+        "rapid": 2710,
+        "classical": 2715,
+        "puzzle": 2810
+      },
+      "highestRating": 2715,
+      "stats": {
+        "played": 300,
+        "won": 220,
+        "lost": 80,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2650,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2690,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2710,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.494Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_us_1": {
+      "id": "p_us_1",
+      "username": "DeepCalculator",
+      "email": "deepcalculator@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150",
+      "country": "US",
+      "countryName": "United States",
+      "ratings": {
+        "bullet": 2820,
+        "blitz": 2835,
+        "rapid": 2810,
+        "classical": 2840,
+        "puzzle": 2910
+      },
+      "highestRating": 2840,
+      "stats": {
+        "played": 375,
+        "won": 310,
+        "lost": 65,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2750,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2790,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2810,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.494Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_us_2": {
+      "id": "p_us_2",
+      "username": "SpeedDemon",
+      "email": "speeddemon@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
+      "country": "US",
+      "countryName": "United States",
+      "ratings": {
+        "bullet": 2950,
+        "blitz": 2890,
+        "rapid": 2790,
+        "classical": 2800,
+        "puzzle": 2890
+      },
+      "highestRating": 2950,
+      "stats": {
+        "played": 515,
+        "won": 420,
+        "lost": 95,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2730,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2770,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2790,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.494Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_us_3": {
+      "id": "p_us_3",
+      "username": "WesleySolid",
+      "email": "wesleysolid@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Wesley",
+      "country": "US",
+      "countryName": "United States",
+      "ratings": {
+        "bullet": 2790,
+        "blitz": 2810,
+        "rapid": 2780,
+        "classical": 2795,
+        "puzzle": 2880
+      },
+      "highestRating": 2810,
+      "stats": {
+        "played": 310,
+        "won": 260,
+        "lost": 50,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2720,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2760,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2780,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.494Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_us_4": {
+      "id": "p_us_4",
+      "username": "LevonMagic",
+      "email": "levonmagic@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Levon",
+      "country": "US",
+      "countryName": "United States",
+      "ratings": {
+        "bullet": 2770,
+        "blitz": 2780,
+        "rapid": 2765,
+        "classical": 2770,
+        "puzzle": 2865
+      },
+      "highestRating": 2780,
+      "stats": {
+        "played": 365,
+        "won": 280,
+        "lost": 85,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2705,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2745,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2765,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.494Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_us_5": {
+      "id": "p_us_5",
+      "username": "HansSpeaks",
+      "email": "hansspeaks@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Hans",
+      "country": "US",
+      "countryName": "United States",
+      "ratings": {
+        "bullet": 2740,
+        "blitz": 2750,
+        "rapid": 2735,
+        "classical": 2745,
+        "puzzle": 2835
+      },
+      "highestRating": 2750,
+      "stats": {
+        "played": 325,
+        "won": 240,
+        "lost": 85,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2675,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2715,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2735,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.494Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_us_6": {
+      "id": "p_us_6",
+      "username": "LeinierTactics",
+      "email": "leiniertactics@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Leinier",
+      "country": "US",
+      "countryName": "United States",
+      "ratings": {
+        "bullet": 2710,
+        "blitz": 2725,
+        "rapid": 2730,
+        "classical": 2740,
+        "puzzle": 2830
+      },
+      "highestRating": 2740,
+      "stats": {
+        "played": 280,
+        "won": 215,
+        "lost": 65,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2670,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2710,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2730,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.494Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_us_7": {
+      "id": "p_us_7",
+      "username": "SamSevian",
+      "email": "samsevian@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Sevian",
+      "country": "US",
+      "countryName": "United States",
+      "ratings": {
+        "bullet": 2690,
+        "blitz": 2700,
+        "rapid": 2695,
+        "classical": 2705,
+        "puzzle": 2795
+      },
+      "highestRating": 2705,
+      "stats": {
+        "played": 275,
+        "won": 200,
+        "lost": 75,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2635,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2675,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2695,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.494Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_us_8": {
+      "id": "p_us_8",
+      "username": "RayRobson",
+      "email": "rayrobson@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Robson",
+      "country": "US",
+      "countryName": "United States",
+      "ratings": {
+        "bullet": 2730,
+        "blitz": 2715,
+        "rapid": 2685,
+        "classical": 2700,
+        "puzzle": 2785
+      },
+      "highestRating": 2730,
+      "stats": {
+        "played": 290,
+        "won": 210,
+        "lost": 80,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2625,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2665,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2685,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_es_1": {
+      "id": "p_es_1",
+      "username": "MatadorVallejo",
+      "email": "matadorvallejo@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Vallejo",
+      "country": "ES",
+      "countryName": "Spain",
+      "ratings": {
+        "bullet": 2690,
+        "blitz": 2705,
+        "rapid": 2710,
+        "classical": 2715,
+        "puzzle": 2810
+      },
+      "highestRating": 2715,
+      "stats": {
+        "played": 310,
+        "won": 230,
+        "lost": 80,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2650,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2690,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2710,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_es_2": {
+      "id": "p_es_2",
+      "username": "FireOnBoard",
+      "email": "fireonboard@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Shirov",
+      "country": "ES",
+      "countryName": "Spain",
+      "ratings": {
+        "bullet": 2720,
+        "blitz": 2710,
+        "rapid": 2695,
+        "classical": 2680,
+        "puzzle": 2795
+      },
+      "highestRating": 2720,
+      "stats": {
+        "played": 375,
+        "won": 270,
+        "lost": 105,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2635,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2675,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2695,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_es_3": {
+      "id": "p_es_3",
+      "username": "DavidGuijarro",
+      "email": "davidguijarro@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Guijarro",
+      "country": "ES",
+      "countryName": "Spain",
+      "ratings": {
+        "bullet": 2670,
+        "blitz": 2680,
+        "rapid": 2675,
+        "classical": 2685,
+        "puzzle": 2775
+      },
+      "highestRating": 2685,
+      "stats": {
+        "played": 270,
+        "won": 195,
+        "lost": 75,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2615,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2655,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2675,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_es_4": {
+      "id": "p_es_4",
+      "username": "JaimeSantos",
+      "email": "jaimesantos@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Santos",
+      "country": "ES",
+      "countryName": "Spain",
+      "ratings": {
+        "bullet": 2650,
+        "blitz": 2660,
+        "rapid": 2655,
+        "classical": 2665,
+        "puzzle": 2755
+      },
+      "highestRating": 2665,
+      "stats": {
+        "played": 255,
+        "won": 185,
+        "lost": 70,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2595,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2635,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2655,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_es_5": {
+      "id": "p_es_5",
+      "username": "DaniilYuffa",
+      "email": "daniilyuffa@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Yuffa",
+      "country": "ES",
+      "countryName": "Spain",
+      "ratings": {
+        "bullet": 2660,
+        "blitz": 2650,
+        "rapid": 2640,
+        "classical": 2635,
+        "puzzle": 2740
+      },
+      "highestRating": 2660,
+      "stats": {
+        "played": 250,
+        "won": 175,
+        "lost": 75,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2580,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2620,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2640,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_es_6": {
+      "id": "p_es_6",
+      "username": "IbarraChess",
+      "email": "ibarrachess@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Ibarra",
+      "country": "ES",
+      "countryName": "Spain",
+      "ratings": {
+        "bullet": 2580,
+        "blitz": 2590,
+        "rapid": 2585,
+        "classical": 2595,
+        "puzzle": 2685
+      },
+      "highestRating": 2595,
+      "stats": {
+        "played": 230,
+        "won": 160,
+        "lost": 70,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2525,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2565,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2585,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_es_7": {
+      "id": "p_es_7",
+      "username": "MadridRook",
+      "email": "madridrook@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=MadridRook",
+      "country": "ES",
+      "countryName": "Spain",
+      "ratings": {
+        "bullet": 2490,
+        "blitz": 2500,
+        "rapid": 2495,
+        "classical": 2510,
+        "puzzle": 2595
+      },
+      "highestRating": 2510,
+      "stats": {
+        "played": 225,
+        "won": 145,
+        "lost": 80,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2435,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2475,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2495,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_de_1": {
+      "id": "p_de_1",
+      "username": "VincentKeymer",
+      "email": "vincentkeymer@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Keymer",
+      "country": "DE",
+      "countryName": "Germany",
+      "ratings": {
+        "bullet": 2730,
+        "blitz": 2745,
+        "rapid": 2755,
+        "classical": 2760,
+        "puzzle": 2855
+      },
+      "highestRating": 2760,
+      "stats": {
+        "played": 305,
+        "won": 240,
+        "lost": 65,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2695,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2735,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2755,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_de_2": {
+      "id": "p_de_2",
+      "username": "MatthiasBlue",
+      "email": "matthiasblue@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Bluebaum",
+      "country": "DE",
+      "countryName": "Germany",
+      "ratings": {
+        "bullet": 2680,
+        "blitz": 2690,
+        "rapid": 2695,
+        "classical": 2700,
+        "puzzle": 2795
+      },
+      "highestRating": 2700,
+      "stats": {
+        "played": 280,
+        "won": 210,
+        "lost": 70,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2635,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2675,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2695,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_de_3": {
+      "id": "p_de_3",
+      "username": "DonchenkoBlitz",
+      "email": "donchenkoblitz@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Donchenko",
+      "country": "DE",
+      "countryName": "Germany",
+      "ratings": {
+        "bullet": 2710,
+        "blitz": 2700,
+        "rapid": 2675,
+        "classical": 2680,
+        "puzzle": 2775
+      },
+      "highestRating": 2710,
+      "stats": {
+        "played": 305,
+        "won": 220,
+        "lost": 85,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2615,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2655,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2675,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_de_4": {
+      "id": "p_de_4",
+      "username": "KollarsKnight",
+      "email": "kollarsknight@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Kollars",
+      "country": "DE",
+      "countryName": "Germany",
+      "ratings": {
+        "bullet": 2640,
+        "blitz": 2650,
+        "rapid": 2655,
+        "classical": 2660,
+        "puzzle": 2755
+      },
+      "highestRating": 2660,
+      "stats": {
+        "played": 255,
+        "won": 185,
+        "lost": 70,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2595,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2635,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2655,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_de_5": {
+      "id": "p_de_5",
+      "username": "RasmusSvane",
+      "email": "rasmussvane@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Rasmus",
+      "country": "DE",
+      "countryName": "Germany",
+      "ratings": {
+        "bullet": 2630,
+        "blitz": 2635,
+        "rapid": 2640,
+        "classical": 2645,
+        "puzzle": 2740
+      },
+      "highestRating": 2645,
+      "stats": {
+        "played": 240,
+        "won": 175,
+        "lost": 65,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2580,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2620,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2640,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_de_6": {
+      "id": "p_de_6",
+      "username": "NisipeanuKing",
+      "email": "nisipeanuking@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Nisipeanu",
+      "country": "DE",
+      "countryName": "Germany",
+      "ratings": {
+        "bullet": 2610,
+        "blitz": 2615,
+        "rapid": 2620,
+        "classical": 2630,
+        "puzzle": 2720
+      },
+      "highestRating": 2630,
+      "stats": {
+        "played": 325,
+        "won": 230,
+        "lost": 95,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2560,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2600,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2620,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_de_7": {
+      "id": "p_de_7",
+      "username": "BerlinDefense",
+      "email": "berlindefense@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=BerlinDefense",
+      "country": "DE",
+      "countryName": "Germany",
+      "ratings": {
+        "bullet": 2510,
+        "blitz": 2520,
+        "rapid": 2530,
+        "classical": 2540,
+        "puzzle": 2630
+      },
+      "highestRating": 2540,
+      "stats": {
+        "played": 230,
+        "won": 155,
+        "lost": 75,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2470,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2510,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2530,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_fr_1": {
+      "id": "p_fr_1",
+      "username": "AlirezaSpeed",
+      "email": "alirezaspeed@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Firouzja",
+      "country": "FR",
+      "countryName": "France",
+      "ratings": {
+        "bullet": 2910,
+        "blitz": 2880,
+        "rapid": 2825,
+        "classical": 2815,
+        "puzzle": 2925
+      },
+      "highestRating": 2910,
+      "stats": {
+        "played": 415,
+        "won": 340,
+        "lost": 75,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2765,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2805,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2825,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_fr_2": {
+      "id": "p_fr_2",
+      "username": "MVL_Najdorf",
+      "email": "mvl_najdorf@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150",
+      "country": "FR",
+      "countryName": "France",
+      "ratings": {
+        "bullet": 2840,
+        "blitz": 2830,
+        "rapid": 2795,
+        "classical": 2785,
+        "puzzle": 2895
+      },
+      "highestRating": 2840,
+      "stats": {
+        "played": 450,
+        "won": 360,
+        "lost": 90,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2735,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2775,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2795,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_fr_3": {
+      "id": "p_fr_3",
+      "username": "EtienneBacrot",
+      "email": "etiennebacrot@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Bacrot",
+      "country": "FR",
+      "countryName": "France",
+      "ratings": {
+        "bullet": 2680,
+        "blitz": 2685,
+        "rapid": 2690,
+        "classical": 2700,
+        "puzzle": 2790
+      },
+      "highestRating": 2700,
+      "stats": {
+        "played": 335,
+        "won": 250,
+        "lost": 85,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2630,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2670,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2690,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_fr_4": {
+      "id": "p_fr_4",
+      "username": "FressinetCoach",
+      "email": "fressinetcoach@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Fressinet",
+      "country": "FR",
+      "countryName": "France",
+      "ratings": {
+        "bullet": 2650,
+        "blitz": 2660,
+        "rapid": 2665,
+        "classical": 2670,
+        "puzzle": 2765
+      },
+      "highestRating": 2670,
+      "stats": {
+        "played": 290,
+        "won": 210,
+        "lost": 80,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2605,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2645,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2665,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_fr_5": {
+      "id": "p_fr_5",
+      "username": "MarcMaurizzi",
+      "email": "marcmaurizzi@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Maurizzi",
+      "country": "FR",
+      "countryName": "France",
+      "ratings": {
+        "bullet": 2640,
+        "blitz": 2635,
+        "rapid": 2625,
+        "classical": 2630,
+        "puzzle": 2725
+      },
+      "highestRating": 2640,
+      "stats": {
+        "played": 235,
+        "won": 170,
+        "lost": 65,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2565,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2605,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2625,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_fr_6": {
+      "id": "p_fr_6",
+      "username": "ChristianBauer",
+      "email": "christianbauer@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Bauer",
+      "country": "FR",
+      "countryName": "France",
+      "ratings": {
+        "bullet": 2600,
+        "blitz": 2605,
+        "rapid": 2610,
+        "classical": 2615,
+        "puzzle": 2710
+      },
+      "highestRating": 2615,
+      "stats": {
+        "played": 275,
+        "won": 190,
+        "lost": 85,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2550,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2590,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2610,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_fr_7": {
+      "id": "p_fr_7",
+      "username": "ParisianPawn",
+      "email": "parisianpawn@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=ParisianPawn",
+      "country": "FR",
+      "countryName": "France",
+      "ratings": {
+        "bullet": 2520,
+        "blitz": 2515,
+        "rapid": 2505,
+        "classical": 2515,
+        "puzzle": 2605
+      },
+      "highestRating": 2520,
+      "stats": {
+        "played": 225,
+        "won": 150,
+        "lost": 75,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2445,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2485,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2505,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_gb_1": {
+      "id": "p_gb_1",
+      "username": "MickeyAdams",
+      "email": "mickeyadams@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=MickeyAdams",
+      "country": "GB",
+      "countryName": "United Kingdom",
+      "ratings": {
+        "bullet": 2690,
+        "blitz": 2705,
+        "rapid": 2715,
+        "classical": 2725,
+        "puzzle": 2815
+      },
+      "highestRating": 2725,
+      "stats": {
+        "played": 410,
+        "won": 320,
+        "lost": 90,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2655,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2695,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2715,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_gb_2": {
+      "id": "p_gb_2",
+      "username": "DavidHowell",
+      "email": "davidhowell@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Howell",
+      "country": "GB",
+      "countryName": "United Kingdom",
+      "ratings": {
+        "bullet": 2710,
+        "blitz": 2700,
+        "rapid": 2690,
+        "classical": 2695,
+        "puzzle": 2790
+      },
+      "highestRating": 2710,
+      "stats": {
+        "played": 305,
+        "won": 230,
+        "lost": 75,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2630,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2670,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2690,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_gb_3": {
+      "id": "p_gb_3",
+      "username": "GawainJones",
+      "email": "gawainjones@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Gawain",
+      "country": "GB",
+      "countryName": "United Kingdom",
+      "ratings": {
+        "bullet": 2660,
+        "blitz": 2670,
+        "rapid": 2675,
+        "classical": 2680,
+        "puzzle": 2775
+      },
+      "highestRating": 2680,
+      "stats": {
+        "played": 300,
+        "won": 220,
+        "lost": 80,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2615,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2655,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2675,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_gb_4": {
+      "id": "p_gb_4",
+      "username": "LukeMcShane",
+      "email": "lukemcshane@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=McShane",
+      "country": "GB",
+      "countryName": "United Kingdom",
+      "ratings": {
+        "bullet": 2680,
+        "blitz": 2675,
+        "rapid": 2665,
+        "classical": 2670,
+        "puzzle": 2765
+      },
+      "highestRating": 2680,
+      "stats": {
+        "played": 275,
+        "won": 205,
+        "lost": 70,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2605,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2645,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2665,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_gb_5": {
+      "id": "p_gb_5",
+      "username": "MatthewSadler",
+      "email": "matthewsadler@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Sadler",
+      "country": "GB",
+      "countryName": "United Kingdom",
+      "ratings": {
+        "bullet": 2640,
+        "blitz": 2650,
+        "rapid": 2655,
+        "classical": 2660,
+        "puzzle": 2755
+      },
+      "highestRating": 2660,
+      "stats": {
+        "played": 315,
+        "won": 240,
+        "lost": 75,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2595,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2635,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2655,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_gb_6": {
+      "id": "p_gb_6",
+      "username": "LondonTactics",
+      "email": "londontactics@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=LondonTactics",
+      "country": "GB",
+      "countryName": "United Kingdom",
+      "ratings": {
+        "bullet": 2540,
+        "blitz": 2550,
+        "rapid": 2545,
+        "classical": 2555,
+        "puzzle": 2645
+      },
+      "highestRating": 2555,
+      "stats": {
+        "played": 245,
+        "won": 165,
+        "lost": 80,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2485,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2525,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2545,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_gb_7": {
+      "id": "p_gb_7",
+      "username": "CrownGambit",
+      "email": "crowngambit@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=CrownGambit",
+      "country": "GB",
+      "countryName": "United Kingdom",
+      "ratings": {
+        "bullet": 2480,
+        "blitz": 2490,
+        "rapid": 2485,
+        "classical": 2495,
+        "puzzle": 2585
+      },
+      "highestRating": 2495,
+      "stats": {
+        "played": 215,
+        "won": 140,
+        "lost": 75,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2425,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2465,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2485,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_jp_1": {
+      "id": "p_jp_1",
+      "username": "ShinyaKojima",
+      "email": "shinyakojima@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Kojima",
+      "country": "JP",
+      "countryName": "Japan",
+      "ratings": {
+        "bullet": 2540,
+        "blitz": 2550,
+        "rapid": 2560,
+        "classical": 2565,
+        "puzzle": 2660
+      },
+      "highestRating": 2565,
+      "stats": {
+        "played": 260,
+        "won": 190,
+        "lost": 70,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2500,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2540,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2560,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_jp_2": {
+      "id": "p_jp_2",
+      "username": "ShogiMasterMirai",
+      "email": "shogimastermirai@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Mirai",
+      "country": "JP",
+      "countryName": "Japan",
+      "ratings": {
+        "bullet": 2570,
+        "blitz": 2560,
+        "rapid": 2545,
+        "classical": 2550,
+        "puzzle": 2645
+      },
+      "highestRating": 2570,
+      "stats": {
+        "played": 245,
+        "won": 180,
+        "lost": 65,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2485,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2525,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2545,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_jp_3": {
+      "id": "p_jp_3",
+      "username": "TokyoRook",
+      "email": "tokyorook@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=TokyoRook",
+      "country": "JP",
+      "countryName": "Japan",
+      "ratings": {
+        "bullet": 2480,
+        "blitz": 2490,
+        "rapid": 2495,
+        "classical": 2500,
+        "puzzle": 2595
+      },
+      "highestRating": 2500,
+      "stats": {
+        "played": 235,
+        "won": 160,
+        "lost": 75,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2435,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2475,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2495,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_jp_4": {
+      "id": "p_jp_4",
+      "username": "RyosukeNanjo",
+      "email": "ryosukenanjo@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Nanjo",
+      "country": "JP",
+      "countryName": "Japan",
+      "ratings": {
+        "bullet": 2460,
+        "blitz": 2470,
+        "rapid": 2465,
+        "classical": 2475,
+        "puzzle": 2565
+      },
+      "highestRating": 2475,
+      "stats": {
+        "played": 220,
+        "won": 150,
+        "lost": 70,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2405,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2445,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2465,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_jp_5": {
+      "id": "p_jp_5",
+      "username": "SamuraiBlade",
+      "email": "samuraiblade@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Samurai",
+      "country": "JP",
+      "countryName": "Japan",
+      "ratings": {
+        "bullet": 2430,
+        "blitz": 2440,
+        "rapid": 2450,
+        "classical": 2455,
+        "puzzle": 2550
+      },
+      "highestRating": 2455,
+      "stats": {
+        "played": 225,
+        "won": 145,
+        "lost": 80,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2390,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2430,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2450,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_jp_6": {
+      "id": "p_jp_6",
+      "username": "KyotoKnight",
+      "email": "kyotoknight@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=KyotoKnight",
+      "country": "JP",
+      "countryName": "Japan",
+      "ratings": {
+        "bullet": 2390,
+        "blitz": 2400,
+        "rapid": 2410,
+        "classical": 2420,
+        "puzzle": 2510
+      },
+      "highestRating": 2420,
+      "stats": {
+        "played": 210,
+        "won": 135,
+        "lost": 75,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2350,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2390,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2410,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_jp_7": {
+      "id": "p_jp_7",
+      "username": "FujiDragon",
+      "email": "fujidragon@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=FujiDragon",
+      "country": "JP",
+      "countryName": "Japan",
+      "ratings": {
+        "bullet": 2360,
+        "blitz": 2370,
+        "rapid": 2380,
+        "classical": 2390,
+        "puzzle": 2480
+      },
+      "highestRating": 2390,
+      "stats": {
+        "played": 205,
+        "won": 125,
+        "lost": 80,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2320,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2360,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2380,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_br_1": {
+      "id": "p_br_1",
+      "username": "SupiTactics",
+      "email": "supitactics@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Supi",
+      "country": "BR",
+      "countryName": "Brazil",
+      "ratings": {
+        "bullet": 2740,
+        "blitz": 2725,
+        "rapid": 2690,
+        "classical": 2685,
+        "puzzle": 2790
+      },
+      "highestRating": 2740,
+      "stats": {
+        "played": 320,
+        "won": 240,
+        "lost": 80,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2630,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2670,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2690,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_br_2": {
+      "id": "p_br_2",
+      "username": "AlexandrFier",
+      "email": "alexandrfier@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Fier",
+      "country": "BR",
+      "countryName": "Brazil",
+      "ratings": {
+        "bullet": 2710,
+        "blitz": 2695,
+        "rapid": 2675,
+        "classical": 2665,
+        "puzzle": 2775
+      },
+      "highestRating": 2710,
+      "stats": {
+        "played": 340,
+        "won": 250,
+        "lost": 90,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2615,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2655,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2675,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_br_3": {
+      "id": "p_br_3",
+      "username": "MeckingLegend",
+      "email": "meckinglegend@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Mecking",
+      "country": "BR",
+      "countryName": "Brazil",
+      "ratings": {
+        "bullet": 2620,
+        "blitz": 2635,
+        "rapid": 2650,
+        "classical": 2660,
+        "puzzle": 2750
+      },
+      "highestRating": 2660,
+      "stats": {
+        "played": 395,
+        "won": 300,
+        "lost": 95,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2590,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2630,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2650,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_br_4": {
+      "id": "p_br_4",
+      "username": "RafaelLeitao",
+      "email": "rafaelleitao@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Leitao",
+      "country": "BR",
+      "countryName": "Brazil",
+      "ratings": {
+        "bullet": 2640,
+        "blitz": 2635,
+        "rapid": 2640,
+        "classical": 2645,
+        "puzzle": 2740
+      },
+      "highestRating": 2645,
+      "stats": {
+        "played": 285,
+        "won": 210,
+        "lost": 75,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2580,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2620,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2640,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_br_5": {
+      "id": "p_br_5",
+      "username": "GilbertoMilos",
+      "email": "gilbertomilos@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Milos",
+      "country": "BR",
+      "countryName": "Brazil",
+      "ratings": {
+        "bullet": 2590,
+        "blitz": 2600,
+        "rapid": 2610,
+        "classical": 2615,
+        "puzzle": 2710
+      },
+      "highestRating": 2615,
+      "stats": {
+        "played": 280,
+        "won": 195,
+        "lost": 85,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2550,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2590,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2610,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_br_6": {
+      "id": "p_br_6",
+      "username": "SambaCheckmate",
+      "email": "sambacheckmate@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Samba",
+      "country": "BR",
+      "countryName": "Brazil",
+      "ratings": {
+        "bullet": 2510,
+        "blitz": 2520,
+        "rapid": 2525,
+        "classical": 2530,
+        "puzzle": 2625
+      },
+      "highestRating": 2530,
+      "stats": {
+        "played": 230,
+        "won": 160,
+        "lost": 70,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2465,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2505,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2525,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_br_7": {
+      "id": "p_br_7",
+      "username": "RioBishop",
+      "email": "riobishop@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=RioBishop",
+      "country": "BR",
+      "countryName": "Brazil",
+      "ratings": {
+        "bullet": 2470,
+        "blitz": 2480,
+        "rapid": 2485,
+        "classical": 2490,
+        "puzzle": 2585
+      },
+      "highestRating": 2490,
+      "stats": {
+        "played": 220,
+        "won": 145,
+        "lost": 75,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2425,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2465,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2485,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_ca_1": {
+      "id": "p_ca_1",
+      "username": "ChessQueenAnna",
+      "email": "chessqueenanna@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
+      "country": "CA",
+      "countryName": "Canada",
+      "ratings": {
+        "bullet": 2380,
+        "blitz": 2360,
+        "rapid": 2350,
+        "classical": 2340,
+        "puzzle": 2450
+      },
+      "highestRating": 2380,
+      "stats": {
+        "played": 255,
+        "won": 190,
+        "lost": 65,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2290,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2330,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2350,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_ca_2": {
+      "id": "p_ca_2",
+      "username": "ChessBrahEric",
+      "email": "chessbraheric@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=EricHansen",
+      "country": "CA",
+      "countryName": "Canada",
+      "ratings": {
+        "bullet": 2790,
+        "blitz": 2750,
+        "rapid": 2710,
+        "classical": 2690,
+        "puzzle": 2810
+      },
+      "highestRating": 2790,
+      "stats": {
+        "played": 445,
+        "won": 350,
+        "lost": 95,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2650,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2690,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2710,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_ca_3": {
+      "id": "p_ca_3",
+      "username": "AmanHambleton",
+      "email": "amanhambleton@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Hambleton",
+      "country": "CA",
+      "countryName": "Canada",
+      "ratings": {
+        "bullet": 2660,
+        "blitz": 2640,
+        "rapid": 2625,
+        "classical": 2630,
+        "puzzle": 2725
+      },
+      "highestRating": 2660,
+      "stats": {
+        "played": 305,
+        "won": 220,
+        "lost": 85,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2565,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2605,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2625,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.495Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_ca_4": {
+      "id": "p_ca_4",
+      "username": "NikolayNoritsyn",
+      "email": "nikolaynoritsyn@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Noritsyn",
+      "country": "CA",
+      "countryName": "Canada",
+      "ratings": {
+        "bullet": 2590,
+        "blitz": 2600,
+        "rapid": 2605,
+        "classical": 2610,
+        "puzzle": 2705
+      },
+      "highestRating": 2610,
+      "stats": {
+        "played": 255,
+        "won": 185,
+        "lost": 70,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2545,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2585,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2605,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.496Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_ca_5": {
+      "id": "p_ca_5",
+      "username": "BatorSambuev",
+      "email": "batorsambuev@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=Sambuev",
+      "country": "CA",
+      "countryName": "Canada",
+      "ratings": {
+        "bullet": 2580,
+        "blitz": 2570,
+        "rapid": 2575,
+        "classical": 2580,
+        "puzzle": 2675
+      },
+      "highestRating": 2580,
+      "stats": {
+        "played": 275,
+        "won": 195,
+        "lost": 80,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2515,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2555,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2575,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.496Z",
+      "isOnline": false,
+      "banned": false
+    },
+    "p_ca_6": {
+      "id": "p_ca_6",
+      "username": "MapleKnight",
+      "email": "mapleknight@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=MapleKnight",
+      "country": "CA",
+      "countryName": "Canada",
+      "ratings": {
+        "bullet": 2490,
+        "blitz": 2500,
+        "rapid": 2510,
+        "classical": 2515,
+        "puzzle": 2610
+      },
+      "highestRating": 2515,
+      "stats": {
+        "played": 225,
+        "won": 150,
+        "lost": 75,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2450,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2490,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2510,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.496Z",
+      "isOnline": true,
+      "banned": false
+    },
+    "p_ca_7": {
+      "id": "p_ca_7",
+      "username": "TorontoRook",
+      "email": "torontorook@chessarena.com",
+      "passwordHash": "$2b$10$/bAqsbA9nFFNWBUXGBTVP.emx9KTmYs.j3qfBPOhq.XIqMgfcNSkq",
+      "role": "user",
+      "avatar": "https://api.dicebear.com/7.x/adventurer/svg?seed=TorontoRook",
+      "country": "CA",
+      "countryName": "Canada",
+      "ratings": {
+        "bullet": 2440,
+        "blitz": 2450,
+        "rapid": 2460,
+        "classical": 2470,
+        "puzzle": 2560
+      },
+      "highestRating": 2470,
+      "stats": {
+        "played": 210,
+        "won": 140,
+        "lost": 70,
+        "drawn": 0,
+        "winStreak": 8,
+        "currentStreak": 3
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-02-10",
+          "rating": 2400,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-15",
+          "rating": 2440,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-20",
+          "rating": 2460,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "rapid_master",
+        "queen_badge",
+        "knight_badge"
+      ],
+      "createdAt": "2026-11-20T08:07:39.496Z",
+      "isOnline": false,
+      "banned": false
+    },
     "admin_op21": {
       "id": "admin_op21",
       "username": "op21plus",
       "email": "op21plus@gmail.com",
-      "passwordHash": "$2b$10$nu2bvmqrSj/mrkr0qMrnsOwneNj00.zfcIztHm7TfVHDhXnFkF.Sq",
+      "passwordHash": "$2b$10$Ul93OnoXw2idwQDDDC9fluZH.IIwz0/mxL59VujGT5M.Ouznvulw.",
       "role": "admin",
       "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
       "country": "IN",
@@ -61,699 +4228,13 @@
       ],
       "createdAt": "2026-01-01T00:00:00.000Z",
       "isOnline": false,
-      "banned": false,
-      "provider": "google"
-    },
-    "admin_001": {
-      "id": "admin_001",
-      "username": "GrandmasterAdmin",
-      "email": "admin@chessarena.com",
-      "passwordHash": "$2b$10$nu2bvmqrSj/mrkr0qMrnsOwneNj00.zfcIztHm7TfVHDhXnFkF.Sq",
-      "role": "admin",
-      "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
-      "country": "IS",
-      "countryName": "Iceland",
-      "ratings": {
-        "bullet": 2420,
-        "blitz": 2480,
-        "rapid": 2510,
-        "classical": 2550,
-        "puzzle": 2600
-      },
-      "highestRating": 2550,
-      "stats": {
-        "played": 420,
-        "won": 310,
-        "lost": 75,
-        "drawn": 35,
-        "winStreak": 12,
-        "currentStreak": 4
-      },
-      "ratingHistory": [
-        {
-          "date": "2026-01-01",
-          "rating": 2350,
-          "format": "rapid"
-        },
-        {
-          "date": "2026-02-01",
-          "rating": 2410,
-          "format": "rapid"
-        },
-        {
-          "date": "2026-03-01",
-          "rating": 2480,
-          "format": "rapid"
-        },
-        {
-          "date": "2026-04-01",
-          "rating": 2510,
-          "format": "rapid"
-        }
-      ],
-      "achievements": [
-        "first_win",
-        "checkmate_pro",
-        "wins_10",
-        "games_100",
-        "streak_master",
-        "tactical_genius",
-        "blitz_master",
-        "rapid_master",
-        "king_badge",
-        "queen_badge"
-      ],
-      "createdAt": "2026-11-20T02:43:42.296Z",
-      "isOnline": false,
       "banned": false
-    },
-    "player_magnus": {
-      "id": "player_magnus",
-      "username": "VikingKing",
-      "email": "magnus@chessarena.com",
-      "passwordHash": "$2b$10$nu2bvmqrSj/mrkr0qMrnsOwneNj00.zfcIztHm7TfVHDhXnFkF.Sq",
-      "role": "user",
-      "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
-      "country": "NO",
-      "countryName": "Norway",
-      "ratings": {
-        "bullet": 2850,
-        "blitz": 2890,
-        "rapid": 2840,
-        "classical": 2860,
-        "puzzle": 2940
-      },
-      "highestRating": 2890,
-      "stats": {
-        "played": 280,
-        "won": 195,
-        "lost": 55,
-        "drawn": 30,
-        "winStreak": 9,
-        "currentStreak": 3
-      },
-      "ratingHistory": [
-        {
-          "date": "2026-02-10",
-          "rating": 2780,
-          "format": "rapid"
-        },
-        {
-          "date": "2026-03-15",
-          "rating": 2820,
-          "format": "rapid"
-        },
-        {
-          "date": "2026-04-20",
-          "rating": 2840,
-          "format": "rapid"
-        }
-      ],
-      "achievements": [
-        "first_win",
-        "checkmate_pro",
-        "wins_10",
-        "games_100",
-        "streak_master",
-        "tactical_genius",
-        "rapid_master",
-        "queen_badge",
-        "knight_badge"
-      ],
-      "createdAt": "2026-11-20T02:43:42.313Z",
-      "isOnline": false,
-      "banned": false
-    },
-    "player_hikaru": {
-      "id": "player_hikaru",
-      "username": "SpeedDemon",
-      "email": "hikaru@chessarena.com",
-      "passwordHash": "$2b$10$nu2bvmqrSj/mrkr0qMrnsOwneNj00.zfcIztHm7TfVHDhXnFkF.Sq",
-      "role": "user",
-      "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
-      "country": "US",
-      "countryName": "United States",
-      "ratings": {
-        "bullet": 2920,
-        "blitz": 2870,
-        "rapid": 2790,
-        "classical": 2780,
-        "puzzle": 2890
-      },
-      "highestRating": 2920,
-      "stats": {
-        "played": 280,
-        "won": 195,
-        "lost": 55,
-        "drawn": 30,
-        "winStreak": 9,
-        "currentStreak": 3
-      },
-      "ratingHistory": [
-        {
-          "date": "2026-02-10",
-          "rating": 2730,
-          "format": "rapid"
-        },
-        {
-          "date": "2026-03-15",
-          "rating": 2770,
-          "format": "rapid"
-        },
-        {
-          "date": "2026-04-20",
-          "rating": 2790,
-          "format": "rapid"
-        }
-      ],
-      "achievements": [
-        "first_win",
-        "checkmate_pro",
-        "wins_10",
-        "games_100",
-        "streak_master",
-        "tactical_genius",
-        "rapid_master",
-        "queen_badge",
-        "knight_badge"
-      ],
-      "createdAt": "2026-11-20T02:43:42.314Z",
-      "isOnline": false,
-      "banned": false
-    },
-    "player_gukesh": {
-      "id": "player_gukesh",
-      "username": "YouthMaster",
-      "email": "gukesh@chessarena.com",
-      "passwordHash": "$2b$10$nu2bvmqrSj/mrkr0qMrnsOwneNj00.zfcIztHm7TfVHDhXnFkF.Sq",
-      "role": "user",
-      "avatar": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150",
-      "country": "IN",
-      "countryName": "India",
-      "ratings": {
-        "bullet": 2710,
-        "blitz": 2750,
-        "rapid": 2810,
-        "classical": 2830,
-        "puzzle": 2910
-      },
-      "highestRating": 2830,
-      "stats": {
-        "played": 280,
-        "won": 195,
-        "lost": 55,
-        "drawn": 30,
-        "winStreak": 9,
-        "currentStreak": 3
-      },
-      "ratingHistory": [
-        {
-          "date": "2026-02-10",
-          "rating": 2750,
-          "format": "rapid"
-        },
-        {
-          "date": "2026-03-15",
-          "rating": 2790,
-          "format": "rapid"
-        },
-        {
-          "date": "2026-04-20",
-          "rating": 2810,
-          "format": "rapid"
-        }
-      ],
-      "achievements": [
-        "first_win",
-        "checkmate_pro",
-        "wins_10",
-        "games_100",
-        "streak_master",
-        "tactical_genius",
-        "rapid_master",
-        "queen_badge",
-        "knight_badge"
-      ],
-      "createdAt": "2026-11-20T02:43:42.314Z",
-      "isOnline": false,
-      "banned": false
-    },
-    "player_judit": {
-      "id": "player_judit",
-      "username": "TacticalQueen",
-      "email": "judit@chessarena.com",
-      "passwordHash": "$2b$10$nu2bvmqrSj/mrkr0qMrnsOwneNj00.zfcIztHm7TfVHDhXnFkF.Sq",
-      "role": "user",
-      "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150",
-      "country": "HU",
-      "countryName": "Hungary",
-      "ratings": {
-        "bullet": 2680,
-        "blitz": 2720,
-        "rapid": 2750,
-        "classical": 2760,
-        "puzzle": 2850
-      },
-      "highestRating": 2760,
-      "stats": {
-        "played": 280,
-        "won": 195,
-        "lost": 55,
-        "drawn": 30,
-        "winStreak": 9,
-        "currentStreak": 3
-      },
-      "ratingHistory": [
-        {
-          "date": "2026-02-10",
-          "rating": 2690,
-          "format": "rapid"
-        },
-        {
-          "date": "2026-03-15",
-          "rating": 2730,
-          "format": "rapid"
-        },
-        {
-          "date": "2026-04-20",
-          "rating": 2750,
-          "format": "rapid"
-        }
-      ],
-      "achievements": [
-        "first_win",
-        "checkmate_pro",
-        "wins_10",
-        "games_100",
-        "streak_master",
-        "tactical_genius",
-        "rapid_master",
-        "queen_badge",
-        "knight_badge"
-      ],
-      "createdAt": "2026-11-20T02:43:42.314Z",
-      "isOnline": false,
-      "banned": false
-    },
-    "player_anna": {
-      "id": "player_anna",
-      "username": "ChessQueenAnna",
-      "email": "anna@chessarena.com",
-      "passwordHash": "$2b$10$nu2bvmqrSj/mrkr0qMrnsOwneNj00.zfcIztHm7TfVHDhXnFkF.Sq",
-      "role": "user",
-      "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
-      "country": "CA",
-      "countryName": "Canada",
-      "ratings": {
-        "bullet": 2280,
-        "blitz": 2310,
-        "rapid": 2350,
-        "classical": 2320,
-        "puzzle": 2450
-      },
-      "highestRating": 2350,
-      "stats": {
-        "played": 280,
-        "won": 195,
-        "lost": 55,
-        "drawn": 30,
-        "winStreak": 9,
-        "currentStreak": 3
-      },
-      "ratingHistory": [
-        {
-          "date": "2026-02-10",
-          "rating": 2290,
-          "format": "rapid"
-        },
-        {
-          "date": "2026-03-15",
-          "rating": 2330,
-          "format": "rapid"
-        },
-        {
-          "date": "2026-04-20",
-          "rating": 2350,
-          "format": "rapid"
-        }
-      ],
-      "achievements": [
-        "first_win",
-        "checkmate_pro",
-        "wins_10",
-        "games_100",
-        "streak_master",
-        "tactical_genius",
-        "rapid_master",
-        "queen_badge",
-        "knight_badge"
-      ],
-      "createdAt": "2026-11-20T02:43:42.314Z",
-      "isOnline": false,
-      "banned": false
-    },
-    "player_fabiano": {
-      "id": "player_fabiano",
-      "username": "DeepCalculator",
-      "email": "fabi@chessarena.com",
-      "passwordHash": "$2b$10$nu2bvmqrSj/mrkr0qMrnsOwneNj00.zfcIztHm7TfVHDhXnFkF.Sq",
-      "role": "user",
-      "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150",
-      "country": "US",
-      "countryName": "United States",
-      "ratings": {
-        "bullet": 2730,
-        "blitz": 2790,
-        "rapid": 2810,
-        "classical": 2840,
-        "puzzle": 2910
-      },
-      "highestRating": 2840,
-      "stats": {
-        "played": 280,
-        "won": 195,
-        "lost": 55,
-        "drawn": 30,
-        "winStreak": 9,
-        "currentStreak": 3
-      },
-      "ratingHistory": [
-        {
-          "date": "2026-02-10",
-          "rating": 2750,
-          "format": "rapid"
-        },
-        {
-          "date": "2026-03-15",
-          "rating": 2790,
-          "format": "rapid"
-        },
-        {
-          "date": "2026-04-20",
-          "rating": 2810,
-          "format": "rapid"
-        }
-      ],
-      "achievements": [
-        "first_win",
-        "checkmate_pro",
-        "wins_10",
-        "games_100",
-        "streak_master",
-        "tactical_genius",
-        "rapid_master",
-        "queen_badge",
-        "knight_badge"
-      ],
-      "createdAt": "2026-11-20T02:43:42.314Z",
-      "isOnline": false,
-      "banned": false
-    },
-    "u_1795145375523_4mb8": {
-      "role": "user",
-      "country": "US",
-      "countryName": "United States",
-      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Ommmm107",
-      "ratings": {
-        "bullet": 1200,
-        "blitz": 1200,
-        "rapid": 1200,
-        "classical": 1200,
-        "puzzle": 1200
-      },
-      "highestRating": 1200,
-      "stats": {
-        "played": 0,
-        "won": 0,
-        "lost": 0,
-        "drawn": 0,
-        "winStreak": 0,
-        "currentStreak": 0
-      },
-      "ratingHistory": [
-        {
-          "date": "2026-11-20",
-          "rating": 1200,
-          "format": "rapid"
-        }
-      ],
-      "achievements": [],
-      "createdAt": "2026-11-20T03:29:35.524Z",
-      "isOnline": false,
-      "banned": false,
-      "id": "u_1795145375523_4mb8",
-      "username": "Ommmm107",
-      "email": "op21plus@gmail.com",
-      "passwordHash": "$2b$10$RaQPGERka9BhO6GxfK28uOW3FWmyNxPN2zPnPnX5lkQWRlXlV8ud."
-    },
-    "u_1795147433351_lrjm": {
-      "role": "user",
-      "country": "US",
-      "countryName": "United States",
-      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=testuser1",
-      "ratings": {
-        "bullet": 1200,
-        "blitz": 1200,
-        "rapid": 1200,
-        "classical": 1200,
-        "puzzle": 1200
-      },
-      "highestRating": 1200,
-      "stats": {
-        "played": 0,
-        "won": 0,
-        "lost": 0,
-        "drawn": 0,
-        "winStreak": 0,
-        "currentStreak": 0
-      },
-      "ratingHistory": [
-        {
-          "date": "2026-11-20",
-          "rating": 1200,
-          "format": "rapid"
-        }
-      ],
-      "achievements": [],
-      "createdAt": "2026-11-20T04:03:53.352Z",
-      "isOnline": false,
-      "banned": false,
-      "id": "u_1795147433351_lrjm",
-      "username": "testuser1",
-      "email": "test@example.com",
-      "passwordHash": "$2b$10$zNLMkfPwgnG6eWmm.u9X1.k2TChBu7FxN17QTQYesFiGvrw5h8roe"
-    },
-    "guest_1795148472771_8213": {
-      "role": "guest",
-      "country": "UN",
-      "countryName": "United States",
-      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Guest_8213",
-      "ratings": {
-        "bullet": 1200,
-        "blitz": 1200,
-        "rapid": 1200,
-        "classical": 1200,
-        "puzzle": 1200
-      },
-      "highestRating": 1200,
-      "stats": {
-        "played": 0,
-        "won": 0,
-        "lost": 0,
-        "drawn": 0,
-        "winStreak": 0,
-        "currentStreak": 0
-      },
-      "ratingHistory": [
-        {
-          "date": "2026-11-20",
-          "rating": 1200,
-          "format": "rapid"
-        }
-      ],
-      "achievements": [],
-      "createdAt": "2026-11-20T04:21:12.800Z",
-      "isOnline": false,
-      "banned": false,
-      "id": "guest_1795148472771_8213",
-      "username": "Guest_8213",
-      "email": "guest_8213@chessarena.local",
-      "passwordHash": ""
-    },
-    "guest_1795148480075_9781": {
-      "role": "guest",
-      "country": "UN",
-      "countryName": "United States",
-      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Guest_9781",
-      "ratings": {
-        "bullet": 1200,
-        "blitz": 1200,
-        "rapid": 1200,
-        "classical": 1200,
-        "puzzle": 1200
-      },
-      "highestRating": 1200,
-      "stats": {
-        "played": 0,
-        "won": 0,
-        "lost": 0,
-        "drawn": 0,
-        "winStreak": 0,
-        "currentStreak": 0
-      },
-      "ratingHistory": [
-        {
-          "date": "2026-11-20",
-          "rating": 1200,
-          "format": "rapid"
-        }
-      ],
-      "achievements": [],
-      "createdAt": "2026-11-20T04:21:20.076Z",
-      "isOnline": false,
-      "banned": false,
-      "id": "guest_1795148480075_9781",
-      "username": "Guest_9781",
-      "email": "guest_9781@chessarena.local",
-      "passwordHash": ""
-    },
-    "u_1795148521255_3g4a": {
-      "role": "user",
-      "country": "US",
-      "countryName": "United States",
-      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=testuser_1795148520931",
-      "ratings": {
-        "bullet": 1200,
-        "blitz": 1200,
-        "rapid": 1200,
-        "classical": 1200,
-        "puzzle": 1200
-      },
-      "highestRating": 1200,
-      "stats": {
-        "played": 0,
-        "won": 0,
-        "lost": 0,
-        "drawn": 0,
-        "winStreak": 0,
-        "currentStreak": 0
-      },
-      "ratingHistory": [
-        {
-          "date": "2026-11-20",
-          "rating": 1200,
-          "format": "rapid"
-        }
-      ],
-      "achievements": [],
-      "createdAt": "2026-11-20T04:22:01.256Z",
-      "isOnline": false,
-      "banned": false,
-      "id": "u_1795148521255_3g4a",
-      "username": "testuser_1795148520931",
-      "email": "testuser_1795148520931@example.com",
-      "passwordHash": "$2b$10$S8qgPjqcStQ78G9BBVlCne73KYSXwpNeT0KdKmauTvyIbmLf1EMZO"
-    },
-    "g_1795152861531_n7k9": {
-      "role": "user",
-      "country": "US",
-      "countryName": "United States",
-      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Test_Player",
-      "ratings": {
-        "bullet": 1200,
-        "blitz": 1200,
-        "rapid": 1200,
-        "classical": 1200,
-        "puzzle": 1200
-      },
-      "highestRating": 1200,
-      "stats": {
-        "played": 0,
-        "won": 0,
-        "lost": 0,
-        "drawn": 0,
-        "winStreak": 0,
-        "currentStreak": 0
-      },
-      "ratingHistory": [
-        {
-          "date": "2026-11-20",
-          "rating": 1200,
-          "format": "rapid"
-        }
-      ],
-      "achievements": [],
-      "createdAt": "2026-11-20T05:34:21.558Z",
-      "isOnline": false,
-      "banned": false,
-      "id": "g_1795152861531_n7k9",
-      "username": "Test_Player",
-      "email": "test.player@gmail.com",
-      "passwordHash": "",
-      "provider": "google"
     }
   },
-  "games": {
-    "arena_TEST1": {
-      "id": "arena_TEST1",
-      "whitePlayer": {
-        "id": "test_u2",
-        "username": "FriendPlayer"
-      },
-      "blackPlayer": {
-        "id": "test_u1",
-        "username": "Tester"
-      },
-      "timeControl": {
-        "baseMinutes": 10,
-        "incrementSeconds": 0
-      },
-      "whiteTime": 600000,
-      "blackTime": 600000,
-      "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
-      "status": "active",
-      "moveHistory": [
-        {
-          "from": "e2",
-          "to": "e4",
-          "san": "e4"
-        }
-      ],
-      "capturedPieces": {
-        "white": [],
-        "black": []
-      },
-      "createdAt": "2026-11-20T05:34:28.663Z",
-      "lastUpdated": 1795152919258
-    },
-    "arena_VJ1Q0F": {
-      "id": "arena_VJ1Q0F",
-      "whitePlayer": null,
-      "blackPlayer": {
-        "id": "u1",
-        "username": "Magnus",
-        "avatar": "test.png"
-      },
-      "timeControl": {
-        "baseMinutes": 10,
-        "incrementSeconds": 0
-      },
-      "whiteTime": 600000,
-      "blackTime": 600000,
-      "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-      "status": "waiting",
-      "moveHistory": [],
-      "capturedPieces": {
-        "white": [],
-        "black": []
-      },
-      "createdAt": "2026-11-20T05:40:29.434Z",
-      "lastUpdated": 1795153229434
-    }
-  },
+  "games": {},
   "tournaments": {
-    "tourney_1795142622594_p9fj": {
-      "id": "tourney_1795142622594_p9fj",
+    "tourney_1795162282911_28qo": {
+      "id": "tourney_1795162282911_28qo",
       "name": "Arena Blitz Championship 2026",
       "format": "knockout",
       "timeControl": {
@@ -765,43 +4246,14 @@
       "createdBy": "admin_001",
       "isPublic": true,
       "status": "open",
-      "participants": [
-        {
-          "id": "player_magnus",
-          "username": "VikingKing",
-          "elo": 2840,
-          "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
-          "score": 0
-        },
-        {
-          "id": "player_hikaru",
-          "username": "SpeedDemon",
-          "elo": 2790,
-          "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
-          "score": 0
-        },
-        {
-          "id": "player_gukesh",
-          "username": "YouthMaster",
-          "elo": 2810,
-          "avatar": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150",
-          "score": 0
-        },
-        {
-          "id": "player_judit",
-          "username": "TacticalQueen",
-          "elo": 2750,
-          "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150",
-          "score": 0
-        }
-      ],
+      "participants": [],
       "rounds": [],
       "currentRound": 0,
       "winner": null,
-      "createdAt": "2026-11-20T02:43:42.594Z"
+      "createdAt": "2026-11-20T08:11:22.911Z"
     },
-    "tourney_1795142622595_4k0a": {
-      "id": "tourney_1795142622595_4k0a",
+    "tourney_1795162282924_6eiy": {
+      "id": "tourney_1795162282924_6eiy",
       "name": "Grand Prix Rapid Open",
       "format": "round-robin",
       "timeControl": {
@@ -813,36 +4265,14 @@
       "createdBy": "admin_001",
       "isPublic": true,
       "status": "open",
-      "participants": [
-        {
-          "id": "player_magnus",
-          "username": "VikingKing",
-          "elo": 2840,
-          "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
-          "score": 0
-        },
-        {
-          "id": "player_hikaru",
-          "username": "SpeedDemon",
-          "elo": 2790,
-          "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
-          "score": 0
-        },
-        {
-          "id": "player_gukesh",
-          "username": "YouthMaster",
-          "elo": 2810,
-          "avatar": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150",
-          "score": 0
-        }
-      ],
+      "participants": [],
       "rounds": [],
       "currentRound": 0,
       "winner": null,
-      "createdAt": "2026-11-20T02:43:42.595Z"
+      "createdAt": "2026-11-20T08:11:22.925Z"
     },
-    "tourney_1795142622596_cld4": {
-      "id": "tourney_1795142622596_cld4",
+    "tourney_1795162282936_jjdu": {
+      "id": "tourney_1795162282936_jjdu",
       "name": "Swiss Masters Arena Trophy",
       "format": "swiss",
       "timeControl": {
@@ -854,40 +4284,11 @@
       "createdBy": "admin_001",
       "isPublic": true,
       "status": "open",
-      "participants": [
-        {
-          "id": "player_magnus",
-          "username": "VikingKing",
-          "elo": 2840,
-          "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
-          "score": 0
-        },
-        {
-          "id": "player_hikaru",
-          "username": "SpeedDemon",
-          "elo": 2790,
-          "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
-          "score": 0
-        },
-        {
-          "id": "player_gukesh",
-          "username": "YouthMaster",
-          "elo": 2810,
-          "avatar": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150",
-          "score": 0
-        },
-        {
-          "id": "player_judit",
-          "username": "TacticalQueen",
-          "elo": 2750,
-          "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150",
-          "score": 0
-        }
-      ],
+      "participants": [],
       "rounds": [],
       "currentRound": 0,
       "winner": null,
-      "createdAt": "2026-11-20T02:43:42.596Z"
+      "createdAt": "2026-11-20T08:11:22.936Z"
     }
   },
   "friendships": [],
