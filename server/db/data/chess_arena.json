@@ -441,6 +441,43 @@
       "username": "Ommmm107",
       "email": "op21plus@gmail.com",
       "passwordHash": "$2b$10$RaQPGERka9BhO6GxfK28uOW3FWmyNxPN2zPnPnX5lkQWRlXlV8ud."
+    },
+    "u_1795147433351_lrjm": {
+      "role": "user",
+      "country": "US",
+      "countryName": "United States",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=testuser1",
+      "ratings": {
+        "bullet": 1200,
+        "blitz": 1200,
+        "rapid": 1200,
+        "classical": 1200,
+        "puzzle": 1200
+      },
+      "highestRating": 1200,
+      "stats": {
+        "played": 0,
+        "won": 0,
+        "lost": 0,
+        "drawn": 0,
+        "winStreak": 0,
+        "currentStreak": 0
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-11-20",
+          "rating": 1200,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [],
+      "createdAt": "2026-11-20T04:03:53.352Z",
+      "isOnline": false,
+      "banned": false,
+      "id": "u_1795147433351_lrjm",
+      "username": "testuser1",
+      "email": "test@example.com",
+      "passwordHash": "$2b$10$zNLMkfPwgnG6eWmm.u9X1.k2TChBu7FxN17QTQYesFiGvrw5h8roe"
     }
   },
   "games": {},

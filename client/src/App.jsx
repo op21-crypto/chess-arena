@@ -22,6 +22,7 @@ import { TournamentView } from './components/TournamentView.jsx';
 import { LeaderboardView } from './components/LeaderboardView.jsx';
 import { AnalysisView } from './components/AnalysisView.jsx';
 import { AdminView } from './components/AdminView.jsx';
+import { GameOverModal } from './components/GameOverModal.jsx';
 import { BOARD_THEMES } from './components/PieceIcons.jsx';
 import { sound } from './utils/audio.js';
 
@@ -44,6 +45,7 @@ export default function App() {
   const [createdRoomInfo, setCreatedRoomInfo] = useState(null);
   const [showAIModal, setShowAIModal] = useState(false);
   const [analysisGame, setAnalysisGame] = useState(null);
+  const [showGameOverModal, setShowGameOverModal] = useState(false);
 
   // Active Game State
   const [gameSession, setGameSession] = useState(null); // Full gameState from server
@@ -93,6 +95,7 @@ export default function App() {
     socket.on('match_found', ({ gameId, side, game }) => {
       setIsSearchingMatch(false);
       setShowMatchmakingModal(false);
+      setShowGameOverModal(false);
       setGameSession(game);
       setPlayerColor(side);
       setChatMessages([]);
@@ -111,6 +114,7 @@ export default function App() {
       setGameSession(game);
       if (ready) {
         setShowFriendRoomModal(false);
+        setShowGameOverModal(false);
         setActiveTab('game');
         sound.playMove();
       }
@@ -145,10 +149,15 @@ export default function App() {
         status: data.status,
         winner: data.winner,
         winReason: data.winReason,
+        whiteEloChange: data.whiteEloChange || 0,
+        blackEloChange: data.blackEloChange || 0,
         isGameOver: true
       } : null);
 
-      if (data.winner === playerColor) {
+      setShowGameOverModal(true);
+
+      const isWinner = (data.winner === 'white' && playerColor === 'w') || (data.winner === 'black' && playerColor === 'b');
+      if (isWinner) {
         sound.playVictory();
       } else {
         sound.playGameOver();
@@ -168,6 +177,7 @@ export default function App() {
 
     socket.on('rematch_started', ({ newGameId, game }) => {
       setGameSession(game);
+      setShowGameOverModal(false);
       setPlayerColor(prev => prev === 'w' ? 'b' : 'w');
       setChatMessages([]);
       sound.playMove();
@@ -237,6 +247,7 @@ export default function App() {
     setIsAIGame(true);
     setAiLevel(level);
     setShowAIModal(false);
+    setShowGameOverModal(false);
     setActiveTab('game');
 
     const startingSession = {
@@ -262,6 +273,47 @@ export default function App() {
       triggerAIMove(startingSession.fen, startingSession, level);
     }
   };
+
+  // Local clock interval for AI matches
+  useEffect(() => {
+    if (!isAIGame || !gameSession || gameSession.isGameOver) return;
+    const interval = setInterval(() => {
+      setGameSession(prev => {
+        if (!prev || prev.isGameOver) return prev;
+        const isWhiteTurn = prev.turn === 'w';
+        const newWhiteTime = isWhiteTurn ? Math.max(0, prev.whiteTime - 100) : prev.whiteTime;
+        const newBlackTime = !isWhiteTurn ? Math.max(0, prev.blackTime - 100) : prev.blackTime;
+
+        if (newWhiteTime <= 0 || newBlackTime <= 0) {
+          const winner = newWhiteTime <= 0 ? 'black' : 'white';
+          setShowGameOverModal(true);
+          const isWinner = (winner === 'white' && playerColor === 'w') || (winner === 'black' && playerColor === 'b');
+          if (isWinner) {
+            sound.playVictory();
+          } else {
+            sound.playGameOver();
+          }
+          return {
+            ...prev,
+            whiteTime: newWhiteTime,
+            blackTime: newBlackTime,
+            isGameOver: true,
+            status: 'timeout',
+            winner,
+            winReason: 'timeout'
+          };
+        }
+
+        return {
+          ...prev,
+          whiteTime: newWhiteTime,
+          blackTime: newBlackTime
+        };
+      });
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [isAIGame, gameSession?.isGameOver, playerColor]);
 
   const triggerAIMove = async (fen, session, level) => {
     setAiThinking(true);
@@ -294,12 +346,43 @@ export default function App() {
           }
         ];
 
+        const isOver = chess.isGameOver();
+        let status = 'active';
+        let winner = null;
+        let winReason = null;
+
+        if (isOver) {
+          if (chess.isCheckmate()) {
+            status = 'checkmate';
+            winner = chess.turn() === 'w' ? 'black' : 'white';
+            winReason = 'checkmate';
+          } else if (chess.isStalemate()) {
+            status = 'stalemate';
+            winner = 'draw';
+            winReason = 'stalemate';
+          } else {
+            status = 'draw';
+            winner = 'draw';
+            winReason = 'draw';
+          }
+          setShowGameOverModal(true);
+          const isWinner = (winner === 'white' && playerColor === 'w') || (winner === 'black' && playerColor === 'b');
+          if (isWinner) {
+            sound.playVictory();
+          } else {
+            sound.playGameOver();
+          }
+        }
+
         setGameSession(prev => ({
           ...prev,
           fen: chess.fen(),
           turn: chess.turn(),
           inCheck: chess.inCheck(),
-          isGameOver: chess.isGameOver(),
+          isGameOver: isOver,
+          status: isOver ? status : 'active',
+          winner: isOver ? winner : null,
+          winReason: isOver ? winReason : null,
           moveHistory: updatedMoves
         }));
       }
@@ -331,17 +414,48 @@ export default function App() {
           }
         ];
 
+        const isOver = chess.isGameOver();
+        let status = 'active';
+        let winner = null;
+        let winReason = null;
+
+        if (isOver) {
+          if (chess.isCheckmate()) {
+            status = 'checkmate';
+            winner = chess.turn() === 'w' ? 'black' : 'white';
+            winReason = 'checkmate';
+          } else if (chess.isStalemate()) {
+            status = 'stalemate';
+            winner = 'draw';
+            winReason = 'stalemate';
+          } else {
+            status = 'draw';
+            winner = 'draw';
+            winReason = 'draw';
+          }
+          setShowGameOverModal(true);
+          const isWinner = (winner === 'white' && playerColor === 'w') || (winner === 'black' && playerColor === 'b');
+          if (isWinner) {
+            sound.playVictory();
+          } else {
+            sound.playGameOver();
+          }
+        }
+
         const updatedSession = {
           ...gameSession,
           fen: chess.fen(),
           turn: chess.turn(),
           inCheck: chess.inCheck(),
-          isGameOver: chess.isGameOver(),
+          isGameOver: isOver,
+          status: isOver ? status : 'active',
+          winner: isOver ? winner : null,
+          winReason: isOver ? winReason : null,
           moveHistory: updatedHistory
         };
         setGameSession(updatedSession);
 
-        if (!chess.isGameOver()) {
+        if (!isOver) {
           setTimeout(() => {
             triggerAIMove(chess.fen(), updatedSession, aiLevel);
           }, 300);
@@ -358,7 +472,16 @@ export default function App() {
 
   const handleResign = () => {
     if (isAIGame) {
-      setGameSession(prev => ({ ...prev, isGameOver: true, status: 'resigned', winner: playerColor === 'w' ? 'black' : 'white' }));
+      const oppWinner = playerColor === 'w' ? 'black' : 'white';
+      setGameSession(prev => ({
+        ...prev,
+        isGameOver: true,
+        status: 'resigned',
+        winner: oppWinner,
+        winReason: 'resignation'
+      }));
+      setShowGameOverModal(true);
+      sound.playGameOver();
     } else {
       socketRef.current?.emit('resign_game', { gameId: gameSession.id });
     }
@@ -715,8 +838,8 @@ export default function App() {
                   onShareRoom={() => {
                     const url = `${window.location.origin}/?room=${gameSession.id}`;
                     navigator.clipboard.writeText(url);
-                    alert('Room invite link copied to clipboard!');
                   }}
+                  onViewResult={() => setShowGameOverModal(true)}
                 />
 
                 {/* Live Chat */}
@@ -767,6 +890,7 @@ export default function App() {
         {[
           { id: 'home', label: 'Play', icon: Swords },
           { id: 'puzzles', label: 'Puzzles', icon: Flame },
+          { id: 'lessons', label: 'Learn', icon: BookOpen },
           { id: 'tournaments', label: 'Tournaments', icon: Trophy },
           { id: 'leaderboard', label: 'Rankings', icon: Shield }
         ].map(tab => {
@@ -845,6 +969,33 @@ export default function App() {
           onClose={() => setAnalysisGame(null)}
         />
       )}
+
+      {/* End of Game Celebration & Result Modal */}
+      <GameOverModal
+        isOpen={showGameOverModal}
+        status={gameSession?.status}
+        winner={gameSession?.winner}
+        winReason={gameSession?.winReason}
+        playerColor={playerColor}
+        whitePlayer={gameSession?.whitePlayer}
+        blackPlayer={gameSession?.blackPlayer}
+        whiteEloChange={gameSession?.whiteEloChange || (isAIGame ? (gameSession?.winner === 'white' ? 16 : -16) : 0)}
+        blackEloChange={gameSession?.blackEloChange || (isAIGame ? (gameSession?.winner === 'black' ? 16 : -16) : 0)}
+        onRematch={handleRequestRematch}
+        onAnalyze={() => {
+          setShowGameOverModal(false);
+          setAnalysisGame(gameSession);
+        }}
+        onNewGame={() => {
+          setShowGameOverModal(false);
+          if (isAIGame) {
+            setShowAIModal(true);
+          } else {
+            setShowMatchmakingModal(true);
+          }
+        }}
+        onClose={() => setShowGameOverModal(false)}
+      />
     </div>
   );
 }
