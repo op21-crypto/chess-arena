@@ -3,6 +3,9 @@
 
 A complete, premium, fully functional multiplayer chess application and gaming platform inspired by Chess.com and Lichess.
 
+🌐 **Live Vercel Production**: [https://chess-arena-three-indol.vercel.app](https://chess-arena-three-indol.vercel.app)
+💻 **GitHub Repository**: [https://github.com/op21-crypto/chess-arena](https://github.com/op21-crypto/chess-arena)
+
 ---
 
 ## 🌟 Key Features
