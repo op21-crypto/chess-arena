@@ -489,7 +489,7 @@ export function LessonView({ onBack }) {
         )}
 
         {/* The Chessboard (Properly bounded so it never collapses to a dot) */}
-        <div className="w-full max-w-[min(100vw-32px,440px)] aspect-square flex items-center justify-center my-1">
+        <div className="w-full max-w-[min(100vw-32px,440px)] mx-auto my-2">
           <Chessboard
             fen={activeMode === 'lesson' ? (currentStep?.fen || "8/8/8/8/8/8/8/8 w - - 0 1") : (currentPractice?.fen || "8/8/8/8/8/8/8/8 w - - 0 1")}
             playerColor="w"

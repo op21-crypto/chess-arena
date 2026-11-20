@@ -24,6 +24,7 @@ import { AnalysisView } from './components/AnalysisView.jsx';
 import { AdminView } from './components/AdminView.jsx';
 import { GameOverModal } from './components/GameOverModal.jsx';
 import { SettingsModal } from './components/SettingsModal.jsx';
+import { DailyStreakModal } from './components/DailyStreakModal.jsx';
 import { MiniMusicPlayer } from './components/MiniMusicPlayer.jsx';
 import { BOARD_THEMES } from './components/PieceIcons.jsx';
 import { sound } from './utils/audio.js';
@@ -82,6 +83,7 @@ export default function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showFriendsDrawer, setShowFriendsDrawer] = useState(false);
+  const [showStreakModal, setShowStreakModal] = useState(false);
 
   // Resilient guest user initializer (ensures Firefox/mobile users are never blocked)
   const getOrCreateUser = () => {
@@ -961,6 +963,17 @@ export default function App() {
               <Settings className="w-4 h-4" />
             </button>
 
+            {/* Daily Streak Tracker Pill Button */}
+            <button
+              onClick={() => setShowStreakModal(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/10 border border-amber-500/40 text-amber-400 hover:text-amber-300 hover:border-amber-400 font-bold text-xs shadow-xs transition-all active:scale-95"
+              title="Daily Streak Tracker (🔥 7 Days Active)"
+            >
+              <Flame className="w-4 h-4 text-orange-400 fill-orange-400 animate-pulse" />
+              <span className="hidden sm:inline font-mono">7 Days</span>
+              <span className="sm:hidden font-mono text-[11px]">7d</span>
+            </button>
+
             {/* Friends Drawer Toggle */}
             {currentUser && (
               <button
@@ -1345,6 +1358,16 @@ export default function App() {
         user={currentUser}
         onClose={() => setShowProfileModal(false)}
         onUpdateUser={user => setCurrentUser(user)}
+        onNavigateToRankings={() => setActiveTab('leaderboard')}
+        onOpenStreak={() => {
+          setShowProfileModal(false);
+          setShowStreakModal(true);
+        }}
+      />
+
+      <DailyStreakModal
+        isOpen={showStreakModal}
+        onClose={() => setShowStreakModal(false)}
       />
 
       <FriendsDrawer

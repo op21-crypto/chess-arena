@@ -1,4 +1,5 @@
 import { ALL_LESSONS } from './lessonsData.js';
+import { getLeaderboard } from './leaderboardData.js';
 
 export const CHESS_PUZZLES = [
   {
@@ -93,12 +94,4 @@ export const CHESS_PUZZLES = [
 
 export const CHESS_LESSONS = ALL_LESSONS;
 
-export const DEFAULT_LEADERBOARD = [
-  { rank: 1, id: 'player_magnus', username: 'VikingKing', country: 'NO', rating: 2840, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', progression: { title: 'Elite' }, stats: { won: 195, lost: 55 }, isOnline: true },
-  { rank: 2, id: 'player_gukesh', username: 'YouthMaster', country: 'IN', rating: 2810, avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150', progression: { title: 'Elite' }, stats: { won: 180, lost: 60 }, isOnline: true },
-  { rank: 3, id: 'player_fabiano', username: 'DeepCalculator', country: 'US', rating: 2810, avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150', progression: { title: 'Elite' }, stats: { won: 175, lost: 50 }, isOnline: false },
-  { rank: 4, id: 'player_hikaru', username: 'SpeedDemon', country: 'US', rating: 2790, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', progression: { title: 'Elite' }, stats: { won: 210, lost: 70 }, isOnline: true },
-  { rank: 5, id: 'player_judit', username: 'TacticalQueen', country: 'HU', rating: 2750, avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150', progression: { title: 'Elite' }, stats: { won: 160, lost: 45 }, isOnline: false },
-  { rank: 6, id: 'admin_001', username: 'GrandmasterAdmin', country: 'IS', rating: 2510, avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', progression: { title: 'Elite' }, stats: { won: 310, lost: 75 }, isOnline: true },
-  { rank: 7, id: 'player_anna', username: 'ChessQueenAnna', country: 'CA', rating: 2350, avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', progression: { title: 'Elite' }, stats: { won: 130, lost: 65 }, isOnline: false }
-];
+export const DEFAULT_LEADERBOARD = getLeaderboard('world', 'rapid');

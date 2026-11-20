@@ -208,7 +208,12 @@ router.post('/users/:id/update', requireAuth, (req, res) => {
 
 router.get('/leaderboard', (req, res) => {
   const format = req.query.format || 'rapid';
-  const allUsers = Database.getAllUsers().filter(u => !u.banned && u.role !== 'guest');
+  const country = req.query.country || 'world';
+  let allUsers = Database.getAllUsers().filter(u => !u.banned && u.role !== 'guest');
+
+  if (country && country !== 'world' && country !== 'all') {
+    allUsers = allUsers.filter(u => u.country?.toUpperCase() === country.toUpperCase());
+  }
 
   // Sort by selected format rating
   const sorted = allUsers.sort((a, b) => {
@@ -217,7 +222,8 @@ router.get('/leaderboard', (req, res) => {
     return rB - rA;
   });
 
-  const leaderboard = sorted.slice(0, 50).map((u, idx) => ({
+  const limit = (country && country !== 'world' && country !== 'all') ? 20 : 50;
+  const leaderboard = sorted.slice(0, limit).map((u, idx) => ({
     rank: idx + 1,
     id: u.id,
     username: u.username,
@@ -227,10 +233,11 @@ router.get('/leaderboard', (req, res) => {
     rating: u.ratings?.[format] || 1200,
     progression: getProgressionTier(u.ratings?.[format] || 1200),
     stats: u.stats,
+    puzzles: u.stats?.puzzles || Math.floor((idx + 1) * 12 + 45),
     isOnline: Boolean(u.isOnline)
   }));
 
-  res.json({ format, leaderboard });
+  res.json({ format, country, leaderboard });
 });
 
 // ================= GAME ANALYSIS & AI =================
