@@ -4,7 +4,7 @@ import { Chess } from 'chess.js';
 import {
   Home, Trophy, Swords, Users, BookOpen, Bot, Shield, Volume2, VolumeX,
   Palette, User, LogOut, Bell, Flame, Sparkles, ChevronRight, Settings, Music, Zap, ArrowRight,
-  LogIn, X
+  LogIn, X, Clock, Mic, Smartphone
 } from 'lucide-react';
 
 import { Chessboard } from './components/Chessboard.jsx';
@@ -1159,145 +1159,216 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Grandmaster Arena Hero Showcase */}
-              <div className="relative rounded-3xl p-5 sm:p-8 md:p-10 border border-amber-500/30 bg-gradient-to-br from-slate-900/95 via-slate-900/85 to-slate-950/95 shadow-2xl shadow-amber-500/10 overflow-hidden backdrop-blur-xl">
+              {/* Grandmaster Arena Game Modes Hub */}
+              <div className="relative rounded-3xl p-4 sm:p-7 md:p-8 border border-amber-500/20 bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-950/95 shadow-2xl shadow-amber-500/10 overflow-hidden backdrop-blur-xl">
                 {/* Ethereal Ambient Glows */}
-                <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-amber-500/15 blur-3xl pointer-events-none" />
+                <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
                 <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
 
-                <div className="max-w-3xl mx-auto space-y-6 text-center relative z-10">
-                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold tracking-wider uppercase shadow-xs">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Arena Season 2026 • Official FIDE Rules</span>
-                  </div>
-
-                  <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-white leading-tight">
-                    Master the <span className="gold-gradient-text">Board</span>.
-                  </h1>
-
-                  <p className="text-sm md:text-base text-slate-300 font-medium max-w-xl mx-auto">
-                    Real-time rated matchmaking, grandmaster AI bots, private voice rooms, and full-screen offline pass & play.
-                  </p>
-
-                  {/* Quick-Play Time Controls (Fully Selectable Grid) */}
-                  <div className="space-y-2.5 pt-1 max-w-2xl mx-auto">
-                    <div className="flex items-center justify-between px-1">
-                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                        Select Time Control
-                      </span>
-                      <span className="text-xs text-amber-400 font-mono font-bold flex items-center gap-1.5">
-                        <span className="text-slate-400 text-[11px] font-normal">Active:</span>
-                        <span className="text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-lg flex items-center gap-1">
-                          <span>{selectedHomeTime.icon}</span>
-                          <span>{selectedHomeTime.label}</span>
-                          <span>•</span>
-                          <span>{selectedHomeTime.type}</span>
+                <div className="max-w-2xl mx-auto space-y-4 relative z-10">
+                  {/* Clean, sleek title bar */}
+                  <div className="flex items-center justify-between px-1">
+                    <div>
+                      <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+                        <span>Play Chess</span>
+                        <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400">
+                          Season 2026
                         </span>
-                      </span>
+                      </h2>
+                      <p className="text-xs text-slate-400 font-medium mt-0.5">
+                        Select your game mode to start playing
+                      </p>
                     </div>
-
-                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                      {HOME_TIME_CONTROLS.map((item) => {
-                        const isSelected = selectedHomeTime.id === item.id;
-                        return (
-                          <button
-                            key={item.id}
-                            onClick={() => {
-                              if (isSelected) {
-                                handleStartMatchmaking(item);
-                              } else {
-                                setSelectedHomeTime(item);
-                                sound.playMove();
-                                triggerHaptic('move');
-                              }
-                            }}
-                            className={`p-2 sm:p-2.5 rounded-2xl border text-center transition-all group relative overflow-hidden active:scale-95 cursor-pointer ${
-                              isSelected
-                                ? 'bg-gradient-to-b from-amber-400 via-amber-500 to-amber-600 text-slate-950 font-black border-amber-300 ring-2 ring-amber-400/80 shadow-lg shadow-amber-500/30 scale-102'
-                                : 'bg-slate-950/70 border-slate-800 hover:border-slate-700 text-slate-300'
-                            }`}
-                            title={isSelected ? 'Double-click to start matchmaking' : `Select ${item.label} ${item.type}`}
-                          >
-                            {item.popular && !isSelected && (
-                              <span className="absolute top-1 right-1 px-1 py-0.2 rounded bg-amber-500 text-slate-950 font-black text-[8px] uppercase">
-                                Hot
-                              </span>
-                            )}
-                            {isSelected && (
-                              <span className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-slate-950 text-amber-400 font-black text-[9px] flex items-center justify-center">
-                                ✓
-                              </span>
-                            )}
-                            <div className={`text-xs sm:text-sm font-black transition-colors ${
-                              isSelected ? 'text-slate-950 font-black' : 'text-white group-hover:text-amber-400'
-                            }`}>
-                              {item.icon} {item.label}
-                            </div>
-                            <div className={`text-[9px] sm:text-[10px] font-semibold ${
-                              isSelected ? 'text-slate-900 font-bold' : 'text-slate-400'
-                            }`}>
-                              {item.type}
-                            </div>
-                          </button>
-                        );
-                      })}
+                    <div className="hidden xs:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-950/80 border border-slate-800 text-[11px] text-slate-300">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="font-mono font-bold text-white">18,450</span>
+                      <span className="text-slate-400">online</span>
                     </div>
                   </div>
 
-                  {/* Primary & Secondary Action CTAs (3 in Pic + 1 Play with Stockfish) */}
-                  <div className="space-y-3 pt-3 max-w-2xl mx-auto w-full">
-                    {/* 1. Play Online with Selected Time Control */}
+                  {/* 4 Game Mode Buttons (Up to Down) */}
+                  <div className="space-y-3 pt-1">
+                    {/* 1st: Play with Stockfish */}
                     <button
                       onClick={() => {
                         sound.playClick();
                         triggerHaptic('move');
-                        handleStartMatchmaking(selectedHomeTime);
+                        setShowAIModal(true);
                       }}
-                      className="w-full flex items-center justify-center gap-2.5 py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black text-sm sm:text-base shadow-xl shadow-amber-500/25 transition-all transform hover:-translate-y-0.5 active:scale-95 cursor-pointer"
+                      className="w-full text-left p-4 sm:p-4.5 rounded-2xl bg-gradient-to-r from-indigo-950/60 via-slate-900/90 to-purple-950/40 hover:from-indigo-900/70 hover:to-purple-900/50 border border-indigo-500/30 hover:border-indigo-400/60 shadow-lg shadow-indigo-950/20 transition-all duration-200 transform hover:-translate-y-0.5 active:scale-98 group cursor-pointer relative overflow-hidden"
                     >
-                      <Swords className="w-5 h-5 fill-slate-950" />
-                      <span>Play Online ({selectedHomeTime.label} {selectedHomeTime.type})</span>
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+                      <div className="flex items-center justify-between gap-3 relative z-10">
+                        <div className="flex items-center gap-3.5 sm:gap-4">
+                          <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 border border-indigo-500/40 flex items-center justify-center text-indigo-400 shadow-md group-hover:scale-105 group-hover:bg-indigo-500/25 transition-transform shrink-0">
+                            <Bot className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-base sm:text-lg font-black text-white group-hover:text-indigo-200 transition-colors">
+                                Play with Stockfish
+                              </span>
+                              <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-bold uppercase tracking-wider">
+                                AI Bot
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-400 mt-0.5 font-medium line-clamp-1">
+                              Practice against engine bots • Levels 1 to 8 (800–2600+ Elo)
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 text-indigo-400 text-xs font-bold shrink-0">
+                          <span className="hidden sm:inline">Play AI</span>
+                          <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </div>
                     </button>
 
-                    {/* 2, 3, 4: Pass & Play, Friends Voice, Play with Stockfish */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                      <button
-                        onClick={() => {
-                          sound.playClick();
-                          triggerHaptic('move');
-                          setActiveTab('offline');
-                        }}
-                        className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 border-2 border-amber-500/50 text-amber-300 hover:text-white font-extrabold text-xs sm:text-sm shadow-md transition-all active:scale-95 cursor-pointer"
-                        title="Two Players Pass & Play Face-to-Face on 1 Device"
-                      >
-                        <Users className="w-4 h-4 text-amber-400" />
-                        <span>Pass & Play (Offline 👥)</span>
-                      </button>
+                    {/* 2nd: Play Friends (Voice) */}
+                    <button
+                      onClick={() => {
+                        sound.playClick();
+                        triggerHaptic('move');
+                        setShowFriendRoomModal(true);
+                      }}
+                      className="w-full text-left p-4 sm:p-4.5 rounded-2xl bg-gradient-to-r from-emerald-950/60 via-slate-900/90 to-teal-950/40 hover:from-emerald-900/70 hover:to-teal-900/50 border border-emerald-500/30 hover:border-emerald-400/60 shadow-lg shadow-emerald-950/20 transition-all duration-200 transform hover:-translate-y-0.5 active:scale-98 group cursor-pointer relative overflow-hidden"
+                    >
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+                      <div className="flex items-center justify-between gap-3 relative z-10">
+                        <div className="flex items-center gap-3.5 sm:gap-4">
+                          <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-md group-hover:scale-105 group-hover:bg-emerald-500/25 transition-transform shrink-0">
+                            <Mic className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-base sm:text-lg font-black text-white group-hover:text-emerald-200 transition-colors">
+                                Play Friends (Voice 🎙️)
+                              </span>
+                              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider">
+                                Live Audio
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-400 mt-0.5 font-medium line-clamp-1">
+                              Create a private room & talk in real-time with voice chat
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 text-emerald-400 text-xs font-bold shrink-0">
+                          <span className="hidden sm:inline">Room</span>
+                          <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </div>
+                    </button>
 
-                      <button
-                        onClick={() => {
-                          sound.playClick();
-                          triggerHaptic('move');
-                          setShowFriendRoomModal(true);
-                        }}
-                        className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 border-2 border-emerald-500/50 text-emerald-300 hover:text-white font-extrabold text-xs sm:text-sm shadow-md transition-all active:scale-95 cursor-pointer"
-                      >
-                        <Users className="w-4 h-4 text-emerald-400" />
-                        <span>Friends (Voice 🎙️)</span>
-                      </button>
+                    {/* 3rd: Play Online (With Time Controls + CTA) */}
+                    <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-950/40 via-slate-900/90 to-orange-950/40 border border-amber-500/35 shadow-xl shadow-amber-950/20 relative overflow-hidden space-y-3">
+                      <div className="absolute top-0 right-0 w-36 h-36 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+                      <div className="flex items-center justify-between gap-3 relative z-10">
+                        <div className="flex items-center gap-3.5 sm:gap-4">
+                          <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shadow-md shrink-0">
+                            <Swords className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-base sm:text-lg font-black text-white">
+                                Play Online
+                              </span>
+                              <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold uppercase tracking-wider">
+                                Rated FIDE
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-400 mt-0.5 font-medium line-clamp-1">
+                              Instant rated matchmaking with players worldwide
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-xs text-amber-400 font-mono font-bold bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-lg shrink-0">
+                          {selectedHomeTime.icon} {selectedHomeTime.label}
+                        </span>
+                      </div>
 
+                      {/* Time Control Quick Selector */}
+                      <div className="grid grid-cols-6 gap-1.5 relative z-10">
+                        {HOME_TIME_CONTROLS.map((item) => {
+                          const isSelected = selectedHomeTime.id === item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedHomeTime(item);
+                                sound.playMove();
+                                triggerHaptic('move');
+                              }}
+                              className={`py-2 px-1 rounded-xl border text-center transition-all cursor-pointer active:scale-95 flex flex-col items-center justify-center ${
+                                isSelected
+                                  ? 'bg-amber-500 text-slate-950 font-black border-amber-300 shadow-md shadow-amber-500/30'
+                                  : 'bg-slate-950/70 border-slate-800 hover:border-slate-700 text-slate-300'
+                              }`}
+                              title={`${item.label} ${item.type}`}
+                            >
+                              <span className="text-[11px] sm:text-xs font-black truncate leading-tight">
+                                {item.label}
+                              </span>
+                              <span className={`text-[9px] uppercase font-bold truncate ${
+                                isSelected ? 'text-slate-950' : 'text-slate-400'
+                              }`}>
+                                {item.type}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Main Play Online CTA */}
                       <button
                         onClick={() => {
                           sound.playClick();
                           triggerHaptic('move');
-                          setShowAIModal(true);
+                          handleStartMatchmaking(selectedHomeTime);
                         }}
-                        className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-indigo-500/15 hover:bg-indigo-500/25 border-2 border-indigo-500/50 text-indigo-300 hover:text-white font-extrabold text-xs sm:text-sm shadow-md transition-all active:scale-95 cursor-pointer"
+                        className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black text-sm sm:text-base shadow-lg shadow-amber-500/25 transition-all transform hover:-translate-y-0.5 active:scale-98 cursor-pointer relative z-10"
                       >
-                        <Bot className="w-4 h-4 text-indigo-400" />
-                        <span>Play with Stockfish 🤖</span>
+                        <Swords className="w-5 h-5 fill-slate-950" />
+                        <span>Play Online ({selectedHomeTime.label} {selectedHomeTime.type})</span>
                       </button>
                     </div>
+
+                    {/* 4th: Offline Chess Board */}
+                    <button
+                      onClick={() => {
+                        sound.playClick();
+                        triggerHaptic('move');
+                        setActiveTab('offline');
+                      }}
+                      className="w-full text-left p-4 sm:p-4.5 rounded-2xl bg-gradient-to-r from-slate-900/90 via-slate-900/95 to-slate-950/90 hover:from-slate-850 hover:to-slate-900 border border-slate-800 hover:border-amber-500/40 shadow-lg shadow-slate-950/30 transition-all duration-200 transform hover:-translate-y-0.5 active:scale-98 group cursor-pointer relative overflow-hidden"
+                    >
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
+                      <div className="flex items-center justify-between gap-3 relative z-10">
+                        <div className="flex items-center gap-3.5 sm:gap-4">
+                          <div className="w-12 h-12 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex items-center justify-center text-amber-400 shadow-md group-hover:scale-105 group-hover:border-amber-500/40 transition-transform shrink-0">
+                            <Smartphone className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-base sm:text-lg font-black text-white group-hover:text-amber-200 transition-colors">
+                                Offline Chess Board
+                              </span>
+                              <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 text-[10px] font-bold uppercase tracking-wider">
+                                Pass & Play 👥
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-400 mt-0.5 font-medium line-clamp-1">
+                              Play face-to-face on 1 phone • Vertical full screen board
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 text-slate-400 group-hover:text-amber-400 text-xs font-bold shrink-0">
+                          <span className="hidden sm:inline">Pass & Play</span>
+                          <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </div>
+                    </button>
                   </div>
                 </div>
               </div>
