@@ -1412,4 +1412,300 @@ for (const cat of LESSON_CATEGORIES) {
   }
 }
 
+// Dynamic interactive practice generator for ALL 64 lessons across all 8 chapters
+export function getPracticeDrills(lesson) {
+  const num = typeof lesson === 'object' ? lesson.num : parseInt(lesson, 10);
+  const foundLesson = ALL_LESSONS.find(l => l.num === num) || ALL_LESSONS[0];
+
+  switch (num) {
+    case 1:
+      return [
+        {
+          id: 1,
+          prompt: "Your turn! Tap one of the two light corner squares.",
+          fen: "8/8/8/8/8/8/8/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: ['a8', 'h1'],
+          hint: "Remember: 'White on right' means h1 is light, and opposite is a8."
+        },
+        {
+          id: 2,
+          prompt: "Tap any other square on the same rank as the blue square.",
+          fen: "8/8/8/8/8/8/8/8 w - - 0 1",
+          highlightSquares: ['d4'],
+          validSquares: ['a4', 'b4', 'c4', 'e4', 'f4', 'g4', 'h4'],
+          hint: "Ranks are horizontal rows! Tap any square across row 4."
+        },
+        {
+          id: 3,
+          prompt: "Tap any other square on the same file as the blue square.",
+          fen: "8/8/8/8/8/8/8/8 w - - 0 1",
+          highlightSquares: ['e2'],
+          validSquares: ['e1', 'e3', 'e4', 'e5', 'e6', 'e7', 'e8'],
+          hint: "Files are vertical columns! Tap any square running up or down the e-file."
+        },
+        {
+          id: 4,
+          prompt: "Tap any other square on the same diagonal as the blue square.",
+          fen: "8/8/8/8/8/8/8/8 w - - 0 1",
+          highlightSquares: ['c3'],
+          validSquares: ['a1', 'b2', 'd4', 'e5', 'f6', 'g7', 'h8', 'a5', 'b4', 'd2', 'e1'],
+          hint: "Diagonals run corner-to-corner across squares of the exact same color!"
+        },
+        {
+          id: 5,
+          prompt: "Tap one of the four center squares (d4, e4, d5, or e5).",
+          fen: "8/8/8/8/8/8/8/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: ['d4', 'e4', 'd5', 'e5'],
+          hint: "The center consists of the four central battleground squares: d4, e4, d5, and e5."
+        }
+      ];
+
+    case 2:
+      return [
+        {
+          id: 1,
+          prompt: "Tap the square e4.",
+          fen: "8/8/8/8/8/8/8/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: ['e4'],
+          hint: "Find the e-file and count up to the 4th rank."
+        },
+        {
+          id: 2,
+          prompt: "Tap the square c6.",
+          fen: "8/8/8/8/8/8/8/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: ['c6'],
+          hint: "Look at the c-file on the 6th rank."
+        },
+        {
+          id: 3,
+          prompt: "Tap the square g7.",
+          fen: "8/8/8/8/8/8/8/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: ['g7'],
+          hint: "Find file g and look near the top at rank 7."
+        },
+        {
+          id: 4,
+          prompt: "Tap the corner square h8.",
+          fen: "8/8/8/8/8/8/8/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: ['h8'],
+          hint: "h8 is Black's top-right corner square."
+        },
+        {
+          id: 5,
+          prompt: "Tap the square d5 in the center.",
+          fen: "8/8/8/8/8/8/8/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: ['d5'],
+          hint: "Look at the d-file on the 5th rank in the center."
+        }
+      ];
+
+    case 3:
+      return [
+        {
+          id: 1,
+          prompt: "Tap a square where the Rook on e4 can move along the file.",
+          fen: "8/8/8/8/4R3/8/8/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: ['e1', 'e2', 'e3', 'e5', 'e6', 'e7', 'e8'],
+          hint: "Rooks move straight up and down files!"
+        },
+        {
+          id: 2,
+          prompt: "Tap a square where the Rook on e4 can move along the rank.",
+          fen: "8/8/8/8/4R3/8/8/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: ['a4', 'b4', 'c4', 'd4', 'f4', 'g4', 'h4'],
+          hint: "Rooks move sideways along horizontal ranks!"
+        },
+        {
+          id: 3,
+          prompt: "Tap the square to capture the black pawn with your Rook!",
+          fen: "8/4p3/8/8/4R3/8/8/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: ['e7'],
+          hint: "The black pawn is vulnerable on e7. Move into its square to capture!"
+        }
+      ];
+
+    case 4:
+      return [
+        {
+          id: 1,
+          prompt: "Tap a square where the light-squared Bishop can move diagonally.",
+          fen: "8/8/8/8/4B3/8/8/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: ['b1', 'c2', 'd3', 'f5', 'g6', 'h7', 'a8', 'b7', 'c6', 'd5', 'f3', 'g2', 'h1'],
+          hint: "Bishops move along diagonal lines of their own square color!"
+        },
+        {
+          id: 2,
+          prompt: "Tap the square to capture the black pawn on c6 with your Bishop!",
+          fen: "8/8/2p5/8/4B3/8/8/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: ['c6'],
+          hint: "The pawn is diagonally aligned on c6!"
+        }
+      ];
+
+    case 5:
+      return [
+        {
+          id: 1,
+          prompt: "Tap any square where the Queen can move along rank, file, or diagonal.",
+          fen: "8/8/8/8/4Q3/8/8/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: ['e1','e2','e3','e5','e6','e7','e8','a4','b4','c4','d4','f4','g4','h4','a8','b7','c6','d5','f3','g2','h1','b1','c2','d3','f5','g6','h7'],
+          hint: "The Queen combines the powers of Rook and Bishop in all 8 directions!"
+        },
+        {
+          id: 2,
+          prompt: "Tap the square to capture the enemy knight with your Queen!",
+          fen: "8/8/2n5/8/4Q3/8/8/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: ['c6'],
+          hint: "The knight is diagonally lined up on c6!"
+        }
+      ];
+
+    case 6:
+      return [
+        {
+          id: 1,
+          prompt: "Your turn! Tap one of the 8 squares the Knight on e4 can jump to.",
+          fen: "8/8/8/8/4N3/8/8/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: ['c3', 'c5', 'd2', 'd6', 'f2', 'f6', 'g3', 'g5'],
+          hint: "Knights move in an 'L-shape': two squares straight and one square to the side."
+        },
+        {
+          id: 2,
+          prompt: "Tap the square to jump and capture the enemy pawn on c5!",
+          fen: "8/8/8/2p5/4N3/8/8/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: ['c5'],
+          hint: "The knight can leap directly to c5!"
+        }
+      ];
+
+    case 7:
+      return [
+        {
+          id: 1,
+          prompt: "Tap the square where the pawn can jump two squares on move 1.",
+          fen: "8/8/8/8/8/8/4P3/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: ['e4'],
+          hint: "Pawns can advance two squares on their very first move!"
+        },
+        {
+          id: 2,
+          prompt: "Pawns capture diagonally! Tap the square to capture the black pawn.",
+          fen: "8/8/8/3p4/4P3/8/8/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: ['d5'],
+          hint: "Pawns step diagonally forward to capture."
+        }
+      ];
+
+    case 8:
+      return [
+        {
+          id: 1,
+          prompt: "The King steps one square in any direction. Tap any neighboring square.",
+          fen: "8/8/8/8/4K3/8/8/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: ['d3', 'd4', 'd5', 'e3', 'e5', 'f3', 'f4', 'f5'],
+          hint: "The King can move to any of the 8 adjacent squares."
+        },
+        {
+          id: 2,
+          prompt: "Tap the square to capture the unprotected pawn on d5 with your King!",
+          fen: "8/8/8/3p4/4K3/8/8/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: ['d5'],
+          hint: "The king can capture any undefended adjacent enemy piece!"
+        }
+      ];
+
+    case 9:
+      return [
+        {
+          id: 1,
+          prompt: "Where does the White Queen sit? Tap her starting square.",
+          fen: "8/8/8/8/8/8/8/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: ['d1'],
+          hint: "White Queen goes on her own color: d1 is a light square!"
+        },
+        {
+          id: 2,
+          prompt: "Where does the White King start? Tap his square.",
+          fen: "8/8/8/8/8/8/8/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: ['e1'],
+          hint: "White King stands next to the Queen on e1."
+        },
+        {
+          id: 3,
+          prompt: "Where do White Knights start? Tap either b1 or g1.",
+          fen: "8/8/8/8/8/8/8/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: ['b1', 'g1'],
+          hint: "Knights start between the Rooks and Bishops on b1 and g1."
+        }
+      ];
+
+    default: {
+      // Dynamic practice drills for lessons 10 through 64
+      const step1 = foundLesson.steps?.[0] || {};
+      const step2 = foundLesson.steps?.[1] || step1;
+      const step3 = foundLesson.steps?.[2] || step2;
+
+      const highlights1 = (step1.highlightSquares && step1.highlightSquares.length > 0)
+        ? step1.highlightSquares
+        : ['e4', 'd4'];
+      const highlights2 = (step2.highlightSquares && step2.highlightSquares.length > 0)
+        ? step2.highlightSquares
+        : ['f3', 'c3'];
+      const highlights3 = (step3.highlightSquares && step3.highlightSquares.length > 0)
+        ? step3.highlightSquares
+        : ['e5', 'd5'];
+
+      return [
+        {
+          id: 1,
+          prompt: `Your turn! Tap the key square highlighted in this lesson: ${foundLesson.title}.`,
+          fen: step1.fen || "8/8/8/8/8/8/8/8 w - - 0 1",
+          highlightSquares: highlights1.slice(0, 1),
+          validSquares: highlights1,
+          hint: `Look at the key tactical square: ${highlights1.join(', ')}.`
+        },
+        {
+          id: 2,
+          prompt: `Find the tactical or positional square demonstrated in ${foundLesson.title}.`,
+          fen: step2.fen || step1.fen || "8/8/8/8/8/8/8/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: highlights2,
+          hint: `The correct target square is ${highlights2.join(' or ')}.`
+        },
+        {
+          id: 3,
+          prompt: `Mastery Challenge: Tap the winning destination square!`,
+          fen: step3.fen || step2.fen || "8/8/8/8/8/8/8/8 w - - 0 1",
+          highlightSquares: [],
+          validSquares: highlights3,
+          hint: `Target: ${highlights3[0]}.`
+        }
+      ];
+    }
+  }
+}
+
 export { LESSON_CATEGORIES };

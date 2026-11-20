@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Chessboard } from './Chessboard.jsx';
 import { OwlMascot } from './OwlMascot.jsx';
 import {
@@ -13,12 +13,13 @@ import {
   Lock,
   LockOpen,
   CheckCircle2,
-  Award,
   Sparkles,
-  Unlock,
-  RotateCcw
+  BookOpen,
+  Target,
+  RotateCcw,
+  Check
 } from 'lucide-react';
-import { ALL_LESSONS, LESSON_CATEGORIES } from '../data/lessonsData.js';
+import { ALL_LESSONS, LESSON_CATEGORIES, getPracticeDrills } from '../data/lessonsData.js';
 import { sound } from '../utils/audio.js';
 import { musicEngine } from '../utils/music.js';
 import { safeStorage } from '../utils/storage.js';
@@ -29,11 +30,35 @@ export function LessonView({ onBack }) {
     const saved = safeStorage.getItem('chess_current_lesson_idx');
     return saved !== null ? parseInt(saved, 10) : 0;
   });
+
+  // Mode: 'lesson' | 'practice'
+  const [activeMode, setActiveMode] = useState('lesson');
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
+  const [practiceStepIdx, setPracticeStepIdx] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Audio toggles (persisted in safeStorage)
+  const [voiceEnabled, setVoiceEnabled] = useState(() => {
+    const saved = safeStorage.getItem('chess_lesson_voice');
+    return saved === null ? true : saved === 'true';
+  });
+  const [musicEnabled, setMusicEnabled] = useState(() => {
+    const saved = safeStorage.getItem('chess_lesson_music');
+    return saved === 'true';
+  });
+
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isMusicPlaying, setIsMusicPlaying] = useState(musicEngine.isPlaying);
+
+  // Interactive practice states
+  const [successSquares, setSuccessSquares] = useState([]);
+  const [errorSquares, setErrorSquares] = useState([]);
+  const [practiceFeedback, setPracticeFeedback] = useState(null);
+  const [practiceComplete, setPracticeComplete] = useState(false);
+
   const [unlockAll, setUnlockAll] = useState(() => {
     const saved = safeStorage.getItem('chess_lessons_unlock_all');
-    return saved === null ? true : saved === 'true'; // Default true for flexible learning
+    return saved === null ? true : saved === 'true';
   });
   const [completedLessons, setCompletedLessons] = useState(() => {
     try {
@@ -44,14 +69,19 @@ export function LessonView({ onBack }) {
     }
   });
 
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [showCompletionBanner, setShowCompletionBanner] = useState(false);
 
   const currentLesson = lessons[selectedLessonIdx] || lessons[0];
   const currentStep = currentLesson?.steps?.[currentStepIdx] || currentLesson?.steps?.[0];
 
-  // Save current lesson index to storage
+  // Interactive Practice Drills for this lesson
+  const practiceDrills = useMemo(() => {
+    return getPracticeDrills(currentLesson);
+  }, [currentLesson]);
+
+  const currentPractice = practiceDrills[practiceStepIdx] || practiceDrills[0];
+
+  // Save current lesson index
   useEffect(() => {
     safeStorage.setItem('chess_current_lesson_idx', selectedLessonIdx.toString());
   }, [selectedLessonIdx]);
@@ -61,10 +91,32 @@ export function LessonView({ onBack }) {
     safeStorage.setItem('chess_completed_lessons', JSON.stringify([...completedLessons]));
   }, [completedLessons]);
 
-  // Sync music state
+  // Text-To-Speech Narrator for Owl
+  const speakText = (text) => {
+    if (!voiceEnabled || !('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.95;
+      utterance.pitch = 1.05;
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.warn('Speech synthesis error:', e);
+    }
+  };
+
+  // Auto-speak on step or mode changes when voice is enabled
   useEffect(() => {
-    setIsMusicPlaying(musicEngine.isPlaying);
-  }, []);
+    if (!voiceEnabled) return;
+    const textToSpeak = activeMode === 'lesson'
+      ? (currentStep?.speech || currentStep?.content || currentLesson.title)
+      : (practiceFeedback || currentPractice?.prompt || 'Your turn!');
+
+    speakText(textToSpeak);
+  }, [currentStepIdx, practiceStepIdx, activeMode, selectedLessonIdx]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -74,48 +126,48 @@ export function LessonView({ onBack }) {
         return;
       }
       if (e.key === 'ArrowRight') {
-        handleNextStep();
+        if (activeMode === 'lesson') handleNextStep();
+        else handleNextPractice();
       } else if (e.key === 'ArrowLeft') {
-        handlePrevStep();
+        if (activeMode === 'lesson') handlePrevStep();
+        else handlePrevPractice();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isModalOpen, currentStepIdx, selectedLessonIdx]);
+  }, [isModalOpen, currentStepIdx, practiceStepIdx, activeMode, selectedLessonIdx]);
 
-  // Handle Text-To-Speech for Owl
-  const toggleSpeech = () => {
-    if (!('speechSynthesis' in window)) {
-      alert('Speech Synthesis is not supported in this browser environment.');
-      return;
-    }
+  // Toggle Voice Narration ON/OFF
+  const toggleVoice = () => {
+    const nextVal = !voiceEnabled;
+    setVoiceEnabled(nextVal);
+    safeStorage.setItem('chess_lesson_voice', nextVal.toString());
 
-    if (window.speechSynthesis.speaking) {
-      window.speechSynthesis.cancel();
+    if (nextVal) {
+      const textToSpeak = activeMode === 'lesson'
+        ? (currentStep?.speech || currentStep?.content || currentLesson.title)
+        : (currentPractice?.prompt || 'Your turn!');
+      speakText(textToSpeak);
+    } else {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
       setIsSpeaking(false);
-      return;
     }
-
-    const text = currentStep?.speech || currentStep?.content || currentLesson.title;
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.95;
-    utterance.pitch = 1.05;
-
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-
-    window.speechSynthesis.speak(utterance);
   };
 
-  // Handle ambient background music toggle
+  // Toggle Ambient Light Background Music ON/OFF
   const toggleMusic = () => {
-    if (musicEngine.isPlaying) {
-      musicEngine.stop();
-      setIsMusicPlaying(false);
-    } else {
+    const nextVal = !musicEnabled;
+    setMusicEnabled(nextVal);
+    safeStorage.setItem('chess_lesson_music', nextVal.toString());
+
+    if (nextVal) {
       musicEngine.start();
       setIsMusicPlaying(true);
+    } else {
+      musicEngine.stop();
+      setIsMusicPlaying(false);
     }
   };
 
@@ -129,9 +181,9 @@ export function LessonView({ onBack }) {
       setCurrentStepIdx(prev => prev + 1);
       sound.playMove();
     } else {
-      // Completed last step of lesson!
+      // Completed last lesson step -> offer to jump to practice
       sound.playVictory();
-      setCompletedLessons(prev => new Set([...prev, currentLesson.num, currentLesson.num + 1]));
+      setCompletedLessons(prev => new Set([...prev, currentLesson.num]));
       setShowCompletionBanner(true);
     }
   };
@@ -148,6 +200,71 @@ export function LessonView({ onBack }) {
     }
   };
 
+  const handleNextPractice = () => {
+    setSuccessSquares([]);
+    setErrorSquares([]);
+    setPracticeFeedback(null);
+
+    if (practiceStepIdx < practiceDrills.length - 1) {
+      setPracticeStepIdx(prev => prev + 1);
+      sound.playMove();
+    } else {
+      setPracticeComplete(true);
+      setShowCompletionBanner(true);
+      sound.playVictory();
+    }
+  };
+
+  const handlePrevPractice = () => {
+    setSuccessSquares([]);
+    setErrorSquares([]);
+    setPracticeFeedback(null);
+
+    if (practiceStepIdx > 0) {
+      setPracticeStepIdx(prev => prev - 1);
+      sound.playMove();
+    }
+  };
+
+  // Handle User Tapping a square during Practice drills
+  const handlePracticeSquareClick = (square) => {
+    if (activeMode !== 'practice' || !currentPractice) return;
+    if (practiceComplete) return;
+
+    const isCorrect = currentPractice.validSquares && currentPractice.validSquares.includes(square);
+    if (isCorrect) {
+      setSuccessSquares([square]);
+      setErrorSquares([]);
+      sound.playVictory();
+      setPracticeFeedback("Well done!");
+      if (voiceEnabled) speakText("Well done!");
+
+      // Advance to next practice after brief celebration
+      setTimeout(() => {
+        if (practiceStepIdx < practiceDrills.length - 1) {
+          setPracticeStepIdx(prev => prev + 1);
+          setSuccessSquares([]);
+          setPracticeFeedback(null);
+        } else {
+          setPracticeComplete(true);
+          setCompletedLessons(prev => new Set([...prev, currentLesson.num, currentLesson.num + 1]));
+          setShowCompletionBanner(true);
+          sound.playVictory();
+        }
+      }, 1200);
+    } else {
+      setErrorSquares([square]);
+      sound.playGameOver();
+      const hintMsg = currentPractice.hint ? `Not quite! ${currentPractice.hint}` : "Not quite, try again!";
+      setPracticeFeedback(hintMsg);
+      if (voiceEnabled) speakText(hintMsg);
+
+      setTimeout(() => {
+        setErrorSquares([]);
+      }, 700);
+    }
+  };
+
   const handleSelectLesson = (lessonNum) => {
     const idx = lessons.findIndex(l => l.num === lessonNum);
     if (idx !== -1) {
@@ -157,6 +274,12 @@ export function LessonView({ onBack }) {
       }
       setSelectedLessonIdx(idx);
       setCurrentStepIdx(0);
+      setPracticeStepIdx(0);
+      setActiveMode('lesson');
+      setSuccessSquares([]);
+      setErrorSquares([]);
+      setPracticeFeedback(null);
+      setPracticeComplete(false);
       setIsModalOpen(false);
       setShowCompletionBanner(false);
       sound.playMove();
@@ -166,37 +289,13 @@ export function LessonView({ onBack }) {
   const handleAdvanceToNextLesson = () => {
     setShowCompletionBanner(false);
     if (selectedLessonIdx < lessons.length - 1) {
-      setSelectedLessonIdx(prev => prev + 1);
-      setCurrentStepIdx(0);
-      sound.playMove();
+      handleSelectLesson(lessons[selectedLessonIdx + 1].num);
     }
   };
-
-  const getBorderColorClass = (color) => {
-    switch (color) {
-      case 'emerald':
-        return 'border-b-4 border-emerald-500';
-      case 'rose':
-        return 'border-b-4 border-rose-500';
-      case 'orange':
-        return 'border-b-4 border-orange-500';
-      case 'amber':
-      default:
-        return 'border-b-4 border-amber-400';
-    }
-  };
-
-  if (!currentLesson || !currentStep) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px] text-slate-400">
-        Loading lessons...
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[#edf3f8] text-slate-800 flex flex-col justify-between selection:bg-sky-200">
-      {/* Top Navigation Bar (matching Image 8) */}
+      {/* Top Navigation Bar (matching screenshots) */}
       <header className="sticky top-0 z-30 bg-[#dbeafe] border-b border-sky-200 px-4 py-2.5 shadow-xs">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           {/* Back Button */}
@@ -221,9 +320,9 @@ export function LessonView({ onBack }) {
             </span>
           </button>
 
-          {/* Right Action Icons */}
+          {/* Right Action Icons (Chapter List, Voice, Music) */}
           <div className="flex items-center gap-1.5 md:gap-2">
-            {/* Choose Lesson Modal Trigger */}
+            {/* 1. Choose Lesson Modal Trigger (:= icon) */}
             <button
               onClick={() => setIsModalOpen(true)}
               className="p-2 rounded-xl text-slate-700 hover:text-sky-900 hover:bg-sky-200/70 transition-colors"
@@ -232,28 +331,28 @@ export function LessonView({ onBack }) {
               <List className="w-5 h-5" />
             </button>
 
-            {/* Text-To-Speech Speaker */}
+            {/* 2. Text-To-Speech Voice Narration Toggle (🗣️ / Volume) */}
             <button
-              onClick={toggleSpeech}
+              onClick={toggleVoice}
               className={`p-2 rounded-xl transition-all ${
-                isSpeaking
-                  ? 'bg-sky-400 text-sky-950 shadow-sm animate-pulse'
-                  : 'text-slate-700 hover:text-sky-900 hover:bg-sky-200/70'
+                voiceEnabled
+                  ? 'bg-sky-500 text-white shadow-sm ring-2 ring-sky-300'
+                  : 'text-slate-500 hover:text-slate-800 hover:bg-sky-200/60'
               }`}
-              title={isSpeaking ? 'Mute voice' : 'Listen to lesson'}
+              title={voiceEnabled ? 'Voice Narration: ON (Tap to mute)' : 'Voice Narration: OFF (Tap to speak)'}
             >
-              <Volume2 className="w-5 h-5" />
+              {voiceEnabled ? <Volume2 className="w-5 h-5 animate-pulse" /> : <VolumeX className="w-5 h-5" />}
             </button>
 
-            {/* Ambient Background Music */}
+            {/* 3. Light Ambient Background Music Toggle (🎵 icon) */}
             <button
               onClick={toggleMusic}
               className={`p-2 rounded-xl transition-all ${
-                isMusicPlaying
-                  ? 'bg-amber-400/90 text-amber-950 shadow-sm'
-                  : 'text-slate-700 hover:text-sky-900 hover:bg-sky-200/70'
+                musicEnabled
+                  ? 'bg-amber-400 text-amber-950 shadow-sm ring-2 ring-amber-300 animate-pulse'
+                  : 'text-slate-500 hover:text-slate-800 hover:bg-sky-200/60'
               }`}
-              title={isMusicPlaying ? 'Stop music' : 'Play ambient music'}
+              title={musicEnabled ? 'Ambient Music: ON (Tap to mute)' : 'Ambient Music: OFF (Tap to play)'}
             >
               <Music className="w-5 h-5" />
             </button>
@@ -261,27 +360,92 @@ export function LessonView({ onBack }) {
         </div>
       </header>
 
-      {/* Subtitle Header */}
-      <div className="w-full text-center pt-3 pb-1 px-4">
+      {/* Subtitle Header & Lesson / Practice Switcher */}
+      <div className="w-full text-center pt-3 pb-1 px-4 space-y-2">
         <h2 className="text-base md:text-lg font-semibold text-slate-700">
           {currentLesson.title}
         </h2>
+
+        {/* Clean Mode Switcher: [ 📖 Lesson ]  [ 🎯 Practice ] */}
+        <div className="flex items-center justify-center gap-2">
+          <button
+            onClick={() => {
+              setActiveMode('lesson');
+              setSuccessSquares([]);
+              setErrorSquares([]);
+              setPracticeFeedback(null);
+              sound.playMove();
+            }}
+            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+              activeMode === 'lesson'
+                ? 'bg-sky-700 text-white shadow-sm ring-1 ring-sky-800'
+                : 'bg-white/90 text-slate-700 hover:bg-white border border-slate-300'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Lesson</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveMode('practice');
+              setSuccessSquares([]);
+              setErrorSquares([]);
+              setPracticeFeedback(null);
+              sound.playMove();
+            }}
+            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+              activeMode === 'practice'
+                ? 'bg-amber-500 text-slate-950 shadow-sm ring-1 ring-amber-600'
+                : 'bg-white/90 text-slate-700 hover:bg-white border border-slate-300'
+            }`}
+          >
+            <Target className="w-3.5 h-3.5" />
+            <span>Practice</span>
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-400/30 text-amber-950 font-bold">
+              {practiceDrills.length}
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-2xl w-full mx-auto px-4 py-2 flex flex-col justify-around items-center gap-4">
+      <main className="flex-1 max-w-2xl w-full mx-auto px-4 py-1 flex flex-col justify-around items-center gap-3">
         {/* Owl Mascot & Speech Bubble */}
         <div className="w-full flex items-start gap-3 md:gap-4 max-w-[500px]">
           {/* Owl Mascot */}
-          <div className="shrink-0 pt-1 cursor-pointer" onClick={toggleSpeech} title="Tap owl to hear voice">
+          <div
+            className="shrink-0 pt-1 cursor-pointer"
+            onClick={() => {
+              const textToSpeak = activeMode === 'lesson'
+                ? (currentStep?.speech || currentStep?.content || currentLesson.title)
+                : (practiceFeedback || currentPractice?.prompt || 'Your turn!');
+              speakText(textToSpeak);
+            }}
+            title="Tap owl to hear voice"
+          >
             <OwlMascot size={64} isSpeaking={isSpeaking} />
           </div>
 
           {/* Speech Bubble */}
           <div className="relative flex-1 bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-slate-200 text-slate-800 text-sm md:text-base leading-relaxed">
-            {/* Speech bubble arrow pointer pointing to owl */}
+            {/* Arrow pointer */}
             <div className="absolute top-5 -left-2 w-0 h-0 border-t-8 border-t-transparent border-r-8 border-r-white border-b-8 border-b-transparent drop-shadow-xs" />
-            <p>{currentStep.speech || currentStep.content}</p>
+            
+            {activeMode === 'lesson' ? (
+              <p>{currentStep?.speech || currentStep?.content}</p>
+            ) : (
+              <div>
+                <p className="font-semibold text-sky-950">
+                  {practiceFeedback || currentPractice?.prompt || "Your turn! Tap the correct square."}
+                </p>
+                {practiceFeedback === "Well done!" && (
+                  <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-bold mt-1">
+                    <Check className="w-3.5 h-3.5" /> Correct! Moving to next drill...
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -291,42 +455,63 @@ export function LessonView({ onBack }) {
             <div className="flex items-center gap-2.5">
               <Sparkles className="w-5 h-5 text-emerald-600 animate-spin" />
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-emerald-700">Lesson Complete!</p>
-                <p className="text-sm font-semibold">Great job mastering {currentLesson.title}!</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-emerald-700">
+                  {activeMode === 'practice' ? 'Practice Complete!' : 'Lesson Complete!'}
+                </p>
+                <p className="text-sm font-semibold">
+                  {activeMode === 'practice'
+                    ? `Mastered all drills for ${currentLesson.title}!`
+                    : `Great job on ${currentLesson.title}! Ready for practice?`}
+                </p>
               </div>
             </div>
-            {selectedLessonIdx < lessons.length - 1 && (
+            {activeMode === 'lesson' ? (
+              <button
+                onClick={() => {
+                  setActiveMode('practice');
+                  setPracticeStepIdx(0);
+                  setShowCompletionBanner(false);
+                  sound.playMove();
+                }}
+                className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-bold shadow-sm transition-all transform active:scale-95"
+              >
+                Practice Drills 🎯 &rarr;
+              </button>
+            ) : selectedLessonIdx < lessons.length - 1 ? (
               <button
                 onClick={handleAdvanceToNextLesson}
                 className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-sm transition-all transform active:scale-95"
               >
                 Next Lesson &rarr;
               </button>
-            )}
+            ) : null}
           </div>
         )}
 
-        {/* The Chessboard */}
-        <div className="w-full max-w-[420px] md:max-w-[460px] aspect-square flex items-center justify-center">
+        {/* The Chessboard (Properly bounded so it never collapses to a dot) */}
+        <div className="w-full max-w-[min(100vw-32px,440px)] aspect-square flex items-center justify-center my-1">
           <Chessboard
-            fen={currentStep.fen}
+            fen={activeMode === 'lesson' ? (currentStep?.fen || "8/8/8/8/8/8/8/8 w - - 0 1") : (currentPractice?.fen || "8/8/8/8/8/8/8/8 w - - 0 1")}
             playerColor="w"
-            disabled={true}
+            disabled={activeMode === 'lesson'}
+            onSquareClick={activeMode === 'practice' ? handlePracticeSquareClick : undefined}
             boardTheme="cappuccino"
-            highlightSquares={currentStep.highlightSquares || []}
+            highlightSquares={activeMode === 'lesson' ? (currentStep?.highlightSquares || []) : (currentPractice?.highlightSquares || [])}
+            successSquares={successSquares}
+            errorSquares={errorSquares}
             showCoordinates={true}
           />
         </div>
       </main>
 
-      {/* Bottom Step Navigation Bar (matching Image 8) */}
+      {/* Bottom Step Navigation Bar (matching screenshots) */}
       <footer className="w-full py-3 px-4 bg-transparent">
         <div className="max-w-md mx-auto flex items-center justify-between gap-4">
           {/* Previous Step Button */}
           <button
-            onClick={handlePrevStep}
-            disabled={currentStepIdx === 0}
-            className="w-11 h-11 rounded-full bg-slate-200/80 hover:bg-slate-300 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center text-slate-700 shadow-xs transition-all active:scale-90"
+            onClick={activeMode === 'lesson' ? handlePrevStep : handlePrevPractice}
+            disabled={activeMode === 'lesson' ? currentStepIdx === 0 : practiceStepIdx === 0}
+            className="w-11 h-11 rounded-full bg-slate-200/90 hover:bg-slate-300 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center text-slate-700 shadow-xs transition-all active:scale-90"
             title="Previous Step"
           >
             <ChevronLeft className="w-6 h-6" />
@@ -334,35 +519,64 @@ export function LessonView({ onBack }) {
 
           {/* Pagination Step Dots */}
           <div className="flex items-center gap-2 overflow-x-auto py-1 px-2 no-scrollbar">
-            {currentLesson.steps.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => {
-                  setCurrentStepIdx(idx);
-                  sound.playMove();
-                }}
-                className={`transition-all duration-200 rounded-full ${
-                  currentStepIdx === idx
-                    ? 'w-2.5 h-2.5 bg-[#1e40af] scale-125 shadow-xs'
-                    : 'w-2 h-2 bg-sky-300/80 hover:bg-sky-400'
-                }`}
-                title={`Go to step ${idx + 1}`}
-              />
-            ))}
+            {activeMode === 'lesson' ? (
+              currentLesson.steps.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setCurrentStepIdx(idx);
+                    sound.playMove();
+                  }}
+                  className={`transition-all duration-200 rounded-full ${
+                    currentStepIdx === idx
+                      ? 'w-2.5 h-2.5 bg-[#1e40af] scale-125 shadow-xs'
+                      : 'w-2 h-2 bg-sky-300/80 hover:bg-sky-400'
+                  }`}
+                  title={`Go to step ${idx + 1}`}
+                />
+              ))
+            ) : (
+              practiceDrills.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setPracticeStepIdx(idx);
+                    setSuccessSquares([]);
+                    setErrorSquares([]);
+                    setPracticeFeedback(null);
+                    sound.playMove();
+                  }}
+                  className={`transition-all duration-200 rounded-full ${
+                    practiceStepIdx === idx
+                      ? 'w-2.5 h-2.5 bg-amber-500 scale-125 shadow-xs'
+                      : 'w-2 h-2 bg-amber-300/80 hover:bg-amber-400'
+                  }`}
+                  title={`Go to practice drill ${idx + 1}`}
+                />
+              ))
+            )}
           </div>
 
           {/* Next Step Button */}
           <button
-            onClick={handleNextStep}
-            className="w-11 h-11 rounded-full bg-[#1e40af] hover:bg-blue-800 text-white flex items-center justify-center shadow-md shadow-blue-900/20 transition-all active:scale-90"
-            title={currentStepIdx === currentLesson.steps.length - 1 ? 'Finish Lesson' : 'Next Step'}
+            onClick={activeMode === 'lesson' ? handleNextStep : handleNextPractice}
+            className={`w-11 h-11 rounded-full flex items-center justify-center text-white shadow-md transition-all active:scale-90 ${
+              activeMode === 'lesson'
+                ? 'bg-[#1e40af] hover:bg-blue-800 shadow-blue-900/20'
+                : 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/20 font-bold'
+            }`}
+            title={
+              activeMode === 'lesson'
+                ? currentStepIdx === currentLesson.steps.length - 1 ? 'Finish Lesson' : 'Next Step'
+                : practiceStepIdx === practiceDrills.length - 1 ? 'Finish Practice' : 'Next Drill'
+            }
           >
             <ChevronRight className="w-6 h-6" />
           </button>
         </div>
       </footer>
 
-      {/* "Choose a lesson" Modal Dialog (matching Screenshots 1 to 7) */}
+      {/* "Choose a lesson" Modal Dialog */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fade-in">
           <div className="bg-[#f0f4f9] rounded-[28px] max-w-md w-full max-h-[88vh] flex flex-col overflow-hidden shadow-2xl border border-slate-200 animate-scale-up">
@@ -380,72 +594,63 @@ export function LessonView({ onBack }) {
                   setUnlockAll(nextVal);
                   safeStorage.setItem('chess_lessons_unlock_all', nextVal.toString());
                 }}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
                   unlockAll
-                    ? 'bg-sky-100 text-sky-800 border border-sky-300'
-                    : 'bg-slate-200 text-slate-600'
+                    ? 'bg-amber-500/15 border-amber-500/30 text-amber-800'
+                    : 'bg-slate-200 border-slate-300 text-slate-600'
                 }`}
-                title="Toggle unlocking all lessons"
+                title={unlockAll ? 'Free mode active: all lessons open' : 'Sequential mode: complete lessons in order'}
               >
-                <Unlock className="w-3.5 h-3.5" />
-                <span>{unlockAll ? 'All Unlocked' : 'Progress Mode'}</span>
+                {unlockAll ? <LockOpen className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                <span>{unlockAll ? 'All Open' : 'Sequential'}</span>
               </button>
             </div>
 
-            {/* Modal Body: Categorized Lessons List */}
-            <div className="flex-1 overflow-y-auto px-5 py-3 space-y-5">
+            {/* Scrollable Lesson List by Category */}
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-6">
               {LESSON_CATEGORIES.map((cat, catIdx) => (
-                <div key={cat.name} className="space-y-2">
-                  {/* Category Header (Screenshots 1-7: blue section title) */}
-                  <h4 className="text-sky-800 font-semibold text-sm px-1">
+                <div key={catIdx} className="space-y-2">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 px-1">
                     {cat.name}
                   </h4>
 
-                  {/* Lesson Cards */}
-                  <div className="space-y-2.5">
-                    {cat.lessons.map(lesson => {
+                  <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 divide-y divide-slate-100 overflow-hidden">
+                    {cat.lessons.map((lesson) => {
+                      const isUnlocked = unlockAll || completedLessons.has(lesson.num) || lesson.num === 1;
                       const isCompleted = completedLessons.has(lesson.num);
-                      const isUnlocked = unlockAll || isCompleted || lesson.num === 1 || completedLessons.has(lesson.num - 1);
-                      const isCurrent = currentLesson.num === lesson.num;
-                      const cardColor = lesson.color || cat.color;
+                      const isCurrent = lesson.num === currentLesson.num;
 
                       return (
-                        <div
+                        <button
                           key={lesson.num}
-                          onClick={() => {
-                            if (isUnlocked) {
-                              handleSelectLesson(lesson.num);
-                            }
-                          }}
-                          className={`bg-white rounded-2xl shadow-xs p-3.5 flex items-center gap-3 transition-all ${
-                            getBorderColorClass(cardColor)
-                          } ${
-                            isUnlocked
-                              ? 'cursor-pointer hover:shadow-md hover:scale-[1.01] active:scale-[0.99]'
-                              : 'opacity-65 cursor-not-allowed'
-                          } ${isCurrent ? 'ring-2 ring-sky-500/50 bg-sky-50/40' : ''}`}
+                          disabled={!isUnlocked}
+                          onClick={() => handleSelectLesson(lesson.num)}
+                          className={`w-full px-4 py-3 flex items-center justify-between transition-colors text-left ${
+                            isCurrent
+                              ? 'bg-sky-50 text-sky-900 font-semibold'
+                              : isUnlocked
+                              ? 'hover:bg-slate-50 text-slate-700'
+                              : 'opacity-40 cursor-not-allowed bg-slate-50/50'
+                          }`}
                         >
-                          {/* Lock / Check Icon */}
-                          <div className="w-6 flex items-center justify-center shrink-0">
-                            {isCompleted ? (
-                              <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                            ) : isUnlocked ? (
-                              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                            ) : (
-                              <Lock className="w-5 h-5 text-slate-400" />
-                            )}
+                          <div className="flex items-center gap-3">
+                            <span className="w-6 text-xs font-bold text-slate-400">
+                              {lesson.num}.
+                            </span>
+                            <span className="text-sm font-medium">
+                              {lesson.title}
+                            </span>
                           </div>
 
-                          {/* Lesson Number */}
-                          <span className="text-sky-600 font-bold text-base min-w-[28px] text-right">
-                            {lesson.num}
-                          </span>
-
-                          {/* Lesson Title */}
-                          <span className="text-slate-800 font-medium text-sm flex-1 truncate">
-                            {lesson.title}
-                          </span>
-                        </div>
+                          <div className="flex items-center gap-2">
+                            {isCompleted && (
+                              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                            )}
+                            {!isUnlocked && (
+                              <Lock className="w-4 h-4 text-slate-400" />
+                            )}
+                          </div>
+                        </button>
                       );
                     })}
                   </div>
@@ -453,13 +658,16 @@ export function LessonView({ onBack }) {
               ))}
             </div>
 
-            {/* Modal Footer: Cancel Button */}
-            <div className="p-3 border-t border-slate-200/80 bg-white/70 text-center">
+            {/* Modal Footer */}
+            <div className="p-4 bg-white/70 border-t border-slate-200 flex items-center justify-between">
+              <span className="text-xs text-slate-500">
+                {completedLessons.size} of 64 completed
+              </span>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="w-full py-2 text-sky-800 hover:text-sky-950 font-semibold text-sm transition-colors cursor-pointer"
+                className="px-5 py-2 bg-sky-700 hover:bg-sky-800 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors"
               >
-                Cancel
+                Close
               </button>
             </div>
           </div>

@@ -7,6 +7,7 @@ import { triggerHaptic } from '../utils/device.js';
 export function Chessboard({
   fen,
   onMove,
+  onSquareClick,
   playerColor = 'w', // 'w' | 'b' | 'spectator'
   flipped = false,
   boardTheme = 'cappuccino',
@@ -17,6 +18,8 @@ export function Chessboard({
   disabled = false,
   // Game Option toggles from Settings
   highlightSquares = [],
+  successSquares = [],
+  errorSquares = [],
   showLegalMoves = true,
   highlightLastMove = true,
   showCoordinates = true,
@@ -114,6 +117,9 @@ export function Chessboard({
   }
 
   const handleSquareClick = (square) => {
+    if (onSquareClick) {
+      onSquareClick(square);
+    }
     if (disabled || playerColor === 'spectator' || !chess) return;
 
     const pieceAtSquare = chess.get(square);
@@ -201,7 +207,7 @@ export function Chessboard({
   };
 
   return (
-    <div className="relative select-none flex flex-col items-center">
+    <div className="relative select-none flex flex-col items-center w-full">
       {/* Promotion Modal Overlay */}
       {promotionPending && (
         <div className="absolute inset-0 z-30 bg-black/70 backdrop-blur-sm flex items-center justify-center rounded-xl p-4 animate-fade-in">
@@ -224,7 +230,7 @@ export function Chessboard({
 
       {/* Chessboard Grid Container */}
       <div 
-        className="w-full max-w-[520px] aspect-square rounded-2xl overflow-hidden shadow-2xl border-4 transition-colors duration-200"
+        className="w-full max-w-[min(100vw-32px,520px)] aspect-square rounded-2xl overflow-hidden shadow-2xl border-4 transition-colors duration-200"
         style={{ borderColor: theme.border }}
       >
         <div className="grid grid-cols-8 grid-rows-8 w-full h-full">
@@ -239,6 +245,8 @@ export function Chessboard({
               const isPremoveSquare = premove && (premove.from === square || premove.to === square);
               const legalMoveTarget = showLegalMoves && legalMoves.find(m => m.to === square);
               const isCustomHighlight = highlightSquares && highlightSquares.includes(square);
+              const isSuccess = successSquares && successSquares.includes(square);
+              const isError = errorSquares && errorSquares.includes(square);
 
               let bgColor = isDark ? theme.dark : theme.light;
 
@@ -249,9 +257,19 @@ export function Chessboard({
                   className="relative flex items-center justify-center cursor-pointer transition-colors duration-150"
                   style={{ backgroundColor: bgColor }}
                 >
-                  {/* Custom Educational Highlight */}
-                  {isCustomHighlight && (
-                    <div className="absolute inset-0 bg-sky-400/40 ring-2 ring-sky-500 pointer-events-none z-10 animate-pulse" />
+                  {/* Success Educational Highlight (Green, matching Photo 7) */}
+                  {isSuccess && (
+                    <div className="absolute inset-0 bg-[#86b574] ring-2 ring-emerald-600 pointer-events-none z-10 animate-fade-in" />
+                  )}
+
+                  {/* Error Highlight (Soft Red) */}
+                  {isError && (
+                    <div className="absolute inset-0 bg-rose-500/50 ring-2 ring-rose-500 pointer-events-none z-10 animate-pulse" />
+                  )}
+
+                  {/* Custom Educational Highlight (Blue, matching Photo 4, 5, 8) */}
+                  {isCustomHighlight && !isSuccess && (
+                    <div className="absolute inset-0 bg-[#7aa2c2] ring-2 ring-sky-500 pointer-events-none z-10" />
                   )}
 
                   {/* Last Move Indicator */}
