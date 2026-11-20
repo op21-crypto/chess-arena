@@ -3,7 +3,8 @@ import { io } from 'socket.io-client';
 import { Chess } from 'chess.js';
 import {
   Home, Trophy, Swords, Users, BookOpen, Bot, Shield, Volume2, VolumeX,
-  Palette, User, LogOut, Bell, Flame, Sparkles, ChevronRight, Settings, Music, Zap, ArrowRight
+  Palette, User, LogOut, Bell, Flame, Sparkles, ChevronRight, Settings, Music, Zap, ArrowRight,
+  LogIn, X
 } from 'lucide-react';
 
 import { Chessboard } from './components/Chessboard.jsx';
