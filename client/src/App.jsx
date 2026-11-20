@@ -1780,6 +1780,8 @@ export default function App() {
         blackPlayer={gameSession?.blackPlayer}
         whiteEloChange={gameSession?.whiteEloChange || (isAIGame ? (gameSession?.winner === 'white' ? 16 : -16) : 0)}
         blackEloChange={gameSession?.blackEloChange || (isAIGame ? (gameSession?.winner === 'black' ? 16 : -16) : 0)}
+        moveHistory={gameSession?.moveHistory}
+        pgn={gameSession?.pgn}
         onRematch={handleRequestRematch}
         onAnalyze={() => {
           setShowGameOverModal(false);

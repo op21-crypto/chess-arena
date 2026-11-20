@@ -278,19 +278,103 @@ class ChessAudio {
     this.initContext();
     if (!this.ctx) return;
 
-    const notes = [440, 415.30, 392, 349.23];
-    notes.forEach((freq, idx) => {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.15);
-      gain.gain.setValueAtTime(0.25, this.ctx.currentTime + idx * 0.15);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.15 + 0.3);
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(this.ctx.currentTime + idx * 0.15);
-      osc.stop(this.ctx.currentTime + idx * 0.15 + 0.3);
-    });
+    try {
+      const now = this.ctx.currentTime;
+
+      // 1. Warm sub-bass acoustic warmth foundation (110 Hz -> 55 Hz)
+      const subOsc = this.ctx.createOscillator();
+      const subGain = this.ctx.createGain();
+      const subFilter = this.ctx.createBiquadFilter();
+      subOsc.type = 'sine';
+      subOsc.frequency.setValueAtTime(110, now);
+      subOsc.frequency.exponentialRampToValueAtTime(55, now + 1.2);
+      subFilter.type = 'lowpass';
+      subFilter.frequency.setValueAtTime(240, now);
+
+      subGain.gain.setValueAtTime(0.35, now);
+      subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.3);
+
+      subOsc.connect(subFilter);
+      subFilter.connect(subGain);
+      subGain.connect(this.ctx.destination);
+      subOsc.start(now);
+      subOsc.stop(now + 1.3);
+
+      // 2. Cinematic contemplative acoustic piano/celesta arpeggio (D minor 9th: D4 -> F4 -> A4 -> C5 -> E5)
+      // Dignified, reflective, and encouraging rather than harsh or depressing
+      const notes = [
+        { freq: 293.66, delay: 0.0, dur: 0.9, vol: 0.28 },   // D4
+        { freq: 349.23, delay: 0.12, dur: 0.9, vol: 0.26 },  // F4
+        { freq: 440.00, delay: 0.24, dur: 1.0, vol: 0.24 },  // A4
+        { freq: 523.25, delay: 0.38, dur: 1.1, vol: 0.22 },  // C5
+        { freq: 659.25, delay: 0.52, dur: 1.3, vol: 0.20 }   // E5
+      ];
+
+      notes.forEach(({ freq, delay, dur, vol }) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now + delay);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1200, now + delay);
+        filter.frequency.exponentialRampToValueAtTime(450, now + delay + dur);
+
+        gain.gain.setValueAtTime(vol, now + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + delay + dur);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now + delay);
+        osc.stop(now + delay + dur);
+      });
+
+      // 3. Sustained reflective chord shimmer (A4 + C5 + E5) resolving warmly
+      const padNotes = [440.00, 523.25, 659.25];
+      padNotes.forEach(freq => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + 0.55);
+        gain.gain.setValueAtTime(0.12, now + 0.55);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now + 0.55);
+        osc.stop(now + 1.8);
+      });
+    } catch (e) {}
+  }
+
+  // Crisp ascending insight chime when opening Stockfish review
+  playReviewOpen() {
+    if (!this.enabled) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+      const notes = [
+        { freq: 783.99, delay: 0, dur: 0.22 },   // G5
+        { freq: 1046.50, delay: 0.08, dur: 0.35 } // C6
+      ];
+      notes.forEach(({ freq, delay, dur }) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + delay);
+        gain.gain.setValueAtTime(0.24, now + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + delay + dur);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now + delay);
+        osc.stop(now + delay + dur);
+      });
+    } catch (e) {}
   }
 
   playLowTime() {
