@@ -1,6 +1,3 @@
-import fs from 'fs';
-import path from 'path';
-
 // Complete dataset for all 64 chess lessons
 const LESSON_CATEGORIES = [
   {

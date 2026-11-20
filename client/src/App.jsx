@@ -996,7 +996,9 @@ export default function App() {
         )}
 
         {/* Lessons Tab */}
-        {activeTab === 'lessons' && <LessonView />}
+        {activeTab === 'lessons' && (
+          <LessonView onBack={() => setActiveTab('home')} />
+        )}
 
         {/* Tournaments Tab */}
         {activeTab === 'tournaments' && (
