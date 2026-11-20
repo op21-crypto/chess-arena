@@ -40,6 +40,7 @@ import {
 import confetti from 'canvas-confetti';
 import { sound } from '../utils/audio.js';
 import { safeStorage } from '../utils/storage.js';
+import { triggerHaptic } from '../utils/device.js';
 import {
   THEME_CATEGORIES,
   PUZZLE_OPENINGS,
@@ -196,6 +197,13 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
   const [streakGameOver, setStreakGameOver] = useState(false);
   const [streakPuzzlesList, setStreakPuzzlesList] = useState([]);
   const [streakIdx, setStreakIdx] = useState(0);
+  const [streakHighScore, setStreakHighScore] = useState(() => {
+    try {
+      return Number(safeStorage.getItem('arena_streak_highscore')) || 0;
+    } catch {
+      return 0;
+    }
+  });
 
   // Puzzle Storm Mode State
   const [stormScore, setStormScore] = useState(0);
@@ -203,7 +211,24 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
   const [stormTimeRemaining, setStormTimeRemaining] = useState(180); // 3:00 min
   const [stormActive, setStormActive] = useState(false);
   const [stormFinished, setStormFinished] = useState(false);
+  const [stormHighScore, setStormHighScore] = useState(() => {
+    try {
+      return Number(safeStorage.getItem('arena_storm_highscore')) || 0;
+    } catch {
+      return 0;
+    }
+  });
   const stormTimerRef = useRef(null);
+
+  // Solved Puzzles Set
+  const [solvedPuzzles, setSolvedPuzzles] = useState(() => {
+    try {
+      const saved = safeStorage.getItem('arena_solved_puzzles');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
 
   // Themes Search & Accordion State
   const [searchQuery, setSearchQuery] = useState('');
@@ -291,14 +316,28 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
         if (puzzleSettings.sound) sound.playVictory();
 
         if (viewState === 'streak') {
-          setStreakCount(prev => prev + 1);
+          setStreakCount(prev => {
+            const next = prev + 1;
+            if (next > streakHighScore) {
+              setStreakHighScore(next);
+              safeStorage.setItem('arena_streak_highscore', String(next));
+            }
+            return next;
+          });
           setStreakRating(prev => prev + 15);
           confetti({ particleCount: 60, spread: 50, origin: { y: 0.6 } });
           setTimeout(() => {
             handleNextStreakPuzzle();
           }, 800);
         } else if (viewState === 'storm') {
-          setStormScore(prev => prev + 1);
+          setStormScore(prev => {
+            const next = prev + 1;
+            if (next > stormHighScore) {
+              setStormHighScore(next);
+              safeStorage.setItem('arena_storm_highscore', String(next));
+            }
+            return next;
+          });
           setStormCombo(prev => {
             const nextCombo = prev + 1;
             // Bonus time for combos
@@ -312,6 +351,12 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
         } else {
           // Standard trainer solve
           setPuzzleRating(prev => prev + 15);
+          setSolvedPuzzles(prev => {
+            const next = new Set(prev);
+            next.add(currentPuzzle.id);
+            safeStorage.setItem('arena_solved_puzzles', JSON.stringify([...next]));
+            return next;
+          });
           confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
           if (onUpdateRating) onUpdateRating(puzzleRating + 15);
 
