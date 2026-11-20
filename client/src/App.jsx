@@ -25,6 +25,7 @@ import { GameOverModal } from './components/GameOverModal.jsx';
 import { SettingsModal } from './components/SettingsModal.jsx';
 import { DailyStreakModal } from './components/DailyStreakModal.jsx';
 import { MiniMusicPlayer } from './components/MiniMusicPlayer.jsx';
+import { ChessLogo } from './components/ChessLogo.jsx';
 import { BOARD_THEMES } from './components/PieceIcons.jsx';
 import { sound } from './utils/audio.js';
 import { musicEngine } from './utils/music.js';
@@ -924,27 +925,13 @@ export default function App() {
           isLight ? 'bg-white/95 border-slate-200 text-slate-900 shadow-sm' : 'bg-slate-950/80 border-slate-800 text-white'
         }`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          {/* Logo & Slogan */}
+          {/* Top-Left Premium Brand Logo: CHESS */}
           <div
             onClick={() => setActiveTab('home')}
-            className="flex items-center gap-2.5 cursor-pointer group"
+            className="cursor-pointer group flex items-center"
+            title="CHESS - Home"
           >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-400 p-0.5 flex items-center justify-center shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform">
-              <span className="text-xl">♟️</span>
-            </div>
-            <div>
-              <span className={`text-base font-extrabold tracking-tight flex items-center gap-1 ${
-                isLight ? 'text-slate-900' : 'text-white'
-              }`}>
-                <span>CHESS</span>
-                <span className="text-amber-500">ARENA</span>
-              </span>
-              <span className={`text-[10px] block font-medium -mt-1 hidden sm:block ${
-                isLight ? 'text-slate-500' : 'text-slate-400'
-              }`}>
-                Play. Challenge. Conquer.
-              </span>
-            </div>
+            <ChessLogo size="md" isLight={isLight} showSubtitle={true} />
           </div>
 
           {/* Navigation Links (Visible on desktop/wide tablet) */}
@@ -1037,18 +1024,7 @@ export default function App() {
               <Settings className="w-4 h-4" />
             </button>
 
-            {/* Daily Streak Tracker Pill Button */}
-            <button
-              onClick={() => setShowStreakModal(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/10 border border-amber-500/40 text-amber-400 hover:text-amber-300 hover:border-amber-400 font-bold text-xs shadow-xs transition-all active:scale-95"
-              title="Daily Streak Tracker (🔥 7 Days Active)"
-            >
-              <Flame className="w-4 h-4 text-orange-400 fill-orange-400 animate-pulse" />
-              <span className="hidden sm:inline font-mono">7 Days</span>
-              <span className="sm:hidden font-mono text-[11px]">7d</span>
-            </button>
-
-            {/* Profile Avatar / Login Button */}
+            {/* Sign In / Sign Out Header Control (replaces Streak as requested) */}
             {currentUser ? (
               <div className="flex items-center gap-1.5 md:gap-2">
                 {currentUser.role === 'admin' && (
@@ -1077,6 +1053,7 @@ export default function App() {
                       ? 'bg-slate-100 border-slate-200 hover:border-amber-500'
                       : 'bg-slate-900 border-slate-800 hover:border-amber-500/50'
                   }`}
+                  title="View Profile"
                 >
                   <span className={`text-xs font-bold max-w-[90px] truncate ${
                     isLight ? 'text-slate-800' : 'text-white'
@@ -1094,22 +1071,25 @@ export default function App() {
                     safeStorage.removeItem('token');
                     setCurrentUser(null);
                   }}
-                  className={`p-2 rounded-xl border transition-colors ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-bold text-xs shadow-xs transition-all active:scale-95 cursor-pointer ${
                     isLight
-                      ? 'bg-slate-100 border-slate-200 text-slate-500 hover:text-red-500'
-                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-red-400'
+                      ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-red-600 hover:bg-red-50'
+                      : 'bg-slate-900 border-slate-800 text-slate-300 hover:text-red-400 hover:border-red-500/40 hover:bg-red-500/10'
                   }`}
                   title="Sign Out"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-3.5 h-3.5 text-red-400" />
+                  <span className="hidden sm:inline">Sign Out</span>
                 </button>
               </div>
             ) : (
               <button
                 onClick={() => setShowAuthModal(true)}
-                className="px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition-all shadow-md shadow-amber-500/10"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 transition-all active:scale-95 cursor-pointer"
+                title="Sign In with Google / Gmail"
               >
-                Sign In
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In</span>
               </button>
             )}
           </div>

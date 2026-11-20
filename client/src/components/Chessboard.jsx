@@ -123,7 +123,9 @@ export function Chessboard({
     if (disabled || playerColor === 'spectator' || !chess) return;
 
     const pieceAtSquare = chess.get(square);
-    const isPlayerTurn = chess.turn() === playerColor;
+    const activeTurn = chess.turn();
+    const canControlColor = playerColor === 'both' || playerColor === 'auto' || playerColor === activeTurn;
+    const isPlayerTurn = canControlColor || (chess.turn() === playerColor);
 
     // Handle premove input when not player turn
     if (!isPlayerTurn && enablePremoves) {
@@ -139,8 +141,31 @@ export function Chessboard({
 
     if (!isPlayerTurn) return;
 
-    // 1. If clicking on one's own piece, select it and compute legal moves
-    if (pieceAtSquare && pieceAtSquare.color === playerColor) {
+    const isCurrentPlayerPiece = pieceAtSquare && (canControlColor ? pieceAtSquare.color === activeTurn : pieceAtSquare.color === playerColor);
+
+    // 1. If clicking on one's own piece, toggle or select it
+    if (isCurrentPlayerPiece) {
+      // Castling convenience: if King is already selected and user clicks Rook to castle
+      if (selectedSquare && selectedSquare !== square) {
+        const selectedPiece = chess.get(selectedSquare);
+        if (selectedPiece?.type === 'k') {
+          let castlingMove = null;
+          if (selectedSquare === 'e1' && (square === 'a1' || square === 'c1')) {
+            castlingMove = legalMoves.find(m => m.to === 'c1');
+          } else if (selectedSquare === 'e1' && (square === 'h1' || square === 'g1')) {
+            castlingMove = legalMoves.find(m => m.to === 'g1');
+          } else if (selectedSquare === 'e8' && (square === 'a8' || square === 'c8')) {
+            castlingMove = legalMoves.find(m => m.to === 'c8');
+          } else if (selectedSquare === 'e8' && (square === 'h8' || square === 'g8')) {
+            castlingMove = legalMoves.find(m => m.to === 'g8');
+          }
+          if (castlingMove) {
+            executeMove({ from: selectedSquare, to: castlingMove.to, promotion: 'q' });
+            return;
+          }
+        }
+      }
+
       if (selectedSquare === square) {
         setSelectedSquare(null);
         setLegalMoves([]);
@@ -154,15 +179,32 @@ export function Chessboard({
 
     // 2. If a piece was selected and clicking on a target destination
     if (selectedSquare) {
-      const matchMove = legalMoves.find(m => m.to === square);
+      let matchMove = legalMoves.find(m => m.to === square);
+
+      // Castling convenience: if King selected and user clicks b1/c1 or f1/g1
+      if (!matchMove) {
+        const selectedPiece = chess.get(selectedSquare);
+        if (selectedPiece?.type === 'k') {
+          if (selectedSquare === 'e1' && (square === 'b1' || square === 'a1')) {
+            matchMove = legalMoves.find(m => m.to === 'c1');
+          } else if (selectedSquare === 'e1' && (square === 'f1' || square === 'h1')) {
+            matchMove = legalMoves.find(m => m.to === 'g1');
+          } else if (selectedSquare === 'e8' && (square === 'b8' || square === 'a8')) {
+            matchMove = legalMoves.find(m => m.to === 'c8');
+          } else if (selectedSquare === 'e8' && (square === 'f8' || square === 'h8')) {
+            matchMove = legalMoves.find(m => m.to === 'g8');
+          }
+        }
+      }
+
       if (matchMove) {
         const selectedPiece = chess.get(selectedSquare);
-        const isPromotion = selectedPiece?.type === 'p' && (square.endsWith('8') || square.endsWith('1'));
+        const isPromotion = selectedPiece?.type === 'p' && (matchMove.to.endsWith('8') || matchMove.to.endsWith('1'));
 
         if (isPromotion && !alwaysPromoteToQueen) {
-          setPromotionPending({ from: selectedSquare, to: square });
+          setPromotionPending({ from: selectedSquare, to: matchMove.to });
         } else {
-          executeMove({ from: selectedSquare, to: square, promotion: 'q' });
+          executeMove({ from: selectedSquare, to: matchMove.to, promotion: 'q' });
         }
       } else {
         setSelectedSquare(null);

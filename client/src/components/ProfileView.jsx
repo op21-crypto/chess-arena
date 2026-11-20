@@ -278,7 +278,7 @@ export function ProfileView({
         )}
       </div>
 
-      {/* Sub-Navigation Tabs: Overview & Stats | Rankings & Leaderboard | Settings */}
+      {/* Sub-Navigation Tabs: Overview & Stats | Rankings & Leaderboard | Settings | Sign In / Sign Out at the last */}
       <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-slate-900 border border-slate-800 shadow-lg">
         {[
           { id: 'overview', label: 'Stats', icon: User },
@@ -291,7 +291,7 @@ export function ProfileView({
             <button
               key={tab.id}
               onClick={() => handleSubTabChange(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
                 isActive
                   ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
                   : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -302,6 +302,33 @@ export function ProfileView({
             </button>
           );
         })}
+
+        {/* Dedicated Sign In / Sign Out Tab at the Last */}
+        {user ? (
+          <button
+            onClick={() => {
+              triggerHaptic('move');
+              if (onSignOut) onSignOut();
+            }}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-rose-500/20 transition-all cursor-pointer"
+            title="Sign Out of account"
+          >
+            <LogOut className="w-4 h-4 shrink-0" />
+            <span className="truncate">Sign Out</span>
+          </button>
+        ) : (
+          <button
+            onClick={() => {
+              triggerHaptic('move');
+              if (onSignIn) onSignIn();
+            }}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-black bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-md shadow-amber-500/20 hover:from-amber-400 hover:to-amber-300 transition-all cursor-pointer"
+            title="Sign In with Google / Gmail"
+          >
+            <LogIn className="w-4 h-4 shrink-0" />
+            <span className="truncate">Sign In</span>
+          </button>
+        )}
       </div>
 
       {/* ================= VIEW 1: OVERVIEW & STATS ================= */}
@@ -445,6 +472,64 @@ export function ProfileView({
           />
         </div>
       )}
+
+      {/* ================= DEDICATED ACCOUNT AUTH SECTION AT THE VERY LAST ================= */}
+      <div className="bg-gradient-to-br from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden mt-6">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 text-center sm:text-left">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-md ${
+              user ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+            }`}>
+              {user ? <Check className="w-6 h-6 text-emerald-400" /> : <LogIn className="w-6 h-6 text-amber-400" />}
+            </div>
+            <div>
+              <h4 className="text-sm font-extrabold text-white flex items-center justify-center sm:justify-start gap-2">
+                <span>{user ? 'Account Connected' : 'Google & Gmail Authentication'}</span>
+                {user && (
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-black border border-emerald-500/30">
+                    Active
+                  </span>
+                )}
+              </h4>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {user ? (
+                  <span>Signed in as <strong className="text-slate-200">{user.username}</strong> ({user.email || 'Gmail Account'})</span>
+                ) : (
+                  <span>Sign in with Google / Gmail to save your ratings, climb leaderboards, and sync progress across devices.</span>
+                )}
+              </p>
+            </div>
+          </div>
+
+          <div className="w-full sm:w-auto shrink-0">
+            {user ? (
+              <button
+                onClick={() => {
+                  triggerHaptic('move');
+                  if (onSignOut) onSignOut();
+                }}
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-rose-500/20 border border-slate-700 hover:border-rose-500/50 text-slate-200 hover:text-rose-300 font-extrabold text-xs shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                title="Sign Out of Account"
+              >
+                <LogOut className="w-4 h-4 text-rose-400" />
+                <span>Sign Out</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  triggerHaptic('move');
+                  if (onSignIn) onSignIn();
+                }}
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/25 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                title="Sign In with Google / Gmail"
+              >
+                <LogIn className="w-4 h-4 text-slate-950" />
+                <span>Sign In with Gmail</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

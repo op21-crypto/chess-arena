@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import confetti from 'canvas-confetti';
 import { Chessboard } from './Chessboard.jsx';
 import { OwlMascot } from './OwlMascot.jsx';
 import {
@@ -21,12 +22,26 @@ import {
   Clock,
   Layers,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Trophy,
+  Star,
+  Award
 } from 'lucide-react';
 import { ALL_LESSONS, LESSON_CATEGORIES, getPracticeDrills } from '../data/lessonsData.js';
 import { sound } from '../utils/audio.js';
 import { musicEngine } from '../utils/music.js';
 import { safeStorage } from '../utils/storage.js';
+
+const ENCOURAGING_PRAISES = [
+  { title: "Brilliant Move! 🌟", text: "You calculated the line like a grandmaster!" },
+  { title: "Outstanding Vision! 🎯", text: "Pure tactical precision! That was spot-on!" },
+  { title: "Phenomenal Tactic! ⚡", text: "Razor-sharp tactical instinct! That's how champions play!" },
+  { title: "Grandmaster Intuition! 👑", text: "Flawless execution! Even Magnus Carlsen would smile at that!" },
+  { title: "Mastery Unlocked! 💎", text: "Superb calculation! You turned chess theory into pure power!" },
+  { title: "Tactical Perfection! 🔥", text: "You spotted the key square instantly! Keep this momentum!" },
+  { title: "Strategic Brilliance! 🏆", text: "Your piece coordination and board control are outstanding!" },
+  { title: "Superb Insight! ✨", text: "Spot-on! Another critical fundamental mastered!" }
+];
 
 export function LessonView({ onBack }) {
   const [lessons] = useState(ALL_LESSONS);
@@ -230,7 +245,10 @@ export function LessonView({ onBack }) {
       setCurrentStepIdx(prev => prev + 1);
       sound.playMove();
     } else {
-      sound.playVictory();
+      sound.playLessonComplete();
+      try {
+        confetti({ particleCount: 75, spread: 65, origin: { y: 0.65 } });
+      } catch (e) {}
       setCompletedLessons(prev => new Set([...prev, currentLesson.num]));
       setShowCompletionBanner(true);
     }
@@ -283,9 +301,12 @@ export function LessonView({ onBack }) {
     if (isCorrect) {
       setSuccessSquares([square]);
       setErrorSquares([]);
-      sound.playVictory();
-      setPracticeFeedback("Well done!");
-      if (voiceEnabled) speakText("Well done!");
+
+      // Dynamic encouraging grandmaster reaction
+      const praise = ENCOURAGING_PRAISES[Math.floor(Math.random() * ENCOURAGING_PRAISES.length)];
+      setPracticeFeedback(`${praise.title} ${praise.text}`);
+      sound.playLessonSuccess();
+      if (voiceEnabled) speakText(praise.title);
 
       setTimeout(() => {
         if (practiceStepIdx < practiceDrills.length - 1) {
@@ -296,12 +317,15 @@ export function LessonView({ onBack }) {
           setPracticeComplete(true);
           setCompletedLessons(prev => new Set([...prev, currentLesson.num, currentLesson.num + 1]));
           setShowCompletionBanner(true);
-          sound.playVictory();
+          sound.playLessonComplete();
+          try {
+            confetti({ particleCount: 85, spread: 75, origin: { y: 0.65 } });
+          } catch (e) {}
         }
       }, 1200);
     } else {
       setErrorSquares([square]);
-      sound.playGameOver();
+      sound.playErrorTone();
       const hintMsg = currentPractice.hint ? `Not quite! ${currentPractice.hint}` : "Not quite, try again!";
       setPracticeFeedback(hintMsg);
       if (voiceEnabled) speakText(hintMsg);
@@ -922,21 +946,22 @@ export function LessonView({ onBack }) {
         </div>
       </main>
 
-      {/* Bottom Step Navigation Bar */}
-      <footer className="w-full py-3 px-4 bg-transparent">
-        <div className="max-w-md mx-auto flex items-center justify-between gap-4">
+      {/* Premium Step Navigation Bar */}
+      <footer className="w-full py-4 px-4 bg-transparent">
+        <div className="max-w-md mx-auto flex items-center justify-between gap-3 sm:gap-4">
           {/* Previous Step Button */}
           <button
             onClick={activeMode === 'lesson' ? handlePrevStep : handlePrevPractice}
             disabled={activeMode === 'lesson' ? currentStepIdx === 0 : practiceStepIdx === 0}
-            className="w-11 h-11 rounded-full bg-slate-200/90 hover:bg-slate-300 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center text-slate-700 shadow-xs transition-all active:scale-90 cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 rounded-2xl bg-white/90 hover:bg-white disabled:opacity-30 disabled:pointer-events-none text-slate-700 border border-slate-200/90 shadow-sm font-bold text-xs sm:text-sm transition-all active:scale-95 cursor-pointer shrink-0"
             title="Previous Step"
           >
-            <ChevronLeft className="w-6 h-6" />
+            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600" />
+            <span className="hidden sm:inline">Prev</span>
           </button>
 
-          {/* Pagination Step Dots */}
-          <div className="flex items-center gap-2 overflow-x-auto py-1 px-2 no-scrollbar">
+          {/* Interactive Step Navigator Capsule */}
+          <div className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-2xl bg-white/80 border border-slate-200/80 shadow-xs max-w-[210px] overflow-x-auto no-scrollbar">
             {activeMode === 'lesson' ? (
               currentLesson.steps.map((_, idx) => (
                 <button
@@ -947,10 +972,10 @@ export function LessonView({ onBack }) {
                   }}
                   className={`transition-all duration-200 rounded-full cursor-pointer ${
                     currentStepIdx === idx
-                      ? 'w-2.5 h-2.5 bg-[#1e40af] scale-125 shadow-xs'
-                      : 'w-2 h-2 bg-sky-300/80 hover:bg-sky-400'
+                      ? 'w-3 h-3 bg-[#1e40af] scale-125 shadow-xs ring-2 ring-blue-300'
+                      : 'w-2 h-2 bg-sky-200 hover:bg-sky-400'
                   }`}
-                  title={`Go to step ${idx + 1}`}
+                  title={`Step ${idx + 1}`}
                 />
               ))
             ) : (
@@ -966,22 +991,26 @@ export function LessonView({ onBack }) {
                   }}
                   className={`transition-all duration-200 rounded-full cursor-pointer ${
                     practiceStepIdx === idx
-                      ? 'w-2.5 h-2.5 bg-amber-500 scale-125 shadow-xs'
-                      : 'w-2 h-2 bg-amber-300/80 hover:bg-amber-400'
+                      ? 'w-3 h-3 bg-amber-500 scale-125 shadow-xs ring-2 ring-amber-300'
+                      : 'w-2 h-2 bg-amber-200 hover:bg-amber-400'
                   }`}
-                  title={`Go to practice drill ${idx + 1}`}
+                  title={`Drill ${idx + 1}`}
                 />
               ))
             )}
           </div>
 
-          {/* Next Step Button */}
+          {/* Next / Complete Step Button */}
           <button
             onClick={activeMode === 'lesson' ? handleNextStep : handleNextPractice}
-            className={`w-11 h-11 rounded-full flex items-center justify-center text-white shadow-md transition-all active:scale-90 cursor-pointer ${
+            className={`flex items-center gap-1.5 px-4 sm:px-6 py-2.5 rounded-2xl font-black text-xs sm:text-sm shadow-md transition-all active:scale-95 cursor-pointer shrink-0 ${
               activeMode === 'lesson'
-                ? 'bg-[#1e40af] hover:bg-blue-800 shadow-blue-900/20'
-                : 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/20 font-bold'
+                ? currentStepIdx === currentLesson.steps.length - 1
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 shadow-amber-500/30'
+                  : 'bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-500 hover:to-blue-600 text-white shadow-sky-600/25'
+                : practiceStepIdx === practiceDrills.length - 1
+                ? 'bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white shadow-emerald-600/30'
+                : 'bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 shadow-amber-500/25'
             }`}
             title={
               activeMode === 'lesson'
@@ -989,7 +1018,29 @@ export function LessonView({ onBack }) {
                 : practiceStepIdx === practiceDrills.length - 1 ? 'Finish Practice' : 'Next Drill'
             }
           >
-            <ChevronRight className="w-6 h-6" />
+            {activeMode === 'lesson' ? (
+              currentStepIdx === currentLesson.steps.length - 1 ? (
+                <>
+                  <Sparkles className="w-4 h-4 text-amber-900" />
+                  <span>Practice 🎯</span>
+                </>
+              ) : (
+                <>
+                  <span>Next</span>
+                  <ChevronRight className="w-4 h-4" />
+                </>
+              )
+            ) : practiceStepIdx === practiceDrills.length - 1 ? (
+              <>
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Complete 🏆</span>
+              </>
+            ) : (
+              <>
+                <span>Next</span>
+                <ChevronRight className="w-4 h-4" />
+              </>
+            )}
           </button>
         </div>
       </footer>

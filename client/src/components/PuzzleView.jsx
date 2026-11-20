@@ -31,7 +31,8 @@ import {
   Trash2,
   Award,
   Layers,
-  ArrowRight
+  ArrowRight,
+  Eye
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { sound } from '../utils/audio.js';
@@ -46,6 +47,59 @@ import {
   getStreakPuzzles,
   getStormPuzzles
 } from '../data/puzzleDatabase.js';
+
+// Calculate captured pieces dynamically from FEN
+function getCapturedPieces(currentFen) {
+  const STARTING_PIECES = {
+    w: { p: 8, r: 2, n: 2, b: 2, q: 1 },
+    b: { p: 8, r: 2, n: 2, b: 2, q: 1 }
+  };
+  const currentCount = {
+    w: { p: 0, r: 0, n: 0, b: 0, q: 0 },
+    b: { p: 0, r: 0, n: 0, b: 0, q: 0 }
+  };
+
+  const boardPart = (currentFen || '').split(' ')[0] || '';
+  for (const char of boardPart) {
+    if (char === '/' || (char >= '1' && char <= '8')) continue;
+    const isWhite = char === char.toUpperCase();
+    const type = char.toLowerCase();
+    if (type === 'k') continue;
+    const color = isWhite ? 'w' : 'b';
+    if (currentCount[color][type] !== undefined) {
+      currentCount[color][type]++;
+    }
+  }
+
+  const capturedByWhite = [];
+  const capturedByBlack = [];
+  const PIECE_VALUES = { p: 1, n: 3, b: 3, r: 5, q: 9 };
+  let whiteMaterial = 0;
+  let blackMaterial = 0;
+
+  for (const type of ['q', 'r', 'b', 'n', 'p']) {
+    const missingBlack = Math.max(0, STARTING_PIECES.b[type] - currentCount.b[type]);
+    for (let i = 0; i < missingBlack; i++) {
+      capturedByWhite.push(type);
+      whiteMaterial += PIECE_VALUES[type] || 0;
+    }
+
+    const missingWhite = Math.max(0, STARTING_PIECES.w[type] - currentCount.w[type]);
+    for (let i = 0; i < missingWhite; i++) {
+      capturedByBlack.push(type);
+      blackMaterial += PIECE_VALUES[type] || 0;
+    }
+  }
+
+  const materialDiff = whiteMaterial - blackMaterial;
+
+  return {
+    white: capturedByWhite,
+    black: capturedByBlack,
+    whiteAdvantage: materialDiff > 0 ? `+${materialDiff}` : null,
+    blackAdvantage: materialDiff < 0 ? `+${Math.abs(materialDiff)}` : null
+  };
+}
 
 // MiniBoard preview for Hub cards
 function MiniBoard({ fen, flipped = false }) {
@@ -212,9 +266,21 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
     if (uciMove === expectedMove) {
       const nextStep = solutionStep + 1;
       const chess = new Chess(currentFen);
-      chess.move(moveObj);
+      const moveRes = chess.move(moveObj);
       setCurrentFen(chess.fen());
       setLastMove({ from: moveObj.from, to: moveObj.to });
+
+      // Audio & Haptics for Player Move
+      if (moveRes?.captured) {
+        if (puzzleSettings.sound) sound.playCapture();
+        triggerHaptic('capture');
+      } else if (chess.inCheck()) {
+        if (puzzleSettings.sound) sound.playCheck();
+        triggerHaptic('check');
+      } else {
+        if (puzzleSettings.sound) sound.playMove();
+        triggerHaptic('move');
+      }
 
       if (nextStep >= currentPuzzle.solution.length) {
         // Complete solve!
@@ -266,7 +332,6 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
         // Correct step: opponent replies automatically
         setStatus('correct_step');
         setSolutionStep(nextStep);
-        if (puzzleSettings.sound) sound.playMove();
 
         const oppUci = currentPuzzle.solution[nextStep];
         setTimeout(() => {
@@ -274,18 +339,30 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
           const oppTo = oppUci.substring(2, 4);
           const oppProm = oppUci.length > 4 ? oppUci.substring(4, 5) : undefined;
 
-          chess.move({ from: oppFrom, to: oppTo, promotion: oppProm });
+          const oppRes = chess.move({ from: oppFrom, to: oppTo, promotion: oppProm });
           setCurrentFen(chess.fen());
           setLastMove({ from: oppFrom, to: oppTo });
           setSolutionStep(nextStep + 1);
           setStatus('playing');
-          if (puzzleSettings.sound) sound.playMove();
+
+          if (oppRes?.captured) {
+            if (puzzleSettings.sound) sound.playCapture();
+            triggerHaptic('capture');
+          } else if (chess.inCheck()) {
+            if (puzzleSettings.sound) sound.playCheck();
+            triggerHaptic('check');
+          } else {
+            if (puzzleSettings.sound) sound.playMove();
+            triggerHaptic('move');
+          }
         }, viewState === 'storm' ? 250 : 500);
       }
     } else {
       // Wrong Move
       setStatus('failed');
+      setLastMove({ from: moveObj.from, to: moveObj.to });
       if (puzzleSettings.sound) sound.playGameOver();
+      triggerHaptic('error');
 
       if (viewState === 'streak') {
         setStreakGameOver(true);
@@ -592,56 +669,116 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
 
   // ================= VIEW 3: PUZZLE STREAK =================
   if (viewState === 'streak') {
+    const capturedPieces = getCapturedPieces(currentFen);
+
     return (
-      <div className="max-w-md mx-auto px-4 py-3 min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between pb-20">
+      <div className="max-w-md mx-auto w-full px-3 py-2 min-h-screen flex flex-col gap-2 pb-24 text-slate-100">
         {/* Top Header */}
-        <div className="flex items-center justify-between py-2">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between py-1 border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
             <button
               onClick={() => setViewState('hub')}
-              className="p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-700 dark:text-slate-200"
+              className="p-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
             </button>
-            <h1 className="text-xl font-bold tracking-tight">Puzzle Streak</h1>
+            <div>
+              <h1 className="text-sm font-black text-white flex items-center gap-1.5">
+                <span>Puzzle Streak</span>
+                <span className="text-xs">🏹🍎</span>
+              </h1>
+              <p className="text-[10px] text-slate-400">One life, how far can you go?</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSettingsOpen(true)}
-              className="p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white"
+              className="p-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
             >
-              <Info className="w-5 h-5" />
+              <Info className="w-4 h-4" />
             </button>
             <button
               onClick={() => updateSettings('sound', !puzzleSettings.sound)}
-              className="p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white"
+              className="p-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
             >
               {puzzleSettings.sound ? (
-                <Volume2 className="w-5 h-5 text-sky-500" />
+                <Volume2 className="w-4 h-4 text-amber-400" />
               ) : (
-                <VolumeX className="w-5 h-5" />
+                <VolumeX className="w-4 h-4" />
               )}
             </button>
           </div>
         </div>
 
+        {/* Streak Score & Rating Bar */}
+        <div className="flex items-center justify-between px-3 py-2 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-md">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">🏹🍎</span>
+            <div>
+              <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 block leading-tight">Streak</span>
+              <span className="text-xl font-black font-mono text-amber-400 leading-tight">
+                {streakCount}
+              </span>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 block leading-tight">Rating</span>
+            <span className="text-sm font-black font-mono text-white leading-tight">
+              {streakRating}
+            </span>
+          </div>
+        </div>
+
+        {/* Opponent Card & Captured Tray (Above Board) */}
+        <div className="flex items-center justify-between px-3 py-1.5 rounded-2xl bg-slate-900/90 border border-slate-800/90 shadow-md">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-slate-950 border border-slate-700 flex items-center justify-center shrink-0">
+              <PieceIcon piece="k" color={sideToMove === 'white' ? 'b' : 'w'} size={18} />
+            </div>
+            <div>
+              <span className="text-xs font-bold text-slate-300 block leading-tight">
+                Opponent ({sideToMove === 'white' ? 'Black' : 'White'})
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5">
+              {(sideToMove === 'white' ? capturedPieces.black : capturedPieces.white).map((pType, idx) => (
+                <div key={idx} className="shrink-0">
+                  <PieceIcon
+                    piece={pType}
+                    color={sideToMove === 'white' ? 'w' : 'b'}
+                    size={16}
+                  />
+                </div>
+              ))}
+            </div>
+            {(sideToMove === 'white' ? capturedPieces.blackAdvantage : capturedPieces.whiteAdvantage) && (
+              <span className="text-[10px] font-bold text-rose-400 bg-rose-500/10 px-1.5 py-0.2 rounded border border-rose-500/20 font-mono">
+                {sideToMove === 'white' ? capturedPieces.blackAdvantage : capturedPieces.whiteAdvantage}
+              </span>
+            )}
+          </div>
+        </div>
+
         {/* Turn Status Banner */}
-        <div className="my-2 p-3 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center border border-sky-500/30 shrink-0">
-            <PieceIcon piece="k" color={sideToMove === 'white' ? 'w' : 'b'} size={24} />
+        <div className="px-3 py-2 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-slate-950 flex items-center justify-center border border-amber-500/30 shrink-0">
+            <PieceIcon piece="k" color={sideToMove === 'white' ? 'w' : 'b'} size={18} />
           </div>
           <div>
-            <div className="text-sm font-bold text-slate-900 dark:text-white">Your turn</div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
+            <div className="text-xs font-bold text-white">Your turn</div>
+            <div className="text-[10px] text-slate-400">
               Find the best move for {sideToMove}.
             </div>
           </div>
         </div>
 
         {/* Interactive Chessboard */}
-        <div className="my-auto">
+        <div className="w-full aspect-square rounded-2xl overflow-hidden shadow-2xl relative my-auto">
           <Chessboard
             fen={currentFen}
+            playerColor="auto"
             flipped={shouldFlipBoard}
             onMove={handleMove}
             lastMove={lastMove}
@@ -649,29 +786,49 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
           />
         </div>
 
-        {/* Streak Score & Rating Bar */}
-        <div className="my-3 flex items-center justify-between px-2">
-          {/* Apple Streak Counter Badge */}
-          <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-            <span className="text-xl">🏹🍎</span>
-            <span className="text-2xl font-black font-mono text-sky-600 dark:text-sky-400">
-              {streakCount}
-            </span>
+        {/* Player Card & Captured Tray (Below Board) */}
+        <div className="flex items-center justify-between px-3 py-1.5 rounded-2xl bg-slate-900/90 border border-slate-800/90 shadow-md">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-slate-950 border border-amber-400/80 flex items-center justify-center overflow-hidden shrink-0">
+              <img
+                src={currentUser?.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${currentUser?.username || 'You'}`}
+                alt="You"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div>
+              <span className="text-xs font-bold text-white block leading-tight">
+                {currentUser?.username || 'You'} ({sideToMove === 'white' ? 'White' : 'Black'})
+              </span>
+            </div>
           </div>
-
-          {/* Rating */}
-          <div className="text-sm font-bold text-slate-600 dark:text-slate-400 font-mono">
-            Rating: <span className="text-slate-900 dark:text-white font-bold">{streakRating}</span>
+          <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5">
+              {(sideToMove === 'white' ? capturedPieces.white : capturedPieces.black).map((pType, idx) => (
+                <div key={idx} className="shrink-0">
+                  <PieceIcon
+                    piece={pType}
+                    color={sideToMove === 'white' ? 'b' : 'w'}
+                    size={16}
+                  />
+                </div>
+              ))}
+            </div>
+            {(sideToMove === 'white' ? capturedPieces.whiteAdvantage : capturedPieces.blackAdvantage) && (
+              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20 font-mono">
+                {sideToMove === 'white' ? capturedPieces.whiteAdvantage : capturedPieces.blackAdvantage}
+              </span>
+            )}
           </div>
         </div>
 
         {/* Bottom Control Bar */}
-        <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex justify-center">
+        <div className="p-2 rounded-2xl bg-slate-900/95 border border-slate-800 shadow-xl flex items-center justify-between gap-2">
           <button
             onClick={handleSkipStreak}
-            className="flex items-center gap-2 py-2 px-4 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors"
+            className="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold bg-slate-950/80 text-slate-300 border border-slate-800 hover:border-slate-700 hover:text-white flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4 text-amber-400" />
             <span>Skip this move</span>
           </button>
         </div>
@@ -722,58 +879,102 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
 
   // ================= VIEW 4: PUZZLE STORM =================
   if (viewState === 'storm') {
+    const capturedPieces = getCapturedPieces(currentFen);
+
     return (
-      <div className="max-w-md mx-auto px-4 py-3 min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between pb-20">
+      <div className="max-w-md mx-auto w-full px-3 py-2 min-h-screen flex flex-col gap-2 pb-24 text-slate-100">
         {/* Top Header */}
-        <div className="flex items-center justify-between py-2">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between py-1 border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
             <button
               onClick={() => {
                 handleEndStorm();
                 setViewState('hub');
               }}
-              className="p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-700 dark:text-slate-200"
+              className="p-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
             </button>
-            <h1 className="text-xl font-bold tracking-tight">Puzzle Storm</h1>
+            <div>
+              <h1 className="text-sm font-black text-white flex items-center gap-1.5">
+                <span>Puzzle Storm</span>
+                <span className="text-xs">🌪️</span>
+              </h1>
+              <p className="text-[10px] text-slate-400">Solve as many puzzles as you can in 3 min</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSettingsOpen(true)}
-              className="p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white"
+              className="p-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
             >
-              <Info className="w-5 h-5" />
+              <Info className="w-4 h-4" />
             </button>
           </div>
         </div>
 
         {/* Score & Timer Header Bar */}
-        <div className="my-2 flex items-center justify-between px-1">
+        <div className="flex items-center justify-between px-3 py-2 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-md">
           {/* Tornado Score Badge */}
-          <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+          <div className="flex items-center gap-2">
             <span className="text-2xl">🌪️</span>
-            <span className="text-2xl font-black font-mono text-sky-600 dark:text-sky-400">
-              {stormScore}
-            </span>
+            <div>
+              <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 block leading-tight">Score</span>
+              <span className="text-xl font-black font-mono text-sky-400 leading-tight">
+                {stormScore}
+              </span>
+            </div>
           </div>
 
           {/* Countdown Clock */}
           <div
-            className={`px-4 py-2 rounded-2xl font-mono text-xl font-black border ${
+            className={`px-4 py-1.5 rounded-xl font-mono text-lg font-black border ${
               stormTimeRemaining < 30
-                ? 'bg-rose-500/20 text-rose-500 border-rose-500/40 animate-pulse'
-                : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-800 shadow-xs'
+                ? 'bg-rose-500/20 text-rose-400 border-rose-500/40 animate-pulse'
+                : 'bg-slate-950 text-amber-400 border-slate-800 shadow-xs'
             }`}
           >
             {formatStormTime(stormTimeRemaining)}
           </div>
         </div>
 
+        {/* Opponent Card & Captured Tray (Above Board) */}
+        <div className="flex items-center justify-between px-3 py-1.5 rounded-2xl bg-slate-900/90 border border-slate-800/90 shadow-md">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-slate-950 border border-slate-700 flex items-center justify-center shrink-0">
+              <PieceIcon piece="k" color={sideToMove === 'white' ? 'b' : 'w'} size={18} />
+            </div>
+            <div>
+              <span className="text-xs font-bold text-slate-300 block leading-tight">
+                Opponent ({sideToMove === 'white' ? 'Black' : 'White'})
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5">
+              {(sideToMove === 'white' ? capturedPieces.black : capturedPieces.white).map((pType, idx) => (
+                <div key={idx} className="shrink-0">
+                  <PieceIcon
+                    piece={pType}
+                    color={sideToMove === 'white' ? 'w' : 'b'}
+                    size={16}
+                  />
+                </div>
+              ))}
+            </div>
+            {(sideToMove === 'white' ? capturedPieces.blackAdvantage : capturedPieces.whiteAdvantage) && (
+              <span className="text-[10px] font-bold text-rose-400 bg-rose-500/10 px-1.5 py-0.2 rounded border border-rose-500/20 font-mono">
+                {sideToMove === 'white' ? capturedPieces.blackAdvantage : capturedPieces.whiteAdvantage}
+              </span>
+            )}
+          </div>
+        </div>
+
         {/* Interactive Chessboard */}
-        <div className="my-auto">
+        <div className="w-full aspect-square rounded-2xl overflow-hidden shadow-2xl relative my-auto">
           <Chessboard
             fen={currentFen}
+            playerColor="auto"
             flipped={shouldFlipBoard}
             onMove={handleMove}
             lastMove={lastMove}
@@ -781,10 +982,46 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
           />
         </div>
 
+        {/* Player Card & Captured Tray (Below Board) */}
+        <div className="flex items-center justify-between px-3 py-1.5 rounded-2xl bg-slate-900/90 border border-slate-800/90 shadow-md">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-slate-950 border border-amber-400/80 flex items-center justify-center overflow-hidden shrink-0">
+              <img
+                src={currentUser?.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${currentUser?.username || 'You'}`}
+                alt="You"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div>
+              <span className="text-xs font-bold text-white block leading-tight">
+                {currentUser?.username || 'You'} ({sideToMove === 'white' ? 'White' : 'Black'})
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5">
+              {(sideToMove === 'white' ? capturedPieces.white : capturedPieces.black).map((pType, idx) => (
+                <div key={idx} className="shrink-0">
+                  <PieceIcon
+                    piece={pType}
+                    color={sideToMove === 'white' ? 'b' : 'w'}
+                    size={16}
+                  />
+                </div>
+              ))}
+            </div>
+            {(sideToMove === 'white' ? capturedPieces.whiteAdvantage : capturedPieces.blackAdvantage) && (
+              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20 font-mono">
+                {sideToMove === 'white' ? capturedPieces.whiteAdvantage : capturedPieces.blackAdvantage}
+              </span>
+            )}
+          </div>
+        </div>
+
         {/* Combo Multiplier Bar */}
-        <div className="my-3 space-y-1 px-1">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
-            <span>{stormCombo} Combo</span>
+        <div className="space-y-1 px-1">
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-400">
+            <span className="text-sky-400 font-bold">{stormCombo} Combo</span>
             <div className="flex gap-4 font-mono text-[10px]">
               <span>3s</span>
               <span>5s</span>
@@ -792,28 +1029,28 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
               <span>10s</span>
             </div>
           </div>
-          <div className="w-full h-3 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden p-0.5">
+          <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5">
             <div
-              className="h-full bg-linear-to-r from-sky-500 to-indigo-500 rounded-full transition-all duration-300"
+              className="h-full bg-gradient-to-r from-sky-500 to-indigo-500 rounded-full transition-all duration-300"
               style={{ width: `${Math.min(100, (stormCombo / 10) * 100)}%` }}
             />
           </div>
         </div>
 
         {/* Bottom Run Controls */}
-        <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-around">
+        <div className="p-2 rounded-2xl bg-slate-900/95 border border-slate-800 shadow-xl flex items-center justify-around gap-2">
           <button
             onClick={startStormMode}
-            className="flex flex-col items-center gap-1 py-1 px-4 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors"
+            className="flex-1 py-2.5 px-3 rounded-xl text-xs font-bold bg-slate-950/80 text-slate-300 border border-slate-800 hover:border-slate-700 hover:text-white flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-md"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-3.5 h-3.5 text-slate-400" />
             <span>New run</span>
           </button>
           <button
             onClick={handleEndStorm}
-            className="flex flex-col items-center gap-1 py-1 px-4 rounded-xl text-xs font-semibold text-slate-500 hover:text-rose-500 transition-colors"
+            className="flex-1 py-2.5 px-3 rounded-xl text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30 flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-md"
           >
-            <Flag className="w-4 h-4" />
+            <Flag className="w-3.5 h-3.5 text-rose-400" />
             <span>End run</span>
           </button>
         </div>
@@ -864,111 +1101,295 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
 
   // ================= VIEW 5: TACTICS TRAINER (BOARD VIEW) =================
   if (viewState === 'trainer') {
+    const capturedPieces = getCapturedPieces(currentFen);
+
     return (
-      <div className="max-w-md mx-auto px-4 py-3 min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between pb-20">
+      <div className="max-w-md mx-auto w-full px-3 py-2 min-h-screen flex flex-col gap-2 pb-24 text-slate-100">
         {/* Top Header */}
-        <div className="flex items-center justify-between py-2">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between py-1 border-b border-slate-800">
+          <div className="flex items-center gap-2.5 min-w-0">
             <button
               onClick={() => setViewState('hub')}
-              className="p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-700 dark:text-slate-200"
+              className="p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 hover:text-white text-slate-300 transition-colors shrink-0 shadow-xs active:scale-95"
+              title="Back to Puzzle Hub"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
             </button>
-            <h1 className="text-xl font-bold tracking-tight truncate max-w-[220px]">
-              {activeThemeTitle || currentPuzzle.theme || 'Tactics Trainer'}
-            </h1>
+            <div className="truncate">
+              <h1 className="text-sm sm:text-base font-extrabold text-white truncate leading-tight">
+                {activeThemeTitle || currentPuzzle.title || currentPuzzle.theme || 'Tactics Trainer'}
+              </h1>
+              <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono">
+                <span className="text-amber-400 font-bold">{currentPuzzle.rating || 1350} ELO</span>
+                <span>•</span>
+                <span>{currentPuzzle.theme || 'Tactics'}</span>
+                <span>•</span>
+                <span className="text-emerald-400">+15 on solve</span>
+              </div>
+            </div>
           </div>
-          <button
-            onClick={() => setSettingsOpen(true)}
-            className="p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={() => updateSettings('sound', !puzzleSettings.sound)}
+              className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-amber-400 transition-colors shadow-xs"
+              title={puzzleSettings.sound ? 'Mute sound' : 'Enable sound'}
+            >
+              {puzzleSettings.sound ? <Volume2 className="w-4 h-4 text-amber-400" /> : <VolumeX className="w-4 h-4" />}
+            </button>
+            <button
+              onClick={() => setSettingsOpen(true)}
+              className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors shadow-xs"
+              title="Puzzle Settings"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Opponent Card & Captured Tray (Above Board) */}
+        <div className="flex items-center justify-between px-3 py-1.5 rounded-2xl bg-slate-900/90 border border-slate-800/90 shadow-md">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-slate-950 border border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
+              <img
+                src={`https://api.dicebear.com/7.x/bottts/svg?seed=TrainerOpponent_${currentPuzzle.id}`}
+                alt="Opponent"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div>
+              <span className="text-xs font-bold text-white block leading-tight">
+                Opponent ({sideToMove === 'white' ? 'Black' : 'White'})
+              </span>
+              <span className="text-[10px] text-slate-400 font-mono">
+                {currentPuzzle.rating || 1400} ELO
+              </span>
+            </div>
+          </div>
+
+          {/* Captured Pieces by Opponent */}
+          <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5">
+              {(sideToMove === 'white' ? capturedPieces.black : capturedPieces.white).map((pType, idx) => (
+                <div key={idx} className="shrink-0">
+                  <PieceIcon
+                    piece={pType}
+                    color={sideToMove === 'white' ? 'w' : 'b'}
+                    size={16}
+                  />
+                </div>
+              ))}
+            </div>
+            {(sideToMove === 'white' ? capturedPieces.blackAdvantage : capturedPieces.whiteAdvantage) && (
+              <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/20 font-mono">
+                {sideToMove === 'white' ? capturedPieces.blackAdvantage : capturedPieces.whiteAdvantage}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Turn Status Banner */}
-        <div className="my-2 p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-sky-500/10 dark:bg-sky-500/20 flex items-center justify-center border border-sky-500/30 shrink-0">
-              <PieceIcon piece="k" color={sideToMove === 'white' ? 'w' : 'b'} size={24} />
+        <div className={`p-2.5 rounded-2xl border shadow-md flex items-center justify-between transition-all ${
+          status === 'solved'
+            ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-300'
+            : status === 'failed'
+            ? 'bg-rose-500/15 border-rose-500/50 text-rose-300'
+            : status === 'correct_step'
+            ? 'bg-amber-500/15 border-amber-500/50 text-amber-300'
+            : 'bg-slate-900/90 border-slate-800 text-white'
+        }`}>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${
+              sideToMove === 'white'
+                ? 'bg-white/10 border-white/30 text-white'
+                : 'bg-black/40 border-slate-700 text-slate-300'
+            }`}>
+              <PieceIcon piece="k" color={sideToMove === 'white' ? 'w' : 'b'} size={20} />
             </div>
-            <div>
-              <div className="text-sm font-bold text-slate-900 dark:text-white">
-                {status === 'solved'
-                  ? 'Puzzle solved!'
-                  : status === 'failed'
-                  ? 'Incorrect move'
-                  : 'Your turn'}
+            <div className="truncate">
+              <div className="text-xs font-black flex items-center gap-1.5 truncate">
+                <span>
+                  {status === 'solved'
+                    ? '🎉 Puzzle Solved! (+15 ELO)'
+                    : status === 'failed'
+                    ? '❌ Incorrect move — Try again'
+                    : status === 'correct_step'
+                    ? '✓ Best move! Opponent replying...'
+                    : `${sideToMove === 'white' ? 'White' : 'Black'} to move`}
+                </span>
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
+              <div className="text-[10px] text-slate-400 truncate">
                 {status === 'solved'
-                  ? 'Well played! +15 Rating'
+                  ? 'Excellent calculation! Click Next for more.'
                   : status === 'failed'
-                  ? 'Try again or view solution'
-                  : `Find the best move for ${sideToMove}.`}
+                  ? 'Not the winning line. Tap Retry or Solution.'
+                  : (currentPuzzle.hint ? 'Find the winning continuation.' : `Find the best move for ${sideToMove}.`)}
               </div>
             </div>
           </div>
-          {status === 'solved' && <CheckCircle2 className="w-6 h-6 text-emerald-500" />}
-          {status === 'failed' && <XCircle className="w-6 h-6 text-rose-500" />}
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            {status === 'solved' && (
+              <button
+                onClick={handleNextPuzzle}
+                className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl shadow-md flex items-center gap-1 active:scale-95"
+              >
+                <span>Next</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {status === 'failed' && (
+              <button
+                onClick={() => {
+                  loadPuzzle(currentPuzzle);
+                  sound.playMove();
+                }}
+                className="px-3 py-1.5 bg-rose-500 hover:bg-rose-400 text-white font-black text-xs rounded-xl shadow-md flex items-center gap-1 active:scale-95"
+              >
+                <span>Retry</span>
+                <RotateCcw className="w-3 h-3" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Hint Box if triggered */}
         {hintShown && currentPuzzle.hint && (
-          <div className="mb-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-700 dark:text-amber-400 flex items-center gap-2">
-            <Lightbulb className="w-4 h-4 shrink-0 text-amber-500" />
-            <span>{currentPuzzle.hint}</span>
+          <div className="p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-xs text-amber-300 flex items-center gap-2 shadow-sm animate-fade-in">
+            <Lightbulb className="w-4 h-4 shrink-0 text-amber-400" />
+            <span className="font-medium">{currentPuzzle.hint}</span>
           </div>
         )}
 
         {/* Revealed Solution */}
         {revealedSolution && currentPuzzle.solution && (
-          <div className="mb-2 p-3 rounded-xl bg-sky-500/10 border border-sky-500/30 text-xs text-sky-700 dark:text-sky-400 flex items-center gap-2 font-mono">
-            <span>Solution: {currentPuzzle.solution.join(' ')}</span>
+          <div className="p-2.5 rounded-xl bg-sky-500/15 border border-sky-500/40 text-xs text-sky-300 flex items-center gap-2 font-mono shadow-sm animate-fade-in">
+            <Eye className="w-4 h-4 shrink-0 text-sky-400" />
+            <span>Winning moves: <strong>{currentPuzzle.solution.join(' ')}</strong></span>
           </div>
         )}
 
         {/* Interactive Chessboard */}
-        <div className="my-auto">
+        <div className="w-full aspect-square rounded-2xl overflow-hidden shadow-2xl relative my-auto">
           <Chessboard
             fen={currentFen}
+            playerColor="auto"
             flipped={shouldFlipBoard}
             onMove={handleMove}
             lastMove={lastMove}
+            highlightSquares={hintShown && currentPuzzle.solution ? [currentPuzzle.solution[solutionStep]?.substring(0, 2)] : []}
+            errorSquares={status === 'failed' && lastMove ? [lastMove.to] : []}
             disabled={status === 'solved'}
           />
         </div>
 
-        {/* Bottom Toolbar: Hint, Flag, Prev, Next */}
-        <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-around">
+        {/* Player Card & Captured Tray (Below Board) */}
+        <div className="flex items-center justify-between px-3 py-1.5 rounded-2xl bg-slate-900/90 border border-slate-800/90 shadow-md">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-slate-950 border border-amber-400/80 flex items-center justify-center overflow-hidden shrink-0">
+              <img
+                src={currentUser?.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${currentUser?.username || 'You'}`}
+                alt="You"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div>
+              <span className="text-xs font-bold text-white block leading-tight">
+                {currentUser?.username || 'You'} ({sideToMove === 'white' ? 'White' : 'Black'})
+              </span>
+              <span className="text-[10px] text-amber-400 font-mono font-bold">
+                {puzzleRating} ELO
+              </span>
+            </div>
+          </div>
+
+          {/* Captured Pieces by You */}
+          <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5">
+              {(sideToMove === 'white' ? capturedPieces.white : capturedPieces.black).map((pType, idx) => (
+                <div key={idx} className="shrink-0">
+                  <PieceIcon
+                    piece={pType}
+                    color={sideToMove === 'white' ? 'b' : 'w'}
+                    size={16}
+                  />
+                </div>
+              ))}
+            </div>
+            {(sideToMove === 'white' ? capturedPieces.whiteAdvantage : capturedPieces.blackAdvantage) && (
+              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20 font-mono">
+                {sideToMove === 'white' ? capturedPieces.whiteAdvantage : capturedPieces.blackAdvantage}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Premium Puzzle Controls Toolbar */}
+        <div className="p-2 rounded-2xl bg-slate-900/95 border border-slate-800 shadow-xl flex items-center justify-between gap-1.5 flex-wrap">
+          {/* Hint Button */}
           <button
-            onClick={() => setHintShown(true)}
-            className="p-2.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-amber-500 transition-colors"
-            title="Hint"
+            onClick={() => {
+              setHintShown(true);
+              sound.playMove();
+            }}
+            className={`flex-1 min-w-[70px] py-2 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all active:scale-95 shadow-md ${
+              hintShown
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/60 shadow-amber-500/10'
+                : 'bg-slate-950/80 text-slate-300 border border-slate-800 hover:border-amber-500/40 hover:text-amber-300'
+            }`}
+            title="Show hint"
           >
-            <Lightbulb className="w-5 h-5" />
+            <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
+            <span>Hint</span>
           </button>
+
+          {/* Retry Button */}
           <button
-            onClick={handleShowSolution}
-            className="p-2.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-rose-500 transition-colors"
-            title="View Solution"
+            onClick={() => {
+              loadPuzzle(currentPuzzle);
+              sound.playMove();
+            }}
+            className="flex-1 min-w-[70px] py-2 px-2 rounded-xl text-xs font-bold bg-slate-950/80 text-slate-300 border border-slate-800 hover:border-slate-600 hover:text-white flex items-center justify-center gap-1 transition-all active:scale-95 shadow-md"
+            title="Reset position"
           >
-            <Flag className="w-5 h-5" />
+            <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
+            <span>Retry</span>
           </button>
+
+          {/* Solution Button */}
+          <button
+            onClick={() => {
+              handleShowSolution();
+              sound.playCheck();
+            }}
+            className={`flex-1 min-w-[75px] py-2 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all active:scale-95 shadow-md ${
+              revealedSolution
+                ? 'bg-sky-500/20 text-sky-300 border border-sky-500/60'
+                : 'bg-slate-950/80 text-slate-300 border border-slate-800 hover:border-sky-500/40 hover:text-sky-300'
+            }`}
+            title="View solution"
+          >
+            <Eye className="w-3.5 h-3.5 text-sky-400" />
+            <span>Solution</span>
+          </button>
+
+          {/* Previous Button */}
           <button
             onClick={handlePrevPuzzle}
-            className="p-2.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
-            title="Previous Puzzle"
+            className="py-2 px-2.5 rounded-xl text-xs font-bold bg-slate-950/80 text-slate-400 border border-slate-800 hover:border-slate-700 hover:text-white flex items-center justify-center gap-1 transition-all active:scale-95 shadow-md"
+            title="Previous puzzle"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-4 h-4" />
           </button>
+
+          {/* Next Puzzle Button */}
           <button
             onClick={handleNextPuzzle}
-            className="p-2.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
-            title="Next Puzzle"
+            className="flex-1 min-w-[105px] py-2 px-3 rounded-xl text-xs font-black bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 flex items-center justify-center gap-1 transition-all active:scale-95 shadow-lg shadow-amber-500/20"
+            title="Next puzzle"
           >
-            <ChevronRight className="w-5 h-5" />
+            <span>Next</span>
+            <ChevronRight className="w-4 h-4 stroke-[3]" />
           </button>
         </div>
 
