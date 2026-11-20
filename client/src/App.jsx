@@ -1579,7 +1579,6 @@ export default function App() {
             onNavigateToLessons={() => setActiveTab('lessons')}
             onNavigateToTournaments={() => setActiveTab('tournaments')}
             onNavigateToRankings={() => {
-              setProfileSubTab('rankings');
               setActiveTab('profile');
             }}
             activeGameSession={gameSession}
@@ -1709,7 +1708,6 @@ export default function App() {
         onOpenAdmin={() => setActiveTab('admin')}
         onNavigateToRankings={() => {
           setShowProfileModal(false);
-          setProfileSubTab('rankings');
           setActiveTab('profile');
         }}
         onOpenStreak={() => {
