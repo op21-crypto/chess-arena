@@ -58,7 +58,8 @@ export function LessonView({ onBack }) {
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
   const [practiceStepIdx, setPracticeStepIdx] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [expandedCategoryIdx, setExpandedCategoryIdx] = useState(0);
+  const [showAllChapters, setShowAllChapters] = useState(false);
+  const [expandedCategoryIdx, setExpandedCategoryIdx] = useState(null);
 
   // Voice narration enabled by default so the AI mentor speaks
   const [voiceEnabled, setVoiceEnabled] = useState(() => {
@@ -457,7 +458,7 @@ export function LessonView({ onBack }) {
       <div className="min-h-screen bg-gradient-to-b from-slate-950 via-[#070b14] to-slate-950 text-slate-100 flex flex-col justify-between selection:bg-emerald-500/30 pb-20 md:pb-8 animate-fade-in">
         {/* Streamlined Top Header */}
         <header className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/80 px-4 py-3 shadow-lg">
-          <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+          <div className="max-w-md mx-auto flex items-center justify-between gap-3">
             {/* Back Button to Home */}
             <button
               onClick={() => {
@@ -493,10 +494,14 @@ export function LessonView({ onBack }) {
                 onClick={() => {
                   sound.playClick();
                   triggerHaptic('move');
-                  setIsModalOpen(true);
+                  setShowAllChapters(prev => !prev);
                 }}
-                className="p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-emerald-500/50 text-slate-300 hover:text-emerald-400 transition-colors shadow-xs cursor-pointer active:scale-95"
-                title="Browse all 64 lessons"
+                className={`p-2 rounded-xl transition-all shadow-xs cursor-pointer active:scale-95 ${
+                  showAllChapters
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
+                    : 'bg-slate-900 border border-slate-800 text-slate-300 hover:text-emerald-400'
+                }`}
+                title="Toggle chapters list"
               >
                 <List className="w-5 h-5" />
               </button>
@@ -529,74 +534,51 @@ export function LessonView({ onBack }) {
         </header>
 
         {/* Academy Hub Main Body */}
-        <main className="flex-1 max-w-2xl w-full mx-auto px-3.5 py-4 space-y-4">
-          {/* Streamlined Live Progress Tracker Card */}
-          <div className="bg-gradient-to-br from-slate-900/90 via-slate-900/75 to-slate-950/90 border border-slate-800/80 rounded-3xl p-4 sm:p-5 shadow-2xl backdrop-blur-xl space-y-3.5 relative overflow-hidden">
+        <main className="flex-1 max-w-md w-full mx-auto px-3.5 py-4 space-y-4">
+          {/* Professional Academic Mastery Tracker Card (Single Premium Progress Line) */}
+          <div className="bg-gradient-to-br from-slate-900/90 via-slate-900/80 to-slate-950/90 border border-slate-800/80 rounded-2xl p-4 shadow-xl backdrop-blur-xl space-y-3 relative overflow-hidden">
             <div className="flex items-center justify-between gap-2 relative z-10">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-slate-950 font-black shadow-md shadow-emerald-500/20">
-                  <Trophy className="w-4 h-4 text-slate-950" />
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-slate-950 font-black shadow-md shadow-emerald-500/20 shrink-0">
+                  <GraduationCap className="w-4 h-4 text-slate-950" />
                 </div>
-                <h2 className="text-xs sm:text-sm font-black text-white uppercase tracking-wider">
-                  Academic Mastery Tracker
-                </h2>
+                <div className="min-w-0">
+                  <h2 className="text-xs sm:text-sm font-black text-white uppercase tracking-wider truncate">
+                    Academic Mastery Tracker
+                  </h2>
+                  <p className="text-[11px] text-slate-400 font-medium truncate">
+                    Structured FIDE Curriculum • 64 Master Lessons
+                  </p>
+                </div>
               </div>
 
-              <div className="px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[11px] font-extrabold text-emerald-400 flex items-center gap-1 shadow-xs">
+              <div className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-extrabold text-emerald-400 flex items-center gap-1 shadow-xs shrink-0">
                 <span>{academicTier.badge}</span>
               </div>
             </div>
 
-            {/* Progress Bar & Percentage */}
-            <div className="space-y-1.5 relative z-10">
+            {/* Single Premium Progress Line */}
+            <div className="space-y-1.5 pt-0.5 relative z-10">
               <div className="flex items-center justify-between text-xs font-mono font-bold">
-                <span className="text-slate-300 flex items-center gap-1.5">
+                <span className="text-slate-300 flex items-center gap-1.5 text-[11px]">
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                   <span>Curriculum Completed</span>
                 </span>
-                <span className="text-emerald-400 font-black">
+                <span className="text-emerald-400 font-black text-xs">
                   {completedCount} / 64 Lessons ({progressPercent}%)
                 </span>
               </div>
 
-              <div className="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-800">
+              <div className="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-800 shadow-inner">
                 <div
-                  className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-400 rounded-full transition-all duration-700 shadow-lg shadow-emerald-500/30"
+                  className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-400 rounded-full transition-all duration-700 shadow-md shadow-emerald-500/30"
                   style={{ width: `${Math.max(4, progressPercent)}%` }}
                 />
               </div>
             </div>
-
-            {/* Metrics Strip: Completed & XP */}
-            <div className="grid grid-cols-2 gap-2 pt-1 text-center relative z-10">
-              <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-2">
-                <span className="text-[10px] text-slate-400 font-bold uppercase block">Lessons Done</span>
-                <span className="text-sm sm:text-base font-black font-mono text-emerald-400">
-                  {completedCount}<span className="text-xs text-slate-500 font-medium">/64</span>
-                </span>
-              </div>
-              <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-2">
-                <span className="text-[10px] text-slate-400 font-bold uppercase block">Academy XP</span>
-                <span className="text-sm sm:text-base font-black font-mono text-amber-400">
-                  {completedCount * 50}
-                </span>
-              </div>
-            </div>
-
-            {/* Encouragement Banner */}
-            <div className="pt-0.5 relative z-10">
-              <div className="p-3 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-slate-900 to-amber-500/10 border border-emerald-500/25 flex items-center gap-2.5 shadow-xs">
-                <div className="w-7 h-7 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
-                  <Flame className="w-4 h-4 animate-bounce" />
-                </div>
-                <p className="text-xs text-slate-200 font-medium leading-relaxed flex-1">
-                  {dynamicEncouragement}
-                </p>
-              </div>
-            </div>
           </div>
 
-          {/* Featured Resume Lesson Card with New Anime Sensei Mentor */}
+          {/* Featured Resume Lesson Card with Anime Sensei Mentor */}
           <div className="bg-gradient-to-br from-slate-900/95 via-slate-900/85 to-slate-950/95 border border-slate-800/90 rounded-3xl p-4 sm:p-5 shadow-2xl backdrop-blur-xl space-y-3.5">
             <div className="flex items-center justify-between gap-2">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
@@ -680,128 +662,177 @@ export function LessonView({ onBack }) {
                 onClick={() => {
                   sound.playClick();
                   triggerHaptic('move');
-                  setIsModalOpen(true);
+                  setShowAllChapters(prev => !prev);
                 }}
                 className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white font-extrabold text-xs border border-slate-700/80 hover:border-emerald-500/50 flex items-center justify-center gap-2 transition-all shadow-md active:scale-98 cursor-pointer"
               >
                 <List className="w-4 h-4 text-emerald-400" />
-                <span>Browse All 64 Lessons</span>
+                <span>{showAllChapters ? 'Collapse Curriculum Chapters' : 'Browse All 64 Lessons (Chapters)'}</span>
               </button>
             </div>
           </div>
 
-          {/* Curriculum Categories Explorer */}
-          <div className="space-y-2.5 pt-1">
-            <div className="flex items-center justify-between px-1">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-amber-400" />
-                <span>Curriculum Chapters</span>
-              </span>
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  triggerHaptic('move');
-                  setIsModalOpen(true);
-                }}
-                className="text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
-              >
-                View all 64 &rarr;
-              </button>
-            </div>
+          {/* Curriculum Chapters (Collapsible & Closed by Default) */}
+          <div className="space-y-2 pt-1">
+            {/* Master Toggle Button: Closed by Default */}
+            <button
+              type="button"
+              onClick={() => {
+                sound.playClick();
+                triggerHaptic('move');
+                setShowAllChapters(prev => !prev);
+              }}
+              className="w-full p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-slate-900/90 via-slate-900/95 to-slate-950/90 hover:from-slate-850 hover:to-slate-900 border border-slate-800 hover:border-emerald-500/40 shadow-lg shadow-slate-950/30 transition-all duration-200 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden text-left"
+            >
+              <div className="absolute top-0 right-0 w-28 h-28 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
+              <div className="flex items-center justify-between gap-3 relative z-10">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-11 h-11 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-md group-hover:scale-105 group-hover:bg-emerald-500/25 transition-transform shrink-0">
+                    <Layers className="w-5 h-5" />
+                  </div>
+                  <div className="text-left min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-black text-white group-hover:text-emerald-300 transition-colors truncate">
+                        Curriculum Chapters
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider shrink-0">
+                        8 Chapters
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5 font-medium truncate">
+                      {showAllChapters
+                        ? 'Tap to collapse chapter curriculum'
+                        : 'Tap to view full 64-lesson chapter list'}
+                    </p>
+                  </div>
+                </div>
 
-            <div className="space-y-2">
-              {LESSON_CATEGORIES.map((cat, catIdx) => {
-                const isExpanded = expandedCategoryIdx === catIdx;
-                const completedInCat = cat.lessons.filter(l => completedLessons.has(l.num)).length;
-
-                return (
-                  <div
-                    key={catIdx}
-                    className="bg-slate-900/80 border border-slate-800/90 rounded-2xl overflow-hidden transition-all shadow-md backdrop-blur-md"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        sound.playClick();
-                        triggerHaptic('move');
-                        setExpandedCategoryIdx(isExpanded ? null : catIdx);
-                      }}
-                      className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-slate-800/50 transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">
-                          {catIdx + 1}
-                        </div>
-                        <div className="min-w-0">
-                          <span className="text-xs sm:text-sm font-bold text-white block truncate">
-                            {cat.name}
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-mono">
-                            {cat.lessons.length} Lessons • {completedInCat} Done
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-                          {completedInCat}/{cat.lessons.length}
-                        </span>
-                        {isExpanded ? (
-                          <ChevronUp className="w-4 h-4 text-slate-400" />
-                        ) : (
-                          <ChevronDown className="w-4 h-4 text-slate-400" />
-                        )}
-                      </div>
-                    </button>
-
-                    {isExpanded && (
-                      <div className="px-3 pb-3 pt-1 space-y-1.5 border-t border-slate-800/80 bg-slate-950/60">
-                        {cat.lessons.map((lesson) => {
-                          const isCompleted = completedLessons.has(lesson.num);
-                          const isCurrent = lesson.num === currentLesson.num;
-
-                          return (
-                            <button
-                              key={lesson.num}
-                              type="button"
-                              onClick={() => handleSelectLesson(lesson.num, true)}
-                              className={`w-full px-3 py-2.5 rounded-xl text-left flex items-center justify-between text-xs transition-all cursor-pointer active:scale-98 ${
-                                isCurrent
-                                  ? 'bg-gradient-to-r from-emerald-500/20 to-amber-500/10 text-white font-black border border-emerald-500/50 shadow-md'
-                                  : 'hover:bg-slate-800/70 text-slate-300 border border-transparent'
-                              }`}
-                            >
-                              <div className="flex items-center gap-2.5 min-w-0">
-                                {isCompleted ? (
-                                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                                ) : (
-                                  <span className="w-4 h-4 rounded-full border border-slate-600 flex items-center justify-center shrink-0">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
-                                  </span>
-                                )}
-                                <span className="font-mono font-bold text-amber-400 w-6 shrink-0">
-                                  {lesson.num}.
-                                </span>
-                                <span className="truncate">{lesson.title}</span>
-                              </div>
-
-                              <div className="flex items-center gap-1.5 shrink-0">
-                                {isCurrent && (
-                                  <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-300 text-[9px] font-black rounded-md border border-emerald-500/30">
-                                    Current
-                                  </span>
-                                )}
-                                <Play className="w-3 h-3 text-slate-500 hover:text-white" />
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="w-8 h-8 rounded-xl bg-slate-800/80 border border-slate-700/80 flex items-center justify-center text-slate-300 group-hover:text-emerald-400 group-hover:border-emerald-500/40 transition-all">
+                    {showAllChapters ? (
+                      <ChevronUp className="w-4 h-4 text-emerald-400" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-emerald-400" />
                     )}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              </div>
+            </button>
+
+            {/* Chapters List: Revealed on click */}
+            {showAllChapters && (
+              <div className="space-y-2 pt-1 animate-fade-in">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    All 8 Chapters • Tap to expand lessons
+                  </span>
+                  <button
+                    onClick={() => {
+                      sound.playClick();
+                      triggerHaptic('move');
+                      setIsModalOpen(true);
+                    }}
+                    className="text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
+                  >
+                    Quick Modal &rarr;
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  {LESSON_CATEGORIES.map((cat, catIdx) => {
+                    const isExpanded = expandedCategoryIdx === catIdx;
+                    const completedInCat = cat.lessons.filter(l => completedLessons.has(l.num)).length;
+
+                    return (
+                      <div
+                        key={catIdx}
+                        className="bg-slate-900/80 border border-slate-800/90 rounded-2xl overflow-hidden transition-all shadow-md backdrop-blur-md"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            sound.playClick();
+                            triggerHaptic('move');
+                            setExpandedCategoryIdx(isExpanded ? null : catIdx);
+                          }}
+                          className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-slate-800/50 transition-colors cursor-pointer"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">
+                              {catIdx + 1}
+                            </div>
+                            <div className="min-w-0">
+                              <span className="text-xs sm:text-sm font-bold text-white block truncate">
+                                {cat.name}
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-mono">
+                                {cat.lessons.length} Lessons • {completedInCat} Done
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                              {completedInCat}/{cat.lessons.length}
+                            </span>
+                            {isExpanded ? (
+                              <ChevronUp className="w-4 h-4 text-emerald-400" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4 text-slate-400" />
+                            )}
+                          </div>
+                        </button>
+
+                        {isExpanded && (
+                          <div className="px-3 pb-3 pt-1 space-y-1.5 border-t border-slate-800/80 bg-slate-950/60">
+                            {cat.lessons.map((lesson) => {
+                              const isCompleted = completedLessons.has(lesson.num);
+                              const isCurrent = lesson.num === currentLesson.num;
+
+                              return (
+                                <button
+                                  key={lesson.num}
+                                  type="button"
+                                  onClick={() => handleSelectLesson(lesson.num, true)}
+                                  className={`w-full px-3 py-2.5 rounded-xl text-left flex items-center justify-between text-xs transition-all cursor-pointer active:scale-98 ${
+                                    isCurrent
+                                      ? 'bg-gradient-to-r from-emerald-500/20 to-amber-500/10 text-white font-black border border-emerald-500/50 shadow-md'
+                                      : 'hover:bg-slate-800/70 text-slate-300 border border-transparent'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    {isCompleted ? (
+                                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                                    ) : (
+                                      <span className="w-4 h-4 rounded-full border border-slate-600 flex items-center justify-center shrink-0">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                                      </span>
+                                    )}
+                                    <span className="font-mono font-bold text-amber-400 w-6 shrink-0">
+                                      {lesson.num}.
+                                    </span>
+                                    <span className="truncate">{lesson.title}</span>
+                                  </div>
+
+                                  <div className="flex items-center gap-1.5 shrink-0">
+                                    {isCurrent && (
+                                      <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-300 text-[9px] font-black rounded-md border border-emerald-500/30">
+                                        Current
+                                      </span>
+                                    )}
+                                    <Play className="w-3 h-3 text-slate-500 hover:text-white" />
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </main>
 
@@ -819,7 +850,7 @@ export function LessonView({ onBack }) {
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-[#070b14] to-slate-950 text-slate-100 flex flex-col justify-between selection:bg-emerald-500/30 pb-20 md:pb-6 animate-fade-in">
       {/* Compact Top Navigation Bar */}
       <header className="sticky top-0 z-30 bg-slate-950/85 backdrop-blur-xl border-b border-slate-800/80 px-3 py-2.5 shadow-md">
-        <div className="max-w-3xl mx-auto flex items-center justify-between gap-2">
+        <div className="max-w-md w-full mx-auto flex items-center justify-between gap-2">
           {/* Back Button -> Returns to Lesson Overview Hub */}
           <button
             onClick={() => {

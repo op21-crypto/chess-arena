@@ -1571,6 +1571,7 @@ export default function App() {
             onStartMatchmaking={handleStartMatchmaking}
             isSearchingMatch={isSearchingMatch}
             onCancelMatchmaking={handleCancelMatchmaking}
+            onOpenMatchmakingModal={() => setShowMatchmakingModal(true)}
             onOpenFriendRoom={() => setShowFriendRoomModal(true)}
             onStartAIGame={handleStartAIGame}
             onOpenAIModal={() => setShowAIModal(true)}
