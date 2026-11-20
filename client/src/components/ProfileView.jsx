@@ -18,13 +18,12 @@ export function ProfileView({
   onUpdateUser,
   settings,
   onUpdateSettings,
-  initialSubTab = 'overview',
   onOpenStreak,
   onOpenAdmin,
   onSignOut,
   onSignIn
 }) {
-  // Accordion state: by default ALL 3 buttons are CLOSED
+  // Accordion state: by default ALL 3 buttons are strictly CLOSED
   const [openSections, setOpenSections] = useState({
     stats: false,
     rankings: false,
@@ -33,16 +32,6 @@ export function ProfileView({
 
   // Achievements section inside Statistics is closed by default
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
-
-  // Sync ONLY when explicitly deep-linked (e.g. clicking header settings gear)
-  useEffect(() => {
-    if (initialSubTab === 'rankings') {
-      setOpenSections({ stats: false, rankings: true, settings: false });
-    } else if (initialSubTab === 'settings') {
-      setOpenSections({ stats: false, rankings: false, settings: true });
-    }
-    // Note: 'overview' leaves all buttons closed by default
-  }, [initialSubTab]);
 
   const toggleSection = (sectionKey) => {
     sound.playClick();

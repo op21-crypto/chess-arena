@@ -74,7 +74,6 @@ export const HOME_TIME_CONTROLS = [
 export default function App() {
   // Navigation & View State (5 Primary: Home, Play Online, Puzzles, Learn, Profile)
   const [activeTab, setActiveTab] = useState('home'); // 'home' | 'play' | 'game' | 'puzzles' | 'lessons' | 'profile' | 'admin'
-  const [profileSubTab, setProfileSubTab] = useState('overview'); // 'overview' | 'rankings' | 'settings'
   const [selectedHomeTime, setSelectedHomeTime] = useState(HOME_TIME_CONTROLS[1]); // Default 3 min Blitz
   const [incomingChallenge, setIncomingChallenge] = useState(null);
   const [settings, setSettings] = useState(() => {
@@ -1074,11 +1073,12 @@ export default function App() {
             {/* Global Settings Trigger */}
             <button
               onClick={() => {
-                setProfileSubTab('settings');
-                setActiveTab('profile');
+                sound.playClick();
+                triggerHaptic('move');
+                setShowSettingsModal(true);
               }}
               className={`p-2 rounded-xl border transition-colors ${
-                activeTab === 'profile' && profileSubTab === 'settings'
+                showSettingsModal
                   ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/20'
                   : isLight
                   ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-amber-600'
@@ -1110,11 +1110,10 @@ export default function App() {
                   onClick={() => {
                     sound.playClick();
                     triggerHaptic('move');
-                    setProfileSubTab('overview');
                     setActiveTab('profile');
                   }}
                   className={`flex items-center gap-2 p-1 pl-2.5 rounded-2xl border transition-colors ${
-                    activeTab === 'profile' && profileSubTab === 'overview'
+                    activeTab === 'profile'
                       ? 'border-amber-400 bg-amber-500/10'
                       : isLight
                       ? 'bg-slate-100 border-slate-200 hover:border-amber-500'
@@ -1217,31 +1216,47 @@ export default function App() {
                         triggerHaptic('move');
                         setShowAIModal(true);
                       }}
-                      className="w-full text-left p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-indigo-950/60 via-slate-900/90 to-purple-950/40 hover:from-indigo-900/70 hover:to-purple-900/50 border border-indigo-500/30 hover:border-indigo-400/60 shadow-lg shadow-indigo-950/20 transition-all duration-200 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden"
+                      className="w-full text-left p-3 sm:p-4 rounded-2xl bg-gradient-to-r from-indigo-950/70 via-slate-900/90 to-purple-950/50 hover:from-indigo-900/80 hover:via-purple-900/60 hover:to-indigo-850/80 active:from-indigo-900/95 active:to-purple-900/90 border border-indigo-500/35 hover:border-indigo-400/70 shadow-lg shadow-indigo-950/30 transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden"
                     >
-                      <div className="absolute top-0 right-0 w-28 h-28 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-indigo-500/25 transition-all duration-300" />
                       <div className="flex items-center justify-between gap-3 relative z-10">
-                        <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
-                          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-indigo-500/15 border border-indigo-500/40 flex items-center justify-center text-indigo-400 shadow-md group-hover:scale-105 group-hover:bg-indigo-500/25 transition-transform shrink-0">
-                            <Bot className="w-5 h-5 sm:w-6 sm:h-6" />
+                        <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
+                          {/* Stockfish AI Neural Bot Avatar Profile Picture */}
+                          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-indigo-900/80 via-slate-950 to-purple-950/90 border border-indigo-400/50 p-1.5 shadow-md flex flex-col items-center justify-center shrink-0 group-hover:scale-105 group-hover:border-indigo-300 group-hover:shadow-[0_0_15px_rgba(99,102,241,0.35)] transition-all duration-300 relative overflow-hidden">
+                            {/* Circuit lines backdrop */}
+                            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#818cf8_1px,transparent_1px)] [background-size:6px_6px] pointer-events-none" />
+                            {/* Glowing Bot Face & Dual Cyan Eyes */}
+                            <div className="relative z-10 flex flex-col items-center">
+                              <Bot className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-300 drop-shadow-[0_0_6px_rgba(99,102,241,0.7)] group-hover:text-indigo-200 transition-colors" />
+                              <div className="flex items-center gap-1 mt-0.5">
+                                <span className="w-1 h-1 rounded-full bg-cyan-400 shadow-[0_0_4px_#22d3ee] animate-pulse" />
+                                <span className="w-1 h-1 rounded-full bg-cyan-400 shadow-[0_0_4px_#22d3ee] animate-pulse" style={{ animationDelay: '200ms' }} />
+                              </div>
+                            </div>
+                            {/* Bottom tag strip */}
+                            <div className="absolute bottom-0 inset-x-0 bg-indigo-950/95 border-t border-indigo-500/40 py-0.5 flex justify-center items-center">
+                              <span className="text-[7px] sm:text-[8px] font-black tracking-widest text-indigo-300 uppercase">AI BOT</span>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm sm:text-base font-black text-white group-hover:text-indigo-200 transition-colors truncate">
+
+                          <div className="flex-1 min-w-0">
+                            {/* Title with flex-wrap and NO truncate so title is 100% visible on all screens */}
+                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                              <h3 className="text-sm sm:text-base font-black text-white group-hover:text-indigo-200 transition-colors leading-tight">
                                 Play with Stockfish
-                              </span>
-                              <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-bold uppercase tracking-wider shrink-0">
-                                AI Bot
+                              </h3>
+                              <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[9px] sm:text-[10px] font-black uppercase tracking-wider shrink-0 shadow-sm">
+                                AI Bot 🤖
                               </span>
                             </div>
-                            <p className="text-xs text-slate-400 mt-0.5 font-medium truncate">
+                            <p className="text-[11px] sm:text-xs text-slate-400 mt-1 font-medium leading-tight">
                               Practice against engine bots (800–2500+ Elo)
                             </p>
                           </div>
                         </div>
                         <div className="flex items-center gap-1 text-indigo-400 text-xs font-bold shrink-0">
-                          <span className="hidden sm:inline">Play AI</span>
-                          <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                          <span className="hidden md:inline">Play AI</span>
+                          <ChevronRight className="w-5 h-5 group-hover:translate-x-1 group-hover:text-indigo-300 transition-all" />
                         </div>
                       </div>
                     </button>
@@ -1253,68 +1268,104 @@ export default function App() {
                         triggerHaptic('move');
                         setShowFriendRoomModal(true);
                       }}
-                      className="w-full text-left p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-950/60 via-slate-900/90 to-teal-950/40 hover:from-emerald-900/70 hover:to-teal-900/50 border border-emerald-500/30 hover:border-emerald-400/60 shadow-lg shadow-emerald-950/20 transition-all duration-200 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden"
+                      className="w-full text-left p-3 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-950/70 via-slate-900/90 to-teal-950/50 hover:from-emerald-900/80 hover:via-teal-900/60 hover:to-emerald-850/80 active:from-emerald-900/95 active:to-teal-900/90 border border-emerald-500/35 hover:border-emerald-400/70 shadow-lg shadow-emerald-950/30 transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden"
                     >
-                      <div className="absolute top-0 right-0 w-28 h-28 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-emerald-500/25 transition-all duration-300" />
                       <div className="flex items-center justify-between gap-3 relative z-10">
-                        <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
-                          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-md group-hover:scale-105 group-hover:bg-emerald-500/25 transition-transform shrink-0">
-                            <Users className="w-5 h-5 sm:w-6 sm:h-6" />
+                        <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
+                          {/* Friends & Live Voice Audio Wave Avatar Profile Picture */}
+                          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-emerald-900/80 via-slate-950 to-teal-950/90 border border-emerald-400/50 p-1.5 shadow-md flex flex-col items-center justify-center shrink-0 group-hover:scale-105 group-hover:border-emerald-300 group-hover:shadow-[0_0_15px_rgba(16,185,129,0.35)] transition-all duration-300 relative overflow-hidden">
+                            {/* Two friend avatar badges overlapping + live sound equalizer waves */}
+                            <div className="relative z-10 flex flex-col items-center">
+                              <div className="flex items-center justify-center -space-x-1.5">
+                                <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 border border-emerald-200/50 flex items-center justify-center text-[8px] font-black text-white shadow-sm">
+                                  ♔
+                                </div>
+                                <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 border border-amber-200/50 flex items-center justify-center text-[8px] font-black text-white shadow-sm">
+                                  ♚
+                                </div>
+                              </div>
+                              {/* Audio Soundwave Equalizer */}
+                              <div className="flex items-end gap-0.5 justify-center mt-1">
+                                <span className="w-0.5 h-2 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                <span className="w-0.5 h-3 bg-emerald-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                <span className="w-0.5 h-1.5 bg-teal-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                <span className="w-0.5 h-2.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '100ms' }} />
+                              </div>
+                            </div>
+                            {/* Bottom tag strip */}
+                            <div className="absolute bottom-0 inset-x-0 bg-emerald-950/95 border-t border-emerald-500/40 py-0.5 flex justify-center items-center">
+                              <span className="text-[7px] sm:text-[8px] font-black tracking-widest text-emerald-300 uppercase">VOICE</span>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm sm:text-base font-black text-white group-hover:text-emerald-200 transition-colors truncate">
+
+                          <div className="flex-1 min-w-0">
+                            {/* Title with flex-wrap and NO truncate so title is 100% visible on all screens */}
+                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                              <h3 className="text-sm sm:text-base font-black text-white group-hover:text-emerald-200 transition-colors leading-tight">
                                 Play with Friends
-                              </span>
-                              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider shrink-0 flex items-center gap-1">
+                              </h3>
+                              <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] sm:text-[10px] font-black uppercase tracking-wider shrink-0 flex items-center gap-1 shadow-sm">
                                 <span>Chat & Voice</span>
-                                <span className="text-[9px]">💬🎙️</span>
+                                <span className="text-[10px]">🎙️</span>
                               </span>
                             </div>
-                            <p className="text-xs text-slate-400 mt-0.5 font-medium truncate">
+                            <p className="text-[11px] sm:text-xs text-slate-400 mt-1 font-medium leading-tight">
                               Private rooms with live chat, voice & invites
                             </p>
                           </div>
                         </div>
                         <div className="flex items-center gap-1 text-emerald-400 text-xs font-bold shrink-0">
-                          <span className="hidden sm:inline">Room</span>
-                          <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                          <span className="hidden md:inline">Join Room</span>
+                          <ChevronRight className="w-5 h-5 group-hover:translate-x-1 group-hover:text-emerald-300 transition-all" />
                         </div>
                       </div>
                     </button>
 
-                    {/* 3rd: Play Online (Simple, Clean Button like 1 & 2 -> Opens Time Selection Modal) */}
+                    {/* 3rd: Play Online (Opens Time Selection Modal) */}
                     <button
                       onClick={() => {
                         sound.playClick();
                         triggerHaptic('move');
                         setShowMatchmakingModal(true);
                       }}
-                      className="w-full text-left p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-950/60 via-slate-900/90 to-orange-950/40 hover:from-amber-900/70 hover:to-orange-900/50 border border-amber-500/35 hover:border-amber-400/60 shadow-lg shadow-amber-950/20 transition-all duration-200 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden"
+                      className="w-full text-left p-3 sm:p-4 rounded-2xl bg-gradient-to-r from-amber-950/70 via-slate-900/90 to-orange-950/50 hover:from-amber-900/80 hover:via-orange-900/60 hover:to-amber-850/80 active:from-amber-900/95 active:to-orange-900/90 border border-amber-500/35 hover:border-amber-400/70 shadow-lg shadow-amber-950/30 transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden"
                     >
-                      <div className="absolute top-0 right-0 w-28 h-28 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-500/25 transition-all duration-300" />
                       <div className="flex items-center justify-between gap-3 relative z-10">
-                        <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
-                          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shadow-md group-hover:scale-105 group-hover:bg-amber-500/30 transition-transform shrink-0">
-                            <Swords className="w-5 h-5 sm:w-6 sm:h-6" />
+                        <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
+                          {/* Global Arena Matchmaking Profile Picture with Crossed Swords */}
+                          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-amber-900/80 via-slate-950 to-orange-950/90 border border-amber-500/50 p-1.5 shadow-md flex flex-col items-center justify-center shrink-0 group-hover:scale-105 group-hover:border-amber-300 group-hover:shadow-[0_0_15px_rgba(245,158,11,0.35)] transition-all duration-300 relative overflow-hidden">
+                            {/* Green live radar pulse in corner */}
+                            <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399] animate-pulse" />
+                            {/* Crossed Swords with golden flare */}
+                            <div className="relative z-10 flex flex-col items-center">
+                              <Swords className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 drop-shadow-[0_0_6px_rgba(245,158,11,0.7)] group-hover:rotate-12 transition-transform duration-300" />
+                            </div>
+                            {/* Bottom tag strip */}
+                            <div className="absolute bottom-0 inset-x-0 bg-amber-950/95 border-t border-amber-500/40 py-0.5 flex justify-center items-center">
+                              <span className="text-[7px] sm:text-[8px] font-black tracking-widest text-amber-300 uppercase">ONLINE</span>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm sm:text-base font-black text-white group-hover:text-amber-200 transition-colors truncate">
+
+                          <div className="flex-1 min-w-0">
+                            {/* Title with flex-wrap and NO truncate so title is 100% visible on all screens */}
+                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                              <h3 className="text-sm sm:text-base font-black text-white group-hover:text-amber-200 transition-colors leading-tight">
                                 Play Online
-                              </span>
-                              <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold uppercase tracking-wider shrink-0">
-                                Rated FIDE
+                              </h3>
+                              <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] sm:text-[10px] font-black uppercase tracking-wider shrink-0 shadow-sm">
+                                Rated FIDE ⚔️
                               </span>
                             </div>
-                            <p className="text-xs text-slate-400 mt-0.5 font-medium truncate">
+                            <p className="text-[11px] sm:text-xs text-slate-400 mt-1 font-medium leading-tight">
                               Choose time control & match with global players
                             </p>
                           </div>
                         </div>
                         <div className="flex items-center gap-1 text-amber-400 text-xs font-bold shrink-0">
-                          <span className="hidden sm:inline">Choose Time</span>
-                          <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                          <span className="hidden md:inline">Choose Time</span>
+                          <ChevronRight className="w-5 h-5 group-hover:translate-x-1 group-hover:text-amber-300 transition-all" />
                         </div>
                       </div>
                     </button>
@@ -1326,14 +1377,14 @@ export default function App() {
                         triggerHaptic('move');
                         setActiveTab('offline');
                       }}
-                      className="w-full text-left p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-slate-900/90 via-slate-900/95 to-slate-950/90 hover:from-slate-850 hover:to-slate-900 border border-slate-800 hover:border-amber-500/40 shadow-lg shadow-slate-950/30 transition-all duration-200 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden"
+                      className="w-full text-left p-3 sm:p-4 rounded-2xl bg-gradient-to-r from-slate-900/90 via-amber-950/25 to-slate-950/90 hover:from-slate-850 hover:via-amber-950/40 hover:to-amber-900/30 active:from-amber-950/60 active:to-slate-900/95 border border-amber-500/30 hover:border-amber-400/60 shadow-lg shadow-slate-950/30 transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden"
                     >
-                      <div className="absolute top-0 right-0 w-28 h-28 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-500/20 transition-all duration-300" />
                       <div className="flex items-center justify-between gap-3 relative z-10">
-                        <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+                        <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
                           {/* 4x4 Mini Chessboard Picture */}
-                          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-amber-950/90 border border-amber-500/40 p-1.5 shadow-md flex items-center justify-center shrink-0 group-hover:scale-105 group-hover:border-amber-400 transition-transform">
-                            <div className="w-full h-full grid grid-cols-4 grid-rows-4 rounded-sm overflow-hidden border border-amber-900/80 shadow-inner">
+                          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-amber-950/90 border border-amber-500/50 p-1 shadow-md flex flex-col items-center justify-center shrink-0 group-hover:scale-105 group-hover:border-amber-300 group-hover:shadow-[0_0_15px_rgba(245,158,11,0.35)] transition-all duration-300 relative overflow-hidden">
+                            <div className="w-full h-[32px] sm:h-[36px] grid grid-cols-4 grid-rows-4 rounded-sm overflow-hidden border border-amber-900/80 shadow-inner">
                               {[
                                 0, 1, 0, 1,
                                 1, 0, 1, 0,
@@ -1358,24 +1409,30 @@ export default function App() {
                                 );
                               })}
                             </div>
+                            {/* Bottom tag strip */}
+                            <div className="absolute bottom-0 inset-x-0 bg-stone-950/95 border-t border-amber-600/40 py-0.5 flex justify-center items-center">
+                              <span className="text-[7px] sm:text-[8px] font-black tracking-widest text-amber-300 uppercase">BOARD</span>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm sm:text-base font-black text-white group-hover:text-amber-200 transition-colors truncate">
+
+                          <div className="flex-1 min-w-0">
+                            {/* Title with flex-wrap and NO truncate so title is 100% visible on all screens */}
+                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                              <h3 className="text-sm sm:text-base font-black text-white group-hover:text-amber-200 transition-colors leading-tight">
                                 Offline Chess Board
-                              </span>
-                              <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 text-[10px] font-bold uppercase tracking-wider shrink-0">
+                              </h3>
+                              <span className="px-1.5 sm:px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 text-[9px] sm:text-[10px] font-black uppercase tracking-wider shrink-0 shadow-sm">
                                 Pass & Play 👥
                               </span>
                             </div>
-                            <p className="text-xs text-slate-400 mt-0.5 font-medium truncate">
+                            <p className="text-[11px] sm:text-xs text-slate-400 mt-1 font-medium leading-tight">
                               Play face-to-face on 1 phone (No internet needed)
                             </p>
                           </div>
                         </div>
                         <div className="flex items-center gap-1 text-slate-400 group-hover:text-amber-400 text-xs font-bold shrink-0">
-                          <span className="hidden sm:inline">Pass & Play</span>
-                          <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                          <span className="hidden md:inline">Pass & Play</span>
+                          <ChevronRight className="w-5 h-5 group-hover:translate-x-1 group-hover:text-amber-300 transition-all" />
                         </div>
                       </div>
                     </button>
@@ -1570,7 +1627,6 @@ export default function App() {
             onUpdateUser={user => setCurrentUser(user)}
             settings={settings}
             onUpdateSettings={handleUpdateSettings}
-            initialSubTab={profileSubTab}
             onOpenStreak={() => setShowStreakModal(true)}
             onOpenAdmin={() => setActiveTab('admin')}
             onSignOut={() => {
@@ -1610,9 +1666,6 @@ export default function App() {
                 onClick={() => {
                   sound.playClick();
                   triggerHaptic('move');
-                  if (tab.id === 'profile') {
-                    setProfileSubTab('overview');
-                  }
                   setActiveTab(tab.id);
                 }}
                 className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl text-[10px] font-bold transition-all active:scale-95 cursor-pointer ${
