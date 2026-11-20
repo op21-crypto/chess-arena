@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Flag, Handshake, RotateCcw, Share2, Sparkles, RefreshCw, Trophy, Swords, Check, X } from 'lucide-react';
+import { Flag, Handshake, RotateCcw, Share2, Sparkles, RefreshCw, Trophy, Swords, Check, X, PhoneCall } from 'lucide-react';
 
 export function GameControls({
   isGameOver,
@@ -14,7 +14,8 @@ export function GameControls({
   onFlipBoard,
   onAnalyze,
   onShareRoom,
-  onViewResult
+  onViewResult,
+  onVoiceCall
 }) {
   const [showResignModal, setShowResignModal] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -27,6 +28,24 @@ export function GameControls({
 
   return (
     <div className="space-y-2.5">
+      {/* Voice Call Quick Connect Banner for Playing with Friends */}
+      {onVoiceCall && !isGameOver && (
+        <button
+          onClick={onVoiceCall}
+          className="w-full py-2.5 px-3 bg-gradient-to-r from-emerald-950/60 via-indigo-950/40 to-slate-900 border border-emerald-500/40 hover:border-emerald-400 rounded-2xl text-emerald-300 font-bold text-xs flex items-center justify-between transition-all group shadow-md"
+        >
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <PhoneCall className="w-3.5 h-3.5 text-emerald-400" />
+            </div>
+            <span>Voice Call Friend</span>
+          </div>
+          <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-bold">
+            Live Audio
+          </span>
+        </button>
+      )}
+
       {/* Draw Offer Notification Banner */}
       {drawOfferedBy && !isGameOver && (
         <div className="p-3 bg-gradient-to-r from-amber-950/60 to-slate-900 border border-amber-500/50 rounded-2xl shadow-lg flex items-center justify-between gap-3 animate-fade-in">

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Award, Trophy, Zap, Shield, Flame, X, Check, Edit2, Crown } from 'lucide-react';
+import { safeStorage } from '../utils/storage.js';
 
 const ACHIEVEMENTS_DATA = [
   { id: 'first_win', name: 'First Victory', desc: 'Won your first chess match in the arena', icon: '🏆' },
@@ -43,7 +44,7 @@ export function ProfileModal({ user, isOpen, onClose, onUpdateUser }) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        'Authorization': `Bearer ${safeStorage.getItem('token')}`
       },
       body: JSON.stringify({ avatar: selectedAvatar })
     })

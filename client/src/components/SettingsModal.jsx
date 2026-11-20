@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import {
   X, Settings, Music, Volume2, VolumeX, Smartphone, Mic, Palette,
   ChevronLeft, ChevronRight, Check, Eye, BookOpen, MessageSquare,
-  Crown, Play, Pause, Sliders, Sparkles, HelpCircle
+  Crown, Play, Pause, Sliders, Sparkles, Filter, Shield
 } from 'lucide-react';
-import { BOARD_THEMES, PIECE_THEMES, PieceIcon } from './PieceIcons.jsx';
-import { musicEngine } from '../utils/music.js';
+import { BOARD_THEMES, PIECE_THEMES, PIECE_COLOR_PALETTES, PieceIcon } from './PieceIcons.jsx';
+import { musicEngine, TRACK_LIST, MUSIC_CATEGORIES } from '../utils/music.js';
 import { triggerHaptic } from '../utils/device.js';
 
 export function SettingsModal({
@@ -14,15 +14,16 @@ export function SettingsModal({
   settings,
   onUpdateSettings
 }) {
-  const [activeSubModal, setActiveSubModal] = useState(null); // 'board_picker' | 'piece_picker' | null
+  const [activeSubModal, setActiveSubModal] = useState(null); // 'board_picker' | 'piece_picker' | 'color_picker' | 'music_library' | null
+  const [selectedMusicCategory, setSelectedMusicCategory] = useState('all');
   const [musicIsPlaying, setMusicIsPlaying] = useState(musicEngine.isPlaying);
 
   if (!isOpen) return null;
 
   const currentBoard = BOARD_THEMES[settings.boardTheme] || BOARD_THEMES.cappuccino;
   const currentPiece = PIECE_THEMES[settings.pieceTheme] || PIECE_THEMES.alexander;
-  const tracks = musicEngine.tracks;
-  const currentTrack = tracks[settings.musicTrackIndex % tracks.length];
+  const currentPalette = PIECE_COLOR_PALETTES[settings.pieceColorPalette || 'classic'];
+  const currentTrack = TRACK_LIST[settings.musicTrackIndex % TRACK_LIST.length];
 
   const handleToggle = (key) => {
     triggerHaptic('move');
@@ -42,9 +43,20 @@ export function SettingsModal({
 
   const handleChangeTrack = (delta) => {
     triggerHaptic('move');
-    const newIdx = (settings.musicTrackIndex + delta + tracks.length) % tracks.length;
+    const newIdx = (settings.musicTrackIndex + delta + TRACK_LIST.length) % TRACK_LIST.length;
     musicEngine.setTrack(newIdx);
     onUpdateSettings({ ...settings, musicTrackIndex: newIdx });
+  };
+
+  const handleSelectTrack = (trackId) => {
+    triggerHaptic('move');
+    const idx = TRACK_LIST.findIndex(t => t.id === trackId);
+    if (idx !== -1) {
+      musicEngine.setTrack(idx);
+      onUpdateSettings({ ...settings, musicTrackIndex: idx, musicEnabled: true });
+      musicEngine.start();
+      setMusicIsPlaying(true);
+    }
   };
 
   const handleToggleMusicPlayback = () => {
@@ -67,16 +79,20 @@ export function SettingsModal({
     onUpdateSettings({ ...settings, musicVolume: vol });
   };
 
+  const filteredTracks = selectedMusicCategory === 'all'
+    ? TRACK_LIST
+    : TRACK_LIST.filter(t => t.category === selectedMusicCategory);
+
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 md:p-6 animate-fade-in">
-      <div className="bg-slate-900 border-2 border-slate-700/80 rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden relative">
+      <div className="bg-slate-900 border-2 border-slate-700/80 rounded-3xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden relative">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 bg-slate-950/80 border-b border-slate-800">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
               <Settings className="w-4 h-4" />
             </div>
-            <h2 className="text-lg font-extrabold text-white tracking-tight">Settings</h2>
+            <h2 className="text-lg font-extrabold text-white tracking-tight">Arena Settings</h2>
           </div>
           <button
             onClick={onClose}
@@ -88,75 +104,149 @@ export function SettingsModal({
 
         {/* Scrollable Settings Body */}
         <div className="flex-1 overflow-y-auto p-5 space-y-6">
-          {/* ================= SECTION 1: GENERAL & AUDIO ================= */}
+          {/* ================= SECTION 1: THEME & COLOR COMBINATION ================= */}
           <div className="space-y-3">
             <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Sliders className="w-3.5 h-3.5" />
-              <span>General & Audio</span>
+              <Palette className="w-3.5 h-3.5" />
+              <span>Color Themes & Visuals</span>
             </h3>
 
-            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl divide-y divide-slate-800/60 overflow-hidden">
-              {/* App Theme */}
-              <div className="flex items-center justify-between p-3.5">
-                <div className="space-y-0.5">
-                  <span className="text-xs font-bold text-slate-200">Theme</span>
-                  <p className="text-[11px] text-slate-400">Application visual appearance</p>
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-4 space-y-4">
+              {/* App UI Theme Picker */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-200">App Theme Style</span>
+                  <p className="text-[11px] text-slate-400">Light luxury or dark esports aesthetic</p>
                 </div>
                 <select
                   value={settings.appTheme || 'dark'}
                   onChange={(e) => onUpdateSettings({ ...settings, appTheme: e.target.value })}
-                  className="bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1 text-xs font-bold text-amber-400 focus:outline-none"
+                  className="bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold text-amber-400 focus:outline-none"
                 >
-                  <option value="dark">Dark Slate</option>
-                  <option value="midnight">Midnight OLED</option>
-                  <option value="cyber">Cyber Arena</option>
+                  <option value="alabaster">Alabaster Luxury (Light)</option>
+                  <option value="dark">Dark Luxury Slate</option>
+                  <option value="emerald">Emerald Royale</option>
+                  <option value="obsidian">Obsidian Gold</option>
+                  <option value="midnight">Midnight Navy</option>
                 </select>
               </div>
 
-              {/* Sound Effects Toggle */}
+              {/* 3 Swatch Selector Buttons: Board Theme, Pieces Style, Pieces Color */}
+              <div className="grid grid-cols-3 gap-2">
+                {/* 1. Board Theme */}
+                <button
+                  onClick={() => setActiveSubModal('board_picker')}
+                  className="flex flex-col items-center justify-center p-2.5 bg-slate-900 border border-slate-800 hover:border-amber-500/50 rounded-xl transition-all text-center group"
+                >
+                  <span className="text-[10px] text-slate-400 font-semibold mb-1">Board</span>
+                  <div className="flex w-6 h-6 rounded overflow-hidden border border-slate-700 mb-1">
+                    <span className="w-3 h-full" style={{ backgroundColor: currentBoard.light }} />
+                    <span className="w-3 h-full" style={{ backgroundColor: currentBoard.dark }} />
+                  </div>
+                  <span className="text-[11px] font-bold text-white truncate max-w-full group-hover:text-amber-400">
+                    {currentBoard.name.split(' ')[0]}
+                  </span>
+                </button>
+
+                {/* 2. Pieces Carving Style */}
+                <button
+                  onClick={() => setActiveSubModal('piece_picker')}
+                  className="flex flex-col items-center justify-center p-2.5 bg-slate-900 border border-slate-800 hover:border-amber-500/50 rounded-xl transition-all text-center group"
+                >
+                  <span className="text-[10px] text-slate-400 font-semibold mb-1">Piece Design</span>
+                  <span className="text-xl leading-none mb-1">♔</span>
+                  <span className="text-[11px] font-bold text-white truncate max-w-full group-hover:text-amber-400">
+                    {currentPiece.name}
+                  </span>
+                </button>
+
+                {/* 3. Pieces Color Palette */}
+                <button
+                  onClick={() => setActiveSubModal('color_picker')}
+                  className="flex flex-col items-center justify-center p-2.5 bg-slate-900 border border-slate-800 hover:border-amber-500/50 rounded-xl transition-all text-center group"
+                >
+                  <span className="text-[10px] text-slate-400 font-semibold mb-1">Piece Color</span>
+                  <div className="flex items-center gap-1 mb-1">
+                    <span className="w-3 h-3 rounded-full border border-slate-600" style={{ backgroundColor: currentPalette.white }} />
+                    <span className="w-3 h-3 rounded-full border border-slate-600" style={{ backgroundColor: currentPalette.black }} />
+                  </div>
+                  <span className="text-[11px] font-bold text-white truncate max-w-full group-hover:text-amber-400">
+                    {currentPalette.name.split(' ')[0]}
+                  </span>
+                </button>
+              </div>
+
+              {/* Real Interactive Live Preview */}
+              <div className="flex flex-col items-center justify-center p-3 bg-slate-900/60 rounded-2xl border border-slate-800/80">
+                <span className="text-[11px] font-semibold text-slate-400 mb-2">Live Board Preview</span>
+                <div
+                  className="w-44 h-44 rounded-xl overflow-hidden border-2 shadow-2xl grid grid-cols-4 grid-rows-4"
+                  style={{ borderColor: currentBoard.border }}
+                >
+                  {[
+                    ['r', 'n', 'b', 'q'],
+                    ['p', 'p', 'p', 'p'],
+                    ['P', 'P', 'P', 'P'],
+                    ['R', 'N', 'B', 'K']
+                  ].map((row, rIdx) =>
+                    row.map((pieceChar, cIdx) => {
+                      const isDark = (rIdx + cIdx) % 2 === 1;
+                      const isWhite = pieceChar === pieceChar.toUpperCase();
+                      return (
+                        <div
+                          key={`${rIdx}-${cIdx}`}
+                          className="flex items-center justify-center"
+                          style={{ backgroundColor: isDark ? currentBoard.dark : currentBoard.light }}
+                        >
+                          <PieceIcon
+                            piece={pieceChar.toLowerCase()}
+                            color={isWhite ? 'w' : 'b'}
+                            size={30}
+                            theme={settings.pieceTheme}
+                            colorPalette={settings.pieceColorPalette || 'classic'}
+                          />
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ================= SECTION 2: SOOTHING MUSIC & SOUNDS (36+ Tracks) ================= */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Music className="w-3.5 h-3.5" />
+                <span>Soothing Music & Audio (36 Tracks)</span>
+              </h3>
+              <button
+                onClick={() => setActiveSubModal('music_library')}
+                className="text-xs font-bold text-indigo-400 hover:text-indigo-300 underline"
+              >
+                Browse All (36) →
+              </button>
+            </div>
+
+            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl divide-y divide-slate-800/60 overflow-hidden">
+              {/* Music Master Toggle */}
               <div className="flex items-center justify-between p-3.5">
                 <div className="flex items-center gap-2.5">
-                  <Volume2 className="w-4 h-4 text-slate-400" />
-                  <div className="space-y-0.5">
-                    <span className="text-xs font-bold text-slate-200">Sounds</span>
-                    <p className="text-[11px] text-slate-400">Board moves, captures, checks and victories</p>
+                  <Music className="w-4 h-4 text-indigo-400" />
+                  <div>
+                    <span className="text-xs font-bold text-slate-200">Background Music</span>
+                    <p className="text-[11px] text-slate-400">Soothing, organic ambient chill soundtrack</p>
                   </div>
                 </div>
                 <ToggleSwitch
-                  checked={settings.soundEnabled}
-                  onChange={() => handleToggle('soundEnabled')}
+                  checked={settings.musicEnabled}
+                  onChange={() => handleToggle('musicEnabled')}
                 />
               </div>
 
-              {/* Sounds only on piece move */}
-              <div className="flex items-center justify-between p-3.5 pl-9 bg-slate-950/40">
-                <div className="space-y-0.5">
-                  <span className="text-xs font-semibold text-slate-300">Sounds only on piece move</span>
-                  <p className="text-[10px] text-slate-500">Mute chat and timer notifications</p>
-                </div>
-                <ToggleSwitch
-                  checked={settings.soundOnlyPieceMove}
-                  onChange={() => handleToggle('soundOnlyPieceMove')}
-                />
-              </div>
-
-              {/* Music Master Toggle & Track Switcher */}
+              {/* Quick Track Switcher Carousel */}
               <div className="p-3.5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <Music className="w-4 h-4 text-indigo-400" />
-                    <div>
-                      <span className="text-xs font-bold text-slate-200">Ambient Music</span>
-                      <p className="text-[11px] text-slate-400">Procedural chill chess soundtrack</p>
-                    </div>
-                  </div>
-                  <ToggleSwitch
-                    checked={settings.musicEnabled}
-                    onChange={() => handleToggle('musicEnabled')}
-                  />
-                </div>
-
-                {/* Track Selector Carousel */}
                 <div className="p-2.5 bg-slate-900/90 border border-slate-800 rounded-xl flex items-center justify-between gap-2">
                   <button
                     onClick={() => handleChangeTrack(-1)}
@@ -172,7 +262,7 @@ export function SettingsModal({
                         {currentTrack.name}
                       </span>
                       <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-bold">
-                        {settings.musicTrackIndex + 1}/{tracks.length}
+                        {settings.musicTrackIndex + 1}/{TRACK_LIST.length}
                       </span>
                     </div>
                     <span className="text-[10px] text-slate-400 block truncate">
@@ -218,9 +308,9 @@ export function SettingsModal({
                 </div>
               </div>
 
-              {/* Music Scopes: During Game, Puzzles, Lessons */}
+              {/* Music Scopes: Game, Puzzles, Lessons */}
               <div className="flex items-center justify-between p-3.5 pl-9 bg-slate-950/40">
-                <span className="text-xs font-medium text-slate-300">Music during a game</span>
+                <span className="text-xs font-medium text-slate-300">Play music during games</span>
                 <ToggleSwitch
                   checked={settings.musicDuringGame}
                   onChange={() => handleToggle('musicDuringGame')}
@@ -228,7 +318,7 @@ export function SettingsModal({
               </div>
 
               <div className="flex items-center justify-between p-3.5 pl-9 bg-slate-950/40">
-                <span className="text-xs font-medium text-slate-300">Music during puzzles</span>
+                <span className="text-xs font-medium text-slate-300">Play music during puzzles</span>
                 <ToggleSwitch
                   checked={settings.musicDuringPuzzles}
                   onChange={() => handleToggle('musicDuringPuzzles')}
@@ -236,14 +326,29 @@ export function SettingsModal({
               </div>
 
               <div className="flex items-center justify-between p-3.5 pl-9 bg-slate-950/40">
-                <span className="text-xs font-medium text-slate-300">Music during lessons</span>
+                <span className="text-xs font-medium text-slate-300">Play music during lessons</span>
                 <ToggleSwitch
                   checked={settings.musicDuringLessons}
                   onChange={() => handleToggle('musicDuringLessons')}
                 />
               </div>
 
-              {/* Vibrations */}
+              {/* Sound Effects Toggle */}
+              <div className="flex items-center justify-between p-3.5">
+                <div className="flex items-center gap-2.5">
+                  <Volume2 className="w-4 h-4 text-slate-400" />
+                  <div>
+                    <span className="text-xs font-bold text-slate-200">Sound Effects</span>
+                    <p className="text-[11px] text-slate-400">Board moves, captures, checks and victories</p>
+                  </div>
+                </div>
+                <ToggleSwitch
+                  checked={settings.soundEnabled}
+                  onChange={() => handleToggle('soundEnabled')}
+                />
+              </div>
+
+              {/* Vibrations & Haptics */}
               <div className="flex items-center justify-between p-3.5">
                 <div className="flex items-center gap-2.5">
                   <Smartphone className="w-4 h-4 text-slate-400" />
@@ -287,91 +392,6 @@ export function SettingsModal({
             </div>
           </div>
 
-          {/* ================= SECTION 2: CHESSBOARD & PIECES ================= */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Palette className="w-3.5 h-3.5" />
-              <span>Chessboard and Pieces</span>
-            </h3>
-
-            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-4 space-y-4">
-              {/* Selectors Row */}
-              <div className="grid grid-cols-2 gap-3">
-                {/* Board Dropdown Trigger */}
-                <div className="space-y-1">
-                  <span className="text-[11px] font-semibold text-slate-400">Chessboard</span>
-                  <button
-                    onClick={() => setActiveSubModal('board_picker')}
-                    className="w-full flex items-center justify-between p-2.5 bg-slate-900 border border-slate-700/80 rounded-xl hover:border-amber-500/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="flex w-5 h-5 rounded overflow-hidden border border-slate-700 shrink-0">
-                        <span className="w-2.5 h-full" style={{ backgroundColor: currentBoard.light }} />
-                        <span className="w-2.5 h-full" style={{ backgroundColor: currentBoard.dark }} />
-                      </div>
-                      <span className="text-xs font-bold text-white truncate">
-                        {currentBoard.name}
-                      </span>
-                    </div>
-                    <span className="text-slate-400 text-xs">▾</span>
-                  </button>
-                </div>
-
-                {/* Pieces Dropdown Trigger */}
-                <div className="space-y-1">
-                  <span className="text-[11px] font-semibold text-slate-400">Pieces</span>
-                  <button
-                    onClick={() => setActiveSubModal('piece_picker')}
-                    className="w-full flex items-center justify-between p-2.5 bg-slate-900 border border-slate-700/80 rounded-xl hover:border-amber-500/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-sm">♔</span>
-                      <span className="text-xs font-bold text-white truncate">
-                        {currentPiece.name}
-                      </span>
-                    </div>
-                    <span className="text-slate-400 text-xs">▾</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Real Interactive Mini Board Preview (Matching Screenshot 4) */}
-              <div className="flex flex-col items-center justify-center p-3 bg-slate-900/60 rounded-2xl border border-slate-800">
-                <span className="text-[11px] font-semibold text-slate-400 mb-2">Live Board Preview</span>
-                <div
-                  className="w-48 h-48 rounded-xl overflow-hidden border-2 shadow-xl grid grid-cols-4 grid-rows-4"
-                  style={{ borderColor: currentBoard.border }}
-                >
-                  {[
-                    ['r', 'n', 'b', 'q'],
-                    ['p', 'p', 'p', 'p'],
-                    ['P', 'P', 'P', 'P'],
-                    ['R', 'N', 'B', 'K']
-                  ].map((row, rIdx) =>
-                    row.map((pieceChar, cIdx) => {
-                      const isDark = (rIdx + cIdx) % 2 === 1;
-                      const isWhite = pieceChar === pieceChar.toUpperCase();
-                      return (
-                        <div
-                          key={`${rIdx}-${cIdx}`}
-                          className="flex items-center justify-center"
-                          style={{ backgroundColor: isDark ? currentBoard.dark : currentBoard.light }}
-                        >
-                          <PieceIcon
-                            piece={pieceChar.toLowerCase()}
-                            color={isWhite ? 'w' : 'b'}
-                            size={32}
-                            theme={settings.pieceTheme}
-                          />
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* ================= SECTION 3: GAME OPTIONS ================= */}
           <div className="space-y-3">
             <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -380,88 +400,58 @@ export function SettingsModal({
             </h3>
 
             <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl divide-y divide-slate-800/60 overflow-hidden">
-              {/* Show legal moves */}
               <div className="flex items-center justify-between p-3.5">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full border border-slate-500 flex items-center justify-center">
-                    <span className="w-1.5 h-1.5 rounded-full bg-slate-300" />
-                  </div>
-                  <span className="text-xs font-bold text-slate-200">Show legal moves</span>
-                </div>
+                <span className="text-xs font-bold text-slate-200">Show legal moves</span>
                 <ToggleSwitch
                   checked={settings.showLegalMoves}
                   onChange={() => handleToggle('showLegalMoves')}
                 />
               </div>
 
-              {/* Highlight last move */}
               <div className="flex items-center justify-between p-3.5">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded bg-amber-400/40 border border-amber-400" />
-                  <span className="text-xs font-bold text-slate-200">Highlight last move</span>
-                </div>
+                <span className="text-xs font-bold text-slate-200">Highlight last move</span>
                 <ToggleSwitch
                   checked={settings.highlightLastMove}
                   onChange={() => handleToggle('highlightLastMove')}
                 />
               </div>
 
-              {/* Show coordinates */}
               <div className="flex items-center justify-between p-3.5">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-xs font-mono font-bold text-slate-400">1 a</span>
-                  <span className="text-xs font-bold text-slate-200">Show coordinates</span>
-                </div>
+                <span className="text-xs font-bold text-slate-200">Show coordinates</span>
                 <ToggleSwitch
                   checked={settings.showCoordinates}
                   onChange={() => handleToggle('showCoordinates')}
                 />
               </div>
 
-              {/* King in check indicator */}
               <div className="flex items-center justify-between p-3.5">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded border-2 border-rose-500 bg-rose-500/20" />
-                  <span className="text-xs font-bold text-slate-200">King in check indicator</span>
-                </div>
+                <span className="text-xs font-bold text-slate-200">King in check indicator</span>
                 <ToggleSwitch
                   checked={settings.kingInCheckIndicator}
                   onChange={() => handleToggle('kingInCheckIndicator')}
                 />
               </div>
 
-              {/* Show openings names */}
               <div className="flex items-center justify-between p-3.5">
-                <div className="flex items-center gap-2.5">
-                  <BookOpen className="w-4 h-4 text-slate-400" />
-                  <span className="text-xs font-bold text-slate-200">Show openings names</span>
-                </div>
+                <span className="text-xs font-bold text-slate-200">Show openings names</span>
                 <ToggleSwitch
                   checked={settings.showOpenings}
                   onChange={() => handleToggle('showOpenings')}
                 />
               </div>
 
-              {/* Allow chat during game */}
               <div className="flex items-center justify-between p-3.5">
-                <div className="flex items-center gap-2.5">
-                  <MessageSquare className="w-4 h-4 text-slate-400" />
-                  <span className="text-xs font-bold text-slate-200">Allow chat during game</span>
-                </div>
+                <span className="text-xs font-bold text-slate-200">Allow chat during game</span>
                 <ToggleSwitch
                   checked={settings.allowChat}
                   onChange={() => handleToggle('allowChat')}
                 />
               </div>
 
-              {/* Always promote to queen */}
               <div className="flex items-center justify-between p-3.5">
-                <div className="flex items-center gap-2.5">
-                  <Crown className="w-4 h-4 text-amber-400" />
-                  <div>
-                    <span className="text-xs font-bold text-slate-200">Always promote to queen</span>
-                    <p className="text-[10px] text-slate-500">Fast tactical play without promotion dialog</p>
-                  </div>
+                <div>
+                  <span className="text-xs font-bold text-slate-200">Always promote to queen</span>
+                  <p className="text-[10px] text-slate-500">Fast tactical play without modal</p>
                 </div>
                 <ToggleSwitch
                   checked={settings.alwaysPromoteToQueen}
@@ -469,14 +459,10 @@ export function SettingsModal({
                 />
               </div>
 
-              {/* Enable premoves */}
               <div className="flex items-center justify-between p-3.5">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded bg-rose-500/40 border border-rose-500" />
-                  <div>
-                    <span className="text-xs font-bold text-slate-200">Enable premoves</span>
-                    <p className="text-[10px] text-slate-500">Queue your response while opponent thinks</p>
-                  </div>
+                <div>
+                  <span className="text-xs font-bold text-slate-200">Enable premoves</span>
+                  <p className="text-[10px] text-slate-500">Queue next response while opponent thinks</p>
                 </div>
                 <ToggleSwitch
                   checked={settings.enablePremoves}
@@ -497,7 +483,93 @@ export function SettingsModal({
           </button>
         </div>
 
-        {/* ================= SUB-MODAL: BOARD THEME PICKER (Screenshot 5) ================= */}
+        {/* ================= SUB-MODAL: 36+ TRACK MUSIC LIBRARY ================= */}
+        {activeSubModal === 'music_library' && (
+          <div className="absolute inset-0 z-30 bg-slate-950/95 p-4 flex flex-col animate-fade-in">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div>
+                <h4 className="text-sm font-bold text-white">Soothing Chess Music Library</h4>
+                <p className="text-[11px] text-slate-400">36 handcrafted calm, organic tracks</p>
+              </div>
+              <button
+                onClick={() => setActiveSubModal(null)}
+                className="p-1 rounded-full text-slate-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Category Filter Pills */}
+            <div className="flex gap-1.5 py-3 overflow-x-auto no-scrollbar">
+              <button
+                onClick={() => setSelectedMusicCategory('all')}
+                className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                  selectedMusicCategory === 'all'
+                    ? 'bg-amber-500 text-slate-950'
+                    : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                }`}
+              >
+                All (36)
+              </button>
+              {Object.keys(MUSIC_CATEGORIES).map((catKey) => (
+                <button
+                  key={catKey}
+                  onClick={() => setSelectedMusicCategory(catKey)}
+                  className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                    selectedMusicCategory === catKey
+                      ? 'bg-amber-500 text-slate-950'
+                      : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                  }`}
+                >
+                  {MUSIC_CATEGORIES[catKey]}
+                </button>
+              ))}
+            </div>
+
+            {/* Track Items List */}
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+              {filteredTracks.map((tr) => {
+                const isCurrent = TRACK_LIST[settings.musicTrackIndex]?.id === tr.id;
+                return (
+                  <div
+                    key={tr.id}
+                    onClick={() => handleSelectTrack(tr.id)}
+                    className={`p-3 rounded-2xl border cursor-pointer transition-all flex items-center justify-between gap-3 ${
+                      isCurrent
+                        ? 'bg-amber-500/15 border-amber-500/60 shadow-md'
+                        : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-white truncate">{tr.name}</span>
+                        {isCurrent && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 font-bold font-mono">
+                            Playing
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-400 truncate mt-0.5">{tr.mood}</p>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-[10px] font-mono text-slate-500 uppercase">
+                        {tr.category}
+                      </span>
+                      {isCurrent && musicIsPlaying ? (
+                        <Pause className="w-4 h-4 text-amber-400" />
+                      ) : (
+                        <Play className="w-4 h-4 text-slate-400" />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ================= SUB-MODAL: BOARD THEME PICKER ================= */}
         {activeSubModal === 'board_picker' && (
           <div className="absolute inset-0 z-30 bg-slate-950/95 p-4 flex flex-col animate-fade-in">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
@@ -529,7 +601,6 @@ export function SettingsModal({
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      {/* Checkered 4x2 swatch matching Screenshot 5 */}
                       <div className="w-14 h-9 rounded-lg overflow-hidden border border-slate-700/80 grid grid-cols-4 grid-rows-2 shrink-0">
                         {[0, 1, 0, 1, 1, 0, 1, 0].map((val, idx) => (
                           <div
@@ -538,7 +609,10 @@ export function SettingsModal({
                           />
                         ))}
                       </div>
-                      <span className="text-xs font-bold text-white capitalize">{b.name}</span>
+                      <div className="text-left">
+                        <span className="text-xs font-bold text-white block capitalize">{b.name}</span>
+                        {b.isLight && <span className="text-[10px] text-amber-400 font-medium">Light Luxury Theme</span>}
+                      </div>
                     </div>
                     {isSelected && <Check className="w-4 h-4 text-amber-400" />}
                   </button>
@@ -548,7 +622,7 @@ export function SettingsModal({
           </div>
         )}
 
-        {/* ================= SUB-MODAL: PIECE SET PICKER (Screenshots 1 & 2) ================= */}
+        {/* ================= SUB-MODAL: PIECE CARVING PICKER ================= */}
         {activeSubModal === 'piece_picker' && (
           <div className="absolute inset-0 z-30 bg-slate-950/95 p-4 flex flex-col animate-fade-in">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
@@ -584,7 +658,6 @@ export function SettingsModal({
                       {isSelected && <Check className="w-4 h-4 text-amber-400" />}
                     </div>
 
-                    {/* Pieces Row: King, Queen, Rook, Bishop, Knight, Pawn (Matching Screenshot 1 & 2) */}
                     <div className="flex items-center justify-between p-2 bg-slate-950/70 rounded-xl border border-slate-800/80">
                       {['k', 'q', 'r', 'b', 'n', 'p'].map((pieceType, pIdx) => (
                         <div key={pIdx} className="w-7 h-7 flex items-center justify-center">
@@ -593,12 +666,62 @@ export function SettingsModal({
                             color={pIdx % 2 === 0 ? 'w' : 'b'}
                             size={26}
                             theme={key}
+                            colorPalette={settings.pieceColorPalette || 'classic'}
                           />
                         </div>
                       ))}
                     </div>
 
                     <p className="text-[10px] text-slate-400 truncate">{p.desc}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ================= SUB-MODAL: PIECE COLOR PALETTE PICKER ================= */}
+        {activeSubModal === 'color_picker' && (
+          <div className="absolute inset-0 z-30 bg-slate-950/95 p-4 flex flex-col animate-fade-in">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <h4 className="text-sm font-bold text-white">Select Pieces Color Palette</h4>
+              <button
+                onClick={() => setActiveSubModal(null)}
+                className="p-1 rounded-full text-slate-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto py-3 space-y-2.5">
+              {Object.keys(PIECE_COLOR_PALETTES).map((palKey) => {
+                const pal = PIECE_COLOR_PALETTES[palKey];
+                const isSelected = (settings.pieceColorPalette || 'classic') === palKey;
+                return (
+                  <button
+                    key={palKey}
+                    onClick={() => {
+                      triggerHaptic('move');
+                      onUpdateSettings({ ...settings, pieceColorPalette: palKey });
+                      setActiveSubModal(null);
+                    }}
+                    className={`w-full p-3.5 rounded-2xl border transition-all text-left flex items-center justify-between ${
+                      isSelected
+                        ? 'bg-amber-500/15 border-amber-500/60 shadow-md'
+                        : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1.5 p-1 bg-slate-950 rounded-xl border border-slate-800">
+                        <span className="w-5 h-5 rounded-full border border-slate-600" style={{ backgroundColor: pal.white }} />
+                        <span className="w-5 h-5 rounded-full border border-slate-600" style={{ backgroundColor: pal.black }} />
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-white block">{pal.name}</span>
+                        <span className="text-[10px] text-slate-400">White & Black color finish</span>
+                      </div>
+                    </div>
+                    {isSelected && <Check className="w-4 h-4 text-amber-400" />}
                   </button>
                 );
               })}

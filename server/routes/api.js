@@ -124,6 +124,47 @@ router.post('/auth/guest', (req, res) => {
   res.json({ token, user: safeUser });
 });
 
+// Google / Gmail Authentication
+router.post('/auth/google', async (req, res) => {
+  try {
+    const { email, name, avatar } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required for Google sign in' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    let user = Database.getUserByEmail(cleanEmail);
+
+    if (!user) {
+      const baseName = (name || cleanEmail.split('@')[0]).replace(/[^a-zA-Z0-9_]/g, '_');
+      const uniqueSuffix = Math.floor(100 + Math.random() * 900);
+      let username = baseName;
+      if (Database.getUserByUsername(username)) {
+        username = `${baseName}_${uniqueSuffix}`;
+      }
+
+      const userId = `g_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      user = Database.createUser({
+        id: userId,
+        username,
+        email: cleanEmail,
+        passwordHash: '',
+        role: 'user',
+        provider: 'google',
+        country: 'US',
+        countryName: 'United States',
+        avatar: avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`
+      });
+    }
+
+    const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '30d' });
+    const { passwordHash: _, ...safeUser } = user;
+    res.json({ token, user: safeUser });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Current User Profile
 router.get('/auth/me', requireAuth, (req, res) => {
   const user = Database.getUserById(req.user.id);
@@ -227,6 +268,91 @@ router.get('/games/:id', (req, res) => {
   const game = Database.getGameById(req.params.id);
   if (!game) return res.status(404).json({ error: 'Game not found' });
   res.json({ game });
+});
+
+// ================= ROOMS (FRIEND PLAY & SERVERLESS SYNC) =================
+
+router.post('/rooms/create', (req, res) => {
+  const { roomId, timeControl, colorPreference, user } = req.body;
+  const id = roomId || `arena_${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+  const baseMinutes = timeControl?.baseMinutes || 10;
+  
+  const hostPlayer = user || {
+    id: `guest_${Date.now()}`,
+    username: 'Host_Player',
+    role: 'guest',
+    elo: 1200
+  };
+
+  const isWhite = colorPreference === 'white' || (colorPreference === 'random' && Math.random() > 0.5);
+
+  const room = {
+    id,
+    whitePlayer: isWhite ? hostPlayer : null,
+    blackPlayer: isWhite ? null : hostPlayer,
+    timeControl: { baseMinutes, incrementSeconds: timeControl?.incrementSeconds || 0 },
+    whiteTime: baseMinutes * 60 * 1000,
+    blackTime: baseMinutes * 60 * 1000,
+    fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+    status: 'waiting',
+    moveHistory: [],
+    capturedPieces: { white: [], black: [] },
+    createdAt: new Date().toISOString(),
+    lastUpdated: Date.now()
+  };
+
+  Database.saveGame(room);
+  res.json({ success: true, room });
+});
+
+router.get('/rooms/:id', (req, res) => {
+  const room = Database.getGameById(req.params.id);
+  if (!room) return res.status(404).json({ error: 'Room not found' });
+  res.json({ room });
+});
+
+router.post('/rooms/:id/join', (req, res) => {
+  const room = Database.getGameById(req.params.id);
+  if (!room) return res.status(404).json({ error: 'Room not found' });
+
+  const { user } = req.body;
+  const joiningPlayer = user || {
+    id: `guest_${Date.now()}`,
+    username: 'Guest_Opponent',
+    role: 'guest',
+    elo: 1200
+  };
+
+  if (!room.whitePlayer) {
+    room.whitePlayer = joiningPlayer;
+    room.status = 'active';
+  } else if (!room.blackPlayer && room.whitePlayer.id !== joiningPlayer.id) {
+    room.blackPlayer = joiningPlayer;
+    room.status = 'active';
+  }
+
+  room.lastUpdated = Date.now();
+  Database.saveGame(room);
+  res.json({ success: true, room });
+});
+
+router.post('/rooms/:id/move', (req, res) => {
+  const room = Database.getGameById(req.params.id);
+  if (!room) return res.status(404).json({ error: 'Room not found' });
+
+  const { move, fen, whiteTime, blackTime, capturedPieces, status, winner, winReason } = req.body;
+  if (fen) room.fen = fen;
+  if (move) room.moveHistory.push(move);
+  if (whiteTime !== undefined) room.whiteTime = whiteTime;
+  if (blackTime !== undefined) room.blackTime = blackTime;
+  if (capturedPieces) room.capturedPieces = capturedPieces;
+  if (status) room.status = status;
+  if (winner) room.winner = winner;
+  if (winReason) room.winReason = winReason;
+
+  room.lastUpdated = Date.now();
+  Database.saveGame(room);
+  res.json({ success: true, room });
 });
 
 // ================= PUZZLES & LESSONS =================

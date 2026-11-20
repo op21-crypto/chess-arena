@@ -21,22 +21,23 @@ import {
 import { ALL_LESSONS, LESSON_CATEGORIES } from '../data/lessonsData.js';
 import { sound } from '../utils/audio.js';
 import { musicEngine } from '../utils/music.js';
+import { safeStorage } from '../utils/storage.js';
 
 export function LessonView({ onBack }) {
   const [lessons] = useState(ALL_LESSONS);
   const [selectedLessonIdx, setSelectedLessonIdx] = useState(() => {
-    const saved = localStorage.getItem('chess_current_lesson_idx');
+    const saved = safeStorage.getItem('chess_current_lesson_idx');
     return saved !== null ? parseInt(saved, 10) : 0;
   });
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [unlockAll, setUnlockAll] = useState(() => {
-    const saved = localStorage.getItem('chess_lessons_unlock_all');
+    const saved = safeStorage.getItem('chess_lessons_unlock_all');
     return saved === null ? true : saved === 'true'; // Default true for flexible learning
   });
   const [completedLessons, setCompletedLessons] = useState(() => {
     try {
-      const saved = localStorage.getItem('chess_completed_lessons');
+      const saved = safeStorage.getItem('chess_completed_lessons');
       return saved ? new Set(JSON.parse(saved)) : new Set([1]);
     } catch {
       return new Set([1]);
@@ -52,12 +53,12 @@ export function LessonView({ onBack }) {
 
   // Save current lesson index to storage
   useEffect(() => {
-    localStorage.setItem('chess_current_lesson_idx', selectedLessonIdx.toString());
+    safeStorage.setItem('chess_current_lesson_idx', selectedLessonIdx.toString());
   }, [selectedLessonIdx]);
 
   // Save completed lessons
   useEffect(() => {
-    localStorage.setItem('chess_completed_lessons', JSON.stringify([...completedLessons]));
+    safeStorage.setItem('chess_completed_lessons', JSON.stringify([...completedLessons]));
   }, [completedLessons]);
 
   // Sync music state
@@ -377,7 +378,7 @@ export function LessonView({ onBack }) {
                 onClick={() => {
                   const nextVal = !unlockAll;
                   setUnlockAll(nextVal);
-                  localStorage.setItem('chess_lessons_unlock_all', nextVal.toString());
+                  safeStorage.setItem('chess_lessons_unlock_all', nextVal.toString());
                 }}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
                   unlockAll

@@ -90,7 +90,7 @@ export function MatchmakingModal({ isOpen, onClose, onStartMatchmaking, isSearch
   );
 }
 
-export function FriendRoomModal({ isOpen, onClose, onCreateRoom, onJoinRoom, createdRoom }) {
+export function FriendRoomModal({ isOpen, onClose, onCreateRoom, onJoinRoom, createdRoom, onEnterRoom }) {
   const [roomCode, setRoomCode] = useState('');
   const [selectedMinutes, setSelectedMinutes] = useState(10);
   const [colorPref, setColorPref] = useState('random');
@@ -102,10 +102,52 @@ export function FriendRoomModal({ isOpen, onClose, onCreateRoom, onJoinRoom, cre
     ? `${window.location.origin}/?room=${createdRoom.roomId}`
     : '';
 
-  const copyLink = () => {
-    navigator.clipboard.writeText(fullShareUrl);
+  const copyLink = async () => {
+    let success = false;
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(fullShareUrl);
+        success = true;
+      }
+    } catch {
+      // Fall through to textarea fallback
+    }
+
+    if (!success) {
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = fullShareUrl;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        textarea.style.top = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      } catch (err) {
+        console.error('Fallback copy failed', err);
+      }
+    }
+
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleNativeShare = async () => {
+    if (navigator?.share) {
+      try {
+        await navigator.share({
+          title: 'Chess Arena Match',
+          text: '♟️ Battle me in Chess Arena! Click to join my match:',
+          url: fullShareUrl
+        });
+        return;
+      } catch {
+        // User cancelled share
+      }
+    }
+    copyLink();
   };
 
   const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(
@@ -136,22 +178,43 @@ export function FriendRoomModal({ isOpen, onClose, onCreateRoom, onJoinRoom, cre
 
         {createdRoom ? (
           <div className="p-4 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-4 animate-fade-in">
-            <span className="text-xs font-semibold text-emerald-400 block text-center">
-              ✓ Room Created! Share with your friend to begin
-            </span>
-
-            <div className="flex items-center justify-between p-2.5 bg-slate-900 border border-slate-700 rounded-xl font-mono text-xs text-slate-200">
-              <span className="truncate mr-2">{createdRoom.roomId}</span>
-              <button
-                onClick={copyLink}
-                className="flex items-center gap-1 px-2.5 py-1 bg-amber-500 text-slate-950 font-bold rounded-lg transition-colors"
-              >
-                {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copied ? 'Copied' : 'Copy'}</span>
-              </button>
+            <div className="text-center space-y-1">
+              <span className="text-xs font-semibold text-emerald-400 block">
+                ✓ Room Created! Share with your friend to begin
+              </span>
+              <span className="text-[11px] text-slate-400 font-mono">
+                Room Code: <strong className="text-amber-400">{createdRoom.roomId}</strong>
+              </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1.5">
+              <label className="text-[11px] text-slate-400 font-semibold block">Shareable Link</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={fullShareUrl}
+                  onClick={e => e.target.select()}
+                  className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-slate-200 select-all"
+                />
+                <button
+                  onClick={copyLink}
+                  className="flex items-center gap-1 px-3 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition-colors text-xs whitespace-nowrap shadow-md"
+                >
+                  {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copied ? 'Copied!' : 'Copy'}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={handleNativeShare}
+                className="flex items-center justify-center gap-1.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl transition-colors border border-slate-700"
+              >
+                <Share2 className="w-3.5 h-3.5 text-amber-400" />
+                <span>Share</span>
+              </button>
               <a
                 href={whatsappUrl}
                 target="_blank"
@@ -169,6 +232,16 @@ export function FriendRoomModal({ isOpen, onClose, onCreateRoom, onJoinRoom, cre
                 <span>Telegram</span>
               </a>
             </div>
+
+            <button
+              onClick={() => {
+                if (onEnterRoom) onEnterRoom(createdRoom);
+                onClose();
+              }}
+              className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-lg flex items-center justify-center gap-1.5"
+            >
+              <span>Enter Board & Wait For Friend</span>
+            </button>
           </div>
         ) : (
           <div className="space-y-4">
@@ -211,7 +284,7 @@ export function FriendRoomModal({ isOpen, onClose, onCreateRoom, onJoinRoom, cre
 
               <button
                 onClick={() => onCreateRoom({ timeControl: { baseMinutes: selectedMinutes, incrementSeconds: 0 }, colorPreference: colorPref })}
-                className="w-full py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-colors"
+                className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-colors shadow-md"
               >
                 Generate Room & Link
               </button>

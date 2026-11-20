@@ -1,9 +1,52 @@
 import React from 'react';
 
+export const PIECE_COLOR_PALETTES = {
+  classic: {
+    name: 'Ivory & Ebony',
+    white: '#ffffff',
+    whiteStroke: '#0f172a',
+    black: '#1e293b',
+    blackStroke: '#000000',
+    accent: '#cbd5e1'
+  },
+  gold: {
+    name: 'Gilded Gold & Obsidian',
+    white: '#fef08a',
+    whiteStroke: '#854d0e',
+    black: '#18181b',
+    blackStroke: '#000000',
+    accent: '#eab308'
+  },
+  silver: {
+    name: 'Platinum & Charcoal',
+    white: '#f8fafc',
+    whiteStroke: '#475569',
+    black: '#334155',
+    blackStroke: '#0f172a',
+    accent: '#94a3b8'
+  },
+  rose: {
+    name: 'Rose Gold & Slate',
+    white: '#ffe4e6',
+    whiteStroke: '#be123c',
+    black: '#27272a',
+    blackStroke: '#09090b',
+    accent: '#f43f5e'
+  },
+  emerald: {
+    name: 'Royale Emerald & Onyx',
+    white: '#ecfdf5',
+    whiteStroke: '#065f46',
+    black: '#1c1917',
+    blackStroke: '#042f2e',
+    accent: '#10b981'
+  }
+};
+
 export const PIECE_THEMES = {
   alexander: {
     name: 'Alexander',
-    desc: 'Classic Staunton master standard with balanced proportions',
+    desc: 'Classic Staunton master standard with balanced geometric proportions',
     accent: '#ffffff'
   },
   constantine: {
@@ -31,15 +74,55 @@ export const PIECE_THEMES = {
     desc: 'Spartan geometric cuts and sharp battle-ready silhouettes',
     accent: '#f1f5f9'
   },
+  hannibal: {
+    name: 'Hannibal',
+    desc: 'Carthaginian master tactician with curved battle crests',
+    accent: '#fef3c7'
+  },
+  caligula: {
+    name: 'Caligula',
+    desc: 'Roman imperial majesty with dramatic heavy diadems',
+    accent: '#e2e8f0'
+  },
+  montezuma: {
+    name: 'Montezuma',
+    desc: 'Aztec sun empire motifs and bold feathered geometry',
+    accent: '#fed7aa'
+  },
+  victoria: {
+    name: 'Victoria',
+    desc: 'Victorian era court elegance with refined royal crowns',
+    accent: '#f1f5f9'
+  },
+  tutankhamen: {
+    name: 'Tutankhamen',
+    desc: 'Golden pharaoh regalia with sculpted nemes headdress',
+    accent: '#fef08a'
+  },
+  xerxes: {
+    name: 'Xerxes',
+    desc: 'Persian royal majesty with towering ornate battlements',
+    accent: '#e0e7ff'
+  },
   joanna: {
     name: "Joanna d'Arc",
     desc: 'Gilded golden champion armor with heroic royal heraldry',
     accent: '#facc15'
   },
-  classic: {
-    name: 'Classic Neo',
-    desc: 'High-contrast digital vector design engineered for speed',
-    accent: '#ffffff'
+  pericles: {
+    name: 'Pericles',
+    desc: 'Athenian classical golden age with sculpted column capitals',
+    accent: '#e2e8f0'
+  },
+  hammurabi: {
+    name: 'Hammurabi',
+    desc: 'Babylonian stone carved pillars of justice and strength',
+    accent: '#cbd5e1'
+  },
+  commodus: {
+    name: 'Commodus',
+    desc: 'Colosseum gladiatorial power and iron Roman pillars',
+    accent: '#94a3b8'
   }
 };
 
@@ -54,110 +137,114 @@ export const BOARD_THEMES = {
   },
   greenwich: {
     name: 'Greenwich',
-    light: '#edf1dc',
-    dark: '#67894a',
-    border: '#455f30',
+    light: '#ebecd0',
+    dark: '#759858',
+    border: '#45612c',
     highlight: 'rgba(250, 204, 21, 0.45)',
     check: 'rgba(239, 68, 68, 0.75)'
   },
   riviera: {
     name: 'Riviera',
     light: '#ddecfa',
-    dark: '#699fed',
-    border: '#3b82f6',
+    dark: '#6ea3f2',
+    border: '#3b74c4',
     highlight: 'rgba(244, 63, 94, 0.45)',
     check: 'rgba(239, 68, 68, 0.75)'
   },
   iceberg: {
     name: 'Iceberg',
-    light: '#edf2f7',
-    dark: '#94a3b8',
-    border: '#475569',
-    highlight: 'rgba(56, 189, 248, 0.45)',
+    light: '#f0f4f8',
+    dark: '#a0b3c6',
+    border: '#62788e',
+    highlight: 'rgba(14, 165, 233, 0.45)',
     check: 'rgba(239, 68, 68, 0.75)'
   },
   honeymoon: {
     name: 'Honeymoon',
-    light: '#fed7aa',
-    dark: '#d97706',
-    border: '#b45309',
-    highlight: 'rgba(236, 72, 153, 0.45)',
+    light: '#f9e4c8',
+    dark: '#d68d45',
+    border: '#a26224',
+    highlight: 'rgba(234, 179, 8, 0.45)',
     check: 'rgba(239, 68, 68, 0.75)'
   },
   lavender: {
     name: 'Lavender',
-    light: '#f3e8ff',
-    dark: '#a855f7',
-    border: '#7e22ce',
+    light: '#f3eaf8',
+    dark: '#a084bd',
+    border: '#70538f',
     highlight: 'rgba(250, 204, 21, 0.45)',
     check: 'rgba(239, 68, 68, 0.75)'
   },
   sepia: {
     name: 'Sepia',
-    light: '#faebd7',
-    dark: '#b38b6d',
-    border: '#8a6245',
+    light: '#ede4db',
+    dark: '#cbb39d',
+    border: '#8f7762',
     highlight: 'rgba(245, 158, 11, 0.45)',
     check: 'rgba(239, 68, 68, 0.75)'
   },
   redsquare: {
     name: 'Red Square',
-    light: '#fee2e2',
-    dark: '#dc2626',
-    border: '#991b1b',
+    light: '#f8ebd9',
+    dark: '#de6f5e',
+    border: '#ab3e2e',
     highlight: 'rgba(251, 191, 36, 0.45)',
-    check: 'rgba(220, 38, 38, 0.8)'
+    check: 'rgba(225, 29, 72, 0.8)'
+  },
+  alabaster: {
+    name: 'Alabaster Luxury',
+    light: '#fbfaf8',
+    dark: '#e5dbcc',
+    border: '#c5b49a',
+    highlight: 'rgba(212, 175, 55, 0.45)',
+    check: 'rgba(225, 29, 72, 0.75)',
+    isLight: true
+  },
+  marble: {
+    name: 'Carrara Marble',
+    light: '#f8fafc',
+    dark: '#94a3b8',
+    border: '#475569',
+    highlight: 'rgba(56, 189, 248, 0.45)',
+    check: 'rgba(239, 68, 68, 0.75)',
+    isLight: true
   },
   emerald: {
-    name: 'Tournament Emerald',
+    name: 'Emerald Royale',
     light: '#ebecd0',
-    dark: '#779556',
-    border: '#4a6331',
-    highlight: 'rgba(255, 255, 0, 0.45)',
+    dark: '#4e7c4f',
+    border: '#2d4a2d',
+    highlight: 'rgba(250, 204, 21, 0.45)',
     check: 'rgba(239, 68, 68, 0.75)'
   },
-  wood: {
-    name: 'Classic Walnut',
-    light: '#f0d9b5',
-    dark: '#b58863',
-    border: '#8a5a36',
-    highlight: 'rgba(245, 158, 11, 0.45)',
-    check: 'rgba(239, 68, 68, 0.75)'
-  },
-  midnight: {
-    name: 'Midnight Cyber',
-    light: '#94a3b8',
-    dark: '#1e293b',
-    border: '#0f172a',
-    highlight: 'rgba(168, 85, 247, 0.45)',
-    check: 'rgba(239, 68, 68, 0.75)'
+  obsidian: {
+    name: 'Obsidian Gold',
+    light: '#334155',
+    dark: '#0f172a',
+    border: '#b45309',
+    highlight: 'rgba(234, 179, 8, 0.55)',
+    check: 'rgba(239, 68, 68, 0.85)'
   }
 };
 
-export function PieceIcon({ piece, color, size = 42, theme = 'alexander' }) {
+export function PieceIcon({ piece, color, size = 42, theme = 'alexander', colorPalette = 'classic' }) {
   if (!piece) return null;
   const isWhite = color === 'w';
+  const palette = PIECE_COLOR_PALETTES[colorPalette] || PIECE_COLOR_PALETTES.classic;
 
-  // Customize color schemes per piece theme
-  let fill = isWhite ? '#ffffff' : '#1e293b';
-  let stroke = isWhite ? '#1e293b' : '#000000';
-  let innerShade = isWhite ? '#f8fafc' : '#0f172a';
+  let fill = isWhite ? palette.white : palette.black;
+  let stroke = isWhite ? palette.whiteStroke : palette.blackStroke;
   let strokeW = '1.5';
+  let innerShade = isWhite ? '#f8fafc' : '#0f172a';
 
-  if (theme === 'joanna') {
-    fill = isWhite ? '#fef08a' : '#1c1917';
-    stroke = isWhite ? '#854d0e' : '#44403c';
-    innerShade = isWhite ? '#fde047' : '#0c0a09';
+  if (theme === 'william') {
+    strokeW = '2.2';
   } else if (theme === 'napoleon') {
     fill = isWhite ? '#f1f5f9' : '#334155';
     stroke = isWhite ? '#475569' : '#0f172a';
-    innerShade = isWhite ? '#e2e8f0' : '#1e293b';
-  } else if (theme === 'william') {
-    strokeW = '2.2';
-    stroke = isWhite ? '#0f172a' : '#000000';
-  } else if (theme === 'cleopatra') {
-    fill = isWhite ? '#fffbeb' : '#27272a';
-    stroke = isWhite ? '#78350f' : '#18181b';
+  } else if (theme === 'joanna') {
+    fill = isWhite ? '#fef08a' : '#1c1917';
+    stroke = isWhite ? '#854d0e' : '#44403c';
   }
 
   switch (piece.toLowerCase()) {

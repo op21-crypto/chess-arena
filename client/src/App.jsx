@@ -30,6 +30,7 @@ import { sound } from './utils/audio.js';
 import { musicEngine } from './utils/music.js';
 import { triggerHaptic, speakMove } from './utils/device.js';
 import { getOpeningName } from './utils/openings.js';
+import { safeStorage } from './utils/storage.js';
 
 const DEFAULT_SETTINGS = {
   appTheme: 'dark',
@@ -61,7 +62,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home'); // 'home', 'game', 'puzzles', 'lessons', 'tournaments', 'leaderboard', 'admin'
   const [settings, setSettings] = useState(() => {
     try {
-      const saved = localStorage.getItem('chess_arena_settings');
+      const saved = safeStorage.getItem('chess_arena_settings');
       if (saved) return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
     } catch (e) {}
     return DEFAULT_SETTINGS;
@@ -70,7 +71,7 @@ export default function App() {
   const handleUpdateSettings = (newSettings) => {
     setSettings(newSettings);
     try {
-      localStorage.setItem('chess_arena_settings', JSON.stringify(newSettings));
+      safeStorage.setItem('chess_arena_settings', JSON.stringify(newSettings));
     } catch (e) {}
   };
 
@@ -81,6 +82,23 @@ export default function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showFriendsDrawer, setShowFriendsDrawer] = useState(false);
+
+  // Resilient guest user initializer (ensures Firefox/mobile users are never blocked)
+  const getOrCreateUser = () => {
+    if (currentUser) return currentUser;
+    const guestNum = Math.floor(1000 + Math.random() * 9000);
+    const guest = {
+      id: `guest_${Date.now()}_${guestNum}`,
+      username: `Guest_${guestNum}`,
+      role: 'guest',
+      ratings: { bullet: 1200, blitz: 1200, rapid: 1200, classical: 1200 },
+      country: 'UN',
+      avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=Guest_${guestNum}`
+    };
+    setCurrentUser(guest);
+    safeStorage.setItem('token', `mock_guest_token_${Date.now()}`);
+    return guest;
+  };
 
   // Modals for Match Launching
   const [showMatchmakingModal, setShowMatchmakingModal] = useState(false);
@@ -137,7 +155,7 @@ export default function App() {
 
   useEffect(() => {
     // 1. Check existing auth token
-    const token = localStorage.getItem('token');
+    const token = safeStorage.getItem('token');
     if (token) {
       fetch('/api/auth/me', {
         headers: { Authorization: `Bearer ${token}` }
@@ -148,7 +166,7 @@ export default function App() {
             setCurrentUser(data.user);
           }
         })
-        .catch(() => localStorage.removeItem('token'));
+        .catch(() => safeStorage.removeItem('token'));
     }
 
     // 2. Initialize Socket.IO connection
@@ -269,6 +287,24 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     const roomParam = params.get('room');
     if (roomParam) {
+      const activeUser = getOrCreateUser();
+      fetch(`/api/rooms/${roomParam}/join`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: activeUser })
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.room) {
+            setGameSession(data.room);
+            const isWhite = data.room.whitePlayer?.id === activeUser.id;
+            setPlayerColor(isWhite ? 'w' : 'b');
+            setActiveTab('game');
+            sound.playMove();
+          }
+        })
+        .catch(() => {});
+
       setTimeout(() => {
         socket.emit('join_room', { roomId: roomParam });
         setActiveTab('game');
@@ -280,6 +316,50 @@ export default function App() {
     };
   }, []);
 
+  // Room synchronization polling (ensures moves & player joins stay synced even if WebSocket is disconnected)
+  useEffect(() => {
+    if (!gameSession?.id || isAIGame || gameSession.isGameOver) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/rooms/${gameSession.id}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data?.room) {
+          const r = data.room;
+          const movesDiffer = (r.moveHistory?.length || 0) !== (gameSession.moveHistory?.length || 0);
+          const fenDiffers = r.fen && r.fen !== gameSession.fen;
+          const statusDiffers = r.status && r.status !== gameSession.status;
+          const opponentJoined = (!gameSession.blackPlayer && r.blackPlayer) || (!gameSession.whitePlayer && r.whitePlayer);
+
+          if (movesDiffer || fenDiffers || statusDiffers || opponentJoined) {
+            setGameSession(prev => ({
+              ...prev,
+              ...r,
+              turn: new Chess(r.fen || prev.fen).turn()
+            }));
+
+            if (movesDiffer) {
+              sound.playMove();
+              const lastMove = r.moveHistory?.[r.moveHistory.length - 1];
+              if (lastMove && settings.voiceCommentary) {
+                speakMove(lastMove.san);
+              }
+            }
+
+            if (r.status === 'checkmate' || r.status === 'resigned' || r.status === 'stalemate' || r.status === 'draw') {
+              setShowGameOverModal(true);
+            }
+          }
+        }
+      } catch {
+        // Silent poll fallback
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [gameSession?.id, gameSession?.fen, gameSession?.moveHistory?.length, gameSession?.status, isAIGame]);
+
   // Update socket authentication when user changes
   useEffect(() => {
     if (currentUser && socketRef.current) {
@@ -289,10 +369,7 @@ export default function App() {
 
   // Handle Matchmaking
   const handleStartMatchmaking = (preset) => {
-    if (!currentUser) {
-      setShowAuthModal(true);
-      return;
-    }
+    const activeUser = getOrCreateUser();
     setIsSearchingMatch(true);
     socketRef.current?.emit('join_matchmaking', {
       format: preset.format,
@@ -306,20 +383,79 @@ export default function App() {
   };
 
   // Handle Private Rooms
-  const handleCreateFriendRoom = (config) => {
-    if (!currentUser) {
-      setShowAuthModal(true);
-      return;
+  const handleCreateFriendRoom = async (config) => {
+    const activeUser = getOrCreateUser();
+    const roomId = `arena_${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    const isWhite = config.colorPreference === 'white' || (config.colorPreference === 'random' && Math.random() > 0.5);
+    const baseMinutes = config.timeControl?.baseMinutes || 10;
+
+    const initialGame = {
+      id: roomId,
+      roomId,
+      isRoom: true,
+      whitePlayer: isWhite ? activeUser : null,
+      blackPlayer: isWhite ? null : activeUser,
+      timeControl: { baseMinutes, incrementSeconds: config.timeControl?.incrementSeconds || 0 },
+      whiteTime: baseMinutes * 60 * 1000,
+      blackTime: baseMinutes * 60 * 1000,
+      fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+      status: 'waiting',
+      moveHistory: [],
+      capturedPieces: { white: [], black: [] },
+      createdAt: new Date().toISOString()
+    };
+
+    // Immediately set createdRoomInfo so the share link is instantly available!
+    setCreatedRoomInfo({ roomId, game: initialGame });
+    setGameSession(initialGame);
+    setPlayerColor(isWhite ? 'w' : 'b');
+
+    // Sync room with backend REST endpoint
+    try {
+      await fetch('/api/rooms/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomId,
+          timeControl: config.timeControl,
+          colorPreference: config.colorPreference,
+          user: activeUser
+        })
+      });
+    } catch {
+      // Local room state intact
     }
-    socketRef.current?.emit('create_room', config);
+
+    // Also emit to socket if gateway connected
+    socketRef.current?.emit('create_room', { ...config, roomId });
   };
 
-  const handleJoinFriendRoom = (roomId) => {
-    if (!currentUser) {
-      setShowAuthModal(true);
-      return;
+  const handleJoinFriendRoom = async (roomId) => {
+    const cleanId = (roomId || '').trim();
+    if (!cleanId) return;
+    const activeUser = getOrCreateUser();
+
+    try {
+      const res = await fetch(`/api/rooms/${cleanId}/join`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: activeUser })
+      });
+      const data = await res.json();
+      if (data?.room) {
+        setGameSession(data.room);
+        const isWhite = data.room.whitePlayer?.id === activeUser.id;
+        setPlayerColor(isWhite ? 'w' : 'b');
+        setShowFriendRoomModal(false);
+        setShowGameOverModal(false);
+        setActiveTab('game');
+        sound.playMove();
+      }
+    } catch {
+      // Socket fallback
     }
-    socketRef.current?.emit('join_room', { roomId });
+
+    socketRef.current?.emit('join_room', { roomId: cleanId });
     setShowFriendRoomModal(false);
     setActiveTab('game');
   };
@@ -550,7 +686,92 @@ export default function App() {
         }
       }
     } else {
-      // Multiplayer move
+      // Multiplayer move (optimistic local update + REST sync + socket emit)
+      try {
+        const chess = new Chess(gameSession.fen);
+        const res = chess.move(moveObj);
+        if (res) {
+          sound.playMove();
+          if (settings.voiceCommentary && !settings.voiceCommentaryOnlyOpponent) {
+            speakMove(res.san);
+          }
+
+          const updatedHistory = [
+            ...(gameSession.moveHistory || []),
+            {
+              from: res.from,
+              to: res.to,
+              piece: res.piece,
+              color: res.color,
+              san: res.san,
+              fen: chess.fen()
+            }
+          ];
+
+          const isOver = chess.isGameOver();
+          let status = 'active';
+          let winner = null;
+          let winReason = null;
+
+          if (isOver) {
+            if (chess.isCheckmate()) {
+              status = 'checkmate';
+              winner = chess.turn() === 'w' ? 'black' : 'white';
+              winReason = 'checkmate';
+            } else if (chess.isStalemate()) {
+              status = 'stalemate';
+              winner = 'draw';
+              winReason = 'stalemate';
+            } else {
+              status = 'draw';
+              winner = 'draw';
+              winReason = 'draw';
+            }
+            setShowGameOverModal(true);
+            const isWinner = (winner === 'white' && playerColor === 'w') || (winner === 'black' && playerColor === 'b');
+            if (isWinner) sound.playVictory();
+            else sound.playGameOver();
+          }
+
+          const updatedSession = {
+            ...gameSession,
+            fen: chess.fen(),
+            turn: chess.turn(),
+            inCheck: chess.inCheck(),
+            isGameOver: isOver,
+            status: isOver ? status : 'active',
+            winner: isOver ? winner : null,
+            winReason: isOver ? winReason : null,
+            moveHistory: updatedHistory
+          };
+          setGameSession(updatedSession);
+
+          // REST Sync for serverless persistence
+          if (gameSession.id) {
+            fetch(`/api/rooms/${gameSession.id}/move`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                move: {
+                  from: res.from,
+                  to: res.to,
+                  piece: res.piece,
+                  color: res.color,
+                  san: res.san,
+                  fen: chess.fen()
+                },
+                fen: chess.fen(),
+                status: isOver ? status : 'active',
+                winner: isOver ? winner : null,
+                winReason: isOver ? winReason : null
+              })
+            }).catch(() => {});
+          }
+        }
+      } catch (e) {
+        console.warn('Move validation fallback:', e);
+      }
+
       socketRef.current?.emit('make_move', {
         gameId: gameSession.id,
         move: moveObj
@@ -745,7 +966,7 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => {
-                    localStorage.removeItem('token');
+                    safeStorage.removeItem('token');
                     setCurrentUser(null);
                   }}
                   className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-red-400"
@@ -1084,6 +1305,10 @@ export default function App() {
         onCreateRoom={handleCreateFriendRoom}
         onJoinRoom={handleJoinFriendRoom}
         createdRoom={createdRoomInfo}
+        onEnterRoom={() => {
+          setActiveTab('game');
+          setShowFriendRoomModal(false);
+        }}
       />
 
       <PlayAIModal

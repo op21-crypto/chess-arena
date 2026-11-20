@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Music, Play, Pause, SkipForward, Volume2, VolumeX, Settings, ChevronDown, ChevronUp } from 'lucide-react';
-import { musicEngine } from '../utils/music.js';
+import { musicEngine, TRACK_LIST } from '../utils/music.js';
 import { triggerHaptic } from '../utils/device.js';
 
 export function MiniMusicPlayer({
@@ -10,7 +10,7 @@ export function MiniMusicPlayer({
 }) {
   const [isPlaying, setIsPlaying] = useState(musicEngine.isPlaying);
   const [isMinimized, setIsMinimized] = useState(true);
-  const tracks = musicEngine.tracks;
+  const tracks = TRACK_LIST;
   const currentTrack = tracks[settings.musicTrackIndex % tracks.length];
 
   useEffect(() => {

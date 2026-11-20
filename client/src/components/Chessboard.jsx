@@ -11,6 +11,7 @@ export function Chessboard({
   flipped = false,
   boardTheme = 'cappuccino',
   pieceTheme = 'alexander',
+  colorPalette = 'classic',
   inCheck = false,
   lastMove = null,
   disabled = false,
@@ -213,7 +214,7 @@ export function Chessboard({
                   onClick={() => executeMove({ ...promotionPending, promotion: pType })}
                   className="p-3 bg-slate-800 hover:bg-amber-500/20 hover:border-amber-400 border border-slate-700 rounded-xl transition-all duration-150 transform hover:scale-105 active:scale-95"
                 >
-                  <PieceIcon piece={pType} color={playerColor === 'b' ? 'b' : 'w'} size={44} theme={pieceTheme} />
+                  <PieceIcon piece={pType} color={playerColor === 'b' ? 'b' : 'w'} size={44} theme={pieceTheme} colorPalette={colorPalette} />
                 </button>
               ))}
             </div>
@@ -295,6 +296,7 @@ export function Chessboard({
                         color={piece.color} 
                         size={typeof window !== 'undefined' && window.innerWidth < 450 ? 36 : 48} 
                         theme={pieceTheme} 
+                        colorPalette={colorPalette}
                       />
                     </div>
                   )}

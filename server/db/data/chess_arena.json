@@ -589,9 +589,80 @@
       "username": "testuser_1795148520931",
       "email": "testuser_1795148520931@example.com",
       "passwordHash": "$2b$10$S8qgPjqcStQ78G9BBVlCne73KYSXwpNeT0KdKmauTvyIbmLf1EMZO"
+    },
+    "g_1795152861531_n7k9": {
+      "role": "user",
+      "country": "US",
+      "countryName": "United States",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Test_Player",
+      "ratings": {
+        "bullet": 1200,
+        "blitz": 1200,
+        "rapid": 1200,
+        "classical": 1200,
+        "puzzle": 1200
+      },
+      "highestRating": 1200,
+      "stats": {
+        "played": 0,
+        "won": 0,
+        "lost": 0,
+        "drawn": 0,
+        "winStreak": 0,
+        "currentStreak": 0
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-11-20",
+          "rating": 1200,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [],
+      "createdAt": "2026-11-20T05:34:21.558Z",
+      "isOnline": false,
+      "banned": false,
+      "id": "g_1795152861531_n7k9",
+      "username": "Test_Player",
+      "email": "test.player@gmail.com",
+      "passwordHash": "",
+      "provider": "google"
     }
   },
-  "games": {},
+  "games": {
+    "arena_TEST1": {
+      "id": "arena_TEST1",
+      "whitePlayer": {
+        "id": "test_u2",
+        "username": "FriendPlayer"
+      },
+      "blackPlayer": {
+        "id": "test_u1",
+        "username": "Tester"
+      },
+      "timeControl": {
+        "baseMinutes": 10,
+        "incrementSeconds": 0
+      },
+      "whiteTime": 600000,
+      "blackTime": 600000,
+      "fen": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
+      "status": "active",
+      "moveHistory": [
+        {
+          "from": "e2",
+          "to": "e4",
+          "san": "e4"
+        }
+      ],
+      "capturedPieces": {
+        "white": [],
+        "black": []
+      },
+      "createdAt": "2026-11-20T05:34:28.663Z",
+      "lastUpdated": 1795152919258
+    }
+  },
   "tournaments": {
     "tourney_1795142622594_p9fj": {
       "id": "tourney_1795142622594_p9fj",

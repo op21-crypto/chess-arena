@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Users, Gamepad2, Ban, CheckCircle, AlertTriangle } from 'lucide-react';
+import { safeStorage } from '../utils/storage.js';
 
 export function AdminView() {
   const [stats, setStats] = useState(null);
@@ -9,7 +10,7 @@ export function AdminView() {
   const fetchStats = () => {
     fetch('/api/admin/stats', {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        'Authorization': `Bearer ${safeStorage.getItem('token')}`
       }
     })
       .then(res => res.json())
@@ -32,7 +33,7 @@ export function AdminView() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        'Authorization': `Bearer ${safeStorage.getItem('token')}`
       },
       body: JSON.stringify({ banned })
     })

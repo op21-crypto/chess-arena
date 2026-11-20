@@ -4,6 +4,7 @@ import { Chessboard } from './Chessboard.jsx';
 import { Lightbulb, Trophy, RotateCcw, CheckCircle2, XCircle, ArrowRight, Flame } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { sound } from '../utils/audio.js';
+import { safeStorage } from '../utils/storage.js';
 import { CHESS_PUZZLES as DEFAULT_PUZZLES } from '../data/puzzleData.js';
 
 export function PuzzleView({ currentUser, onUpdateRating }) {
@@ -65,7 +66,7 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${safeStorage.getItem('token')}`
           },
           body: JSON.stringify({ success: true })
         }).catch(() => {});

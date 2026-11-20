@@ -6,7 +6,8 @@ export function VoiceControls({
   gameId,
   currentUser,
   opponentUser,
-  isPlayer
+  isPlayer,
+  triggerVoiceCall
 }) {
   const [voiceStatus, setVoiceStatus] = useState('idle'); // 'idle', 'requesting', 'invited', 'connected'
   const [isMuted, setIsMuted] = useState(false);
@@ -20,6 +21,13 @@ export function VoiceControls({
   const remoteAudio = useRef(new Audio());
   const audioContext = useRef(null);
   const analyser = useRef(null);
+
+  // Trigger voice call programmatically (e.g. from GameControls "Voice Call Friend" button)
+  useEffect(() => {
+    if (triggerVoiceCall && voiceStatus === 'idle' && isPlayer) {
+      requestVoice();
+    }
+  }, [triggerVoiceCall]);
 
   // Setup WebRTC and Socket listeners
   useEffect(() => {

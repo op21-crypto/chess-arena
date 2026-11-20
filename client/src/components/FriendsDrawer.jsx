@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, UserPlus, Swords, Check, X, Search, Circle } from 'lucide-react';
+import { safeStorage } from '../utils/storage.js';
 
 export function FriendsDrawer({ currentUser, isOpen, onClose, onChallengeFriend }) {
   const [friends, setFriends] = useState([]);
@@ -10,7 +11,7 @@ export function FriendsDrawer({ currentUser, isOpen, onClose, onChallengeFriend 
   const fetchFriends = () => {
     fetch('/api/friends', {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        'Authorization': `Bearer ${safeStorage.getItem('token')}`
       }
     })
       .then(res => res.json())
@@ -35,7 +36,7 @@ export function FriendsDrawer({ currentUser, isOpen, onClose, onChallengeFriend 
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        'Authorization': `Bearer ${safeStorage.getItem('token')}`
       },
       body: JSON.stringify({ targetUsername: searchUsername.trim() })
     })
@@ -56,7 +57,7 @@ export function FriendsDrawer({ currentUser, isOpen, onClose, onChallengeFriend 
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        'Authorization': `Bearer ${safeStorage.getItem('token')}`
       },
       body: JSON.stringify({ fromUserId, accept })
     })
