@@ -145,8 +145,11 @@ export function SettingsModal({
                   onChange={(e) => onUpdateSettings({ ...settings, appTheme: e.target.value })}
                   className="bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold text-amber-400 focus:outline-none"
                 >
-                  <option value="alabaster">Alabaster Luxury (Light)</option>
-                  <option value="dark">Dark Luxury Slate</option>
+                  <option value="light">☀️ Day (White / Light Mode)</option>
+                  <option value="dark">🌙 Night (Dark Luxury Slate)</option>
+                  <option value="black">🖤 OLED Black (Pure Pitch Black)</option>
+                  <option value="system">⚙️ Auto System (Device Sync)</option>
+                  <option value="alabaster">Alabaster Luxury</option>
                   <option value="emerald">Emerald Royale</option>
                   <option value="obsidian">Obsidian Gold</option>
                   <option value="midnight">Midnight Navy</option>

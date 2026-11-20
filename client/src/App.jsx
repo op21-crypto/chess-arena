@@ -923,18 +923,49 @@ export default function App() {
   const isWhite = playerColor === 'w';
   const opponent = isWhite ? blackPlayer : whitePlayer;
   const me = isWhite ? whitePlayer : blackPlayer;
-  const isLight = settings.appTheme === 'alabaster';
+  // Dynamic Day & Night System Theme Detection
+  const [systemIsDark, setSystemIsDark] = useState(() => {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return true;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e) => setSystemIsDark(e.matches);
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  const effectiveTheme = useMemo(() => {
+    const rawTheme = (settings.appTheme || 'dark').toLowerCase();
+    if (rawTheme === 'system') {
+      return systemIsDark ? 'dark' : 'light';
+    }
+    if (rawTheme === 'alabaster' || rawTheme === 'light' || rawTheme === 'white' || rawTheme === 'day') {
+      return 'light';
+    }
+    if (rawTheme === 'black' || rawTheme === 'oled') {
+      return 'black';
+    }
+    return 'dark';
+  }, [settings.appTheme, systemIsDark]);
+
+  const isLight = effectiveTheme === 'light';
+  const isOled = effectiveTheme === 'black';
 
   const currentTurn = gameSession ? new Chess(gameSession.fen).turn() : 'w';
 
   return (
     <div className={`min-h-screen flex flex-col font-sans selection:bg-amber-500 selection:text-black transition-colors ${
-      isLight ? 'bg-[#f4f7fb] text-slate-900' : 'luxury-bg text-slate-100'
+      isLight ? 'bg-[#f4f7fb] text-slate-900' : isOled ? 'bg-black text-slate-100' : 'luxury-bg text-slate-100'
     }`}>
       {/* Top Navbar (Hidden in full-screen offline pass & play mode) */}
       {activeTab !== 'offline' && (
         <header className={`sticky top-0 z-40 backdrop-blur-md border-b px-4 py-2.5 transition-colors ${
-          isLight ? 'bg-white/95 border-slate-200 text-slate-900 shadow-sm' : 'bg-slate-950/80 border-slate-800 text-white'
+          isLight ? 'bg-white/95 border-slate-200 text-slate-900 shadow-sm' : isOled ? 'bg-black/95 border-zinc-800 text-white' : 'bg-slate-950/80 border-slate-800 text-white'
         }`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Top-Left Premium Brand Logo: CHESS */}
@@ -1482,7 +1513,7 @@ export default function App() {
       {/* Floating Bottom Navigation for Mobile (5 Primary Tabs: Home, Play, Puzzles, Learn, Profile) */}
       {activeTab !== 'offline' && (
         <footer className={`md:hidden sticky bottom-0 z-40 backdrop-blur-md border-t px-2 py-2 flex items-center justify-around transition-colors ${
-          isLight ? 'bg-white/95 border-slate-200' : 'bg-slate-950/90 border-slate-800'
+          isLight ? 'bg-white/95 border-slate-200' : isOled ? 'bg-black/95 border-zinc-800' : 'bg-slate-950/90 border-slate-800'
         }`}>
           {[
             { id: 'home', label: 'Home', icon: Home },

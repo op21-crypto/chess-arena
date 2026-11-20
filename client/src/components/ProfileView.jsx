@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import {
   User, Trophy, Settings, Award, Shield, Flame, Sparkles,
-  Edit2, Check, ArrowRight, LogOut, LogIn, ChevronRight, Globe
+  Edit2, Check, ArrowRight, LogOut, LogIn, ChevronRight, Globe,
+  BarChart3, Sun, Moon, SunMoon, Contrast, Monitor
 } from 'lucide-react';
 import { calculateUserRanking } from '../data/leaderboardData.js';
 import { safeStorage } from '../utils/storage.js';
@@ -10,6 +11,7 @@ import { SettingsModal } from './SettingsModal.jsx';
 import { ACHIEVEMENTS_DATA } from './ProfileModal.jsx';
 import { FAMOUS_AVATARS, AVATAR_CATEGORIES, ANIME_AVATARS } from '../data/avatarData.js';
 import { triggerHaptic } from '../utils/device.js';
+import { sound } from '../utils/audio.js';
 
 export function ProfileView({
   user,
@@ -45,6 +47,7 @@ export function ProfileView({
     : 0;
 
   const handleSubTabChange = (tab) => {
+    sound.playClick();
     triggerHaptic('move');
     setActiveSubTab(tab);
   };
@@ -281,57 +284,336 @@ export function ProfileView({
         )}
       </div>
 
-      {/* Sub-Navigation Tabs: Overview & Stats | Rankings & Leaderboard | Settings | Sign In / Sign Out at the last */}
-      <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-slate-900 border border-slate-800 shadow-lg">
-        {[
-          { id: 'overview', label: 'Stats', icon: User },
-          { id: 'rankings', label: 'Rankings', icon: Trophy },
-          { id: 'settings', label: 'Settings', icon: Settings }
-        ].map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeSubTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => handleSubTabChange(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
-                isActive
-                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-              }`}
-            >
-              <Icon className="w-4 h-4 shrink-0" />
-              <span className="truncate">{tab.label}</span>
-            </button>
-          );
-        })}
+      {/* ================= DAY & NIGHT THEME SYSTEM SELECTOR ================= */}
+      <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-4 sm:p-5 shadow-xl space-y-3 relative overflow-hidden">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-sm">
+              <SunMoon className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-xs sm:text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+                <span>Day & Night Theme System</span>
+                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">
+                  {(settings?.appTheme || 'dark').toUpperCase()}
+                </span>
+              </h3>
+              <p className="text-[11px] text-slate-400 font-medium">
+                Day (White / Light), Night (Dark Slate), OLED Pitch Black, or Device Auto Sync
+              </p>
+            </div>
+          </div>
+        </div>
 
-        {/* Dedicated Sign In / Sign Out Tab at the Last */}
-        {user ? (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          {[
+            {
+              id: 'light',
+              label: 'Day Mode',
+              sub: 'Crisp White',
+              icon: Sun,
+              activeBorder: 'border-amber-400 bg-amber-500/20 text-amber-300 ring-2 ring-amber-400/40 shadow-lg shadow-amber-500/20'
+            },
+            {
+              id: 'dark',
+              label: 'Night Mode',
+              sub: 'Luxury Slate',
+              icon: Moon,
+              activeBorder: 'border-indigo-400 bg-indigo-500/20 text-indigo-300 ring-2 ring-indigo-400/40 shadow-lg shadow-indigo-500/20'
+            },
+            {
+              id: 'black',
+              label: 'OLED Black',
+              sub: 'Pitch Black #000',
+              icon: Contrast,
+              activeBorder: 'border-zinc-300 bg-zinc-800/80 text-white ring-2 ring-zinc-300/40 shadow-lg'
+            },
+            {
+              id: 'system',
+              label: 'Auto System',
+              sub: 'Device Sync',
+              icon: Monitor,
+              activeBorder: 'border-teal-400 bg-teal-500/20 text-teal-300 ring-2 ring-teal-400/40 shadow-lg shadow-teal-500/20'
+            }
+          ].map((theme) => {
+            const Icon = theme.icon;
+            const currentTheme = (settings?.appTheme || 'dark').toLowerCase();
+            const isSelected =
+              currentTheme === theme.id ||
+              (theme.id === 'light' && (currentTheme === 'alabaster' || currentTheme === 'white')) ||
+              (theme.id === 'black' && currentTheme === 'oled');
+
+            return (
+              <button
+                key={theme.id}
+                type="button"
+                onClick={() => {
+                  sound.playClick();
+                  triggerHaptic('move');
+                  if (onUpdateSettings) {
+                    onUpdateSettings({ ...settings, appTheme: theme.id });
+                  }
+                }}
+                className={`p-3 rounded-2xl border transition-all text-left flex items-center gap-2.5 cursor-pointer select-none active:scale-95 ${
+                  isSelected
+                    ? theme.activeBorder
+                    : 'bg-slate-950/70 border-slate-800/90 text-slate-400 hover:text-white hover:border-slate-700 hover:bg-slate-850'
+                }`}
+              >
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                  isSelected ? 'bg-slate-950/40' : 'bg-slate-900 border border-slate-800'
+                }`}>
+                  <Icon className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-xs font-black block truncate leading-tight">
+                    {theme.label}
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-medium block truncate">
+                    {theme.sub}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ================= 4 VERTICAL ACTION BUTTONS (TOP TO BOTTOM) ================= */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <span className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span>Profile Navigation & Controls</span>
+          </span>
+          <span className="text-[11px] font-mono text-slate-500 font-bold">
+            Select to View Below
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-2.5">
+          {/* 1. STATS BUTTON */}
           <button
-            onClick={() => {
-              triggerHaptic('move');
-              if (onSignOut) onSignOut();
-            }}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-rose-500/20 transition-all cursor-pointer"
-            title="Sign Out of account"
+            type="button"
+            onClick={() => handleSubTabChange('overview')}
+            className={`w-full rounded-2xl p-4 flex items-center justify-between transition-all cursor-pointer select-none active:scale-[0.99] border text-left ${
+              activeSubTab === 'overview'
+                ? 'bg-gradient-to-r from-amber-500/20 via-slate-900 to-amber-500/5 border-amber-500/60 shadow-xl shadow-amber-500/10 ring-1 ring-amber-400/40'
+                : 'bg-slate-900/90 hover:bg-slate-850 border-slate-800/90 hover:border-slate-700 shadow-md'
+            }`}
           >
-            <LogOut className="w-4 h-4 shrink-0" />
-            <span className="truncate">Sign Out</span>
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${
+                activeSubTab === 'overview'
+                  ? 'bg-amber-500/20 border-amber-500/50 text-amber-400 shadow-md shadow-amber-500/20'
+                  : 'bg-slate-950 border-slate-800 text-slate-400'
+              }`}>
+                <BarChart3 className="w-6 h-6" />
+              </div>
+
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm sm:text-base font-black text-white tracking-tight">
+                    Player Statistics & Record
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    {userElo} Elo
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 truncate mt-0.5">
+                  Elo breakdown, win rate ({winRate}%), streak & {unlockedSet.size} achievements
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {activeSubTab === 'overview' ? (
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 flex items-center gap-1">
+                  <Check className="w-3 h-3 stroke-[3]" />
+                  <span>Open</span>
+                </span>
+              ) : (
+                <span className="text-xs font-bold text-slate-500 hidden sm:inline">View Stats</span>
+              )}
+              <ChevronRight className={`w-5 h-5 transition-transform duration-200 ${
+                activeSubTab === 'overview' ? 'text-amber-400 rotate-90' : 'text-slate-500'
+              }`} />
+            </div>
           </button>
-        ) : (
+
+          {/* 2. RANKINGS BUTTON */}
           <button
-            onClick={() => {
-              triggerHaptic('move');
-              if (onSignIn) onSignIn();
-            }}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-black bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 shadow-md shadow-amber-500/20 hover:from-amber-400 hover:to-amber-300 transition-all cursor-pointer"
-            title="Sign In with Google / Gmail"
+            type="button"
+            onClick={() => handleSubTabChange('rankings')}
+            className={`w-full rounded-2xl p-4 flex items-center justify-between transition-all cursor-pointer select-none active:scale-[0.99] border text-left ${
+              activeSubTab === 'rankings'
+                ? 'bg-gradient-to-r from-emerald-500/20 via-slate-900 to-emerald-500/5 border-emerald-500/60 shadow-xl shadow-emerald-500/10 ring-1 ring-emerald-400/40'
+                : 'bg-slate-900/90 hover:bg-slate-850 border-slate-800/90 hover:border-slate-700 shadow-md'
+            }`}
           >
-            <LogIn className="w-4 h-4 shrink-0" />
-            <span className="truncate">Sign In</span>
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${
+                activeSubTab === 'rankings'
+                  ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400 shadow-md shadow-emerald-500/20'
+                  : 'bg-slate-950 border-slate-800 text-slate-400'
+              }`}>
+                <Trophy className="w-6 h-6" />
+              </div>
+
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm sm:text-base font-black text-white tracking-tight">
+                    Global Rankings & Leaderboard
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    #{userRank.toLocaleString()}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 truncate mt-0.5">
+                  Top {((100 - parseFloat(percentile))).toFixed(1)}% worldwide • National #{countryRank.toLocaleString()} in {user?.countryName || user?.country || 'India 🇮🇳'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {activeSubTab === 'rankings' ? (
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20 flex items-center gap-1">
+                  <Check className="w-3 h-3 stroke-[3]" />
+                  <span>Open</span>
+                </span>
+              ) : (
+                <span className="text-xs font-bold text-slate-500 hidden sm:inline">View Ranks</span>
+              )}
+              <ChevronRight className={`w-5 h-5 transition-transform duration-200 ${
+                activeSubTab === 'rankings' ? 'text-emerald-400 rotate-90' : 'text-slate-500'
+              }`} />
+            </div>
           </button>
-        )}
+
+          {/* 3. SETTINGS BUTTON */}
+          <button
+            type="button"
+            onClick={() => handleSubTabChange('settings')}
+            className={`w-full rounded-2xl p-4 flex items-center justify-between transition-all cursor-pointer select-none active:scale-[0.99] border text-left ${
+              activeSubTab === 'settings'
+                ? 'bg-gradient-to-r from-sky-500/20 via-slate-900 to-sky-500/5 border-sky-500/60 shadow-xl shadow-sky-500/10 ring-1 ring-sky-400/40'
+                : 'bg-slate-900/90 hover:bg-slate-850 border-slate-800/90 hover:border-slate-700 shadow-md'
+            }`}
+          >
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${
+                activeSubTab === 'settings'
+                  ? 'bg-sky-500/20 border-sky-500/50 text-sky-400 shadow-md shadow-sky-500/20'
+                  : 'bg-slate-950 border-slate-800 text-slate-400'
+              }`}>
+                <Settings className="w-6 h-6" />
+              </div>
+
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm sm:text-base font-black text-white tracking-tight">
+                    Arena Settings & Preferences
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30 capitalize">
+                    {settings?.appTheme || 'dark'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 truncate mt-0.5">
+                  Board styles, pieces themes, soundscapes, clocks & audio
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {activeSubTab === 'settings' ? (
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-sky-500 text-slate-950 shadow-md shadow-sky-500/20 flex items-center gap-1">
+                  <Check className="w-3 h-3 stroke-[3]" />
+                  <span>Open</span>
+                </span>
+              ) : (
+                <span className="text-xs font-bold text-slate-500 hidden sm:inline">Configure</span>
+              )}
+              <ChevronRight className={`w-5 h-5 transition-transform duration-200 ${
+                activeSubTab === 'settings' ? 'text-sky-400 rotate-90' : 'text-slate-500'
+              }`} />
+            </div>
+          </button>
+
+          {/* 4. DEDICATED SIGN IN / SIGN OUT BUTTON AT THE LAST */}
+          {user ? (
+            <button
+              type="button"
+              onClick={() => {
+                sound.playClick();
+                triggerHaptic('move');
+                if (onSignOut) onSignOut();
+              }}
+              className="w-full rounded-2xl p-4 flex items-center justify-between transition-all cursor-pointer select-none active:scale-[0.99] border text-left bg-gradient-to-r from-rose-500/10 via-slate-900 to-rose-500/5 hover:from-rose-500/15 border-rose-500/30 hover:border-rose-500/50 shadow-md group"
+            >
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border bg-rose-500/20 border-rose-500/40 text-rose-400 shadow-md shadow-rose-500/20">
+                  <LogOut className="w-6 h-6" />
+                </div>
+
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm sm:text-base font-black text-rose-400 tracking-tight group-hover:text-rose-300 transition-colors">
+                      Sign Out of Account
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                      Active Session
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 truncate mt-0.5">
+                    Signed in as {user.email || user.username} • Tap to securely disconnect
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="px-3 py-1 rounded-xl bg-rose-500/20 text-rose-300 text-xs font-extrabold border border-rose-500/40 group-hover:bg-rose-500 group-hover:text-slate-950 transition-all">
+                  Sign Out
+                </span>
+              </div>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                sound.playClick();
+                triggerHaptic('move');
+                if (onSignIn) onSignIn();
+              }}
+              className="w-full rounded-2xl p-4 flex items-center justify-between transition-all cursor-pointer select-none active:scale-[0.99] border text-left bg-gradient-to-r from-amber-500/20 via-slate-900 to-amber-500/10 hover:from-amber-500/30 border-amber-500/50 shadow-xl shadow-amber-500/15 group"
+            >
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border bg-gradient-to-br from-amber-400 to-amber-600 border-amber-400 text-slate-950 shadow-md shadow-amber-500/30">
+                  <LogIn className="w-6 h-6 text-slate-950 font-black" />
+                </div>
+
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm sm:text-base font-black text-white tracking-tight group-hover:text-amber-300 transition-colors">
+                      Sign In with Google / Gmail
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                      Guest Mode
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 truncate mt-0.5">
+                    Sync ratings, match history & unlocked achievements across all devices
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 text-xs font-black shadow-md shadow-amber-500/25 group-hover:scale-105 transition-all">
+                  Sign In
+                </span>
+              </div>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ================= VIEW 1: OVERVIEW & STATS ================= */}

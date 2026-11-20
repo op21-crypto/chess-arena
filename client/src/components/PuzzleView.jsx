@@ -32,7 +32,10 @@ import {
   Award,
   Layers,
   ArrowRight,
-  Eye
+  Eye,
+  Crown,
+  Swords,
+  Shield
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { sound } from '../utils/audio.js';
@@ -1459,191 +1462,394 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
   const lemmingPuzzle = ALL_PUZZLES.find(p => p.id === 'puz_lemming_1') || ALL_PUZZLES[0];
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-4 min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-24">
-      {/* Top Header */}
-      <div className="flex items-center justify-between py-3 border-b border-slate-200 dark:border-slate-800">
-        <h1 className="text-2xl font-bold tracking-tight">Puzzles</h1>
-        <div className="w-9 h-9 rounded-full bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-500 font-bold text-sm">
-          {currentUser?.username?.[0]?.toUpperCase() || 'U'}
-        </div>
-      </div>
+    <div className="max-w-4xl mx-auto px-3.5 sm:px-6 py-4 md:py-6 min-h-screen text-slate-100 pb-28 space-y-6 animate-fade-in">
+      {/* 1. Ultra-Premium Top Header Card */}
+      <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-slate-900/95 via-slate-900/80 to-slate-950/95 border border-amber-500/30 shadow-2xl backdrop-blur-xl relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Top Card: 3 Primary Puzzle Navigation Modes */}
-      <div className="mt-4 bg-sky-500/5 dark:bg-slate-900/60 rounded-3xl p-2 border border-sky-500/15 dark:border-slate-800 divide-y divide-sky-500/10 dark:divide-slate-800/60">
-        {/* Row 1: Puzzle Themes */}
-        <div
-          onClick={() => setViewState('themes')}
-          className="flex items-center gap-4 p-4 rounded-2xl hover:bg-sky-500/10 dark:hover:bg-slate-800/50 cursor-pointer transition-colors group"
-        >
-          <div className="w-10 h-10 rounded-2xl bg-sky-500/20 text-sky-500 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-            <BookOpen className="w-5 h-5" />
+        <div className="flex items-center gap-3.5 relative z-10">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center font-black shadow-lg shadow-amber-500/30 shrink-0">
+            <Flame className="w-6 h-6 fill-slate-950" />
           </div>
-          <div className="flex-1">
-            <h2 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-sky-500 transition-colors">
-              Puzzle Themes
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-              Do puzzles from your favorite openings, or choose a theme.
-            </p>
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[10px] font-black uppercase tracking-wider mb-1">
+              <Sparkles className="w-3 h-3" />
+              <span>Official Tactics Arena</span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+              Tactics & Puzzles
+            </h1>
           </div>
         </div>
 
-        {/* Row 2: Puzzle Streak */}
-        <div
-          onClick={startStreakMode}
-          className="flex items-center gap-4 p-4 rounded-2xl hover:bg-sky-500/10 dark:hover:bg-slate-800/50 cursor-pointer transition-colors group"
-        >
-          <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform text-lg">
-            🏹🍎
+        {/* Rating & Streak Status Capsules */}
+        <div className="flex items-center gap-2 relative z-10 flex-wrap">
+          <div className="px-3 py-1.5 rounded-xl bg-slate-950/80 border border-amber-500/40 text-xs font-bold text-slate-200 flex items-center gap-1.5 shadow-sm">
+            <Zap className="w-3.5 h-3.5 text-amber-400" />
+            <span className="text-slate-400 text-[11px]">Tactics:</span>
+            <span className="font-mono text-amber-400 font-black">{puzzleRating} ELO</span>
           </div>
-          <div className="flex-1">
-            <h2 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors">
-              Puzzle Streak
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-              Solve progressively harder puzzles and build a win streak.
-            </p>
-          </div>
-        </div>
 
-        {/* Row 3: Puzzle Storm */}
-        <div
-          onClick={startStormMode}
-          className="flex items-center gap-4 p-4 rounded-2xl hover:bg-sky-500/10 dark:hover:bg-slate-800/50 cursor-pointer transition-colors group"
-        >
-          <div className="w-10 h-10 rounded-2xl bg-blue-500/20 text-blue-500 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform text-lg">
-            🌪️
+          <div className="px-3 py-1.5 rounded-xl bg-slate-950/80 border border-orange-500/40 text-xs font-bold text-orange-400 flex items-center gap-1.5 shadow-sm">
+            <Flame className="w-3.5 h-3.5 fill-orange-400" />
+            <span className="text-slate-400 text-[11px]">Best:</span>
+            <span className="font-mono font-black">{streakHighScore || 0}</span>
           </div>
-          <div className="flex-1">
-            <h2 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-blue-500 transition-colors">
-              Puzzle Storm
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-              Solve as many puzzles as possible in 3 minutes.
-            </p>
+
+          <div className="px-3 py-1.5 rounded-xl bg-slate-950/80 border border-emerald-500/40 text-xs font-bold text-emerald-400 flex items-center gap-1.5 shadow-sm">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span className="text-slate-400 text-[11px]">Solved:</span>
+            <span className="font-mono font-black">{solvedPuzzles?.size || 0}</span>
           </div>
         </div>
       </div>
 
-      {/* Chess Tactics Trainer Section */}
-      <div className="mt-8">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight mb-4">
-          Chess tactics trainer
-        </h2>
+      {/* 2. Three Primary Game Modes: Luxury Interactive Action Cards with Dedicated Buttons */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
+        {/* Mode 1: Puzzle Streak */}
+        <div className="group relative rounded-3xl p-5 bg-gradient-to-br from-slate-900/95 via-slate-900/75 to-slate-950/95 border-2 border-orange-500/40 hover:border-orange-400 shadow-xl hover:shadow-orange-500/20 transition-all duration-300 flex flex-col justify-between overflow-hidden backdrop-blur-xl">
+          <div className="absolute top-0 right-0 w-28 h-28 bg-orange-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-orange-500/25 transition-all" />
+
+          <div className="space-y-3 relative z-10">
+            <div className="flex items-start justify-between">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-600 text-slate-950 flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:scale-105 transition-transform">
+                <Flame className="w-6 h-6 fill-slate-950" />
+              </div>
+              <span className="px-2.5 py-0.5 rounded-full bg-orange-500/15 text-orange-400 border border-orange-500/30 text-[10px] font-black uppercase tracking-wide">
+                🔥 Unbeaten Run
+              </span>
+            </div>
+
+            <div>
+              <h2 className="text-lg font-black text-white group-hover:text-orange-400 transition-colors">
+                Puzzle Streak
+              </h2>
+              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                Solve progressively tougher puzzles. One mistake ends the run!
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 text-[11px] font-mono text-orange-300 bg-orange-500/10 px-2.5 py-1 rounded-lg border border-orange-500/20 w-fit">
+              <span>Best Streak:</span>
+              <strong className="text-white font-black">{streakHighScore || 0} in a row</strong>
+            </div>
+          </div>
+
+          <div className="pt-4 relative z-10">
+            <button
+              onClick={() => {
+                sound.playClick();
+                triggerHaptic('move');
+                startStreakMode();
+              }}
+              className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-orange-500 via-amber-500 to-amber-400 hover:from-orange-400 hover:to-amber-300 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-orange-500/25 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Start Puzzle Streak</span>
+              <ArrowRight className="w-4 h-4 stroke-[3]" />
+            </button>
+          </div>
+        </div>
+
+        {/* Mode 2: Puzzle Storm */}
+        <div className="group relative rounded-3xl p-5 bg-gradient-to-br from-slate-900/95 via-slate-900/75 to-slate-950/95 border-2 border-sky-500/40 hover:border-sky-400 shadow-xl hover:shadow-sky-500/20 transition-all duration-300 flex flex-col justify-between overflow-hidden backdrop-blur-xl">
+          <div className="absolute top-0 right-0 w-28 h-28 bg-sky-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-sky-500/25 transition-all" />
+
+          <div className="space-y-3 relative z-10">
+            <div className="flex items-start justify-between">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 text-white flex items-center justify-center shadow-lg shadow-sky-500/30 group-hover:scale-105 transition-transform">
+                <Zap className="w-6 h-6 fill-white" />
+              </div>
+              <span className="px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30 text-[10px] font-black uppercase tracking-wide">
+                ⚡ 3:00 Rush
+              </span>
+            </div>
+
+            <div>
+              <h2 className="text-lg font-black text-white group-hover:text-sky-400 transition-colors">
+                Puzzle Storm
+              </h2>
+              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                Speed run tactical puzzles against the 3-minute blitz clock.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 text-[11px] font-mono text-sky-300 bg-sky-500/10 px-2.5 py-1 rounded-lg border border-sky-500/20 w-fit">
+              <span>Personal Best:</span>
+              <strong className="text-white font-black">{stormHighScore || 0} solved</strong>
+            </div>
+          </div>
+
+          <div className="pt-4 relative z-10">
+            <button
+              onClick={() => {
+                sound.playClick();
+                triggerHaptic('move');
+                startStormMode();
+              }}
+              className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-600 hover:from-sky-400 hover:to-blue-500 text-white font-black text-xs sm:text-sm shadow-lg shadow-sky-500/25 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Play Puzzle Storm</span>
+              <ArrowRight className="w-4 h-4 stroke-[3]" />
+            </button>
+          </div>
+        </div>
+
+        {/* Mode 3: Puzzle Themes & Openings */}
+        <div className="group relative rounded-3xl p-5 bg-gradient-to-br from-slate-900/95 via-slate-900/75 to-slate-950/95 border-2 border-purple-500/40 hover:border-purple-400 shadow-xl hover:shadow-purple-500/20 transition-all duration-300 flex flex-col justify-between overflow-hidden backdrop-blur-xl">
+          <div className="absolute top-0 right-0 w-28 h-28 bg-purple-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-purple-500/25 transition-all" />
+
+          <div className="space-y-3 relative z-10">
+            <div className="flex items-start justify-between">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:scale-105 transition-transform">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <span className="px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/30 text-[10px] font-black uppercase tracking-wide">
+                🎯 60+ Motifs
+              </span>
+            </div>
+
+            <div>
+              <h2 className="text-lg font-black text-white group-hover:text-purple-400 transition-colors">
+                Puzzle Themes
+              </h2>
+              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                Practice forks, pins, skewers, sacrifices, and opening traps.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 text-[11px] font-mono text-purple-300 bg-purple-500/10 px-2.5 py-1 rounded-lg border border-purple-500/20 w-fit">
+              <span>FIDE Curated:</span>
+              <strong className="text-white font-black">All Openings</strong>
+            </div>
+          </div>
+
+          <div className="pt-4 relative z-10">
+            <button
+              onClick={() => {
+                sound.playClick();
+                triggerHaptic('move');
+                setViewState('themes');
+              }}
+              className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-500 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs sm:text-sm shadow-lg shadow-purple-500/25 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Explore Themes</span>
+              <ArrowRight className="w-4 h-4 stroke-[3]" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Chess Tactics Trainer: Curated Challenge Cards with Interactive Action Buttons */}
+      <div className="space-y-3.5 pt-2">
+        <div className="flex items-center justify-between px-1">
+          <div>
+            <h2 className="text-base sm:text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
+              <span>Chess Tactics Trainer</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            </h2>
+            <p className="text-xs text-slate-400 font-medium mt-0.5">
+              Hand-crafted tactical problems updated daily with official FIDE solutions.
+            </p>
+          </div>
+          <span className="text-xs text-amber-400 font-bold hidden sm:inline">Daily Rated</span>
+        </div>
 
         <div className="space-y-3">
           {/* Card 1: Puzzle of the Day */}
-          <div
-            onClick={() => {
-              setPuzzles([dailyPuzzle, ...ALL_PUZZLES]);
-              setCurrentIndex(0);
-              setActiveThemeTitle('Puzzle of the day');
-              loadPuzzle(dailyPuzzle);
-              setViewState('trainer');
-            }}
-            className="flex items-center gap-4 p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs hover:border-sky-500/50 cursor-pointer transition-all group"
-          >
-            <MiniBoard fen={dailyPuzzle.fen} flipped={dailyPuzzle.turn === 'b'} />
-            <div className="flex-1 min-w-0">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-sky-500 transition-colors">
-                Puzzle of the day
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Played 18,898 times
-              </p>
-              <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-amber-600 dark:text-amber-400">
-                <Calendar className="w-3.5 h-3.5" />
-                <span>{dailyPuzzle.turn === 'b' ? 'Black' : 'White'} to play</span>
+          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-slate-900/95 via-slate-900/80 to-slate-950/95 border border-amber-500/40 hover:border-amber-400 shadow-xl hover:shadow-amber-500/10 transition-all flex flex-col sm:flex-row items-center justify-between gap-4 backdrop-blur-xl">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left min-w-0">
+              <div className="relative group shrink-0">
+                <div className="rounded-2xl overflow-hidden border-2 border-amber-400/50 shadow-lg">
+                  <MiniBoard fen={dailyPuzzle.fen} flipped={dailyPuzzle.turn === 'b'} />
+                </div>
+                <div className="absolute -bottom-2 inset-x-0 flex justify-center">
+                  <span className="px-2 py-0.5 rounded-full bg-slate-950 text-amber-400 border border-amber-400/60 font-mono text-[9px] font-black uppercase shadow">
+                    {dailyPuzzle.turn === 'b' ? '⚫ Black to Play' : '⚪ White to Play'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-1 pt-1 min-w-0">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[10px] font-black uppercase tracking-wider">
+                  <Crown className="w-3 h-3" />
+                  <span>Daily Challenge</span>
+                </div>
+                <h3 className="text-base sm:text-lg font-black text-white">
+                  Puzzle of the day
+                </h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Played by 18,898 arena competitors • Rated 1750+ Elo.
+                </p>
               </div>
             </div>
+
+            <button
+              onClick={() => {
+                sound.playClick();
+                triggerHaptic('move');
+                setPuzzles([dailyPuzzle, ...ALL_PUZZLES]);
+                setCurrentIndex(0);
+                setActiveThemeTitle('Puzzle of the day');
+                loadPuzzle(dailyPuzzle);
+                setViewState('trainer');
+              }}
+              className="w-full sm:w-auto py-3 px-6 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-amber-500/25 transition-all active:scale-95 flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+            >
+              <Swords className="w-4 h-4 fill-slate-950" />
+              <span>Solve Daily</span>
+            </button>
           </div>
 
           {/* Card 2: Healthy Mix */}
-          <div
-            onClick={() => {
-              const mixed = [...ALL_PUZZLES].sort(() => Math.random() - 0.5);
-              setPuzzles(mixed);
-              setCurrentIndex(0);
-              setActiveThemeTitle('Healthy mix');
-              loadPuzzle(mixed[0]);
-              setViewState('trainer');
-            }}
-            className="flex items-center gap-4 p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs hover:border-sky-500/50 cursor-pointer transition-all group"
-          >
-            <MiniBoard fen={healthyPuzzle.fen} flipped={healthyPuzzle.turn === 'b'} />
-            <div className="flex-1 min-w-0">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-sky-500 transition-colors">
-                Healthy mix
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2 leading-relaxed">
-                A mix of everything. You don't know what to expect, so be ready for anything! Just like in real games.
-              </p>
-              <div className="mt-2 flex items-center gap-2 text-xs font-semibold text-sky-600 dark:text-sky-400">
-                <Crosshair className="w-3.5 h-3.5" />
-                <span>{healthyPuzzle.turn === 'b' ? 'Black' : 'White'} to play</span>
+          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-slate-900/95 via-slate-900/80 to-slate-950/95 border border-sky-500/40 hover:border-sky-400 shadow-xl hover:shadow-sky-500/10 transition-all flex flex-col sm:flex-row items-center justify-between gap-4 backdrop-blur-xl">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left min-w-0">
+              <div className="relative group shrink-0">
+                <div className="rounded-2xl overflow-hidden border-2 border-sky-400/50 shadow-lg">
+                  <MiniBoard fen={healthyPuzzle.fen} flipped={healthyPuzzle.turn === 'b'} />
+                </div>
+                <div className="absolute -bottom-2 inset-x-0 flex justify-center">
+                  <span className="px-2 py-0.5 rounded-full bg-slate-950 text-sky-400 border border-sky-400/60 font-mono text-[9px] font-black uppercase shadow">
+                    {healthyPuzzle.turn === 'b' ? '⚫ Black to Play' : '⚪ White to Play'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-1 pt-1 min-w-0">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-400 text-[10px] font-black uppercase tracking-wider">
+                  <Sparkles className="w-3 h-3" />
+                  <span>Real Game Simulation</span>
+                </div>
+                <h3 className="text-base sm:text-lg font-black text-white">
+                  Healthy mix
+                </h3>
+                <p className="text-xs text-slate-400 leading-relaxed max-w-md">
+                  A mix of everything. You don't know what to expect, so be ready for anything!
+                </p>
               </div>
             </div>
+
+            <button
+              onClick={() => {
+                sound.playClick();
+                triggerHaptic('move');
+                const mixed = [...ALL_PUZZLES].sort(() => Math.random() - 0.5);
+                setPuzzles(mixed);
+                setCurrentIndex(0);
+                setActiveThemeTitle('Healthy mix');
+                loadPuzzle(mixed[0]);
+                setViewState('trainer');
+              }}
+              className="w-full sm:w-auto py-3 px-6 rounded-2xl bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-600 hover:from-sky-400 hover:to-blue-500 text-white font-black text-xs sm:text-sm shadow-xl shadow-sky-500/25 transition-all active:scale-95 flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+            >
+              <Play className="w-4 h-4 fill-white" />
+              <span>Play Mix</span>
+            </button>
           </div>
 
           {/* Card 3: Lemming Defense */}
-          <div
-            onClick={() => {
-              const lemmingPuzzles = getPuzzlesByOpening('Lemming Defense');
-              setPuzzles(lemmingPuzzles);
-              setCurrentIndex(0);
-              setActiveThemeTitle('Lemming Defense');
-              loadPuzzle(lemmingPuzzles[0]);
-              setViewState('trainer');
-            }}
-            className="flex items-center gap-4 p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs hover:border-sky-500/50 cursor-pointer transition-all group"
-          >
-            <MiniBoard fen={lemmingPuzzle.fen} flipped={lemmingPuzzle.turn === 'b'} />
-            <div className="flex-1 min-w-0">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-sky-500 transition-colors">
-                Lemming Defense
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                1. e4 Na6 opening refutation tactic
-              </p>
-              <div className="mt-2 flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                <Crosshair className="w-3.5 h-3.5" />
-                <span>{lemmingPuzzle.turn === 'b' ? 'Black' : 'White'} to play</span>
+          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-slate-900/95 via-slate-900/80 to-slate-950/95 border border-emerald-500/40 hover:border-emerald-400 shadow-xl hover:shadow-emerald-500/10 transition-all flex flex-col sm:flex-row items-center justify-between gap-4 backdrop-blur-xl">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left min-w-0">
+              <div className="relative group shrink-0">
+                <div className="rounded-2xl overflow-hidden border-2 border-emerald-400/50 shadow-lg">
+                  <MiniBoard fen={lemmingPuzzle.fen} flipped={lemmingPuzzle.turn === 'b'} />
+                </div>
+                <div className="absolute -bottom-2 inset-x-0 flex justify-center">
+                  <span className="px-2 py-0.5 rounded-full bg-slate-950 text-emerald-400 border border-emerald-400/60 font-mono text-[9px] font-black uppercase shadow">
+                    {lemmingPuzzle.turn === 'b' ? '⚫ Black to Play' : '⚪ White to Play'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-1 pt-1 min-w-0">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase tracking-wider">
+                  <Shield className="w-3 h-3" />
+                  <span>Opening Refutation</span>
+                </div>
+                <h3 className="text-base sm:text-lg font-black text-white">
+                  Lemming Defense
+                </h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  1. e4 Na6 blunder punishment and sharp tactical refutation.
+                </p>
               </div>
             </div>
-          </div>
 
-          {/* Featured Screenshot Puzzles Quick Access Grid */}
-          <div className="pt-4">
-            <h3 className="text-xs uppercase tracking-wider font-bold text-slate-400 mb-3">
-              Featured Tactics
-            </h3>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { name: "Anastasia's mate", theme: "Anastasia's mate", tag: "Mates" },
-                { name: "Attraction", theme: "Attraction", tag: "Sacrifice" },
-                { name: "Advanced pawn", theme: "Advanced pawn", tag: "Promotion" },
-                { name: "Discovered attack", theme: "Discovered attack", tag: "Battery" },
-                { name: "Rook endgame", theme: "Rook endgame", tag: "Endgame" },
-                { name: "Middlegame", theme: "Middlegame", tag: "Strategy" }
-              ].map(feat => (
-                <div
-                  key={feat.name}
-                  onClick={() => {
-                    const subset = getPuzzlesByTheme(feat.theme);
-                    startTrainerWithTheme(feat.name, subset);
-                  }}
-                  className="p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-sky-500/40 cursor-pointer transition-all group"
-                >
-                  <span className="text-[10px] font-mono font-bold text-sky-500 uppercase">
-                    {feat.tag}
-                  </span>
-                  <div className="text-sm font-bold text-slate-800 dark:text-slate-200 group-hover:text-sky-500 transition-colors mt-0.5">
-                    {feat.name}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <button
+              onClick={() => {
+                sound.playClick();
+                triggerHaptic('move');
+                const lemmingPuzzles = getPuzzlesByOpening('Lemming Defense');
+                setPuzzles(lemmingPuzzles);
+                setCurrentIndex(0);
+                setActiveThemeTitle('Lemming Defense');
+                loadPuzzle(lemmingPuzzles[0]);
+                setViewState('trainer');
+              }}
+              className="w-full sm:w-auto py-3 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-emerald-500/25 transition-all active:scale-95 flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+            >
+              <Zap className="w-4 h-4 fill-slate-950" />
+              <span>Solve Tactic</span>
+            </button>
           </div>
+        </div>
+      </div>
+
+      {/* 4. Featured Tactics: Ultra-Premium Tactical Category Cards */}
+      <div className="space-y-3.5 pt-2">
+        <div className="flex items-center justify-between px-1">
+          <div>
+            <h2 className="text-base sm:text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-amber-400" />
+              <span>Featured Tactics Directory</span>
+            </h2>
+            <p className="text-xs text-slate-400 font-medium mt-0.5">
+              Specific motif drills to conquer your chess blind spots.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          {[
+            { name: "Anastasia's mate", theme: "Anastasia's mate", tag: "Mates", icon: "👑", color: "from-rose-500/20 to-rose-600/5", border: "border-rose-500/40 hover:border-rose-400", badgeColor: "bg-rose-500/15 text-rose-400 border-rose-500/30" },
+            { name: "Attraction", theme: "Attraction", tag: "Sacrifice", icon: "💎", color: "from-amber-500/20 to-amber-600/5", border: "border-amber-500/40 hover:border-amber-400", badgeColor: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
+            { name: "Advanced pawn", theme: "Advanced pawn", tag: "Promotion", icon: "👸", color: "from-emerald-500/20 to-emerald-600/5", border: "border-emerald-500/40 hover:border-emerald-400", badgeColor: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" },
+            { name: "Discovered attack", theme: "Discovered attack", tag: "Battery", icon: "⚡", color: "from-sky-500/20 to-sky-600/5", border: "border-sky-500/40 hover:border-sky-400", badgeColor: "bg-sky-500/15 text-sky-400 border-sky-500/30" },
+            { name: "Rook endgame", theme: "Rook endgame", tag: "Endgame", icon: "🏰", color: "from-indigo-500/20 to-indigo-600/5", border: "border-indigo-500/40 hover:border-indigo-400", badgeColor: "bg-indigo-500/15 text-indigo-400 border-indigo-500/30" },
+            { name: "Middlegame", theme: "Middlegame", tag: "Strategy", icon: "🧠", color: "from-purple-500/20 to-purple-600/5", border: "border-purple-500/40 hover:border-purple-400", badgeColor: "bg-purple-500/15 text-purple-400 border-purple-500/30" }
+          ].map(feat => (
+            <div
+              key={feat.name}
+              onClick={() => {
+                sound.playClick();
+                triggerHaptic('move');
+                const subset = getPuzzlesByTheme(feat.theme);
+                startTrainerWithTheme(feat.name, subset);
+              }}
+              className={`p-4 rounded-3xl bg-gradient-to-br ${feat.color} bg-slate-900/90 border ${feat.border} hover:shadow-xl transition-all duration-200 cursor-pointer group flex flex-col justify-between backdrop-blur-xl active:scale-[0.98]`}
+            >
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${feat.badgeColor}`}>
+                    {feat.icon} {feat.tag}
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                </div>
+                <h4 className="text-sm font-black text-white group-hover:text-amber-400 transition-colors">
+                  {feat.name}
+                </h4>
+                <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
+                  Targeted motif drills • Rated puzzles
+                </p>
+              </div>
+
+              <div className="pt-3 flex items-center justify-between text-xs font-bold text-amber-400 group-hover:text-white transition-colors">
+                <span>Practice Tactic</span>
+                <span className="w-6 h-6 rounded-xl bg-slate-950 flex items-center justify-center border border-slate-800 group-hover:border-amber-400">
+                  <ArrowRight className="w-3 h-3" />
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
