@@ -231,12 +231,13 @@ export function Chessboard({
             return files.map((file, fileIdx) => {
               const square = `${file}${rank}`;
               const isDark = (rankIdx + fileIdx) % 2 === 1;
-              const piece = chess.get(square);
+              const piece = chess ? chess.get(square) : boardPieces[square];
               const isSelected = selectedSquare === square;
               const isLastMove = highlightLastMove && lastMove && (lastMove.from === square || lastMove.to === square);
               const isCheck = isCheckSquare(checkSquare, square);
               const isPremoveSquare = premove && (premove.from === square || premove.to === square);
               const legalMoveTarget = showLegalMoves && legalMoves.find(m => m.to === square);
+              const isCustomHighlight = highlightSquares && highlightSquares.includes(square);
 
               let bgColor = isDark ? theme.dark : theme.light;
 
@@ -247,6 +248,11 @@ export function Chessboard({
                   className="relative flex items-center justify-center cursor-pointer transition-colors duration-150"
                   style={{ backgroundColor: bgColor }}
                 >
+                  {/* Custom Educational Highlight */}
+                  {isCustomHighlight && (
+                    <div className="absolute inset-0 bg-sky-400/40 ring-2 ring-sky-500 pointer-events-none z-10 animate-pulse" />
+                  )}
+
                   {/* Last Move Indicator */}
                   {isLastMove && (
                     <div 

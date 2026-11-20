@@ -487,6 +487,9 @@ export default function App() {
       const chess = new Chess(gameSession.fen);
       const res = chess.move(moveObj);
       if (res) {
+        if (settings.voiceCommentary && !settings.voiceCommentaryOnlyOpponent) {
+          speakMove(res.san);
+        }
         const updatedHistory = [
           ...gameSession.moveHistory,
           {
@@ -670,41 +673,46 @@ export default function App() {
           </nav>
 
           {/* Right Header Tools */}
-          <div className="flex items-center gap-2">
-            {/* Theme Picker Dropdown */}
-            <div className="relative group">
-              <button
-                className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-amber-400 transition-colors"
-                title="Board Theme"
-              >
-                <Palette className="w-4 h-4" />
-              </button>
-              <div className="absolute right-0 top-10 hidden group-hover:flex flex-col gap-1 p-2 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl z-50 min-w-[150px]">
-                {Object.keys(BOARD_THEMES).map(t => (
-                  <button
-                    key={t}
-                    onClick={() => setBoardTheme(t)}
-                    className={`flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold capitalize ${
-                      boardTheme === t ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:bg-slate-800'
-                    }`}
-                  >
-                    <span>{BOARD_THEMES[t].name}</span>
-                    <span
-                      className="w-3 h-3 rounded-full border border-slate-700"
-                      style={{ backgroundColor: BOARD_THEMES[t].dark }}
-                    />
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Sound Toggle */}
+          <div className="flex items-center gap-1.5 md:gap-2">
+            {/* Ambient Background Music Toggle */}
             <button
-              onClick={() => setSoundEnabled(!soundEnabled)}
-              className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-amber-400 transition-colors"
-              title={soundEnabled ? 'Mute Sounds' : 'Enable Sounds'}
+              onClick={() => {
+                const nextVal = !settings.musicEnabled;
+                handleUpdateSettings({ ...settings, musicEnabled: nextVal });
+                if (nextVal) {
+                  musicEngine.start();
+                } else {
+                  musicEngine.stop();
+                }
+              }}
+              className={`p-2 rounded-xl border transition-all ${
+                settings.musicEnabled
+                  ? 'bg-amber-500/20 text-amber-400 border-amber-500/50 shadow-md shadow-amber-500/10 animate-pulse'
+                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+              }`}
+              title={settings.musicEnabled ? `Playing: ${musicEngine.getCurrentTrack().name}` : 'Muted Background Music'}
             >
-              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+              <Music className="w-4 h-4" />
+            </button>
+
+            {/* Sound FX Toggle */}
+            <button
+              onClick={() => {
+                handleUpdateSettings({ ...settings, soundEnabled: !settings.soundEnabled });
+              }}
+              className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-amber-400 transition-colors"
+              title={settings.soundEnabled ? 'Mute Sound FX' : 'Enable Sound FX'}
+            >
+              {settings.soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </button>
+
+            {/* Global Settings Modal Trigger */}
+            <button
+              onClick={() => setShowSettingsModal(true)}
+              className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-amber-400 transition-colors"
+              title="Application Settings"
+            >
+              <Settings className="w-4 h-4" />
             </button>
 
             {/* Friends Drawer Toggle */}
@@ -847,7 +855,7 @@ export default function App() {
         {activeTab === 'game' && gameSession && (
           <div className="max-w-6xl w-full mx-auto p-2 md:p-6 flex-1 flex flex-col justify-center">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-start">
-              {/* Left Column: Opponent Card + Chessboard + Player Card */}
+              {/* Left Column: Opponent Card + Opening Banner + Chessboard + Player Card */}
               <div className="lg:col-span-7 flex flex-col items-center gap-2 md:gap-3 w-full">
                 {/* Opponent Card */}
                 <div className="w-full max-w-[520px]">
@@ -862,6 +870,19 @@ export default function App() {
                   />
                 </div>
 
+                {/* Opening Name Banner (Screenshot 6: Show Opening Names) */}
+                {settings.showOpenings && getOpeningName(gameSession.moveHistory) && (
+                  <div className="w-full max-w-[520px] px-3.5 py-1.5 bg-slate-900/90 border border-slate-800 rounded-xl flex items-center justify-between text-xs text-amber-300 shadow-sm animate-fade-in">
+                    <div className="flex items-center gap-2 truncate">
+                      <BookOpen className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span className="font-bold truncate">{getOpeningName(gameSession.moveHistory).name}</span>
+                    </div>
+                    <span className="font-mono text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-bold shrink-0">
+                      {getOpeningName(gameSession.moveHistory).eco}
+                    </span>
+                  </div>
+                )}
+
                 {/* Interactive Chessboard */}
                 <div className="w-full max-w-[520px]">
                   <Chessboard
@@ -869,9 +890,17 @@ export default function App() {
                     onMove={handleMove}
                     playerColor={playerColor}
                     flipped={boardFlipped}
-                    boardTheme={boardTheme}
+                    boardTheme={settings.boardTheme}
+                    pieceTheme={settings.pieceTheme}
                     inCheck={gameSession.inCheck}
+                    lastMove={gameSession.moveHistory?.[gameSession.moveHistory.length - 1]}
                     disabled={gameSession.isGameOver || (isAIGame && aiThinking)}
+                    showLegalMoves={settings.showLegalMoves}
+                    highlightLastMove={settings.highlightLastMove}
+                    showCoordinates={settings.showCoordinates}
+                    kingInCheckIndicator={settings.kingInCheckIndicator}
+                    alwaysPromoteToQueen={settings.alwaysPromoteToQueen}
+                    enablePremoves={settings.enablePremoves}
                   />
                 </div>
 
@@ -889,8 +918,15 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Right Column: Game Controls, Move History, Voice Bar, Live Chat */}
+              {/* Right Column: Mini Music Player, Game Controls, Move History, Voice Bar, Live Chat */}
               <div className="lg:col-span-5 space-y-3 w-full max-w-md mx-auto lg:max-w-none">
+                {/* In-Game Mini Ambient Music Player & Settings Bar */}
+                <MiniMusicPlayer
+                  settings={settings}
+                  onUpdateSettings={handleUpdateSettings}
+                  onOpenSettings={() => setShowSettingsModal(true)}
+                />
+
                 {/* Voice Chat Component */}
                 {!isAIGame && (
                   <VoiceControls
@@ -927,12 +963,18 @@ export default function App() {
                   onViewResult={() => setShowGameOverModal(true)}
                 />
 
-                {/* Live Chat */}
-                <GameChat
-                  messages={chatMessages}
-                  onSendMessage={handleSendMessage}
-                  currentUser={currentUser}
-                />
+                {/* Live Chat (Toggleable in Settings) */}
+                {settings.allowChat ? (
+                  <GameChat
+                    messages={chatMessages}
+                    onSendMessage={handleSendMessage}
+                    currentUser={currentUser}
+                  />
+                ) : (
+                  <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-xl text-center text-xs text-slate-500 italic">
+                    In-game text chat is disabled in Settings.
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1080,6 +1122,14 @@ export default function App() {
           }
         }}
         onClose={() => setShowGameOverModal(false)}
+      />
+
+      {/* Full Feature Settings Modal */}
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        settings={settings}
+        onUpdateSettings={handleUpdateSettings}
       />
     </div>
   );
