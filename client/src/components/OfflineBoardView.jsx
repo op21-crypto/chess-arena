@@ -1,8 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Chess } from 'chess.js';
+import confetti from 'canvas-confetti';
 import {
   ArrowLeft, RotateCw, Undo, Lightbulb, Settings, X, Check,
-  Volume2, VolumeX, Eye, Camera, User, HelpCircle, Bell
+  Volume2, VolumeX, Eye, Camera, User, HelpCircle, Bell,
+  Trophy, Sparkles, Crown, Swords, RotateCcw
 } from 'lucide-react';
 import { PieceIcon } from './PieceIcons.jsx';
 import { sound } from '../utils/audio.js';
@@ -114,6 +116,75 @@ export function OfflineBoardView({ onBack }) {
     return captured;
   }, [moveHistory]);
 
+  // Material advantage score calculation
+  const materialScore = useMemo(() => {
+    const values = { p: 1, n: 3, b: 3, r: 5, q: 9 };
+    let whiteScore = 0;
+    let blackScore = 0;
+    capturedPieces.w.forEach(p => { whiteScore += values[p] || 0; });
+    capturedPieces.b.forEach(p => { blackScore += values[p] || 0; });
+    return {
+      whiteAdvantage: whiteScore - blackScore,
+      blackAdvantage: blackScore - whiteScore,
+      whiteScore,
+      blackScore
+    };
+  }, [capturedPieces]);
+
+  // Trigger celebration effects helper
+  const triggerCelebration = () => {
+    try {
+      if (soundEnabled) {
+        sound.playVictory();
+      }
+      if (notificationEnabled) {
+        triggerHaptic('gameover');
+      }
+
+      // 1. Center burst
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { y: 0.55 },
+        colors: ['#f59e0b', '#fbbf24', '#10b981', '#3b82f6', '#ec4899', '#ffffff']
+      });
+
+      // 2. Left side cannon
+      const timer1 = setTimeout(() => {
+        confetti({
+          particleCount: 75,
+          angle: 60,
+          spread: 60,
+          origin: { x: 0.05, y: 0.65 },
+          colors: ['#f59e0b', '#fbbf24', '#10b981', '#ffffff']
+        });
+      }, 300);
+
+      // 3. Right side cannon
+      const timer2 = setTimeout(() => {
+        confetti({
+          particleCount: 75,
+          angle: 120,
+          spread: 60,
+          origin: { x: 0.95, y: 0.65 },
+          colors: ['#3b82f6', '#ec4899', '#f59e0b', '#ffffff']
+        });
+      }, 550);
+
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+      };
+    } catch (e) {}
+  };
+
+  // Trigger celebration on match conclusion
+  useEffect(() => {
+    if (showGameOverModal && chess.isCheckmate()) {
+      triggerCelebration();
+    }
+  }, [showGameOverModal]);
+
   // Handle Square Selection and Moves
   const handleSquareClick = (square) => {
     if (isGameOver) return;
@@ -128,12 +199,12 @@ export function OfflineBoardView({ onBack }) {
         return;
       }
 
-      // Check if clicked square is a legal destination
+      // 1. Direct valid move destination (handles moves, captures, en passant, standard castling)
       const validMove = legalMoves.find(m => m.to === square);
       if (validMove) {
-        const isPromotion = validMove.piece === 'p' && (square.endsWith('8') || square.endsWith('1'));
+        const isPromotion = Boolean(validMove.promotion || (validMove.piece === 'p' && (square.endsWith('8') || square.endsWith('1'))));
         if (isPromotion) {
-          setPromotionPending({ from: selectedSquare, to: square });
+          setPromotionPending({ from: selectedSquare, to: square, color: turn });
           return;
         }
 
@@ -141,7 +212,44 @@ export function OfflineBoardView({ onBack }) {
         return;
       }
 
-      // If user clicked another own piece, switch selection
+      // 2. Intuitive Castling: If user selected King and tapped the corresponding Rook
+      const selectedPiece = chess.get(selectedSquare);
+      if (selectedPiece && selectedPiece.type === 'k' && selectedPiece.color === turn) {
+        // White Kingside: King e1 tapped Rook h1 -> castle to g1
+        if (selectedSquare === 'e1' && square === 'h1') {
+          const kCastle = legalMoves.find(m => m.to === 'g1' && (m.flags.includes('k') || m.san === 'O-O'));
+          if (kCastle) {
+            executeMove({ from: 'e1', to: 'g1' });
+            return;
+          }
+        }
+        // White Queenside: King e1 tapped Rook a1 -> castle to c1
+        if (selectedSquare === 'e1' && square === 'a1') {
+          const qCastle = legalMoves.find(m => m.to === 'c1' && (m.flags.includes('q') || m.san === 'O-O-O'));
+          if (qCastle) {
+            executeMove({ from: 'e1', to: 'c1' });
+            return;
+          }
+        }
+        // Black Kingside: King e8 tapped Rook h8 -> castle to g8
+        if (selectedSquare === 'e8' && square === 'h8') {
+          const kCastle = legalMoves.find(m => m.to === 'g8' && (m.flags.includes('k') || m.san === 'O-O'));
+          if (kCastle) {
+            executeMove({ from: 'e8', to: 'g8' });
+            return;
+          }
+        }
+        // Black Queenside: King e8 tapped Rook a8 -> castle to c8
+        if (selectedSquare === 'e8' && square === 'a8') {
+          const qCastle = legalMoves.find(m => m.to === 'c8' && (m.flags.includes('q') || m.san === 'O-O-O'));
+          if (qCastle) {
+            executeMove({ from: 'e8', to: 'c8' });
+            return;
+          }
+        }
+      }
+
+      // 3. If user clicked another own piece, switch selection smoothly
       if (pieceOnSquare && pieceOnSquare.color === turn) {
         setSelectedSquare(square);
         const moves = chess.moves({ square, verbose: true });
@@ -176,22 +284,52 @@ export function OfflineBoardView({ onBack }) {
         // Update history
         setMoveHistory(prev => [...prev, moveResult]);
 
+        // Check if game is over after this move
+        const isGameOverNow = chess.isGameOver();
+
         // Audio & Haptics
         if (soundEnabled) {
-          if (moveResult.captured) {
+          if (isGameOverNow) {
+            if (chess.isCheckmate()) {
+              sound.playVictory();
+            } else {
+              sound.playGameOver();
+            }
+          } else if (moveResult.captured) {
             sound.playCapture();
+            if (chess.inCheck()) {
+              setTimeout(() => sound.playCheck(), 140);
+            }
+          } else if (
+            moveResult.flags.includes('k') ||
+            moveResult.flags.includes('q') ||
+            moveResult.san === 'O-O' ||
+            moveResult.san === 'O-O-O'
+          ) {
+            sound.playCastle();
+          } else if (moveResult.promotion) {
+            sound.playPromotion();
           } else if (chess.inCheck()) {
             sound.playCheck();
           } else {
             sound.playMove();
           }
         }
+
         if (notificationEnabled) {
-          triggerHaptic(moveResult.captured ? 'capture' : 'move');
+          if (isGameOverNow) {
+            triggerHaptic('gameover');
+          } else if (moveResult.captured) {
+            triggerHaptic('capture');
+          } else if (chess.inCheck()) {
+            triggerHaptic('check');
+          } else {
+            triggerHaptic('move');
+          }
         }
 
-        // Check for Game Over
-        if (chess.isGameOver()) {
+        // Trigger Game Over modal
+        if (isGameOverNow) {
           setShowGameOverModal(true);
         }
       }
@@ -279,20 +417,46 @@ export function OfflineBoardView({ onBack }) {
     >
       {/* Promotion Dialog Overlay */}
       {promotionPending && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-slate-900 border-2 border-amber-500 rounded-3xl p-5 shadow-2xl flex flex-col items-center gap-4">
-            <span className="text-sm font-black text-amber-400 uppercase tracking-wider">Promote Pawn</span>
-            <div className="flex gap-3">
-              {['q', 'r', 'b', 'n'].map((pType) => (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-slate-900 border-2 border-amber-500 rounded-3xl p-6 shadow-2xl flex flex-col items-center gap-4 max-w-xs w-full text-center">
+            <div>
+              <span className="text-xs font-black text-amber-400 uppercase tracking-widest block">
+                Pawn Promotion
+              </span>
+              <p className="text-xs text-slate-300 mt-0.5 font-medium">
+                Choose promotion piece for {promotionPending.color === 'w' ? 'White' : 'Black'}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-4 gap-2 w-full pt-1">
+              {[
+                { type: 'q', name: 'Queen', val: 9 },
+                { type: 'r', name: 'Rook', val: 5 },
+                { type: 'b', name: 'Bishop', val: 3 },
+                { type: 'n', name: 'Knight', val: 3 }
+              ].map(({ type, name, val }) => (
                 <button
-                  key={pType}
-                  onClick={() => executeMove({ ...promotionPending, promotion: pType })}
-                  className="p-3 bg-slate-800 hover:bg-amber-500/20 hover:border-amber-400 border border-slate-700 rounded-2xl transition-transform hover:scale-110 active:scale-95 cursor-pointer"
+                  key={type}
+                  onClick={() => executeMove({ ...promotionPending, promotion: type })}
+                  className="p-2.5 bg-slate-800 hover:bg-amber-500/20 hover:border-amber-400 border border-slate-700 rounded-2xl flex flex-col items-center gap-1 transition-all hover:scale-105 active:scale-95 cursor-pointer group"
                 >
-                  <PieceIcon piece={pType} color={turn} size={48} />
+                  <PieceIcon piece={type} color={promotionPending.color || turn} size={42} />
+                  <span className="text-[10px] font-bold text-white group-hover:text-amber-300">
+                    {name}
+                  </span>
+                  <span className="text-[8px] font-mono font-bold text-amber-400/80">
+                    +{val}
+                  </span>
                 </button>
               ))}
             </div>
+
+            <button
+              onClick={() => setPromotionPending(null)}
+              className="text-xs text-slate-400 hover:text-white pt-1 transition-colors cursor-pointer"
+            >
+              Cancel Move
+            </button>
           </div>
         </div>
       )}
@@ -326,41 +490,85 @@ export function OfflineBoardView({ onBack }) {
         </div>
       )}
 
-      {/* Game Over Dialog */}
+      {/* Game Over Celebration Dialog */}
       {showGameOverModal && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-slate-900 border-2 border-amber-500/80 rounded-3xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl">
-            <div className="w-14 h-14 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto border border-amber-500/40 text-3xl">
-              🏆
+          <div className="bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border-2 border-amber-500 rounded-3xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl relative overflow-hidden">
+            {/* Ambient gold celebration glow */}
+            <div className="absolute -top-16 -right-16 w-48 h-48 bg-amber-500/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
+
+            {/* Glowing Trophy with pulse */}
+            <div className="relative z-10">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400/25 to-amber-600/20 text-amber-400 flex items-center justify-center mx-auto border border-amber-400/50 shadow-lg shadow-amber-500/30 text-3xl animate-bounce">
+                🏆
+              </div>
             </div>
-            <div>
-              <h3 className="text-xl font-black text-white">
+
+            <div className="relative z-10 space-y-1">
+              <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[10px] font-black uppercase tracking-wider">
+                <Sparkles className="w-3 h-3" />
+                <span>
+                  {chess.isCheckmate() ? 'Match Victory' : chess.isDraw() ? 'Match Drawn' : 'Game Finished'}
+                </span>
+              </div>
+
+              <h3 className="text-2xl font-black text-white tracking-tight">
                 {chess.isCheckmate()
                   ? `Checkmate! ${turn === 'w' ? 'Black' : 'White'} Wins!`
                   : chess.isDraw()
                   ? 'Game Drawn!'
                   : 'Game Over!'}
               </h3>
-              <p className="text-xs text-amber-300 mt-1">
+              <p className="text-xs text-amber-300 font-medium">
                 {chess.isCheckmate()
                   ? 'Official FIDE Checkmate Victory'
                   : chess.isStalemate()
-                  ? 'Stalemate - No legal moves left'
+                  ? 'Stalemate • No legal moves remaining'
                   : 'Match concluded'}
               </p>
             </div>
-            <div className="flex gap-2.5 pt-2">
+
+            {/* Match Stats Pill */}
+            <div className="relative z-10 grid grid-cols-3 gap-2 py-2 px-3 rounded-2xl bg-slate-950/80 border border-slate-800 text-xs">
+              <div>
+                <span className="text-[10px] text-slate-400 uppercase font-bold block">Moves</span>
+                <span className="font-mono font-black text-white">{Math.floor(moveHistory.length / 2) + 1}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 uppercase font-bold block">White Captures</span>
+                <span className="font-mono font-black text-amber-300">{capturedPieces.w.length}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 uppercase font-bold block">Black Captures</span>
+                <span className="font-mono font-black text-white">{capturedPieces.b.length}</span>
+              </div>
+            </div>
+
+            {/* CTAs */}
+            <div className="relative z-10 space-y-2 pt-1">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowGameOverModal(false)}
+                  className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl cursor-pointer transition-colors"
+                >
+                  Review Board
+                </button>
+                <button
+                  onClick={handleResetGame}
+                  className="flex-1 py-3 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-amber-500/25 cursor-pointer transition-transform active:scale-95"
+                >
+                  Play Again
+                </button>
+              </div>
+
+              {/* Fire More Celebration Confetti */}
               <button
-                onClick={() => setShowGameOverModal(false)}
-                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl cursor-pointer"
+                onClick={triggerCelebration}
+                className="w-full py-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[11px] font-bold rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
-                Review Board
-              </button>
-              <button
-                onClick={handleResetGame}
-                className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-amber-500/20 cursor-pointer"
-              >
-                Play Again
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Celebrate Again 🎉</span>
               </button>
             </div>
           </div>
@@ -447,6 +655,11 @@ export function OfflineBoardView({ onBack }) {
                   {p === 'p' ? '♟' : p === 'n' ? '♞' : p === 'b' ? '♝' : p === 'r' ? '♜' : '♛'}
                 </span>
               ))}
+              {materialScore.blackAdvantage > 0 && (
+                <span className="text-[10px] font-black text-emerald-400 font-mono ml-1">
+                  +{materialScore.blackAdvantage}
+                </span>
+              )}
             </div>
           ) : (
             <span className="text-[10px] text-slate-500 italic">No captures</span>
@@ -513,13 +726,13 @@ export function OfflineBoardView({ onBack }) {
                       <div className="absolute inset-0 bg-rose-600/50 ring-4 ring-rose-500 animate-pulse pointer-events-none z-10" />
                     )}
 
-                    {/* Legal Move Indicators */}
+                    {/* Legal Move Indicators (Distinguishes moves vs captures/en passant) */}
                     {legalMoveTarget && (
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                        {piece ? (
-                          <div className="w-full h-full border-4 border-amber-400/80 rounded-full animate-pulse" />
+                        {piece || legalMoveTarget.captured ? (
+                          <div className="w-full h-full border-4 border-amber-400/90 rounded-full animate-pulse shadow-sm" />
                         ) : (
-                          <div className="w-3.5 h-3.5 md:w-4 md:h-4 rounded-full bg-amber-400/70 shadow-md ring-2 ring-amber-500/50" />
+                          <div className="w-3.5 h-3.5 md:w-4 md:h-4 rounded-full bg-amber-400/75 shadow-md ring-2 ring-amber-500/50" />
                         )}
                       </div>
                     )}
@@ -591,6 +804,11 @@ export function OfflineBoardView({ onBack }) {
                   {p === 'p' ? '♟' : p === 'n' ? '♞' : p === 'b' ? '♝' : p === 'r' ? '♜' : '♛'}
                 </span>
               ))}
+              {materialScore.whiteAdvantage > 0 && (
+                <span className="text-[10px] font-black text-amber-400 font-mono ml-1">
+                  +{materialScore.whiteAdvantage}
+                </span>
+              )}
             </div>
           ) : (
             <span className="text-[10px] text-slate-500 italic">No captures</span>
