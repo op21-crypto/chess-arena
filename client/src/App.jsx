@@ -80,12 +80,12 @@ export default function App() {
       const saved = safeStorage.getItem('chess_arena_settings');
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Signature sound identity initialization: ensure music is enabled for all users
-        const signatureMigrated = safeStorage.getItem('chess_arena_signature_sound_v2');
+        // 10 new tracks & signature identity initialization: ensure 1st track is default
+        const signatureMigrated = safeStorage.getItem('chess_arena_signature_sound_v3');
         if (!signatureMigrated) {
-          safeStorage.setItem('chess_arena_signature_sound_v2', 'true');
+          safeStorage.setItem('chess_arena_signature_sound_v3', 'true');
           parsed.musicEnabled = true;
-          parsed.musicTrackIndex = 0;
+          parsed.musicTrackIndex = 0; // 1st track by default
           parsed.musicVolume = parsed.musicVolume || 0.30;
           safeStorage.setItem('chess_arena_settings', JSON.stringify({ ...DEFAULT_SETTINGS, ...parsed, musicEnabled: true, musicTrackIndex: 0 }));
           return { ...DEFAULT_SETTINGS, ...parsed, musicEnabled: true, musicTrackIndex: 0 };

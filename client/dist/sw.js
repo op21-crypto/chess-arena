@@ -1,5 +1,5 @@
-// Chess Arena Service Worker v5
-const CACHE_NAME = 'chess-arena-v5';
+// Chess Arena Service Worker v6
+const CACHE_NAME = 'chess-arena-v6';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
