@@ -4227,7 +4227,7 @@
         "queen_badge"
       ],
       "createdAt": "2026-01-01T00:00:00.000Z",
-      "isOnline": false,
+      "isOnline": true,
       "banned": false
     },
     "player_magnus": {
