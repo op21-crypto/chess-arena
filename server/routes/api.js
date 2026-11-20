@@ -305,12 +305,15 @@ router.post('/rooms/create', (req, res) => {
   res.json({ success: true, room });
 });
 
-router.get('/rooms/:id', (req, res) => {
-  let room = Database.getGameById(req.params.id);
+// Universal Get Room (supports both ?id=... and /rooms/:id)
+router.get(['/rooms/get', '/rooms/:id'], (req, res) => {
+  const roomId = req.query.id || req.params.id;
+  if (!roomId) return res.status(400).json({ error: 'Room ID required' });
+  let room = Database.getGameById(roomId);
   if (!room) {
     room = {
-      id: req.params.id,
-      whitePlayer: { id: `host_${req.params.id}`, username: 'Host Player', elo: 1200 },
+      id: roomId,
+      whitePlayer: { id: `host_${roomId}`, username: 'Host Player', elo: 1200 },
       blackPlayer: null,
       timeControl: { baseMinutes: 10, incrementSeconds: 0 },
       whiteTime: 600000,
@@ -327,8 +330,11 @@ router.get('/rooms/:id', (req, res) => {
   res.json({ room });
 });
 
-router.post('/rooms/:id/join', (req, res) => {
-  let room = Database.getGameById(req.params.id);
+// Universal Join Room (supports both POST /rooms/join with body.roomId and POST /rooms/:id/join)
+router.post(['/rooms/join', '/rooms/:id/join'], (req, res) => {
+  const roomId = req.body.roomId || req.params.id;
+  if (!roomId) return res.status(400).json({ error: 'Room ID required' });
+  let room = Database.getGameById(roomId);
   const { user } = req.body;
   const joiningPlayer = user || {
     id: `guest_${Date.now()}`,
@@ -339,8 +345,8 @@ router.post('/rooms/:id/join', (req, res) => {
 
   if (!room) {
     room = {
-      id: req.params.id,
-      whitePlayer: { id: `host_${req.params.id}`, username: 'Host Player', elo: 1200 },
+      id: roomId,
+      whitePlayer: { id: `host_${roomId}`, username: 'Host Player', elo: 1200 },
       blackPlayer: joiningPlayer,
       timeControl: { baseMinutes: 10, incrementSeconds: 0 },
       whiteTime: 600000,
@@ -369,13 +375,16 @@ router.post('/rooms/:id/join', (req, res) => {
   res.json({ success: true, room });
 });
 
-router.post('/rooms/:id/move', (req, res) => {
-  let room = Database.getGameById(req.params.id);
+// Universal Move in Room (supports both POST /rooms/move with body.roomId and POST /rooms/:id/move)
+router.post(['/rooms/move', '/rooms/:id/move'], (req, res) => {
+  const roomId = req.body.roomId || req.params.id;
+  if (!roomId) return res.status(400).json({ error: 'Room ID required' });
+  let room = Database.getGameById(roomId);
   if (!room) {
     room = {
-      id: req.params.id,
-      whitePlayer: { id: `host_${req.params.id}`, username: 'Player 1', elo: 1200 },
-      blackPlayer: { id: `guest_${req.params.id}`, username: 'Player 2', elo: 1200 },
+      id: roomId,
+      whitePlayer: { id: `host_${roomId}`, username: 'Player 1', elo: 1200 },
+      blackPlayer: { id: `guest_${roomId}`, username: 'Player 2', elo: 1200 },
       timeControl: { baseMinutes: 10, incrementSeconds: 0 },
       whiteTime: 600000,
       blackTime: 600000,
@@ -387,7 +396,6 @@ router.post('/rooms/:id/move', (req, res) => {
       lastUpdated: Date.now()
     };
   }
-  if (!room) return res.status(404).json({ error: 'Room not found' });
 
   const { move, fen, whiteTime, blackTime, capturedPieces, status, winner, winReason } = req.body;
   if (fen) room.fen = fen;

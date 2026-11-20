@@ -289,10 +289,10 @@ export default function App() {
     const roomParam = params.get('room');
     if (roomParam) {
       const activeUser = getOrCreateUser();
-      fetch(`/api/rooms/${roomParam}/join`, {
+      fetch('/api/rooms/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user: activeUser })
+        body: JSON.stringify({ roomId: roomParam, user: activeUser })
       })
         .then(r => r.json())
         .then(data => {
@@ -323,7 +323,7 @@ export default function App() {
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/rooms/${gameSession.id}`);
+        const res = await fetch(`/api/rooms/get?id=${gameSession.id}`);
         if (!res.ok) return;
         const data = await res.json();
         if (data?.room) {
@@ -437,10 +437,10 @@ export default function App() {
     const activeUser = getOrCreateUser();
 
     try {
-      const res = await fetch(`/api/rooms/${cleanId}/join`, {
+      const res = await fetch('/api/rooms/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user: activeUser })
+        body: JSON.stringify({ roomId: cleanId, user: activeUser })
       });
       const data = await res.json();
       if (data?.room) {
@@ -749,10 +749,11 @@ export default function App() {
 
           // REST Sync for serverless persistence
           if (gameSession.id) {
-            fetch(`/api/rooms/${gameSession.id}/move`, {
+            fetch('/api/rooms/move', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
+                roomId: gameSession.id,
                 move: {
                   from: res.from,
                   to: res.to,
