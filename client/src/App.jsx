@@ -117,6 +117,7 @@ export default function App() {
   const [isAIGame, setIsAIGame] = useState(false);
   const [aiLevel, setAiLevel] = useState(2);
   const [aiThinking, setAiThinking] = useState(false);
+  const [voiceCallTrigger, setVoiceCallTrigger] = useState(0);
 
   // Socket reference
   const socketRef = useRef(null);
@@ -838,13 +839,18 @@ export default function App() {
   const isWhite = playerColor === 'w';
   const opponent = isWhite ? blackPlayer : whitePlayer;
   const me = isWhite ? whitePlayer : blackPlayer;
+  const isLight = settings.appTheme === 'alabaster';
 
   const currentTurn = gameSession ? new Chess(gameSession.fen).turn() : 'w';
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-black">
+    <div className={`min-h-screen flex flex-col font-sans selection:bg-amber-500 selection:text-black transition-colors ${
+      isLight ? 'bg-[#f4f7fb] text-slate-900' : 'bg-slate-950 text-slate-100'
+    }`}>
       {/* Top Navbar */}
-      <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 px-4 py-2.5">
+      <header className={`sticky top-0 z-40 backdrop-blur-md border-b px-4 py-2.5 transition-colors ${
+        isLight ? 'bg-white/95 border-slate-200 text-slate-900 shadow-sm' : 'bg-slate-950/80 border-slate-800 text-white'
+      }`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Logo & Slogan */}
           <div
@@ -855,18 +861,24 @@ export default function App() {
               <span className="text-xl">♟️</span>
             </div>
             <div>
-              <span className="text-base font-extrabold tracking-tight text-white flex items-center gap-1">
+              <span className={`text-base font-extrabold tracking-tight flex items-center gap-1 ${
+                isLight ? 'text-slate-900' : 'text-white'
+              }`}>
                 <span>CHESS</span>
-                <span className="text-amber-400">ARENA</span>
+                <span className="text-amber-500">ARENA</span>
               </span>
-              <span className="text-[10px] text-slate-400 block font-medium -mt-1 hidden sm:block">
+              <span className={`text-[10px] block font-medium -mt-1 hidden sm:block ${
+                isLight ? 'text-slate-500' : 'text-slate-400'
+              }`}>
                 Play. Challenge. Conquer.
               </span>
             </div>
           </div>
 
           {/* Navigation Links */}
-          <nav className="hidden md:flex items-center gap-1 p-1 bg-slate-900/80 border border-slate-800 rounded-2xl">
+          <nav className={`hidden md:flex items-center gap-1 p-1 rounded-2xl border transition-colors ${
+            isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-900/80 border-slate-800'
+          }`}>
             {[
               { id: 'home', label: 'Play', icon: Swords },
               { id: 'puzzles', label: 'Puzzles', icon: Flame },
@@ -883,6 +895,8 @@ export default function App() {
                   className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
                     activeTab === tab.id
                       ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/10'
+                      : isLight
+                      ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
                       : 'text-slate-300 hover:text-white hover:bg-slate-800'
                   }`}
                 >
@@ -908,7 +922,9 @@ export default function App() {
               }}
               className={`p-2 rounded-xl border transition-all ${
                 settings.musicEnabled
-                  ? 'bg-amber-500/20 text-amber-400 border-amber-500/50 shadow-md shadow-amber-500/10 animate-pulse'
+                  ? 'bg-amber-500/20 text-amber-500 border-amber-500/50 shadow-md shadow-amber-500/10 animate-pulse'
+                  : isLight
+                  ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900'
                   : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
               }`}
               title={settings.musicEnabled ? `Playing: ${musicEngine.getCurrentTrack().name}` : 'Muted Background Music'}
@@ -921,7 +937,11 @@ export default function App() {
               onClick={() => {
                 handleUpdateSettings({ ...settings, soundEnabled: !settings.soundEnabled });
               }}
-              className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-amber-400 transition-colors"
+              className={`p-2 rounded-xl border transition-colors ${
+                isLight
+                  ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-amber-600'
+                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-amber-400'
+              }`}
               title={settings.soundEnabled ? 'Mute Sound FX' : 'Enable Sound FX'}
             >
               {settings.soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
@@ -930,7 +950,11 @@ export default function App() {
             {/* Global Settings Modal Trigger */}
             <button
               onClick={() => setShowSettingsModal(true)}
-              className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-amber-400 transition-colors"
+              className={`p-2 rounded-xl border transition-colors ${
+                isLight
+                  ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-amber-600'
+                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-amber-400'
+              }`}
               title="Application Settings"
             >
               <Settings className="w-4 h-4" />
@@ -940,7 +964,11 @@ export default function App() {
             {currentUser && (
               <button
                 onClick={() => setShowFriendsDrawer(true)}
-                className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-amber-400 transition-colors relative"
+                className={`p-2 rounded-xl border transition-colors relative ${
+                  isLight
+                    ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-amber-600'
+                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-amber-400'
+                }`}
                 title="Friends & Social"
               >
                 <Users className="w-4 h-4" />
@@ -953,9 +981,15 @@ export default function App() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowProfileModal(true)}
-                  className="flex items-center gap-2 p-1 pl-2.5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-amber-500/50 transition-colors"
+                  className={`flex items-center gap-2 p-1 pl-2.5 rounded-2xl border transition-colors ${
+                    isLight
+                      ? 'bg-slate-100 border-slate-200 hover:border-amber-500'
+                      : 'bg-slate-900 border-slate-800 hover:border-amber-500/50'
+                  }`}
                 >
-                  <span className="text-xs font-bold text-white max-w-[90px] truncate">
+                  <span className={`text-xs font-bold max-w-[90px] truncate ${
+                    isLight ? 'text-slate-800' : 'text-white'
+                  }`}>
                     {currentUser.username}
                   </span>
                   <img
@@ -969,7 +1003,11 @@ export default function App() {
                     safeStorage.removeItem('token');
                     setCurrentUser(null);
                   }}
-                  className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-red-400"
+                  className={`p-2 rounded-xl border transition-colors ${
+                    isLight
+                      ? 'bg-slate-100 border-slate-200 text-slate-500 hover:text-red-500'
+                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-red-400'
+                  }`}
                   title="Sign Out"
                 >
                   <LogOut className="w-4 h-4" />
@@ -988,86 +1026,110 @@ export default function App() {
       </header>
 
       {/* Main Content View Switcher */}
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col relative">
         {activeTab === 'home' && (
-          <div className="max-w-6xl w-full mx-auto p-4 md:p-8 space-y-8 flex-1">
-            {/* Hero Card */}
-            <div className="relative overflow-hidden p-6 md:p-10 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-950 border border-slate-800 shadow-2xl">
-              <div className="relative z-10 max-w-2xl space-y-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>The Grandmaster Arena Experience</span>
-                </div>
-                <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">
-                  Play. Challenge. Connect. <span className="text-amber-400">Conquer.</span>
-                </h1>
-                <p className="text-sm md:text-base text-slate-300 leading-relaxed">
-                  Join real-time rated multiplayer matches, invite friends with one-click links, chat via live audio voice, solve daily tactics, and sharpen your game with Stockfish 19 WASM analysis.
-                </p>
-
-                {/* Primary Action Buttons */}
-                <div className="flex flex-wrap gap-3 pt-2">
-                  <button
-                    onClick={() => setShowMatchmakingModal(true)}
-                    className="flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm shadow-xl shadow-amber-500/20 transform hover:-translate-y-0.5 transition-all"
-                  >
-                    <Swords className="w-4 h-4" />
-                    <span>Play Online</span>
-                  </button>
-
-                  <button
-                    onClick={() => setShowFriendRoomModal(true)}
-                    className="flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold text-sm transform hover:-translate-y-0.5 transition-all"
-                  >
-                    <Users className="w-4 h-4" />
-                    <span>Play with Friend</span>
-                  </button>
-
-                  <button
-                    onClick={() => setShowAIModal(true)}
-                    className="flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-indigo-600/30 hover:bg-indigo-600/40 border border-indigo-500/50 text-indigo-300 font-bold text-sm transform hover:-translate-y-0.5 transition-all"
-                  >
-                    <Bot className="w-4 h-4" />
-                    <span>Practice vs Stockfish</span>
-                  </button>
-                </div>
+          <div className="max-w-5xl w-full mx-auto p-4 md:p-8 space-y-8 flex-1 flex flex-col justify-center relative">
+            {/* Subtle Chess Watermark & Grid Background */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-[0.035] sm:opacity-[0.055] flex items-center justify-center select-none">
+              <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                <defs>
+                  <pattern id="chess-grid" width="80" height="80" patternUnits="userSpaceOnUse">
+                    <rect width="40" height="40" fill="currentColor" />
+                    <rect x="40" y="40" width="40" height="40" fill="currentColor" />
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#chess-grid)" />
+              </svg>
+              <div className="absolute right-4 bottom-4 text-[200px] sm:text-[300px] font-serif leading-none opacity-25">
+                ♚
+              </div>
+              <div className="absolute left-6 top-8 text-[160px] sm:text-[240px] font-serif leading-none opacity-20">
+                ♞
               </div>
             </div>
 
-            {/* Quick Modes 3-Card Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <div
+            {/* Clean Hero Header (Without bulky small lines or paragraphs) */}
+            <div className="relative z-10 flex flex-col items-center justify-center text-center space-y-3 py-2">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-600 to-amber-400 p-1 flex items-center justify-center shadow-xl shadow-amber-500/20 transform hover:scale-105 transition-transform">
+                <span className="text-3xl">♟️</span>
+              </div>
+              <h1 className="text-3xl sm:text-5xl font-black tracking-tight flex items-center gap-2">
+                <span className={isLight ? 'text-slate-900' : 'text-white'}>CHESS</span>
+                <span className="text-amber-500">ARENA</span>
+              </h1>
+              <div className="text-xs sm:text-sm font-bold tracking-widest uppercase text-amber-500/90">
+                Play. Challenge. Conquer.
+              </div>
+            </div>
+
+            {/* Primary Action Buttons (Strictly max 3-4 words, NO lines underneath) */}
+            <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-3xl mx-auto pt-2">
+              <button
+                onClick={() => setShowMatchmakingModal(true)}
+                className="flex items-center justify-center gap-3 py-4 px-6 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-base shadow-xl shadow-amber-500/20 transform hover:-translate-y-1 transition-all active:scale-95"
+              >
+                <Swords className="w-5 h-5 shrink-0" />
+                <span>Play Online</span>
+              </button>
+
+              <button
+                onClick={() => setShowFriendRoomModal(true)}
+                className={`flex items-center justify-center gap-3 py-4 px-6 rounded-2xl font-extrabold text-base shadow-lg transform hover:-translate-y-1 transition-all active:scale-95 border ${
+                  isLight
+                    ? 'bg-white hover:bg-slate-50 border-slate-300 text-slate-900'
+                    : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-white'
+                }`}
+              >
+                <Users className="w-5 h-5 shrink-0 text-amber-400" />
+                <span>Play with Friends</span>
+              </button>
+
+              <button
+                onClick={() => setShowAIModal(true)}
+                className="flex items-center justify-center gap-3 py-4 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-base shadow-lg shadow-indigo-600/25 transform hover:-translate-y-1 transition-all active:scale-95 border border-indigo-500/40"
+              >
+                <Bot className="w-5 h-5 shrink-0" />
+                <span>Play with Bot</span>
+              </button>
+            </div>
+
+            {/* Secondary Quick Modes (Strictly max 3-4 words, NO lines underneath) */}
+            <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-3xl mx-auto pt-1">
+              <button
                 onClick={() => setActiveTab('puzzles')}
-                className="p-5 bg-slate-900 border border-slate-800 hover:border-amber-500/40 rounded-2xl cursor-pointer group transition-all"
+                className={`flex items-center justify-center gap-3 p-4 rounded-2xl border shadow-md transition-all group ${
+                  isLight
+                    ? 'bg-white hover:bg-slate-50 border-slate-200 hover:border-amber-500 text-slate-900'
+                    : 'bg-slate-900 hover:bg-slate-800 border-slate-800 hover:border-amber-500/50 text-white'
+                }`}
               >
-                <div className="w-12 h-12 rounded-xl bg-orange-500/20 text-orange-400 border border-orange-500/30 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-                  <Flame className="w-6 h-6" />
-                </div>
-                <h3 className="text-base font-bold text-white mb-1">Daily Tactical Puzzles</h3>
-                <p className="text-xs text-slate-400">Sharpen tactical vision, build streaks and climb puzzle ELO.</p>
-              </div>
+                <Flame className="w-5 h-5 text-orange-400 group-hover:scale-110 transition-transform" />
+                <span className="font-bold text-sm">Daily Puzzles</span>
+              </button>
 
-              <div
+              <button
                 onClick={() => setActiveTab('tournaments')}
-                className="p-5 bg-slate-900 border border-slate-800 hover:border-amber-500/40 rounded-2xl cursor-pointer group transition-all"
+                className={`flex items-center justify-center gap-3 p-4 rounded-2xl border shadow-md transition-all group ${
+                  isLight
+                    ? 'bg-white hover:bg-slate-50 border-slate-200 hover:border-amber-500 text-slate-900'
+                    : 'bg-slate-900 hover:bg-slate-800 border-slate-800 hover:border-amber-500/50 text-white'
+                }`}
               >
-                <div className="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-                  <Trophy className="w-6 h-6" />
-                </div>
-                <h3 className="text-base font-bold text-white mb-1">Live Arena Tournaments</h3>
-                <p className="text-xs text-slate-400">Knockout brackets, Swiss systems and podium trophies.</p>
-              </div>
+                <Trophy className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform" />
+                <span className="font-bold text-sm">Arena Tournaments</span>
+              </button>
 
-              <div
+              <button
                 onClick={() => setActiveTab('lessons')}
-                className="p-5 bg-slate-900 border border-slate-800 hover:border-amber-500/40 rounded-2xl cursor-pointer group transition-all"
+                className={`flex items-center justify-center gap-3 p-4 rounded-2xl border shadow-md transition-all group ${
+                  isLight
+                    ? 'bg-white hover:bg-slate-50 border-slate-200 hover:border-amber-500 text-slate-900'
+                    : 'bg-slate-900 hover:bg-slate-800 border-slate-800 hover:border-amber-500/50 text-white'
+                }`}
               >
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-                  <BookOpen className="w-6 h-6" />
-                </div>
-                <h3 className="text-base font-bold text-white mb-1">Interactive Lessons</h3>
-                <p className="text-xs text-slate-400">Master piece maneuvers, golden openings and checkmate nets.</p>
-              </div>
+                <BookOpen className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" />
+                <span className="font-bold text-sm">Chess Lessons</span>
+              </button>
             </div>
           </div>
         )}
@@ -1113,6 +1175,7 @@ export default function App() {
                     flipped={boardFlipped}
                     boardTheme={settings.boardTheme}
                     pieceTheme={settings.pieceTheme}
+                    colorPalette={settings.pieceColorPalette || 'classic'}
                     inCheck={gameSession.inCheck}
                     lastMove={gameSession.moveHistory?.[gameSession.moveHistory.length - 1]}
                     disabled={gameSession.isGameOver || (isAIGame && aiThinking)}
@@ -1156,6 +1219,7 @@ export default function App() {
                     currentUser={currentUser}
                     opponentUser={opponent}
                     isPlayer={playerColor === 'w' || playerColor === 'b'}
+                    triggerVoiceCall={voiceCallTrigger}
                   />
                 )}
 
@@ -1182,6 +1246,8 @@ export default function App() {
                     navigator.clipboard.writeText(url);
                   }}
                   onViewResult={() => setShowGameOverModal(true)}
+                  isFriendRoom={!isAIGame && !gameSession.isMatchmaking}
+                  onVoiceCall={() => setVoiceCallTrigger(c => c + 1)}
                 />
 
                 {/* Live Chat (Toggleable in Settings) */}
@@ -1236,7 +1302,9 @@ export default function App() {
       </main>
 
       {/* Floating Bottom Navigation for Mobile */}
-      <footer className="md:hidden sticky bottom-0 z-40 bg-slate-950/90 backdrop-blur-md border-t border-slate-800 px-2 py-2 flex items-center justify-around">
+      <footer className={`md:hidden sticky bottom-0 z-40 backdrop-blur-md border-t px-2 py-2 flex items-center justify-around transition-colors ${
+        isLight ? 'bg-white/95 border-slate-200' : 'bg-slate-950/90 border-slate-800'
+      }`}>
         {[
           { id: 'home', label: 'Play', icon: Swords },
           { id: 'puzzles', label: 'Puzzles', icon: Flame },
@@ -1250,7 +1318,11 @@ export default function App() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl text-[10px] font-bold ${
-                activeTab === tab.id ? 'text-amber-400' : 'text-slate-400'
+                activeTab === tab.id
+                  ? 'text-amber-500'
+                  : isLight
+                  ? 'text-slate-600 hover:text-slate-900'
+                  : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               <Icon className="w-4 h-4" />

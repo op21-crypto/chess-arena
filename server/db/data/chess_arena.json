@@ -661,6 +661,30 @@
       },
       "createdAt": "2026-11-20T05:34:28.663Z",
       "lastUpdated": 1795152919258
+    },
+    "arena_VJ1Q0F": {
+      "id": "arena_VJ1Q0F",
+      "whitePlayer": null,
+      "blackPlayer": {
+        "id": "u1",
+        "username": "Magnus",
+        "avatar": "test.png"
+      },
+      "timeControl": {
+        "baseMinutes": 10,
+        "incrementSeconds": 0
+      },
+      "whiteTime": 600000,
+      "blackTime": 600000,
+      "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "status": "waiting",
+      "moveHistory": [],
+      "capturedPieces": {
+        "white": [],
+        "black": []
+      },
+      "createdAt": "2026-11-20T05:40:29.434Z",
+      "lastUpdated": 1795153229434
     }
   },
   "tournaments": {
