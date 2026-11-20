@@ -1260,7 +1260,7 @@ export default function App() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
                   {/* 1. Play Online */}
                   <div
-                    onClick={() => setShowMatchmakingModal(true)}
+                    onClick={() => setActiveTab('play')}
                     className="luxury-card p-4 rounded-2xl cursor-pointer group space-y-2 border-slate-800"
                   >
                     <div className="flex items-center justify-between">
@@ -1373,9 +1373,12 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* 6. Tournaments */}
+                  {/* 6. Player Rankings & Standings */}
                   <div
-                    onClick={() => setActiveTab('tournaments')}
+                    onClick={() => {
+                      setProfileSubTab('rankings');
+                      setActiveTab('profile');
+                    }}
                     className="luxury-card p-4 rounded-2xl cursor-pointer group space-y-2 border-slate-800"
                   >
                     <div className="flex items-center justify-between">
@@ -1383,15 +1386,15 @@ export default function App() {
                         <Trophy className="w-5 h-5" />
                       </div>
                       <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 font-bold text-[10px] border border-amber-500/20">
-                        Live Podium 🥇
+                        Top Leaders 🏆
                       </span>
                     </div>
                     <div>
                       <h3 className="text-sm font-extrabold text-white group-hover:text-amber-400 transition-colors">
-                        Arena Tournaments
+                        Player Rankings
                       </h3>
                       <p className="text-xs text-slate-400">
-                        Compete in Swiss and Knockout tournaments with live podium standings.
+                        Global and national player standings across Bullet, Blitz & Rapid.
                       </p>
                     </div>
                   </div>
@@ -1585,6 +1588,20 @@ export default function App() {
           </div>
         )}
 
+        {/* Play Online Tab */}
+        {activeTab === 'play' && (
+          <PlayView
+            currentUser={currentUser}
+            onStartMatchmaking={handleStartMatchmaking}
+            isSearchingMatch={isSearchingMatch}
+            onCancelMatchmaking={handleCancelMatchmaking}
+            onOpenFriendRoom={() => setShowFriendRoomModal(true)}
+            onStartAIGame={handleStartAIGame}
+            activeGameSession={gameSession}
+            onReturnToGame={() => setActiveTab('game')}
+          />
+        )}
+
         {/* Puzzles Tab */}
         {activeTab === 'puzzles' && (
           <PuzzleView
@@ -1605,12 +1622,26 @@ export default function App() {
           <LessonView onBack={() => setActiveTab('home')} />
         )}
 
-        {/* Tournaments Tab */}
-        {activeTab === 'tournaments' && (
-          <TournamentView currentUser={currentUser} />
+        {/* Profile Tab (Full-Page View: Overview, Rankings & Settings) */}
+        {activeTab === 'profile' && (
+          <ProfileView
+            user={currentUser}
+            onUpdateUser={user => setCurrentUser(user)}
+            settings={settings}
+            onUpdateSettings={handleUpdateSettings}
+            initialSubTab={profileSubTab}
+            onOpenStreak={() => setShowStreakModal(true)}
+            onOpenAdmin={() => setActiveTab('admin')}
+            onSignOut={() => {
+              safeStorage.removeItem('token');
+              setCurrentUser(null);
+              setActiveTab('home');
+            }}
+            onSignIn={() => setShowAuthModal(true)}
+          />
         )}
 
-        {/* Leaderboards Tab */}
+        {/* Leaderboard Tab (Compatibility fallback) */}
         {activeTab === 'leaderboard' && (
           <LeaderboardView currentUser={currentUser} />
         )}
@@ -1619,23 +1650,27 @@ export default function App() {
         {activeTab === 'admin' && <AdminView />}
       </main>
 
-      {/* Floating Bottom Navigation for Mobile */}
+      {/* Floating Bottom Navigation for Mobile (5 Primary Tabs: Home, Play, Puzzles, Learn, Profile) */}
       <footer className={`md:hidden sticky bottom-0 z-40 backdrop-blur-md border-t px-2 py-2 flex items-center justify-around transition-colors ${
         isLight ? 'bg-white/95 border-slate-200' : 'bg-slate-950/90 border-slate-800'
       }`}>
         {[
-          { id: 'home', label: 'Play', icon: Swords },
+          { id: 'home', label: 'Home', icon: Home },
+          { id: 'play', label: 'Play', icon: Swords },
           { id: 'puzzles', label: 'Puzzles', icon: Flame },
           { id: 'lessons', label: 'Learn', icon: BookOpen },
-          { id: 'tournaments', label: 'Tournaments', icon: Trophy },
-          { id: 'leaderboard', label: 'Rankings', icon: Shield },
-          ...(currentUser?.role === 'admin' ? [{ id: 'admin', label: 'Admin', icon: Sparkles }] : [])
+          { id: 'profile', label: 'Profile', icon: User }
         ].map(tab => {
           const Icon = tab.icon;
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                if (tab.id === 'profile') {
+                  setProfileSubTab('overview');
+                }
+                setActiveTab(tab.id);
+              }}
               className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl text-[10px] font-bold ${
                 activeTab === tab.id
                   ? 'text-amber-500'
@@ -1674,7 +1709,11 @@ export default function App() {
           setCurrentUser(user);
         }}
         onOpenAdmin={() => setActiveTab('admin')}
-        onNavigateToRankings={() => setActiveTab('leaderboard')}
+        onNavigateToRankings={() => {
+          setShowProfileModal(false);
+          setProfileSubTab('rankings');
+          setActiveTab('profile');
+        }}
         onOpenStreak={() => {
           setShowProfileModal(false);
           setShowStreakModal(true);
