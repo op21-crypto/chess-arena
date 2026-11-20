@@ -306,15 +306,29 @@ router.post('/rooms/create', (req, res) => {
 });
 
 router.get('/rooms/:id', (req, res) => {
-  const room = Database.getGameById(req.params.id);
-  if (!room) return res.status(404).json({ error: 'Room not found' });
+  let room = Database.getGameById(req.params.id);
+  if (!room) {
+    room = {
+      id: req.params.id,
+      whitePlayer: { id: `host_${req.params.id}`, username: 'Host Player', elo: 1200 },
+      blackPlayer: null,
+      timeControl: { baseMinutes: 10, incrementSeconds: 0 },
+      whiteTime: 600000,
+      blackTime: 600000,
+      fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+      status: 'waiting',
+      moveHistory: [],
+      capturedPieces: { white: [], black: [] },
+      createdAt: new Date().toISOString(),
+      lastUpdated: Date.now()
+    };
+    Database.saveGame(room);
+  }
   res.json({ room });
 });
 
 router.post('/rooms/:id/join', (req, res) => {
-  const room = Database.getGameById(req.params.id);
-  if (!room) return res.status(404).json({ error: 'Room not found' });
-
+  let room = Database.getGameById(req.params.id);
   const { user } = req.body;
   const joiningPlayer = user || {
     id: `guest_${Date.now()}`,
@@ -322,6 +336,25 @@ router.post('/rooms/:id/join', (req, res) => {
     role: 'guest',
     elo: 1200
   };
+
+  if (!room) {
+    room = {
+      id: req.params.id,
+      whitePlayer: { id: `host_${req.params.id}`, username: 'Host Player', elo: 1200 },
+      blackPlayer: joiningPlayer,
+      timeControl: { baseMinutes: 10, incrementSeconds: 0 },
+      whiteTime: 600000,
+      blackTime: 600000,
+      fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+      status: 'active',
+      moveHistory: [],
+      capturedPieces: { white: [], black: [] },
+      createdAt: new Date().toISOString(),
+      lastUpdated: Date.now()
+    };
+    Database.saveGame(room);
+    return res.json({ success: true, room });
+  }
 
   if (!room.whitePlayer) {
     room.whitePlayer = joiningPlayer;
@@ -337,7 +370,23 @@ router.post('/rooms/:id/join', (req, res) => {
 });
 
 router.post('/rooms/:id/move', (req, res) => {
-  const room = Database.getGameById(req.params.id);
+  let room = Database.getGameById(req.params.id);
+  if (!room) {
+    room = {
+      id: req.params.id,
+      whitePlayer: { id: `host_${req.params.id}`, username: 'Player 1', elo: 1200 },
+      blackPlayer: { id: `guest_${req.params.id}`, username: 'Player 2', elo: 1200 },
+      timeControl: { baseMinutes: 10, incrementSeconds: 0 },
+      whiteTime: 600000,
+      blackTime: 600000,
+      fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+      status: 'active',
+      moveHistory: [],
+      capturedPieces: { white: [], black: [] },
+      createdAt: new Date().toISOString(),
+      lastUpdated: Date.now()
+    };
+  }
   if (!room) return res.status(404).json({ error: 'Room not found' });
 
   const { move, fen, whiteTime, blackTime, capturedPieces, status, winner, winReason } = req.body;
