@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
 import {
-  Swords, Zap, Flame, Clock, Shield, Bot, Users, Copy,
-  Check, ArrowRight, Play, RefreshCw, Sparkles, ChevronRight,
-  BookOpen, Trophy, Crown, Globe
+  Swords, Zap, Flame, Clock, Shield, Bot, Users, Check,
+  ArrowRight, Play, Sparkles, ChevronRight, ChevronDown,
+  X, Smartphone, Mic
 } from 'lucide-react';
 import { triggerHaptic } from '../utils/device.js';
 import { sound } from '../utils/audio.js';
 
 export const TIME_PRESETS = [
-  { id: '1m', name: '1 min', format: 'bullet', baseMinutes: 1, incrementSeconds: 0, icon: '⚡', label: 'Bullet' },
-  { id: '2+1', name: '2 | 1', format: 'bullet', baseMinutes: 2, incrementSeconds: 1, icon: '⚡', label: 'Bullet' },
-  { id: '3m', name: '3 min', format: 'blitz', baseMinutes: 3, incrementSeconds: 0, icon: '🔥', label: 'Blitz' },
-  { id: '3+2', name: '3 | 2', format: 'blitz', baseMinutes: 3, incrementSeconds: 2, icon: '🔥', label: 'Blitz' },
-  { id: '5m', name: '5 min', format: 'blitz', baseMinutes: 5, incrementSeconds: 0, icon: '🔥', label: 'Blitz' },
-  { id: '10m', name: '10 min', format: 'rapid', baseMinutes: 10, incrementSeconds: 0, icon: '⏳', label: 'Rapid' },
-  { id: '15+10', name: '15 | 10', format: 'rapid', baseMinutes: 15, incrementSeconds: 10, icon: '⏳', label: 'Rapid' },
-  { id: '30m', name: '30 min', format: 'classical', baseMinutes: 30, incrementSeconds: 0, icon: '🏛️', label: 'Classical' }
+  { id: '1m', name: '1 min', format: 'bullet', baseMinutes: 1, incrementSeconds: 0, icon: '⚡', label: 'Bullet', desc: '1 min per player' },
+  { id: '2+1', name: '2 | 1', format: 'bullet', baseMinutes: 2, incrementSeconds: 1, icon: '⚡', label: 'Bullet', desc: '2 min + 1s per move' },
+  { id: '3m', name: '3 min', format: 'blitz', baseMinutes: 3, incrementSeconds: 0, icon: '🔥', label: 'Blitz', popular: true, desc: '3 min per player' },
+  { id: '3+2', name: '3 | 2', format: 'blitz', baseMinutes: 3, incrementSeconds: 2, icon: '🔥', label: 'Blitz', desc: '3 min + 2s per move' },
+  { id: '5m', name: '5 min', format: 'blitz', baseMinutes: 5, incrementSeconds: 0, icon: '🔥', label: 'Blitz', desc: '5 min per player' },
+  { id: '10m', name: '10 min', format: 'rapid', baseMinutes: 10, incrementSeconds: 0, icon: '⏳', label: 'Rapid', popular: true, desc: '10 min per player' },
+  { id: '15+10', name: '15 | 10', format: 'rapid', baseMinutes: 15, incrementSeconds: 10, icon: '⏳', label: 'Rapid', desc: '15 min + 10s per move' },
+  { id: '30m', name: '30 min', format: 'classical', baseMinutes: 30, incrementSeconds: 0, icon: '🏛️', label: 'Classical', desc: '30 min per player' }
 ];
 
 const BOT_PRESETS = [
@@ -35,21 +35,19 @@ export function PlayView({
   onStartAIGame,
   onOpenAIModal,
   onOpenOfflineBoard,
-  onNavigateToPuzzles,
-  onNavigateToLessons,
-  onNavigateToTournaments,
-  onNavigateToRankings,
   activeGameSession,
   onReturnToGame
 }) {
   const [selectedPreset, setSelectedPreset] = useState(TIME_PRESETS[5]); // Default 10 min Rapid
+  const [showTimeModal, setShowTimeModal] = useState(false);
   const [selectedBot, setSelectedBot] = useState(BOT_PRESETS[1]);
-  const [botColor, setBotColor] = useState('w');
+  const [botColor, setBotColor] = useState('w'); // 'w' | 'b' | 'random'
 
   const handlePresetSelect = (preset) => {
     sound.playSelect();
     triggerHaptic('move');
     setSelectedPreset(preset);
+    setShowTimeModal(false);
   };
 
   const handleLaunchMatch = () => {
@@ -76,7 +74,8 @@ export function PlayView({
     sound.playClick();
     triggerHaptic('move');
     if (onStartAIGame) {
-      onStartAIGame({ level: selectedBot.level, color: botColor });
+      const finalColor = botColor === 'random' ? (Math.random() < 0.5 ? 'w' : 'b') : botColor;
+      onStartAIGame({ level: selectedBot.level, color: finalColor });
     }
   };
 
@@ -105,16 +104,16 @@ export function PlayView({
   };
 
   return (
-    <div className="max-w-5xl w-full mx-auto px-3 py-4 sm:p-6 space-y-5 animate-fade-in">
+    <div className="max-w-3xl w-full mx-auto px-3.5 py-4 sm:p-6 space-y-4 sm:space-y-5 animate-fade-in">
       {/* Banner: Active Live Game in Progress (if any) */}
       {activeGameSession && !activeGameSession.isGameOver && (
-        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/10 border-2 border-amber-500/50 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-pulse">
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/10 border-2 border-amber-500/50 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3 animate-pulse">
           <div className="flex items-center gap-3 text-center sm:text-left">
-            <div className="w-12 h-12 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-2xl shadow-lg">
+            <div className="w-11 h-11 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-2xl shadow-lg">
               ♟️
             </div>
             <div>
-              <h3 className="text-base font-extrabold text-white">Live Match In Progress</h3>
+              <h3 className="text-sm sm:text-base font-extrabold text-white">Live Match In Progress</h3>
               <p className="text-xs text-amber-300">
                 Turn: <span className="font-bold">{activeGameSession.turn === 'w' ? 'White' : 'Black'}</span> • Move #{activeGameSession.moveHistory?.length || 0}
               </p>
@@ -126,7 +125,7 @@ export function PlayView({
               triggerHaptic('move');
               if (onReturnToGame) onReturnToGame();
             }}
-            className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm rounded-xl shadow-lg transition-transform active:scale-95 flex items-center gap-2 cursor-pointer"
+            className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-lg transition-transform active:scale-95 flex items-center gap-2 cursor-pointer"
           >
             <span>Return to Board</span>
             <ArrowRight className="w-4 h-4" />
@@ -134,407 +133,417 @@ export function PlayView({
         </div>
       )}
 
-      {/* Main Play Arena Header - Clean & Mobile-Optimized */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-md shadow-amber-500/10 shrink-0">
-            <Swords className="w-5 h-5" />
-          </div>
-          <div className="truncate">
-            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-              Online Arena
-            </h1>
-            <div className="flex items-center gap-2 text-xs text-slate-400">
-              <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                Live Matchmaking
-              </span>
-              <span>•</span>
-              <span className="font-medium">Rated</span>
-            </div>
-          </div>
+      {/* Main Play View Header */}
+      <div className="flex items-center justify-between gap-3 px-1">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+            <span>Play Arena</span>
+            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400">
+              Season 2026
+            </span>
+          </h1>
+          <p className="text-xs text-slate-400 font-medium mt-0.5">
+            Choose your game mode to begin
+          </p>
         </div>
 
-        {currentUser && (
-          <div className="px-3 py-1.5 rounded-2xl bg-slate-900/90 border border-slate-800 text-xs font-bold text-slate-300 flex items-center gap-2 shadow-xs shrink-0">
-            <span className="text-slate-500 text-[11px] hidden sm:inline">Rating:</span>
-            <span className="font-mono text-amber-400 font-black text-sm">
-              {currentUser.ratings?.[selectedPreset.format] || currentUser.elo || 1200}
-            </span>
-            <span className="uppercase text-[9px] bg-amber-500/15 text-amber-400 px-1.5 py-0.5 rounded-md font-black tracking-wider">
-              {selectedPreset.format}
-            </span>
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-300 shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-slate-400 text-[11px] hidden sm:inline">Matchmaking:</span>
+            <span className="font-bold text-emerald-400 text-[11px]">Online</span>
           </div>
-        )}
+
+          {currentUser && (
+            <div className="px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-bold text-slate-300 flex items-center gap-1.5 shadow-sm">
+              <span className="text-slate-400 text-[11px] hidden sm:inline">Rating:</span>
+              <span className="font-mono text-amber-400 font-black text-xs">
+                {currentUser.ratings?.[selectedPreset.format] || currentUser.elo || 1200}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* SECTION 1: RATED MATCHMAKING & TIME CONTROLS */}
-      <div className="bg-gradient-to-br from-slate-900/90 via-slate-900/75 to-slate-950/90 border border-slate-800/80 rounded-3xl p-3.5 sm:p-6 space-y-4 shadow-2xl backdrop-blur-xl relative overflow-hidden">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
-            <h2 className="text-sm sm:text-base font-extrabold text-white">Select Time Control</h2>
+      {/* 1. ONLINE ARENA (Rated Matchmaking with Clean Consolidated Time Slot Button) */}
+      <div className="bg-gradient-to-br from-amber-950/35 via-slate-900/95 to-orange-950/35 border border-amber-500/30 rounded-3xl p-4 sm:p-6 space-y-3.5 shadow-xl relative overflow-hidden backdrop-blur-xl">
+        <div className="absolute top-0 right-0 w-44 h-44 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        {/* Section Header */}
+        <div className="flex items-center justify-between gap-3 relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shadow-md shrink-0">
+              <Swords className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base sm:text-lg font-black text-white">Online Arena</h2>
+                <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold uppercase tracking-wider">
+                  Rated FIDE
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 font-medium">
+                Instant rated matchmaking with players worldwide
+              </p>
+            </div>
           </div>
-          <span className="text-[11px] font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/25">
-            ⚡ Instant Pairing
+          <span className="text-[11px] font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/25 shrink-0 hidden xs:inline">
+            ⚡ Live
           </span>
         </div>
 
-        {/* Time Presets Grid (All 8 Presets 100% Selectable with Premium Tactile Sound) */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-          {TIME_PRESETS.map((preset) => {
-            const isSelected = selectedPreset.id === preset.id;
-            return (
-              <button
-                key={preset.id}
-                type="button"
-                onClick={() => handlePresetSelect(preset)}
-                className={`relative p-3 sm:p-3.5 rounded-2xl transition-all duration-200 text-left flex flex-col justify-between h-20 sm:h-24 cursor-pointer select-none overflow-hidden ${
-                  isSelected
-                    ? 'bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-slate-950 font-black shadow-xl shadow-amber-500/30 ring-2 ring-amber-300 scale-[1.02] border border-amber-300'
-                    : 'bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-slate-950/90 border border-slate-800/80 hover:border-amber-500/50 hover:bg-slate-800/70 text-slate-200 hover:scale-[1.01] active:scale-95 shadow-md shadow-black/30'
-                }`}
-              >
-                {/* Active Glow Accent for Selected Card */}
-                {isSelected && (
-                  <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-white/20 blur-md pointer-events-none" />
-                )}
+        {/* The Single Consolidated Time Slot Button */}
+        <div className="space-y-1 relative z-10 pt-1">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block px-1">
+            Time Control Slot
+          </span>
 
-                <div className="flex items-center justify-between w-full relative z-10">
-                  <span className="text-xl sm:text-2xl filter drop-shadow-xs">{preset.icon}</span>
-                  <span
-                    className={`text-[9px] sm:text-[10px] uppercase font-black px-2 py-0.5 rounded-full tracking-wider transition-colors ${
-                      isSelected
-                        ? 'bg-slate-950/25 text-slate-950 border border-slate-950/10'
-                        : 'bg-slate-800/80 text-slate-400 border border-slate-700/50'
-                    }`}
-                  >
-                    {preset.label}
+          <button
+            type="button"
+            onClick={() => {
+              sound.playClick();
+              triggerHaptic('move');
+              setShowTimeModal(true);
+            }}
+            className="w-full p-3.5 sm:p-4 rounded-2xl bg-slate-950/80 hover:bg-slate-950 border border-slate-750 hover:border-amber-400 text-left flex items-center justify-between group transition-all duration-200 cursor-pointer shadow-md active:scale-99"
+          >
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="w-11 h-11 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-2xl shrink-0 border border-amber-500/35 group-hover:scale-105 transition-transform">
+                {selectedPreset.icon}
+              </div>
+              <div className="truncate">
+                <div className="flex items-center gap-2">
+                  <span className="text-base sm:text-lg font-black text-white group-hover:text-amber-300 transition-colors">
+                    {selectedPreset.name} • {selectedPreset.label}
                   </span>
+                  {selectedPreset.popular && (
+                    <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] font-black uppercase">
+                      Popular
+                    </span>
+                  )}
                 </div>
+                <p className="text-xs text-slate-400 mt-0.5 font-medium truncate">
+                  {selectedPreset.desc} • {selectedPreset.format.toUpperCase()}
+                </p>
+              </div>
+            </div>
 
-                <div className="relative z-10">
-                  <div
-                    className={`text-base sm:text-lg font-black font-mono leading-tight tracking-tight ${
-                      isSelected ? 'text-slate-950' : 'text-white'
-                    }`}
-                  >
-                    {preset.name}
-                  </div>
-                  <div
-                    className={`text-[10px] sm:text-[11px] font-medium leading-none mt-0.5 ${
-                      isSelected ? 'text-slate-900/90 font-bold' : 'text-slate-400'
-                    }`}
-                  >
-                    {preset.baseMinutes} min {preset.incrementSeconds > 0 ? `+ ${preset.incrementSeconds}s` : ''}
-                  </div>
-                </div>
-              </button>
-            );
-          })}
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 group-hover:bg-amber-500 group-hover:text-slate-950 font-black text-xs transition-colors shrink-0 ml-2">
+              <span>Change Slot</span>
+              <ChevronDown className="w-3.5 h-3.5" />
+            </div>
+          </button>
         </div>
 
-        {/* Action Button / Active Matchmaking Radar */}
-        {isSearchingMatch ? (
-          <div className="py-6 px-4 bg-slate-950/80 rounded-2xl border border-amber-500/40 flex flex-col items-center justify-center space-y-3">
-            <div className="relative w-16 h-16 flex items-center justify-center">
-              <span className="absolute inset-0 rounded-full border-4 border-amber-500/30 animate-ping" />
-              <span className="w-14 h-14 rounded-full bg-amber-500/20 border-2 border-amber-500 flex items-center justify-center text-2xl">
-                ♟️
-              </span>
+        {/* Action Button: Matchmaking or Active Radar */}
+        <div className="relative z-10 pt-1">
+          {isSearchingMatch ? (
+            <div className="py-5 px-4 bg-slate-950/90 rounded-2xl border border-amber-500/40 flex flex-col items-center justify-center space-y-3">
+              <div className="relative w-14 h-14 flex items-center justify-center">
+                <span className="absolute inset-0 rounded-full border-4 border-amber-500/30 animate-ping" />
+                <span className="w-12 h-12 rounded-full bg-amber-500/20 border-2 border-amber-500 flex items-center justify-center text-2xl">
+                  ⚔️
+                </span>
+              </div>
+              <div className="text-center">
+                <span className="text-sm font-bold text-white block">Searching for an opponent...</span>
+                <span className="text-xs text-amber-400 font-mono font-bold">
+                  {selectedPreset.name} ({selectedPreset.label})
+                </span>
+              </div>
+              <button
+                onClick={handleCancelMatchmaking}
+                className="px-6 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors cursor-pointer active:scale-95"
+              >
+                Cancel Matchmaking
+              </button>
             </div>
-            <div className="text-center">
-              <span className="text-sm font-bold text-white block">Searching for an opponent...</span>
-              <span className="text-xs text-amber-400 font-mono font-bold">
-                {selectedPreset.name} • {selectedPreset.format.toUpperCase()}
-              </span>
-            </div>
+          ) : (
             <button
-              onClick={handleCancelMatchmaking}
-              className="px-6 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors cursor-pointer active:scale-95"
+              onClick={handleLaunchMatch}
+              className="w-full py-4 px-4 bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black text-sm sm:text-base rounded-2xl transition-all shadow-xl shadow-amber-500/25 flex items-center justify-center gap-2.5 active:scale-[0.98] cursor-pointer"
             >
-              Cancel Matchmaking
+              <Swords className="w-5 h-5 fill-slate-950" />
+              <span>Play Online ({selectedPreset.name} {selectedPreset.label})</span>
             </button>
-          </div>
-        ) : (
-          <button
-            onClick={handleLaunchMatch}
-            className="w-full py-4 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-sm sm:text-base rounded-2xl transition-all shadow-xl shadow-amber-500/25 flex items-center justify-center gap-2.5 active:scale-[0.98] cursor-pointer"
-          >
-            <Swords className="w-5 h-5 text-slate-950" />
-            <span>Play {selectedPreset.name} ({selectedPreset.label})</span>
-          </button>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* SECTION 2: PLAY WITH FRIENDS & PLAY VS BOT */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Play with Friends Card */}
-        <div className="bg-gradient-to-br from-slate-900/90 via-slate-900/70 to-slate-950/90 border border-slate-800/80 rounded-3xl p-4 sm:p-5 space-y-3 shadow-xl flex flex-col justify-between backdrop-blur-xl">
-          <div className="space-y-1.5">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
-              <Users className="w-5 h-5" />
-            </div>
-            <h3 className="text-base sm:text-lg font-extrabold text-white">Play with a Friend</h3>
-            <p className="text-xs text-slate-400">
-              Create a private room, invite via link or code, and enjoy real-time chess with live voice calls.
-            </p>
-          </div>
+      {/* 2. PLAY VS COMPUTER AI (Stockfish Engine) */}
+      <div className="bg-gradient-to-br from-indigo-950/35 via-slate-900/95 to-purple-950/35 border border-indigo-500/30 rounded-3xl p-4 sm:p-6 space-y-3.5 shadow-xl relative overflow-hidden backdrop-blur-xl">
+        <div className="absolute top-0 right-0 w-44 h-44 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="pt-2">
-            <button
-              onClick={handleOpenFriendRoom}
-              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-slate-800 via-slate-800 to-slate-900 hover:from-amber-500/20 hover:to-amber-500/10 border border-slate-700 hover:border-amber-500/50 text-white font-extrabold text-xs flex items-center justify-center gap-2.5 transition-all shadow-md active:scale-98 cursor-pointer"
-            >
-              <Users className="w-4 h-4 text-amber-400" />
-              <span>Create or Join Custom Room</span>
-            </button>
+        <div className="flex items-center justify-between gap-3 relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400 shadow-md shrink-0">
+              <Bot className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base sm:text-lg font-black text-white">Play vs Computer AI</h2>
+                <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-bold uppercase tracking-wider">
+                  Stockfish 16
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 font-medium">
+                Practice against engine bots from beginner to grandmaster
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Play vs AI Bot Card */}
-        <div className="bg-gradient-to-br from-slate-900/90 via-slate-900/70 to-slate-950/90 border border-slate-800/80 rounded-3xl p-4 sm:p-5 space-y-3 shadow-xl flex flex-col justify-between backdrop-blur-xl">
-          <div className="space-y-1.5">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
-              <Bot className="w-5 h-5" />
-            </div>
-            <h3 className="text-base sm:text-lg font-extrabold text-white">Play vs Computer AI</h3>
-            <p className="text-xs text-slate-400">
-              Practice against offline bots ranging from friendly beginner to Magnus Carlsen level.
-            </p>
+        {/* Bot Level Selector Chips */}
+        <div className="space-y-2 relative z-10 pt-1">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              Difficulty Bot
+            </span>
+            <span className="text-xs text-indigo-300 font-mono font-bold">
+              {selectedBot.name} (~{selectedBot.rating} Elo)
+            </span>
           </div>
 
-          <div className="space-y-3 pt-1">
-            {/* Bot selector pills */}
-            <div className="flex gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-              {BOT_PRESETS.map((bot) => (
+          <div className="grid grid-cols-5 gap-1.5">
+            {BOT_PRESETS.map((bot) => {
+              const isSelected = selectedBot.level === bot.level;
+              return (
                 <button
                   key={bot.level}
                   type="button"
                   onClick={() => handleBotSelect(bot)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 ${
-                    selectedBot.level === bot.level
-                      ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-600/30 border border-indigo-400/50'
-                      : 'bg-slate-950/70 text-slate-400 hover:text-white border border-slate-800/80'
+                  className={`p-2 rounded-xl text-center transition-all cursor-pointer flex flex-col items-center justify-center active:scale-95 ${
+                    isSelected
+                      ? 'bg-gradient-to-b from-indigo-500 to-indigo-600 text-white font-black border border-indigo-300 shadow-md shadow-indigo-500/30'
+                      : 'bg-slate-950/70 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
                   }`}
+                  title={`${bot.name} (${bot.rating} Elo)`}
                 >
-                  <span>{bot.icon}</span>
-                  <span>{bot.name.split(' ')[0]}</span>
+                  <span className="text-base sm:text-lg">{bot.icon}</span>
+                  <span className="text-[10px] font-bold truncate mt-0.5 max-w-full">
+                    {bot.name.split(' ')[0]}
+                  </span>
                 </button>
-              ))}
-            </div>
-
-            {/* Play as White/Black selector and Launch button */}
-            <div className="flex gap-2">
-              <div className="flex bg-slate-950 rounded-xl p-1 border border-slate-800/80">
-                <button
-                  type="button"
-                  onClick={() => handleBotColorSelect('w')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    botColor === 'w' ? 'bg-slate-800 text-amber-400 shadow-xs' : 'text-slate-400 hover:text-white'
-                  }`}
-                  title="Play as White"
-                >
-                  White ♔
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleBotColorSelect('b')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    botColor === 'b' ? 'bg-slate-800 text-amber-400 shadow-xs' : 'text-slate-400 hover:text-white'
-                  }`}
-                  title="Play as Black"
-                >
-                  Black ♚
-                </button>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleLaunchBot}
-                className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-extrabold text-xs transition-all shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 active:scale-98 cursor-pointer"
-              >
-                <Play className="w-3.5 h-3.5 fill-current" />
-                <span>Play {selectedBot.name}</span>
-              </button>
-            </div>
-
-            {onOpenAIModal && (
-              <button
-                type="button"
-                onClick={() => {
-                  sound.playClick();
-                  triggerHaptic('move');
-                  onOpenAIModal();
-                }}
-                className="w-full py-2 px-3 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer"
-              >
-                <Bot className="w-3.5 h-3.5" />
-                <span>Custom Stockfish Difficulty & Deep Engine Hub</span>
-              </button>
-            )}
+              );
+            })}
           </div>
         </div>
 
-        {/* Play Offline Board Card (Pass & Play on 1 Device) */}
-        {onOpenOfflineBoard && (
-          <div className="md:col-span-2 bg-gradient-to-r from-amber-500/15 via-slate-900/90 to-amber-500/10 border border-amber-500/30 rounded-3xl p-4 sm:p-5 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 backdrop-blur-xl">
-            <div className="flex items-center gap-3.5 text-center sm:text-left">
-              <div className="w-11 h-11 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30 shrink-0 shadow-md">
-                <Users className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 justify-center sm:justify-start">
-                  <h3 className="text-sm sm:text-base font-extrabold text-white">Play Offline Board</h3>
-                  <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] font-extrabold">
-                    Pass & Play 👥
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Two players on 1 device with auto board flipping, legal move dots, and move history.
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={handleOpenOfflineBoard}
-              className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition-all active:scale-95 shadow-lg shadow-amber-500/20 flex items-center gap-1.5 shrink-0 cursor-pointer"
-            >
-              <span>Launch Offline Board</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
+        {/* Color Picker + Play Action */}
+        <div className="flex flex-col sm:flex-row gap-2 relative z-10 pt-1">
+          {/* Color Selector */}
+          <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 shrink-0">
+            {[
+              { id: 'w', label: 'White ♔' },
+              { id: 'random', label: 'Random 🎲' },
+              { id: 'b', label: 'Black ♚' }
+            ].map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => handleBotColorSelect(c.id)}
+                className={`flex-1 sm:flex-initial px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  botColor === c.id
+                    ? 'bg-indigo-600 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {c.label}
+              </button>
+            ))}
           </div>
+
+          {/* Primary Play Bot CTA */}
+          <button
+            type="button"
+            onClick={handleLaunchBot}
+            className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-black text-xs sm:text-sm transition-all shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 active:scale-98 cursor-pointer"
+          >
+            <Play className="w-4 h-4 fill-white" />
+            <span>Play vs {selectedBot.name}</span>
+          </button>
+        </div>
+
+        {/* Custom Stockfish Modal Link */}
+        {onOpenAIModal && (
+          <button
+            type="button"
+            onClick={() => {
+              sound.playClick();
+              triggerHaptic('move');
+              onOpenAIModal();
+            }}
+            className="w-full py-2 px-3 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer relative z-10"
+          >
+            <Bot className="w-3.5 h-3.5" />
+            <span>Custom Stockfish Difficulty & Deep Engine Hub (Levels 1–8)</span>
+          </button>
         )}
       </div>
 
-      {/* SECTION 3: MORE ARENA & COMPETITIVE MODES (All added to Play Navigation) */}
-      <div className="space-y-3.5 pt-3">
-        <div className="flex items-center justify-between px-1">
-          <div>
-            <h2 className="text-base sm:text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <span>More Arena Game Modes</span>
-            </h2>
-            <p className="text-xs text-slate-400 font-medium mt-0.5">
-              Explore tactics, master lessons, official tournaments, and global leaderboards.
-            </p>
-          </div>
-        </div>
+      {/* 3. PLAY WITH FRIENDS (Voice Room) */}
+      <div className="bg-gradient-to-br from-emerald-950/35 via-slate-900/95 to-teal-950/35 border border-emerald-500/30 rounded-3xl p-4 sm:p-5 space-y-3.5 shadow-xl relative overflow-hidden backdrop-blur-xl">
+        <div className="absolute top-0 right-0 w-44 h-44 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          {/* 1. Tactics & Puzzles */}
-          <div
-            onClick={() => {
-              sound.playClick();
-              triggerHaptic('move');
-              if (onNavigateToPuzzles) onNavigateToPuzzles();
-            }}
-            className="group p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-slate-950/95 border border-orange-500/30 hover:border-orange-400 shadow-xl hover:shadow-orange-500/15 transition-all duration-200 cursor-pointer overflow-hidden backdrop-blur-md active:scale-[0.99]"
-          >
-            <div className="flex items-start justify-between relative z-10 mb-2.5">
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-orange-400 to-rose-600 text-white flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:scale-105 transition-transform">
-                <Flame className="w-5 h-5 fill-white" />
+        <div className="flex items-center justify-between gap-3 relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-md shrink-0">
+              <Mic className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base sm:text-lg font-black text-white">Play Friends (Voice 🎙️)</h2>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider">
+                  Live Audio
+                </span>
               </div>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-orange-500/15 text-orange-400 border border-orange-500/30 font-black text-[10px] tracking-wide uppercase">
-                🔥 Streak & Storm
-              </span>
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-base font-black text-white group-hover:text-orange-400 transition-colors flex items-center justify-between">
-                <span>Tactics & Puzzles</span>
-                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-orange-400 group-hover:translate-x-0.5 transition-all" />
-              </h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Sharpen tactical calculation with rated themes, Puzzle Streak, and 3-minute blitz rush.
-              </p>
-            </div>
-          </div>
-
-          {/* 2. Chess Academy & Lessons */}
-          <div
-            onClick={() => {
-              sound.playClick();
-              triggerHaptic('move');
-              if (onNavigateToLessons) onNavigateToLessons();
-            }}
-            className="group p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-slate-950/95 border border-sky-500/30 hover:border-sky-400 shadow-xl hover:shadow-sky-500/15 transition-all duration-200 cursor-pointer overflow-hidden backdrop-blur-md active:scale-[0.99]"
-          >
-            <div className="flex items-start justify-between relative z-10 mb-2.5">
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 text-white flex items-center justify-center shadow-lg shadow-sky-500/30 group-hover:scale-105 transition-transform">
-                <BookOpen className="w-5 h-5" />
-              </div>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30 font-black text-[10px] tracking-wide uppercase">
-                🎓 64 Master Lessons
-              </span>
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-base font-black text-white group-hover:text-sky-400 transition-colors flex items-center justify-between">
-                <span>Chess Academy & Lessons</span>
-                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-sky-400 group-hover:translate-x-0.5 transition-all" />
-              </h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Step-by-step master lessons with anime chess sensei tutor and interactive drills.
-              </p>
-            </div>
-          </div>
-
-          {/* 3. Arena Tournaments */}
-          <div
-            onClick={() => {
-              sound.playClick();
-              triggerHaptic('move');
-              if (onNavigateToTournaments) onNavigateToTournaments();
-            }}
-            className="group p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-slate-950/95 border border-amber-500/30 hover:border-amber-400 shadow-xl hover:shadow-amber-500/15 transition-all duration-200 cursor-pointer overflow-hidden backdrop-blur-md active:scale-[0.99]"
-          >
-            <div className="flex items-start justify-between relative z-10 mb-2.5">
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center shadow-lg shadow-amber-500/30 group-hover:scale-105 transition-transform">
-                <Trophy className="w-5 h-5 fill-slate-950" />
-              </div>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 font-black text-[10px] tracking-wide uppercase">
-                ⚔️ Live Championship
-              </span>
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-base font-black text-white group-hover:text-amber-400 transition-colors flex items-center justify-between">
-                <span>Arena Tournaments</span>
-                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
-              </h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Join live Swiss, Knockout & Arena brackets to compete for championship trophies and rating.
-              </p>
-            </div>
-          </div>
-
-          {/* 4. Global Leaderboards & Player Rankings */}
-          <div
-            onClick={() => {
-              sound.playClick();
-              triggerHaptic('move');
-              if (onNavigateToRankings) onNavigateToRankings();
-            }}
-            className="group p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-slate-950/95 border border-yellow-500/30 hover:border-yellow-400 shadow-xl hover:shadow-yellow-500/15 transition-all duration-200 cursor-pointer overflow-hidden backdrop-blur-md active:scale-[0.99]"
-          >
-            <div className="flex items-start justify-between relative z-10 mb-2.5">
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-600 text-slate-950 flex items-center justify-center shadow-lg shadow-yellow-500/30 group-hover:scale-105 transition-transform">
-                <Crown className="w-5 h-5 fill-slate-950" />
-              </div>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 border border-yellow-500/30 font-black text-[10px] tracking-wide uppercase">
-                🏆 Global Leaders
-              </span>
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-base font-black text-white group-hover:text-yellow-400 transition-colors flex items-center justify-between">
-                <span>Global Rankings & Leaderboards</span>
-                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-yellow-400 group-hover:translate-x-0.5 transition-all" />
-              </h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Explore worldwide & country standings across Bullet, Blitz, Rapid, and Classical divisions.
+              <p className="text-xs text-slate-400 font-medium">
+                Create a private room, share your invite link, and talk in real-time
               </p>
             </div>
           </div>
         </div>
+
+        <button
+          onClick={handleOpenFriendRoom}
+          className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-600/25 active:scale-98 cursor-pointer relative z-10"
+        >
+          <Users className="w-4 h-4" />
+          <span>Create or Join Custom Room</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
       </div>
+
+      {/* 4. OFFLINE CHESS BOARD (Pass & Play on 1 Device) */}
+      {onOpenOfflineBoard && (
+        <div className="bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-slate-950/95 border border-slate-800 hover:border-amber-500/40 rounded-3xl p-4 sm:p-5 space-y-3.5 shadow-xl relative overflow-hidden backdrop-blur-xl">
+          <div className="absolute top-0 right-0 w-44 h-44 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="flex items-center justify-between gap-3 relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex items-center justify-center text-amber-400 shadow-md shrink-0">
+                <Smartphone className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base sm:text-lg font-black text-white">Offline Chess Board</h2>
+                  <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 text-[10px] font-bold uppercase tracking-wider">
+                    Pass & Play 👥
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 font-medium">
+                  Two players face-to-face on 1 phone • Vertical full screen board
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleOpenOfflineBoard}
+            className="w-full py-3.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-750 border border-slate-700 text-white hover:text-amber-300 font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-md active:scale-98 cursor-pointer relative z-10"
+          >
+            <span>Launch Offline Board</span>
+            <ArrowRight className="w-4 h-4 text-amber-400" />
+          </button>
+        </div>
+      )}
+
+      {/* TIME CONTROL SELECTION MODAL */}
+      {showTimeModal && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-slate-900 border-2 border-amber-500/80 rounded-3xl p-5 sm:p-6 max-w-md w-full space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+              <div>
+                <h3 className="text-lg font-black text-white flex items-center gap-2">
+                  <span>Choose Time Control</span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Select your preferred time slot for online matchmaking
+                </p>
+              </div>
+              <button
+                onClick={() => setShowTimeModal(false)}
+                className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Presets Grid Grouped by Speed */}
+            <div className="space-y-3">
+              {[
+                { category: 'Bullet (Fast & Sharp)', icon: '⚡', formats: ['bullet'] },
+                { category: 'Blitz (Most Popular)', icon: '🔥', formats: ['blitz'] },
+                { category: 'Rapid (Standard)', icon: '⏳', formats: ['rapid'] },
+                { category: 'Classical (Deep)', icon: '🏛️', formats: ['classical'] }
+              ].map((cat) => {
+                const presetsInCat = TIME_PRESETS.filter(p => cat.formats.includes(p.format));
+                if (presetsInCat.length === 0) return null;
+
+                return (
+                  <div key={cat.category} className="space-y-1.5">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block px-1">
+                      {cat.icon} {cat.category}
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      {presetsInCat.map((preset) => {
+                        const isSelected = selectedPreset.id === preset.id;
+                        return (
+                          <button
+                            key={preset.id}
+                            type="button"
+                            onClick={() => handlePresetSelect(preset)}
+                            className={`p-3 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden active:scale-95 ${
+                              isSelected
+                                ? 'bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 text-slate-950 font-black border-amber-300 shadow-lg shadow-amber-500/25 ring-2 ring-amber-400'
+                                : 'bg-slate-950/80 border-slate-800 hover:border-amber-500/50 hover:bg-slate-850 text-slate-200'
+                            }`}
+                          >
+                            {isSelected && (
+                              <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-slate-950 text-amber-400 font-black text-[10px] flex items-center justify-center">
+                                ✓
+                              </span>
+                            )}
+                            {preset.popular && !isSelected && (
+                              <span className="absolute top-2 right-2 px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[8px] font-black uppercase">
+                                Hot
+                              </span>
+                            )}
+
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-lg">{preset.icon}</span>
+                              <span className={`text-sm font-black ${isSelected ? 'text-slate-950' : 'text-white'}`}>
+                                {preset.name}
+                              </span>
+                            </div>
+
+                            <p className={`text-[10px] mt-0.5 font-medium ${isSelected ? 'text-slate-900 font-bold' : 'text-slate-400'}`}>
+                              {preset.desc}
+                            </p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Close Button */}
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => setShowTimeModal(false)}
+                className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
