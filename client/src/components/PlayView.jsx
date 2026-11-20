@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import {
   Swords, Zap, Flame, Clock, Shield, Bot, Users, Copy,
-  Check, ArrowRight, Play, RefreshCw, Sparkles, ChevronRight
+  Check, ArrowRight, Play, RefreshCw, Sparkles, ChevronRight,
+  BookOpen, Trophy, Crown, Globe
 } from 'lucide-react';
 import { triggerHaptic } from '../utils/device.js';
 import { sound } from '../utils/audio.js';
@@ -32,7 +33,12 @@ export function PlayView({
   onCancelMatchmaking,
   onOpenFriendRoom,
   onStartAIGame,
+  onOpenAIModal,
   onOpenOfflineBoard,
+  onNavigateToPuzzles,
+  onNavigateToLessons,
+  onNavigateToTournaments,
+  onNavigateToRankings,
   activeGameSession,
   onReturnToGame
 }) {
@@ -70,7 +76,7 @@ export function PlayView({
     sound.playClick();
     triggerHaptic('move');
     if (onStartAIGame) {
-      onStartAIGame(selectedBot.level, botColor);
+      onStartAIGame({ level: selectedBot.level, color: botColor });
     }
   };
 
@@ -352,6 +358,21 @@ export function PlayView({
                 <span>Play {selectedBot.name}</span>
               </button>
             </div>
+
+            {onOpenAIModal && (
+              <button
+                type="button"
+                onClick={() => {
+                  sound.playClick();
+                  triggerHaptic('move');
+                  onOpenAIModal();
+                }}
+                className="w-full py-2 px-3 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer"
+              >
+                <Bot className="w-3.5 h-3.5" />
+                <span>Custom Stockfish Difficulty & Deep Engine Hub</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -384,6 +405,135 @@ export function PlayView({
             </button>
           </div>
         )}
+      </div>
+
+      {/* SECTION 3: MORE ARENA & COMPETITIVE MODES (All added to Play Navigation) */}
+      <div className="space-y-3.5 pt-3">
+        <div className="flex items-center justify-between px-1">
+          <div>
+            <h2 className="text-base sm:text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span>More Arena Game Modes</span>
+            </h2>
+            <p className="text-xs text-slate-400 font-medium mt-0.5">
+              Explore tactics, master lessons, official tournaments, and global leaderboards.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          {/* 1. Tactics & Puzzles */}
+          <div
+            onClick={() => {
+              sound.playClick();
+              triggerHaptic('move');
+              if (onNavigateToPuzzles) onNavigateToPuzzles();
+            }}
+            className="group p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-slate-950/95 border border-orange-500/30 hover:border-orange-400 shadow-xl hover:shadow-orange-500/15 transition-all duration-200 cursor-pointer overflow-hidden backdrop-blur-md active:scale-[0.99]"
+          >
+            <div className="flex items-start justify-between relative z-10 mb-2.5">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-orange-400 to-rose-600 text-white flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:scale-105 transition-transform">
+                <Flame className="w-5 h-5 fill-white" />
+              </div>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-orange-500/15 text-orange-400 border border-orange-500/30 font-black text-[10px] tracking-wide uppercase">
+                🔥 Streak & Storm
+              </span>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base font-black text-white group-hover:text-orange-400 transition-colors flex items-center justify-between">
+                <span>Tactics & Puzzles</span>
+                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-orange-400 group-hover:translate-x-0.5 transition-all" />
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Sharpen tactical calculation with rated themes, Puzzle Streak, and 3-minute blitz rush.
+              </p>
+            </div>
+          </div>
+
+          {/* 2. Chess Academy & Lessons */}
+          <div
+            onClick={() => {
+              sound.playClick();
+              triggerHaptic('move');
+              if (onNavigateToLessons) onNavigateToLessons();
+            }}
+            className="group p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-slate-950/95 border border-sky-500/30 hover:border-sky-400 shadow-xl hover:shadow-sky-500/15 transition-all duration-200 cursor-pointer overflow-hidden backdrop-blur-md active:scale-[0.99]"
+          >
+            <div className="flex items-start justify-between relative z-10 mb-2.5">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 text-white flex items-center justify-center shadow-lg shadow-sky-500/30 group-hover:scale-105 transition-transform">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30 font-black text-[10px] tracking-wide uppercase">
+                🎓 64 Master Lessons
+              </span>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base font-black text-white group-hover:text-sky-400 transition-colors flex items-center justify-between">
+                <span>Chess Academy & Lessons</span>
+                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-sky-400 group-hover:translate-x-0.5 transition-all" />
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Step-by-step master lessons with owl mascot speech synthesis tutor and interactive drills.
+              </p>
+            </div>
+          </div>
+
+          {/* 3. Arena Tournaments */}
+          <div
+            onClick={() => {
+              sound.playClick();
+              triggerHaptic('move');
+              if (onNavigateToTournaments) onNavigateToTournaments();
+            }}
+            className="group p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-slate-950/95 border border-amber-500/30 hover:border-amber-400 shadow-xl hover:shadow-amber-500/15 transition-all duration-200 cursor-pointer overflow-hidden backdrop-blur-md active:scale-[0.99]"
+          >
+            <div className="flex items-start justify-between relative z-10 mb-2.5">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center shadow-lg shadow-amber-500/30 group-hover:scale-105 transition-transform">
+                <Trophy className="w-5 h-5 fill-slate-950" />
+              </div>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 font-black text-[10px] tracking-wide uppercase">
+                ⚔️ Live Championship
+              </span>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base font-black text-white group-hover:text-amber-400 transition-colors flex items-center justify-between">
+                <span>Arena Tournaments</span>
+                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Join live Swiss, Knockout & Arena brackets to compete for championship trophies and rating.
+              </p>
+            </div>
+          </div>
+
+          {/* 4. Global Leaderboards & Player Rankings */}
+          <div
+            onClick={() => {
+              sound.playClick();
+              triggerHaptic('move');
+              if (onNavigateToRankings) onNavigateToRankings();
+            }}
+            className="group p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-slate-950/95 border border-yellow-500/30 hover:border-yellow-400 shadow-xl hover:shadow-yellow-500/15 transition-all duration-200 cursor-pointer overflow-hidden backdrop-blur-md active:scale-[0.99]"
+          >
+            <div className="flex items-start justify-between relative z-10 mb-2.5">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-600 text-slate-950 flex items-center justify-center shadow-lg shadow-yellow-500/30 group-hover:scale-105 transition-transform">
+                <Crown className="w-5 h-5 fill-slate-950" />
+              </div>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 border border-yellow-500/30 font-black text-[10px] tracking-wide uppercase">
+                🏆 Global Leaders
+              </span>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base font-black text-white group-hover:text-yellow-400 transition-colors flex items-center justify-between">
+                <span>Global Rankings & Leaderboards</span>
+                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-yellow-400 group-hover:translate-x-0.5 transition-all" />
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Explore worldwide & country standings across Bullet, Blitz, Rapid, and Classical divisions.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

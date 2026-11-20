@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, Users, Clock, Shield, Plus, CheckCircle, Award } from 'lucide-react';
+import { Trophy, Users, Clock, Shield, Plus, CheckCircle, Award, ArrowLeft } from 'lucide-react';
 import { safeStorage } from '../utils/storage.js';
 
-export function TournamentView({ currentUser, onPlayTournamentMatch }) {
+export function TournamentView({ currentUser, onPlayTournamentMatch, onBack }) {
   const [tournaments, setTournaments] = useState([]);
   const [selectedTourney, setSelectedTourney] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -78,6 +78,15 @@ export function TournamentView({ currentUser, onPlayTournamentMatch }) {
       {/* Header & Create Tournament Button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl">
         <div className="flex items-center gap-3">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer mr-1"
+              title="Return to Play Arena"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          )}
           <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30">
             <Trophy className="w-7 h-7" />
           </div>
