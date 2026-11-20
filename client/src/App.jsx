@@ -508,35 +508,52 @@ export default function App() {
 
   // Handle AI Practice Matches
   const handleStartAIGame = (param1, param2) => {
-    let level = 1;
+    let level = 2;
     let color = 'w';
+    let timeMinutes = 10;
+
     if (typeof param1 === 'object' && param1 !== null) {
-      level = Number(param1.level) || 1;
-      color = param1.color === 'b' ? 'b' : 'w';
+      level = Number(param1.level) || 2;
+      const rawColor = param1.color;
+      color = rawColor === 'random' ? (Math.random() < 0.5 ? 'w' : 'b') : (rawColor === 'b' ? 'b' : 'w');
+      timeMinutes = param1.timeMinutes !== undefined ? Number(param1.timeMinutes) : 10;
     } else {
-      level = Number(param1) || 1;
-      color = param2 === 'b' ? 'b' : 'w';
+      level = Number(param1) || 2;
+      const rawColor = param2;
+      color = rawColor === 'random' ? (Math.random() < 0.5 ? 'w' : 'b') : (rawColor === 'b' ? 'b' : 'w');
     }
+
+    const botRoster = [
+      { name: 'Apprentice Bot', elo: 800 },
+      { name: 'Club Amateur', elo: 1200 },
+      { name: 'Tournament Vet', elo: 1600 },
+      { name: 'Master Bot', elo: 2000 },
+      { name: 'Stockfish 19 NNUE', elo: 2500 }
+    ];
+    const bot = botRoster[level - 1] || { name: `Stockfish Level ${level}`, elo: 800 + level * 350 };
 
     setIsAIGame(true);
     setAiLevel(level);
-    setBoardFlipped(false);
+    setBoardFlipped(color === 'b');
     setAiThinking(false);
     setShowAIModal(false);
     setShowGameOverModal(false);
     setActiveTab('game');
 
+    const initialTimeMs = timeMinutes === 0 ? 3600000 : timeMinutes * 60 * 1000;
+
     const startingSession = {
       id: `ai_${Date.now()}`,
-      whitePlayer: color === 'w' ? currentUser || { username: 'You', elo: 1200 } : { username: `Stockfish Level ${level}`, elo: 800 + level * 350 },
-      blackPlayer: color === 'w' ? { username: `Stockfish Level ${level}`, elo: 800 + level * 350 } : currentUser || { username: 'You', elo: 1200 },
+      whitePlayer: color === 'w' ? currentUser || { username: 'You', elo: 1200 } : { username: bot.name, elo: bot.elo },
+      blackPlayer: color === 'w' ? { username: bot.name, elo: bot.elo } : currentUser || { username: 'You', elo: 1200 },
       fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
       turn: 'w',
       inCheck: false,
       isGameOver: false,
       status: 'active',
-      whiteTime: 600000,
-      blackTime: 600000,
+      whiteTime: initialTimeMs,
+      blackTime: initialTimeMs,
+      timeControl: { baseMinutes: timeMinutes, incrementSeconds: 0 },
       moveHistory: [],
       capturedPieces: { white: [], black: [] }
     };
@@ -555,9 +572,14 @@ export default function App() {
   // Local clock interval for AI matches
   useEffect(() => {
     if (!isAIGame || !gameSession || gameSession.isGameOver) return;
+    // Unlimited time / casual mode
+    if (gameSession.timeControl?.baseMinutes === 0) return;
+
     const interval = setInterval(() => {
       setGameSession(prev => {
         if (!prev || prev.isGameOver) return prev;
+        if (prev.timeControl?.baseMinutes === 0) return prev;
+
         const isWhiteTurn = prev.turn === 'w';
         const newWhiteTime = isWhiteTurn ? Math.max(0, prev.whiteTime - 100) : prev.whiteTime;
         const newBlackTime = !isWhiteTurn ? Math.max(0, prev.blackTime - 100) : prev.blackTime;

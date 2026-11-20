@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
   Zap, Clock, Shield, Sparkles, Copy, Check, Share2, Bot, Users, X,
-  UserPlus, Search, Circle, Swords, Trash2, LogIn, Send, AlertCircle
+  UserPlus, Search, Circle, Swords, Trash2, LogIn, Send, AlertCircle,
+  Cpu, Crown, Dices, Flame, Trophy
 } from 'lucide-react';
 import { safeStorage } from '../utils/storage.js';
 import { triggerHaptic } from '../utils/device.js';
+import { sound } from '../utils/audio.js';
 
 const TIME_PRESETS = [
   { id: '1m', name: '1 min', format: 'bullet', baseMinutes: 1, incrementSeconds: 0, icon: '⚡' },
@@ -791,86 +793,313 @@ export function FriendRoomModal({
 
 export function PlayAIModal({ isOpen, onClose, onStartAIGame }) {
   const [selectedLevel, setSelectedLevel] = useState(2);
-  const [selectedColor, setSelectedColor] = useState('w');
+  const [selectedColor, setSelectedColor] = useState('w'); // 'w' | 'random' | 'b'
+  const [selectedTime, setSelectedTime] = useState(10); // minutes (0 = unlimited)
 
   if (!isOpen) return null;
 
   const AI_LEVELS = [
-    { level: 1, name: 'Beginner', elo: '~800 ELO', desc: 'Makes frequent inaccuracies and tactical errors.' },
-    { level: 2, name: 'Casual', elo: '~1200 ELO', desc: 'Solid fundamental openings and piece values.' },
-    { level: 3, name: 'Club Player', elo: '~1600 ELO', desc: 'Sharp tactical vision and few blunders.' },
-    { level: 4, name: 'Master', elo: '~2000 ELO', desc: 'Deep positional foresight and opening book.' },
-    { level: 5, name: 'Grandmaster', elo: '~2500+ ELO', desc: 'Full Stockfish 19 engine calculations.' }
+    {
+      level: 1,
+      name: 'Apprentice Bot',
+      tier: 'Beginner',
+      elo: '800 ELO',
+      badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+      activeBorder: 'border-emerald-500/80 bg-emerald-500/10 ring-1 ring-emerald-500/40 shadow-emerald-500/10',
+      icon: '🐣',
+      accentColor: 'text-emerald-400',
+      desc: 'Learns fundamentals. Makes simple tactical blunders & inaccuracies.',
+      spec: 'Depth 2 • Fast reply'
+    },
+    {
+      level: 2,
+      name: 'Club Amateur',
+      tier: 'Casual',
+      elo: '1200 ELO',
+      badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-500/30',
+      activeBorder: 'border-sky-500/80 bg-sky-500/10 ring-1 ring-sky-500/40 shadow-sky-500/10',
+      icon: '🛡️',
+      accentColor: 'text-sky-400',
+      desc: 'Solid opening fundamentals, values pieces & defends basic threats.',
+      spec: 'Depth 5 • Positional'
+    },
+    {
+      level: 3,
+      name: 'Tournament Vet',
+      tier: 'Club Player',
+      elo: '1600 ELO',
+      badgeColor: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+      activeBorder: 'border-indigo-500/80 bg-indigo-500/10 ring-1 ring-indigo-500/40 shadow-indigo-500/10',
+      icon: '⚔️',
+      accentColor: 'text-indigo-400',
+      desc: 'Sharp tactical vision, punishes blunders & calculates multi-step lines.',
+      spec: 'Depth 8 • Tactical'
+    },
+    {
+      level: 4,
+      name: 'Master Bot',
+      tier: 'FIDE Master',
+      elo: '2000 ELO',
+      badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+      activeBorder: 'border-amber-500/80 bg-amber-500/10 ring-1 ring-amber-500/40 shadow-amber-500/10',
+      icon: '💎',
+      accentColor: 'text-amber-400',
+      desc: 'Deep positional vision, master endgame technique & opening books.',
+      spec: 'Depth 12 • Deep calculation'
+    },
+    {
+      level: 5,
+      name: 'Stockfish 19 NNUE',
+      tier: 'Grandmaster',
+      elo: '2500+ ELO',
+      badgeColor: 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black',
+      activeBorder: 'border-amber-400 bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-amber-500/10 ring-2 ring-amber-400/50 shadow-lg shadow-amber-500/20',
+      icon: '👑',
+      accentColor: 'text-amber-400',
+      desc: 'Uncompromising grandmaster engine with neural network evaluation.',
+      spec: 'Max Depth • World Champion'
+    }
   ];
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-700 rounded-3xl p-6 max-w-md w-full space-y-5 shadow-2xl relative">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800"
-        >
-          <X className="w-5 h-5" />
-        </button>
+  const TIME_OPTIONS = [
+    { minutes: 10, label: '10 min', sub: 'Rapid', icon: '⏳' },
+    { minutes: 5, label: '5 min', sub: 'Blitz', icon: '🔥' },
+    { minutes: 3, label: '3 min', sub: 'Fast', icon: '⚡' },
+    { minutes: 0, label: 'No Clock', sub: 'Casual', icon: '♾️' }
+  ];
 
-        <div className="space-y-1">
-          <h3 className="text-xl font-bold text-white flex items-center gap-2">
-            <Bot className="w-5 h-5 text-indigo-400" />
-            <span>Play Against Stockfish AI</span>
-          </h3>
-          <p className="text-xs text-slate-400">Practice your chess openings and tactics at any difficulty</p>
+  const COLOR_OPTIONS = [
+    { id: 'w', label: 'White', icon: '♔', sub: 'Move 1st' },
+    { id: 'random', label: 'Random', icon: '🎲', sub: '50 / 50' },
+    { id: 'b', label: 'Black', icon: '♚', sub: 'Move 2nd' }
+  ];
+
+  const currentLevelObj = AI_LEVELS.find((l) => l.level === selectedLevel) || AI_LEVELS[1];
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fade-in">
+      <div className="bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border border-slate-700/80 rounded-3xl p-4 sm:p-5 max-w-md w-full max-h-[92vh] overflow-y-auto no-scrollbar space-y-4 shadow-2xl relative text-slate-100">
+        {/* Ambient subtle glow background */}
+        <div className="absolute -top-10 -right-10 w-40 h-40 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        {/* Top Header */}
+        <div className="flex items-center justify-between pb-3 border-b border-slate-800 relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-cyan-500/20 via-indigo-500/20 to-purple-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-300 shadow-md shadow-cyan-500/15 shrink-0">
+              <Cpu className="w-5 h-5 text-cyan-300 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-black text-white tracking-tight">
+                  Stockfish 19 AI
+                </h3>
+                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 uppercase tracking-wider">
+                  NNUE Engine
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 font-medium">
+                Official neural chess engine with adaptive depth
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              sound.playClick();
+              onClose();
+            }}
+            className="p-1.5 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Engine Telemetry Strip */}
+        <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-slate-950/70 border border-slate-800/80 text-[11px] font-mono text-slate-400">
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
+            <span>Neural WASM Ready</span>
+          </span>
+          <span className="text-emerald-400 font-semibold">Zero Cloud Latency</span>
         </div>
 
         {/* Difficulty Selection */}
-        <div className="space-y-2">
-          {AI_LEVELS.map((item) => (
-            <div
-              key={item.level}
-              onClick={() => setSelectedLevel(item.level)}
-              className={`p-3 rounded-2xl border cursor-pointer transition-all ${
-                selectedLevel === item.level
-                  ? 'bg-indigo-500/10 border-indigo-500/80 shadow-md shadow-indigo-500/10'
-                  : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-bold text-white text-xs">{item.name}</span>
-                <span className="text-[11px] font-mono text-indigo-400 font-bold">{item.elo}</span>
-              </div>
-              <p className="text-[11px] text-slate-400">{item.desc}</p>
-            </div>
-          ))}
-        </div>
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <Sparkles className="w-3 h-3 text-amber-400" />
+              <span>Select Engine Difficulty</span>
+            </span>
+            <span className="text-[10px] font-mono font-bold text-amber-400">
+              {currentLevelObj.elo}
+            </span>
+          </div>
 
-        {/* Color Choice */}
-        <div className="flex items-center justify-between p-3 bg-slate-950/50 border border-slate-800 rounded-xl">
-          <span className="text-xs text-slate-300 font-semibold">Play as</span>
-          <div className="flex gap-2">
-            {[
-              { id: 'w', label: 'White ♔' },
-              { id: 'b', label: 'Black ♚' }
-            ].map((c) => (
-              <button
-                key={c.id}
-                onClick={() => setSelectedColor(c.id)}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                  selectedColor === c.id
-                    ? 'bg-amber-500 text-slate-950'
-                    : 'bg-slate-800 text-slate-400 hover:text-white'
-                }`}
-              >
-                {c.label}
-              </button>
-            ))}
+          <div className="space-y-1.5">
+            {AI_LEVELS.map((item) => {
+              const isSelected = selectedLevel === item.level;
+              return (
+                <div
+                  key={item.level}
+                  onClick={() => {
+                    sound.playClick();
+                    triggerHaptic('move');
+                    setSelectedLevel(item.level);
+                  }}
+                  className={`p-2.5 rounded-2xl border cursor-pointer transition-all active:scale-[0.99] select-none ${
+                    isSelected
+                      ? `${item.activeBorder} shadow-md`
+                      : 'bg-slate-950/70 border-slate-800/90 hover:border-slate-700 hover:bg-slate-900/60'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2.5">
+                    {/* Bot Icon & Info */}
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0 border ${
+                        isSelected
+                          ? 'bg-slate-950/80 border-slate-700 shadow-sm'
+                          : 'bg-slate-900 border-slate-800'
+                      }`}>
+                        <span>{item.icon}</span>
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-bold text-white text-xs truncate">
+                            {item.name}
+                          </span>
+                          <span className="text-[9px] px-1.5 py-0.2 rounded font-mono font-semibold bg-slate-800 text-slate-400 border border-slate-700">
+                            {item.tier}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 truncate mt-0.5">
+                          {item.desc}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Right Badge & Radio Selection */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border ${item.badgeColor}`}>
+                        {item.elo}
+                      </span>
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
+                        isSelected
+                          ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-400/40'
+                          : 'border border-slate-700 bg-slate-950'
+                      }`}>
+                        {isSelected ? <Check className="w-3 h-3 stroke-[3]" /> : null}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        <button
-          onClick={() => onStartAIGame({ level: selectedLevel, color: selectedColor })}
-          className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm rounded-2xl transition-all shadow-xl shadow-indigo-600/20"
-        >
-          Start AI Battle
-        </button>
+        {/* Time Control Options */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <Clock className="w-3 h-3 text-sky-400" />
+              <span>Time Control</span>
+            </span>
+            <span className="text-[10px] font-mono text-slate-400">
+              {selectedTime === 0 ? 'No clock pressure' : `${selectedTime} min each`}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-4 gap-1.5">
+            {TIME_OPTIONS.map((t) => {
+              const isSelected = selectedTime === t.minutes;
+              return (
+                <button
+                  key={t.minutes}
+                  type="button"
+                  onClick={() => {
+                    sound.playClick();
+                    triggerHaptic('move');
+                    setSelectedTime(t.minutes);
+                  }}
+                  className={`py-2 px-1.5 rounded-xl border text-center transition-all cursor-pointer active:scale-95 ${
+                    isSelected
+                      ? 'bg-sky-500/20 border-sky-400 text-sky-300 ring-1 ring-sky-400/40 shadow-md shadow-sky-500/15'
+                      : 'bg-slate-950/70 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                  }`}
+                >
+                  <span className="text-xs block">{t.icon}</span>
+                  <span className="text-[11px] font-bold block truncate leading-tight mt-0.5">
+                    {t.label}
+                  </span>
+                  <span className="text-[9px] text-slate-500 block truncate">
+                    {t.sub}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Color Choice */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <Users className="w-3 h-3 text-amber-400" />
+              <span>Play As</span>
+            </span>
+            <span className="text-[10px] font-mono text-slate-400">
+              {selectedColor === 'w' ? 'White (1st move)' : selectedColor === 'b' ? 'Black (2nd move)' : 'Random color'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            {COLOR_OPTIONS.map((c) => {
+              const isSelected = selectedColor === c.id;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => {
+                    sound.playClick();
+                    triggerHaptic('move');
+                    setSelectedColor(c.id);
+                  }}
+                  className={`py-2 px-2 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer active:scale-95 ${
+                    isSelected
+                      ? 'bg-amber-500/20 border-amber-400 text-amber-300 ring-1 ring-amber-400/40 shadow-md shadow-amber-500/15'
+                      : 'bg-slate-950/70 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                  }`}
+                >
+                  <span className="text-base leading-none mb-0.5">{c.icon}</span>
+                  <span className="text-xs font-bold leading-tight">{c.label}</span>
+                  <span className="text-[9px] text-slate-500">{c.sub}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Start AI Battle Action Button */}
+        <div className="pt-1">
+          <button
+            type="button"
+            onClick={() => {
+              sound.playMove();
+              triggerHaptic('impact');
+              onStartAIGame({
+                level: selectedLevel,
+                color: selectedColor,
+                timeMinutes: selectedTime
+              });
+            }}
+            className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black text-sm tracking-wide shadow-xl shadow-amber-500/25 transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer group"
+          >
+            <Swords className="w-4.5 h-4.5 stroke-[2.5] group-hover:rotate-12 transition-transform" />
+            <span>Start Challenge vs {currentLevelObj.name}</span>
+          </button>
+        </div>
       </div>
     </div>
   );
