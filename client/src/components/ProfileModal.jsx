@@ -67,7 +67,7 @@ const CLASSIC_AVATARS = [
   'https://api.dicebear.com/7.x/bottts/svg?seed=CyberKnight'
 ];
 
-export function ProfileModal({ user, isOpen, onClose, onUpdateUser, onNavigateToRankings, onOpenStreak }) {
+export function ProfileModal({ user, isOpen, onClose, onUpdateUser, onNavigateToRankings, onOpenStreak, onOpenAdmin }) {
   const [selectedAvatar, setSelectedAvatar] = useState(user?.avatar || '');
   const [isEditing, setIsEditing] = useState(false);
   const [avatarCategory, setAvatarCategory] = useState('anime'); // 'anime' | 'classic'
@@ -161,6 +161,19 @@ export function ProfileModal({ user, isOpen, onClose, onUpdateUser, onNavigateTo
                 Better than {percentile}%
               </span>
             </div>
+
+            {(user.role === 'admin' || user.email?.toLowerCase() === 'op21plus@gmail.com') && onOpenAdmin && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenAdmin();
+                }}
+                className="w-full mt-2 py-2 px-3 bg-gradient-to-r from-amber-500/25 via-purple-500/25 to-indigo-500/25 hover:from-amber-500/35 border border-amber-500/40 text-amber-300 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-md"
+              >
+                <Shield className="w-3.5 h-3.5 text-amber-400" />
+                <span>Open Administrator Command Center</span>
+              </button>
+            )}
           </div>
         </div>
 

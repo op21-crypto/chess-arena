@@ -166,6 +166,9 @@ export default function App() {
         .then(res => res.json())
         .then(data => {
           if (data.user) {
+            if (data.user.email?.toLowerCase() === 'op21plus@gmail.com' || data.user.username === 'op21plus') {
+              data.user.role = 'admin';
+            }
             setCurrentUser(data.user);
           }
         })
@@ -992,7 +995,21 @@ export default function App() {
 
             {/* Profile Avatar / Login Button */}
             {currentUser ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 md:gap-2">
+                {currentUser.role === 'admin' && (
+                  <button
+                    onClick={() => setActiveTab('admin')}
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                      activeTab === 'admin'
+                        ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/20'
+                        : 'bg-amber-500/15 border-amber-500/30 text-amber-300 hover:bg-amber-500/25'
+                    }`}
+                    title="Open Administrator Command Center"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="hidden sm:inline">Admin</span>
+                  </button>
+                )}
                 <button
                   onClick={() => setShowProfileModal(true)}
                   className={`flex items-center gap-2 p-1 pl-2.5 rounded-2xl border transition-colors ${
@@ -1324,7 +1341,8 @@ export default function App() {
           { id: 'puzzles', label: 'Puzzles', icon: Flame },
           { id: 'lessons', label: 'Learn', icon: BookOpen },
           { id: 'tournaments', label: 'Tournaments', icon: Trophy },
-          { id: 'leaderboard', label: 'Rankings', icon: Shield }
+          { id: 'leaderboard', label: 'Rankings', icon: Shield },
+          ...(currentUser?.role === 'admin' ? [{ id: 'admin', label: 'Admin', icon: Sparkles }] : [])
         ].map(tab => {
           const Icon = tab.icon;
           return (
@@ -1350,14 +1368,25 @@ export default function App() {
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
-        onAuthSuccess={user => setCurrentUser(user)}
+        onAuthSuccess={user => {
+          if (user && (user.email?.toLowerCase() === 'op21plus@gmail.com' || user.username?.toLowerCase() === 'op21plus')) {
+            user.role = 'admin';
+          }
+          setCurrentUser(user);
+        }}
       />
 
       <ProfileModal
         isOpen={showProfileModal}
         user={currentUser}
         onClose={() => setShowProfileModal(false)}
-        onUpdateUser={user => setCurrentUser(user)}
+        onUpdateUser={user => {
+          if (user && (user.email?.toLowerCase() === 'op21plus@gmail.com' || user.username?.toLowerCase() === 'op21plus')) {
+            user.role = 'admin';
+          }
+          setCurrentUser(user);
+        }}
+        onOpenAdmin={() => setActiveTab('admin')}
         onNavigateToRankings={() => setActiveTab('leaderboard')}
         onOpenStreak={() => {
           setShowProfileModal(false);

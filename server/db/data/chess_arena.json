@@ -1,5 +1,69 @@
 {
   "users": {
+    "admin_op21": {
+      "id": "admin_op21",
+      "username": "op21plus",
+      "email": "op21plus@gmail.com",
+      "passwordHash": "$2b$10$nu2bvmqrSj/mrkr0qMrnsOwneNj00.zfcIztHm7TfVHDhXnFkF.Sq",
+      "role": "admin",
+      "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+      "country": "IN",
+      "countryName": "India",
+      "ratings": {
+        "bullet": 2520,
+        "blitz": 2550,
+        "rapid": 2580,
+        "classical": 2600,
+        "puzzle": 2700
+      },
+      "highestRating": 2600,
+      "stats": {
+        "played": 480,
+        "won": 370,
+        "lost": 65,
+        "drawn": 45,
+        "winStreak": 16,
+        "currentStreak": 6
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-01-01",
+          "rating": 2400,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-02-01",
+          "rating": 2480,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-03-01",
+          "rating": 2530,
+          "format": "rapid"
+        },
+        {
+          "date": "2026-04-01",
+          "rating": 2580,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "blitz_master",
+        "rapid_master",
+        "king_badge",
+        "queen_badge"
+      ],
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "isOnline": false,
+      "banned": false,
+      "provider": "google"
+    },
     "admin_001": {
       "id": "admin_001",
       "username": "GrandmasterAdmin",

