@@ -915,16 +915,16 @@ export default function App() {
             </div>
           </div>
 
-          {/* Navigation Links (Visible on desktop/laptop, hidden on mobile/small tablets to prevent cramping) */}
-          <nav className={`hidden lg:flex items-center gap-1 p-1 rounded-2xl border transition-colors ${
+          {/* Navigation Links (Visible on desktop/tablet) */}
+          <nav className={`hidden md:flex items-center gap-1 p-1 rounded-2xl border transition-colors ${
             isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-900/80 border-slate-800'
           }`}>
             {[
-              { id: 'home', label: 'Play', icon: Swords },
+              { id: 'home', label: 'Home', icon: Home },
+              { id: 'play', label: 'Play Online', icon: Swords },
               { id: 'puzzles', label: 'Puzzles', icon: Flame },
               { id: 'lessons', label: 'Learn', icon: BookOpen },
-              { id: 'tournaments', label: 'Tournaments', icon: Trophy },
-              { id: 'leaderboard', label: 'Rankings', icon: Shield },
+              { id: 'profile', label: 'Profile', icon: User },
               ...(currentUser?.role === 'admin' ? [{ id: 'admin', label: 'Admin', icon: Sparkles }] : [])
             ].map(tab => {
               const Icon = tab.icon;
@@ -987,11 +987,16 @@ export default function App() {
               {settings.soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </button>
 
-            {/* Global Settings Modal Trigger */}
+            {/* Global Settings Trigger */}
             <button
-              onClick={() => setShowSettingsModal(true)}
+              onClick={() => {
+                setProfileSubTab('settings');
+                setActiveTab('profile');
+              }}
               className={`p-2 rounded-xl border transition-colors ${
-                isLight
+                activeTab === 'profile' && profileSubTab === 'settings'
+                  ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/20'
+                  : isLight
                   ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-amber-600'
                   : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-amber-400'
               }`}
@@ -1045,9 +1050,14 @@ export default function App() {
                   </button>
                 )}
                 <button
-                  onClick={() => setShowProfileModal(true)}
+                  onClick={() => {
+                    setProfileSubTab('overview');
+                    setActiveTab('profile');
+                  }}
                   className={`flex items-center gap-2 p-1 pl-2.5 rounded-2xl border transition-colors ${
-                    isLight
+                    activeTab === 'profile' && profileSubTab === 'overview'
+                      ? 'border-amber-400 bg-amber-500/10'
+                      : isLight
                       ? 'bg-slate-100 border-slate-200 hover:border-amber-500'
                       : 'bg-slate-900 border-slate-800 hover:border-amber-500/50'
                   }`}
@@ -1092,112 +1102,355 @@ export default function App() {
 
       {/* Main Content View Switcher */}
       <main className="flex-1 flex flex-col relative">
-        {activeTab === 'home' && (
-          <div className="max-w-5xl w-full mx-auto p-4 md:p-8 space-y-8 flex-1 flex flex-col justify-center relative">
-            {/* Subtle Chess Watermark & Grid Background */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-[0.035] sm:opacity-[0.055] flex items-center justify-center select-none">
-              <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-                <defs>
-                  <pattern id="chess-grid" width="80" height="80" patternUnits="userSpaceOnUse">
-                    <rect width="40" height="40" fill="currentColor" />
-                    <rect x="40" y="40" width="40" height="40" fill="currentColor" />
-                  </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#chess-grid)" />
-              </svg>
-              <div className="absolute right-4 bottom-4 text-[200px] sm:text-[300px] font-serif leading-none opacity-25">
-                ♚
+        {activeTab === 'home' && (() => {
+          const userElo = currentUser?.ratings?.rapid || currentUser?.elo || 1078;
+          const { rank: userRank, totalPlayers, percentile, countryRank } = calculateUserRanking(userElo);
+          const currentUsername = currentUser?.username || 'Guest Competitor';
+          const currentAvatar = currentUser?.avatar || 'https://api.dicebear.com/7.x/adventurer/svg?seed=LuffyGear5';
+          const currentTier = currentUser?.tier || 'Intermediate';
+
+          return (
+            <div className="max-w-6xl w-full mx-auto px-3.5 sm:px-6 py-4 md:py-8 space-y-6 flex-1 flex flex-col justify-center relative">
+              {/* Live Arena Telemetry Status Strip */}
+              <div className="flex items-center justify-between flex-wrap gap-2 px-4 py-2.5 rounded-2xl bg-slate-900/80 border border-slate-800/80 shadow-lg text-xs backdrop-blur-md">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                  </span>
+                  <span className="font-extrabold text-white font-mono">18,450</span>
+                  <span className="text-slate-400 font-medium">Players Online</span>
+                </div>
+                <div className="hidden sm:flex items-center gap-2 text-slate-400 font-medium">
+                  <span className="text-amber-400 font-bold font-mono">⚔️ 4,280</span>
+                  <span>Active Battles</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-slate-400 font-medium">
+                  <Zap className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="text-emerald-400 font-bold font-mono">1.1s</span>
+                  <span>Avg Pairing</span>
+                </div>
               </div>
-              <div className="absolute left-6 top-8 text-[160px] sm:text-[240px] font-serif leading-none opacity-20">
-                ♞
+
+              {/* Grandmaster Arena Hero Showcase */}
+              <div className="relative rounded-3xl p-5 sm:p-8 md:p-10 border border-amber-500/30 bg-gradient-to-br from-slate-900/95 via-slate-900/85 to-slate-950/95 shadow-2xl shadow-amber-500/10 overflow-hidden backdrop-blur-xl">
+                {/* Ethereal Ambient Glows */}
+                <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-amber-500/15 blur-3xl pointer-events-none" />
+                <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
+                  {/* Left Column: Headline, Time Controls & Actions */}
+                  <div className="lg:col-span-7 space-y-5 text-center lg:text-left">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold tracking-wider uppercase">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Arena Season 2026</span>
+                    </div>
+
+                    <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-white leading-tight">
+                      Master the <span className="gold-gradient-text">Board</span>.
+                    </h1>
+
+                    <p className="text-sm md:text-base text-slate-300 font-medium max-w-lg mx-auto lg:mx-0">
+                      Play real-time chess with grandmasters and enthusiasts worldwide. Official FIDE clock rules, rated matchmaking, and anti-cheat validation.
+                    </p>
+
+                    {/* Quick-Play Time Controls (1-Tap Direct Launch) */}
+                    <div className="space-y-2 pt-1">
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                        Quick Play Time Controls
+                      </span>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {[
+                          { label: '1 min', type: 'Bullet', icon: '⚡', format: 'bullet', baseMinutes: 1, incrementSeconds: 0 },
+                          { label: '3 min', type: 'Blitz', icon: '🔥', format: 'blitz', baseMinutes: 3, incrementSeconds: 0, popular: true },
+                          { label: '5 min', type: 'Blitz', icon: '⏱️', format: 'blitz', baseMinutes: 5, incrementSeconds: 0 },
+                          { label: '10 min', type: 'Rapid', icon: '🎯', format: 'rapid', baseMinutes: 10, incrementSeconds: 0 }
+                        ].map((item) => (
+                          <button
+                            key={item.label}
+                            onClick={() => handleStartMatchmaking(item)}
+                            className={`p-2.5 rounded-2xl border text-center transition-all group relative overflow-hidden active:scale-95 ${
+                              item.popular
+                                ? 'bg-amber-500/15 border-amber-500/60 shadow-md shadow-amber-500/10'
+                                : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
+                            }`}
+                          >
+                            {item.popular && (
+                              <span className="absolute top-1 right-1 px-1 py-0.2 rounded bg-amber-500 text-slate-950 font-black text-[8px] uppercase">
+                                Hot
+                              </span>
+                            )}
+                            <div className="text-sm font-black text-white group-hover:text-amber-400 transition-colors">
+                              {item.icon} {item.label}
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-semibold">{item.type}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Primary Action Buttons */}
+                    <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+                      <button
+                        onClick={() => setActiveTab('play')}
+                        className="w-full sm:w-auto flex items-center justify-center gap-3 py-4 px-8 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black text-base shadow-xl shadow-amber-500/25 transition-all transform hover:-translate-y-0.5 active:scale-95"
+                      >
+                        <Swords className="w-5 h-5 fill-slate-950" />
+                        <span>Play Online Now</span>
+                      </button>
+
+                      <button
+                        onClick={() => setShowFriendRoomModal(true)}
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 py-4 px-6 rounded-2xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700 text-white font-extrabold text-sm shadow-md transition-all active:scale-95"
+                      >
+                        <Users className="w-4 h-4 text-emerald-400" />
+                        <span>Play Friends (Voice 🎙️)</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Daily Tactical Strike Spotlight Board */}
+                  <div className="lg:col-span-5 flex flex-col items-center">
+                    <div className="w-full max-w-[340px] p-3 rounded-3xl bg-slate-950/90 border border-slate-800/90 shadow-2xl relative space-y-3">
+                      <div className="flex items-center justify-between text-xs px-1">
+                        <span className="font-bold text-amber-400 flex items-center gap-1.5">
+                          <Flame className="w-4 h-4 text-orange-400 fill-orange-400" />
+                          <span>Daily Tactical Strike</span>
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold">
+                          +15 Elo
+                        </span>
+                      </div>
+
+                      <div className="w-full aspect-square rounded-2xl overflow-hidden border border-slate-800 shadow-inner">
+                        <Chessboard
+                          fen="r1bqkb1r/pppp1ppp/2n5/4p3/2B1n3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 5"
+                          playerColor="w"
+                          disabled={false}
+                          boardTheme={settings.boardTheme}
+                          pieceTheme={settings.pieceTheme}
+                          showCoordinates={false}
+                          onMove={() => {
+                            setActiveTab('puzzles');
+                          }}
+                        />
+                      </div>
+
+                      <button
+                        onClick={() => setActiveTab('puzzles')}
+                        className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 text-amber-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs"
+                      >
+                        <span>Solve Daily Puzzle (+15 Elo)</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Competitive Game Modes Grid (6 Luxury Cards) */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between px-1">
+                  <h2 className="text-sm font-extrabold text-slate-300 uppercase tracking-wider">
+                    Competitive Game Modes
+                  </h2>
+                  <span className="text-xs text-amber-400 font-medium">Official FIDE Rules</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                  {/* 1. Play Online */}
+                  <div
+                    onClick={() => setShowMatchmakingModal(true)}
+                    className="luxury-card p-4 rounded-2xl cursor-pointer group space-y-2 border-slate-800"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform shadow-xs">
+                        <Swords className="w-5 h-5" />
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 font-bold text-[10px] border border-amber-500/20">
+                        10k+ Playing
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-extrabold text-white group-hover:text-amber-400 transition-colors">
+                        Play Online
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        Match against players at your exact ELO rating in real-time.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 2. Play Friends */}
+                  <div
+                    onClick={() => setShowFriendRoomModal(true)}
+                    className="luxury-card p-4 rounded-2xl cursor-pointer group space-y-2 border-slate-800"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform shadow-xs">
+                        <Users className="w-5 h-5" />
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-bold text-[10px] border border-emerald-500/20">
+                        Voice Call 🎙️
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-extrabold text-white group-hover:text-emerald-400 transition-colors">
+                        Play with Friends
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        Create private rooms, share invitation links and speak live.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 3. Play AI */}
+                  <div
+                    onClick={() => setShowAIModal(true)}
+                    className="luxury-card p-4 rounded-2xl cursor-pointer group space-y-2 border-slate-800"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform shadow-xs">
+                        <Bot className="w-5 h-5" />
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 font-bold text-[10px] border border-indigo-500/20">
+                        Levels 1 - 8
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-extrabold text-white group-hover:text-indigo-400 transition-colors">
+                        Play Stockfish AI
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        Practice against intelligent bots from Beginner (800) to GM (2800).
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 4. Daily Puzzles */}
+                  <div
+                    onClick={() => setActiveTab('puzzles')}
+                    className="luxury-card p-4 rounded-2xl cursor-pointer group space-y-2 border-slate-800"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="w-10 h-10 rounded-xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-orange-400 group-hover:scale-110 transition-transform shadow-xs">
+                        <Flame className="w-5 h-5 fill-orange-400" />
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 font-bold text-[10px] border border-orange-500/20">
+                        🔥 Streak +25 XP
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-extrabold text-white group-hover:text-orange-400 transition-colors">
+                        Daily Puzzles
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        Train tactical pattern recognition and build your day streak.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 5. Master Lessons */}
+                  <div
+                    onClick={() => setActiveTab('lessons')}
+                    className="luxury-card p-4 rounded-2xl cursor-pointer group space-y-2 border-slate-800"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="w-10 h-10 rounded-xl bg-sky-500/20 border border-sky-500/30 flex items-center justify-center text-sky-400 group-hover:scale-110 transition-transform shadow-xs">
+                        <BookOpen className="w-5 h-5" />
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-400 font-bold text-[10px] border border-sky-500/20">
+                        64 Lessons
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-extrabold text-white group-hover:text-sky-400 transition-colors">
+                        Chess Lessons
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        Voice-guided interactive academy with real drills across 8 chapters.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 6. Tournaments */}
+                  <div
+                    onClick={() => setActiveTab('tournaments')}
+                    className="luxury-card p-4 rounded-2xl cursor-pointer group space-y-2 border-slate-800"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform shadow-xs">
+                        <Trophy className="w-5 h-5" />
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 font-bold text-[10px] border border-amber-500/20">
+                        Live Podium 🥇
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-extrabold text-white group-hover:text-amber-400 transition-colors">
+                        Arena Tournaments
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        Compete in Swiss and Knockout tournaments with live podium standings.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* User Standing & Career Snapshot Bar */}
+              <div className="luxury-card p-4 md:p-5 rounded-2xl border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <img
+                    src={currentAvatar}
+                    alt={currentUsername}
+                    className="w-12 h-12 rounded-full object-cover border-2 border-amber-400 shadow-md bg-slate-950 shrink-0"
+                  />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-extrabold text-white">
+                        {currentUsername}
+                      </span>
+                      <span className="px-2 py-0.2 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-bold border border-amber-500/30">
+                        {currentTier}
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-400 flex items-center gap-2 font-mono pt-0.5 flex-wrap">
+                      <span>Rapid Elo: <strong className="text-amber-400">{userElo}</strong></span>
+                      <span>•</span>
+                      <span>World: <strong className="text-slate-200">#{userRank.toLocaleString()}</strong></span>
+                      <span>•</span>
+                      <span className="text-emerald-400 font-semibold">Top {((100 - parseFloat(percentile))).toFixed(1)}%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => setShowStreakModal(true)}
+                    className="px-3 py-1.5 rounded-xl bg-orange-500/15 border border-orange-500/30 text-orange-400 text-xs font-bold flex items-center gap-1.5 hover:bg-orange-500/25 transition-colors"
+                  >
+                    <Flame className="w-4 h-4 fill-orange-400" />
+                    <span>7 Day Streak</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('leaderboard')}
+                    className="px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black shadow-md flex items-center gap-1 transition-all active:scale-95"
+                  >
+                    <span>Leaderboard</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Grandmaster Wisdom */}
+              <div className="text-center py-2 text-xs text-slate-500 italic">
+                "When you see a good move, look for a better one." — Emanuel Lasker (World Chess Champion)
               </div>
             </div>
-
-            {/* Clean Hero Header (Without bulky small lines or paragraphs) */}
-            <div className="relative z-10 flex flex-col items-center justify-center text-center space-y-3 py-2">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-600 to-amber-400 p-1 flex items-center justify-center shadow-xl shadow-amber-500/20 transform hover:scale-105 transition-transform">
-                <span className="text-3xl">♟️</span>
-              </div>
-              <h1 className="text-3xl sm:text-5xl font-black tracking-tight flex items-center gap-2">
-                <span className={isLight ? 'text-slate-900' : 'text-white'}>CHESS</span>
-                <span className="text-amber-500">ARENA</span>
-              </h1>
-              <div className="text-xs sm:text-sm font-bold tracking-widest uppercase text-amber-500/90">
-                Play. Challenge. Conquer.
-              </div>
-            </div>
-
-            {/* Primary Action Buttons (Strictly max 3-4 words, NO lines underneath) */}
-            <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-3xl mx-auto pt-2">
-              <button
-                onClick={() => setShowMatchmakingModal(true)}
-                className="flex items-center justify-center gap-3 py-4 px-6 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-base shadow-xl shadow-amber-500/20 transform hover:-translate-y-1 transition-all active:scale-95"
-              >
-                <Swords className="w-5 h-5 shrink-0" />
-                <span>Play Online</span>
-              </button>
-
-              <button
-                onClick={() => setShowFriendRoomModal(true)}
-                className={`flex items-center justify-center gap-3 py-4 px-6 rounded-2xl font-extrabold text-base shadow-lg transform hover:-translate-y-1 transition-all active:scale-95 border ${
-                  isLight
-                    ? 'bg-white hover:bg-slate-50 border-slate-300 text-slate-900'
-                    : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-white'
-                }`}
-              >
-                <Users className="w-5 h-5 shrink-0 text-amber-400" />
-                <span>Play with Friends</span>
-              </button>
-
-              <button
-                onClick={() => setShowAIModal(true)}
-                className="flex items-center justify-center gap-3 py-4 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-base shadow-lg shadow-indigo-600/25 transform hover:-translate-y-1 transition-all active:scale-95 border border-indigo-500/40"
-              >
-                <Bot className="w-5 h-5 shrink-0" />
-                <span>Play with Bot</span>
-              </button>
-            </div>
-
-            {/* Secondary Quick Modes (Strictly max 3-4 words, NO lines underneath) */}
-            <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-3xl mx-auto pt-1">
-              <button
-                onClick={() => setActiveTab('puzzles')}
-                className={`flex items-center justify-center gap-3 p-4 rounded-2xl border shadow-md transition-all group ${
-                  isLight
-                    ? 'bg-white hover:bg-slate-50 border-slate-200 hover:border-amber-500 text-slate-900'
-                    : 'bg-slate-900 hover:bg-slate-800 border-slate-800 hover:border-amber-500/50 text-white'
-                }`}
-              >
-                <Flame className="w-5 h-5 text-orange-400 group-hover:scale-110 transition-transform" />
-                <span className="font-bold text-sm">Daily Puzzles</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('tournaments')}
-                className={`flex items-center justify-center gap-3 p-4 rounded-2xl border shadow-md transition-all group ${
-                  isLight
-                    ? 'bg-white hover:bg-slate-50 border-slate-200 hover:border-amber-500 text-slate-900'
-                    : 'bg-slate-900 hover:bg-slate-800 border-slate-800 hover:border-amber-500/50 text-white'
-                }`}
-              >
-                <Trophy className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform" />
-                <span className="font-bold text-sm">Arena Tournaments</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('lessons')}
-                className={`flex items-center justify-center gap-3 p-4 rounded-2xl border shadow-md transition-all group ${
-                  isLight
-                    ? 'bg-white hover:bg-slate-50 border-slate-200 hover:border-amber-500 text-slate-900'
-                    : 'bg-slate-900 hover:bg-slate-800 border-slate-800 hover:border-amber-500/50 text-white'
-                }`}
-              >
-                <BookOpen className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" />
-                <span className="font-bold text-sm">Chess Lessons</span>
-              </button>
-            </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Real-Time Chess Game Screen */}
         {activeTab === 'game' && gameSession && (
