@@ -16,8 +16,10 @@ app.use((req, res, next) => {
   const matchedPath = req.headers['x-matched-path'] || req.headers['x-forwarded-uri'] || '';
   if (matchedPath && matchedPath.startsWith('/api')) {
     req.url = matchedPath;
-  } else if (req.url === '/api/index.js' && matchedPath) {
-    req.url = matchedPath;
+  } else if (Array.isArray(req.query?.path)) {
+    req.url = '/api/' + req.query.path.join('/');
+  } else if (typeof req.query?.path === 'string') {
+    req.url = '/api/' + req.query.path;
   }
   next();
 });
