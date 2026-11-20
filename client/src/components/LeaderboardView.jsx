@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, Medal, Flame, Globe } from 'lucide-react';
+import { Trophy, Medal, Globe, User, Shield, CheckCircle } from 'lucide-react';
 import { DEFAULT_LEADERBOARD } from '../data/puzzleData.js';
 
 const COUNTRY_FLAGS = {
@@ -8,6 +8,8 @@ const COUNTRY_FLAGS = {
 };
 
 export function LeaderboardView({ currentUser }) {
+  const [region, setRegion] = useState('world'); // 'world' | 'india'
+  const [viewFilter, setViewFilter] = useState('leaders'); // 'leaders' | 'my_rank'
   const [format, setFormat] = useState('rapid');
   const [leaderboard, setLeaderboard] = useState(DEFAULT_LEADERBOARD);
   const [loading, setLoading] = useState(false);
@@ -25,30 +27,102 @@ export function LeaderboardView({ currentUser }) {
       });
   }, [format]);
 
+  const userElo = currentUser?.ratings?.[format] || currentUser?.elo || 1200;
+  const userRank = currentUser?.rank || 284;
+  const totalPlayers = 1042040;
+  const percentile = ((1 - userRank / 1000) * 100).toFixed(1);
+
+  // Filter leaderboard by region if national selected
+  const filteredList = leaderboard.filter(p => {
+    if (region === 'india') return p.country === 'IN';
+    return true;
+  });
+
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl">
-        <div className="flex items-center gap-3">
-          <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30">
-            <Trophy className="w-7 h-7" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-white">Global Arena Leaderboards</h2>
-            <p className="text-xs text-slate-400">Top grandmasters, rated players and arena champions</p>
+    <div className="max-w-4xl mx-auto p-3 md:p-6 space-y-5">
+      {/* Top Region Toggle (Matching Screenshot 3) */}
+      <div className="grid grid-cols-2 gap-2 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800">
+        <button
+          onClick={() => setRegion('india')}
+          className={`py-2 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+            region === 'india'
+              ? 'bg-amber-500 text-slate-950 shadow-md'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <span className="text-base">🇮🇳</span>
+          <span>India</span>
+        </button>
+
+        <button
+          onClick={() => setRegion('world')}
+          className={`py-2 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+            region === 'world'
+              ? 'bg-amber-500 text-slate-950 shadow-md'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <span className="text-base">🌐</span>
+          <span>World</span>
+        </button>
+      </div>
+
+      {/* Secondary Filter: Your Ranking vs Leaders (Screenshot 3) */}
+      <div className="grid grid-cols-2 gap-2 bg-slate-900/60 p-1 rounded-xl border border-slate-800/80">
+        <button
+          onClick={() => setViewFilter('my_rank')}
+          className={`py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+            viewFilter === 'my_rank'
+              ? 'bg-slate-800 text-amber-400 font-bold border border-slate-700'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <User className="w-3.5 h-3.5" />
+          <span>Your ranking</span>
+        </button>
+
+        <button
+          onClick={() => setViewFilter('leaders')}
+          className={`py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+            viewFilter === 'leaders'
+              ? 'bg-slate-800 text-amber-400 font-bold border border-slate-700'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Trophy className="w-3.5 h-3.5" />
+          <span>Leaders</span>
+        </button>
+      </div>
+
+      {/* Your Ranking Hero Card (Screenshot 3) */}
+      <div className="p-5 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-3xl shadow-xl text-center space-y-3">
+        <div className="space-y-0.5">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Elo Level</span>
+          <div className="text-4xl md:text-5xl font-extrabold text-white font-mono tracking-tight">
+            {userElo}
           </div>
         </div>
 
+        <div className="space-y-1">
+          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Your Ranking</span>
+          <div className="text-xl md:text-2xl font-extrabold text-slate-200 font-mono">
+            {userRank.toLocaleString()} <span className="text-xs text-slate-500 font-normal">of {totalPlayers.toLocaleString()}</span>
+          </div>
+          <p className="text-xs font-semibold text-emerald-400">
+            You are better than {percentile}% of the players
+          </p>
+        </div>
+
         {/* Format Selector Pills */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-950/60 rounded-xl border border-slate-800">
+        <div className="flex items-center justify-center gap-1.5 pt-2 flex-wrap">
           {['bullet', 'blitz', 'rapid', 'classical'].map((fmt) => (
             <button
               key={fmt}
               onClick={() => setFormat(fmt)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${
+              className={`px-3 py-1 rounded-xl text-xs font-bold uppercase transition-all ${
                 format === fmt
-                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/10'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-amber-500 text-slate-950 shadow-md'
+                  : 'bg-slate-950/80 text-slate-400 hover:text-white border border-slate-800'
               }`}
             >
               {fmt}
@@ -57,88 +131,77 @@ export function LeaderboardView({ currentUser }) {
         </div>
       </div>
 
-      {/* Leaderboard Table */}
+      {/* Leaderboard Table (Screenshot 3 Columns: Player, ELO, WINS, PUZZ) */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-        <div className="grid grid-cols-12 px-4 py-3 bg-slate-950/60 border-b border-slate-800 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-          <span className="col-span-1 text-center">Rank</span>
-          <span className="col-span-6 md:col-span-5">Player</span>
-          <span className="col-span-3 text-center">Tier</span>
-          <span className="col-span-2 md:col-span-3 text-right">Rating</span>
+        <div className="grid grid-cols-12 px-4 py-3 bg-slate-950/70 border-b border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+          <span className="col-span-2 md:col-span-1 text-center">#</span>
+          <span className="col-span-5 md:col-span-5">Player</span>
+          <span className="col-span-2 text-center font-mono">Elo</span>
+          <span className="col-span-1 md:col-span-2 text-center font-mono">Wins</span>
+          <span className="col-span-2 text-right font-mono">Puzz</span>
         </div>
 
-        {loading ? (
-          <div className="p-12 text-center text-slate-500 italic">
-            Updating leaderboard rankings...
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-800/60">
-            {leaderboard.map((player) => {
-              const isCurrentUser = player.id === currentUser?.id;
-              const flag = COUNTRY_FLAGS[player.country] || '🌐';
+        <div className="divide-y divide-slate-800/60">
+          {filteredList.map((player, idx) => {
+            const isCurrentUser = player.id === currentUser?.id;
+            const flag = COUNTRY_FLAGS[player.country] || '🌐';
+            const rankNum = player.rank || idx + 1;
+            const wins = player.wins || Math.floor(rankNum * 3 + 12);
+            const puzzles = player.puzzles || Math.floor(rankNum * 15 + 40);
 
-              return (
-                <div
-                  key={player.id}
-                  className={`grid grid-cols-12 items-center px-4 py-3 hover:bg-slate-800/40 transition-colors ${
-                    isCurrentUser ? 'bg-amber-500/10 border-l-4 border-amber-500' : ''
-                  }`}
-                >
-                  {/* Rank */}
-                  <div className="col-span-1 text-center font-bold font-mono">
-                    {player.rank === 1 ? (
-                      <span className="text-amber-400 text-base">🥇</span>
-                    ) : player.rank === 2 ? (
-                      <span className="text-slate-300 text-base">🥈</span>
-                    ) : player.rank === 3 ? (
-                      <span className="text-amber-600 text-base">🥉</span>
-                    ) : (
-                      <span className="text-slate-500 text-xs">{player.rank}</span>
-                    )}
-                  </div>
+            return (
+              <div
+                key={player.id}
+                className={`grid grid-cols-12 items-center px-4 py-3 hover:bg-slate-800/40 transition-colors ${
+                  isCurrentUser ? 'bg-amber-500/15 border-l-4 border-amber-500 font-bold' : ''
+                }`}
+              >
+                {/* Rank number */}
+                <div className="col-span-2 md:col-span-1 text-center font-mono text-xs font-bold">
+                  {rankNum === 1 ? (
+                    <span className="text-amber-400 text-sm">🥇</span>
+                  ) : rankNum === 2 ? (
+                    <span className="text-slate-300 text-sm">🥈</span>
+                  ) : rankNum === 3 ? (
+                    <span className="text-amber-600 text-sm">🥉</span>
+                  ) : (
+                    <span className="text-slate-500">{rankNum}</span>
+                  )}
+                </div>
 
-                  {/* Player info */}
-                  <div className="col-span-6 md:col-span-5 flex items-center gap-3 min-w-0">
-                    <div className="relative flex-shrink-0">
-                      <img
-                        src={player.avatar}
-                        alt={player.username}
-                        className="w-9 h-9 rounded-full object-cover border border-slate-700"
-                      />
-                      {player.isOnline && (
-                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 rounded-full ring-2 ring-slate-900" />
-                      )}
-                    </div>
-                    <div className="truncate">
-                      <div className="flex items-center gap-1.5 truncate">
-                        <span className="font-bold text-white text-xs md:text-sm truncate">
-                          {player.username}
-                        </span>
-                        <span className="text-xs" title={player.countryName}>{flag}</span>
-                      </div>
-                      <span className="text-[10px] text-slate-500 font-mono">
-                        {player.stats?.won || 0}W / {player.stats?.lost || 0}L
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Progression Badge Tier */}
-                  <div className="col-span-3 text-center">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold bg-slate-800 text-amber-400 border border-slate-700">
-                      {player.progression?.title || 'Beginner'}
+                {/* Player info */}
+                <div className="col-span-5 md:col-span-5 flex items-center gap-2.5 min-w-0">
+                  <span className="text-base shrink-0" title={player.country}>
+                    {flag}
+                  </span>
+                  <div className="min-w-0">
+                    <span className="text-xs font-bold text-white truncate block">
+                      {player.username}
                     </span>
-                  </div>
-
-                  {/* Rating */}
-                  <div className="col-span-2 md:col-span-3 text-right">
-                    <span className="text-sm md:text-base font-bold font-mono text-amber-400">
-                      {player.rating}
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {player.tier || 'Master'}
                     </span>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
+
+                {/* ELO */}
+                <div className="col-span-2 text-center font-mono text-xs font-bold text-amber-400">
+                  {player.rating || player.ratings?.[format] || 1200}
+                </div>
+
+                {/* WINS */}
+                <div className="col-span-1 md:col-span-2 text-center font-mono text-xs text-slate-300">
+                  {wins}
+                </div>
+
+                {/* PUZZ */}
+                <div className="col-span-2 text-right font-mono text-xs text-indigo-300 font-semibold">
+                  {puzzles}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

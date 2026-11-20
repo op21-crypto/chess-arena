@@ -11,8 +11,10 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Support both /api mounts and root mounts for flexible Vercel rewrites
+// Support both /api prefixed routes and root routes
 app.use('/api', apiRouter);
 app.use('/', apiRouter);
 
-export default app;
+export default function handler(req, res) {
+  return app(req, res);
+}
