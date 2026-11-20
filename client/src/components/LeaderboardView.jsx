@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Trophy, Globe, User, Shield, Flame, Sparkles } from 'lucide-react';
+import { Trophy, Globe, User, Shield, Flame, Sparkles, ChevronRight, Zap, Clock, Rocket } from 'lucide-react';
 import {
   COUNTRY_NAMES,
   COUNTRY_FLAGS,
@@ -8,20 +8,27 @@ import {
 } from '../data/leaderboardData.js';
 
 const AVAILABLE_COUNTRIES = [
-  { code: 'world', label: 'Worldwide', flag: '🌐' },
+  { code: 'world', label: 'Global', flag: '🌐' },
   { code: 'IN', label: 'India', flag: '🇮🇳' },
-  { code: 'US', label: 'United States', flag: '🇺🇸' },
+  { code: 'US', label: 'USA', flag: '🇺🇸' },
   { code: 'NO', label: 'Norway', flag: '🇳🇴' },
   { code: 'ES', label: 'Spain', flag: '🇪🇸' },
   { code: 'DE', label: 'Germany', flag: '🇩🇪' },
   { code: 'FR', label: 'France', flag: '🇫🇷' },
-  { code: 'GB', label: 'United Kingdom', flag: '🇬🇧' },
+  { code: 'GB', label: 'UK', flag: '🇬🇧' },
   { code: 'JP', label: 'Japan', flag: '🇯🇵' },
   { code: 'BR', label: 'Brazil', flag: '🇧🇷' },
   { code: 'CA', label: 'Canada', flag: '🇨🇦' }
 ];
 
-export function LeaderboardView({ currentUser }) {
+const FORMAT_CONFIG = [
+  { id: 'rapid', label: 'Rapid', icon: Zap },
+  { id: 'blitz', label: 'Blitz', icon: Flame },
+  { id: 'bullet', label: 'Bullet', icon: Rocket },
+  { id: 'classical', label: 'Classic', icon: Clock }
+];
+
+export function LeaderboardView({ currentUser, onBack }) {
   const [selectedCountry, setSelectedCountry] = useState('world');
   const [viewFilter, setViewFilter] = useState('leaders'); // 'leaders' | 'my_rank'
   const [format, setFormat] = useState('rapid'); // 'bullet' | 'blitz' | 'rapid' | 'classical'
@@ -29,11 +36,9 @@ export function LeaderboardView({ currentUser }) {
 
   // Sync leaderboard when format or country changes
   useEffect(() => {
-    // Immediate synchronous fallback from rich local dataset (76 players)
     const localData = getLeaderboard(selectedCountry, format);
     setLeaderboard(localData);
 
-    // Also fetch from API endpoint if online
     fetch(`/api/leaderboard?format=${format}&country=${selectedCountry}`)
       .then(res => res.json())
       .then(data => {
@@ -41,9 +46,7 @@ export function LeaderboardView({ currentUser }) {
           setLeaderboard(data.leaderboard);
         }
       })
-      .catch(() => {
-        // Keeps localData
-      });
+      .catch(() => {});
   }, [format, selectedCountry]);
 
   // Current user's ELO and accurate rank & percentile calculation
@@ -122,206 +125,213 @@ export function LeaderboardView({ currentUser }) {
   const displayList = viewFilter === 'my_rank' ? userBrackets : leaderboard;
 
   return (
-    <div className="max-w-4xl mx-auto p-3 md:p-6 space-y-4">
-      {/* Country Selection Scroll Bar (Worldwide + 10 Countries with 7+ users each) */}
-      <div className="bg-slate-900/90 border border-slate-800 p-1.5 rounded-2xl shadow-lg">
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 px-0.5">
-          {AVAILABLE_COUNTRIES.map((c) => {
-            const isSelected = selectedCountry === c.code;
-            return (
-              <button
-                key={c.code}
-                onClick={() => setSelectedCountry(c.code)}
-                className={`py-2 px-3.5 rounded-xl text-xs font-bold whitespace-nowrap flex items-center gap-1.5 shrink-0 transition-all ${
-                  isSelected
-                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 scale-[1.02]'
-                    : 'bg-slate-950/60 text-slate-300 hover:text-white hover:bg-slate-800/80 border border-slate-800/80'
-                }`}
-              >
-                <span className="text-sm">{c.flag}</span>
-                <span>{c.label}</span>
-                {c.code === 'world' ? (
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                    isSelected ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-800 text-amber-400'
-                  }`}>50</span>
-                ) : (
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                    isSelected ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-800 text-slate-400'
-                  }`}>7+</span>
-                )}
-              </button>
-            );
-          })}
+    <div className="max-w-md mx-auto px-3 py-3 space-y-3 pb-24 text-slate-900 dark:text-slate-100">
+      {/* Android Native App Top Bar */}
+      <div className="flex items-center justify-between py-1">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center border border-amber-500/30">
+            <Trophy className="w-4 h-4" />
+          </div>
+          <div>
+            <h1 className="text-lg font-black tracking-tight leading-tight">Rankings</h1>
+            <p className="text-[11px] text-slate-400 font-medium">Global & Regional Leaders</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] font-bold text-amber-500">
+          <Globe className="w-3 h-3" />
+          <span className="truncate max-w-[90px]">{activeCountryName}</span>
         </div>
       </div>
 
-      {/* Secondary Filter: Your Ranking vs Leaders Toggle */}
-      <div className="grid grid-cols-2 gap-2 bg-slate-900/60 p-1 rounded-xl border border-slate-800/80">
-        <button
-          onClick={() => setViewFilter('my_rank')}
-          className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-            viewFilter === 'my_rank'
-              ? 'bg-amber-500 text-slate-950 font-bold shadow-md'
-              : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <User className="w-3.5 h-3.5" />
-          <span>Your ranking</span>
-        </button>
+      {/* Android Segmented Control: Time Controls (Rapid, Blitz, Bullet, Classic) */}
+      <div className="grid grid-cols-4 gap-1 p-1 bg-slate-200/80 dark:bg-slate-900 rounded-2xl border border-slate-300/50 dark:border-slate-800 shadow-xs">
+        {FORMAT_CONFIG.map((fmt) => {
+          const Icon = fmt.icon;
+          const isActive = format === fmt.id;
+          return (
+            <button
+              key={fmt.id}
+              onClick={() => setFormat(fmt.id)}
+              className={`py-1.5 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all ${
+                isActive
+                  ? 'bg-amber-500 text-slate-950 shadow-sm shadow-amber-500/30 font-black'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Icon className="w-3 h-3" />
+              <span>{fmt.label}</span>
+            </button>
+          );
+        })}
+      </div>
 
+      {/* Android Horizontal Scroll Region Chips */}
+      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+        {AVAILABLE_COUNTRIES.map((c) => {
+          const isSelected = selectedCountry === c.code;
+          return (
+            <button
+              key={c.code}
+              onClick={() => setSelectedCountry(c.code)}
+              className={`py-1 px-2.5 rounded-full text-xs font-bold whitespace-nowrap flex items-center gap-1 shrink-0 transition-all ${
+                isSelected
+                  ? 'bg-amber-500 text-slate-950 shadow-xs font-black'
+                  : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800'
+              }`}
+            >
+              <span className="text-xs">{c.flag}</span>
+              <span>{c.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Android 2-Way Tab Switch: Leaders vs My Rank */}
+      <div className="grid grid-cols-2 gap-1 p-1 bg-slate-200/70 dark:bg-slate-900/80 rounded-xl border border-slate-300/40 dark:border-slate-800">
         <button
           onClick={() => setViewFilter('leaders')}
-          className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+          className={`py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
             viewFilter === 'leaders'
-              ? 'bg-amber-500 text-slate-950 font-bold shadow-md'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-white dark:bg-slate-800 text-amber-500 shadow-xs font-black'
+              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
           }`}
         >
           <Trophy className="w-3.5 h-3.5" />
-          <span>Leaders ({isWorld ? 'Top 50' : `${activeCountryName} Top 7`})</span>
+          <span>Top Leaders</span>
+        </button>
+        <button
+          onClick={() => setViewFilter('my_rank')}
+          className={`py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+            viewFilter === 'my_rank'
+              ? 'bg-white dark:bg-slate-800 text-amber-500 shadow-xs font-black'
+              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+          }`}
+        >
+          <User className="w-3.5 h-3.5" />
+          <span>My Ranking</span>
         </button>
       </div>
 
-      {/* Your Ranking Hero Card (Accurate Math Matching Screenshot) */}
-      <div className="p-5 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-3xl shadow-xl text-center space-y-3 relative overflow-hidden">
-        <div className="absolute top-3 right-4 flex items-center gap-1 text-[11px] font-bold text-amber-400/90 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">
-          <Globe className="w-3 h-3" />
-          <span>{activeCountryName}</span>
-        </div>
+      {/* Android Hero Card: Current User Rank Card */}
+      <div className="p-4 bg-gradient-to-br from-amber-500/10 via-slate-900 to-slate-950 border border-amber-500/25 dark:border-slate-800 rounded-3xl shadow-md space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <img
+              src={currentUser?.avatar || 'https://api.dicebear.com/7.x/adventurer/svg?seed=You'}
+              alt="You"
+              className="w-10 h-10 rounded-full border border-amber-500/40 bg-slate-800 object-cover"
+            />
+            <div>
+              <div className="text-xs font-black text-white flex items-center gap-1">
+                <span>{currentUser?.username || 'You'}</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-400 font-mono">
+                  YOU
+                </span>
+              </div>
+              <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                {activeCountryName} • {format.toUpperCase()}
+              </div>
+            </div>
+          </div>
 
-        <div className="space-y-0.5 pt-1">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Elo Level</span>
-          <div className="text-4xl md:text-5xl font-extrabold text-white font-mono tracking-tight">
-            {userElo}
+          <div className="text-right">
+            <span className="text-[10px] uppercase font-bold text-slate-500 block">Rating</span>
+            <span className="text-xl font-black text-amber-400 font-mono">{userElo}</span>
           </div>
         </div>
 
-        <div className="space-y-1">
-          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Your Ranking</span>
-          <div className="text-xl md:text-2xl font-extrabold text-slate-200 font-mono">
-            {isWorld ? (
-              <>
-                {userRank.toLocaleString()}{' '}
-                <span className="text-xs text-slate-500 font-normal">
-                  of {totalPlayers.toLocaleString()}
-                </span>
-              </>
-            ) : (
-              <>
-                #{countryRank.toLocaleString()}{' '}
-                <span className="text-xs text-slate-500 font-normal">
-                  in {activeCountryName}
-                </span>
-              </>
-            )}
+        {/* Rank & Percentile row */}
+        <div className="flex items-center justify-between pt-1 border-t border-slate-800/80 text-xs font-semibold">
+          <div className="text-slate-300">
+            <span>Rank: </span>
+            <span className="text-white font-black font-mono">
+              #{isWorld ? userRank.toLocaleString() : countryRank.toLocaleString()}
+            </span>
+            <span className="text-[10px] text-slate-500 font-normal ml-1">
+              of {totalPlayers.toLocaleString()}
+            </span>
           </div>
-          <p className="text-xs font-semibold text-emerald-400">
-            You are better than {percentile}% of the players
-          </p>
-        </div>
-
-        {/* Format Selector Pills (Bullet, Blitz, Rapid, Classical) */}
-        <div className="flex items-center justify-center gap-1.5 pt-2 flex-wrap">
-          {['bullet', 'blitz', 'rapid', 'classical'].map((fmt) => (
-            <button
-              key={fmt}
-              onClick={() => setFormat(fmt)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase transition-all tracking-wider ${
-                format === fmt
-                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                  : 'bg-slate-950/80 text-slate-400 hover:text-white border border-slate-800'
-              }`}
-            >
-              {fmt}
-            </button>
-          ))}
+          <div className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-bold text-[10px] border border-emerald-500/30">
+            Top {100 - percentile}% ({percentile}% beat)
+          </div>
         </div>
       </div>
 
-      {/* Leaderboard Table (Player, ELO, WINS, PUZZ matching screenshot) */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-        <div className="grid grid-cols-12 px-4 py-3 bg-slate-950/70 border-b border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-          <span className="col-span-2 md:col-span-1 text-center">#</span>
-          <span className="col-span-5 md:col-span-5">Player</span>
-          <span className="col-span-2 text-center font-mono">Elo</span>
-          <span className="col-span-2 md:col-span-2 text-center font-mono">Wins</span>
-          <span className="col-span-1 md:col-span-2 text-right font-mono">Puzz</span>
-        </div>
+      {/* Android Leaderboard List View (Clean mobile card rows, zero table squish) */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-md divide-y divide-slate-100 dark:divide-slate-800/70">
+        {displayList.map((player, idx) => {
+          const isCurrentUser = player.isCurrent || player.id === currentUser?.id;
+          const flag = COUNTRY_FLAGS[player.country] || '🌐';
+          const rankNum = player.rank || idx + 1;
+          const wins = player.wins || Math.floor(rankNum * 3 + 12);
 
-        <div className="divide-y divide-slate-800/60 max-h-[640px] overflow-y-auto">
-          {displayList.map((player, idx) => {
-            const isCurrentUser = player.isCurrent || player.id === currentUser?.id;
-            const flag = COUNTRY_FLAGS[player.country] || '🌐';
-            const rankNum = player.rank || idx + 1;
-            const wins = player.wins || Math.floor(rankNum * 3 + 12);
-            const puzzles = player.puzzles || Math.floor(rankNum * 15 + 40);
-
-            return (
-              <div
-                key={player.id || idx}
-                className={`grid grid-cols-12 items-center px-4 py-3 hover:bg-slate-800/40 transition-colors ${
-                  isCurrentUser
-                    ? 'bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent border-l-4 border-amber-500 font-bold shadow-inner'
-                    : ''
-                }`}
-              >
-                {/* Rank number or medal */}
-                <div className="col-span-2 md:col-span-1 text-center font-mono text-xs font-bold">
+          return (
+            <div
+              key={player.id || idx}
+              className={`flex items-center justify-between p-3 transition-colors ${
+                isCurrentUser
+                  ? 'bg-amber-500/10 dark:bg-amber-500/15 border-l-4 border-amber-500'
+                  : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+              }`}
+            >
+              {/* Left: Rank Badge + Avatar + Name */}
+              <div className="flex items-center gap-3 min-w-0">
+                {/* Rank Badge */}
+                <div className="w-7 text-center font-mono text-xs font-bold shrink-0">
                   {rankNum === 1 ? (
-                    <span className="text-amber-400 text-base" title="Gold Medal">🥇</span>
+                    <span className="text-lg">🥇</span>
                   ) : rankNum === 2 ? (
-                    <span className="text-slate-300 text-base" title="Silver Medal">🥈</span>
+                    <span className="text-lg">🥈</span>
                   ) : rankNum === 3 ? (
-                    <span className="text-amber-600 text-base" title="Bronze Medal">🥉</span>
+                    <span className="text-lg">🥉</span>
                   ) : (
-                    <span className={isCurrentUser ? 'text-amber-400 font-black' : 'text-slate-500'}>
-                      {rankNum.toLocaleString()}
+                    <span className={`text-xs ${isCurrentUser ? 'text-amber-500 font-black' : 'text-slate-400'}`}>
+                      #{rankNum}
                     </span>
                   )}
                 </div>
 
-                {/* Player info */}
-                <div className="col-span-5 md:col-span-5 flex items-center gap-2.5 min-w-0">
-                  <span className="text-base shrink-0" title={player.countryName || player.country}>
-                    {flag}
-                  </span>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className={`text-xs font-bold truncate block ${isCurrentUser ? 'text-amber-300 font-black' : 'text-white'}`}>
-                        {player.username}
-                      </span>
-                      {player.title && (
-                        <span className="px-1 py-0.2 text-[9px] font-black rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                          {player.title}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-[10px] text-slate-400 font-mono">
-                      {player.tier || 'Master'}
+                {/* Avatar with flag overlay */}
+                <div className="relative shrink-0">
+                  <img
+                    src={player.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${player.username}`}
+                    alt={player.username}
+                    className="w-9 h-9 rounded-xl bg-slate-800 object-cover border border-slate-200 dark:border-slate-700"
+                  />
+                  <span className="absolute -bottom-1 -right-1 text-xs">{flag}</span>
+                </div>
+
+                {/* Username + Title */}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-xs font-bold truncate block ${isCurrentUser ? 'text-amber-500 font-black' : 'text-slate-900 dark:text-white'}`}>
+                      {player.username}
                     </span>
+                    {player.title && (
+                      <span className="px-1 py-0.2 text-[9px] font-black rounded bg-amber-500/20 text-amber-500 border border-amber-500/30">
+                        {player.title}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[10px] text-slate-400 font-medium">
+                    {wins} Wins • {player.tier || 'Master'}
                   </div>
                 </div>
-
-                {/* ELO */}
-                <div className={`col-span-2 text-center font-mono text-xs font-bold ${
-                  isCurrentUser ? 'text-amber-300 font-black text-sm' : 'text-amber-400'
-                }`}>
-                  {player.rating || player.ratings?.[format] || 1200}
-                </div>
-
-                {/* WINS */}
-                <div className="col-span-2 md:col-span-2 text-center font-mono text-xs text-slate-300">
-                  {wins}
-                </div>
-
-                {/* PUZZ */}
-                <div className="col-span-1 md:col-span-2 text-right font-mono text-xs text-indigo-300 font-semibold">
-                  {puzzles}
-                </div>
               </div>
-            );
-          })}
-        </div>
+
+              {/* Right: ELO Rating */}
+              <div className="text-right shrink-0 pl-2">
+                <span className={`text-sm font-black font-mono block ${isCurrentUser ? 'text-amber-500' : 'text-slate-900 dark:text-white'}`}>
+                  {player.rating || player.ratings?.[format] || 1200}
+                </span>
+                <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">
+                  {format}
+                </span>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

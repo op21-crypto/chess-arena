@@ -8,10 +8,8 @@ import {
 
 import { Chessboard } from './components/Chessboard.jsx';
 import { PlayerCard } from './components/PlayerCard.jsx';
-import { MoveHistory } from './components/MoveHistory.jsx';
 import { GameControls } from './components/GameControls.jsx';
 import { GameChat } from './components/GameChat.jsx';
-import { VoiceControls } from './components/VoiceControls.jsx';
 import { MatchmakingModal, FriendRoomModal, PlayAIModal } from './components/PlayModals.jsx';
 import { AuthModal } from './components/AuthModal.jsx';
 import { ProfileModal } from './components/ProfileModal.jsx';
