@@ -72,7 +72,7 @@ export const HOME_TIME_CONTROLS = [
 
 export default function App() {
   // Navigation & View State (5 Primary: Home, Play Online, Puzzles, Learn, Profile)
-  const [activeTab, setActiveTab] = useState('home'); // 'home' | 'play' | 'game' | 'puzzles' | 'lessons' | 'profile' | 'admin'
+  const [activeTab, setActiveTab] = useState('home'); // 'home' | 'game' | 'puzzles' | 'lessons' | 'profile' | 'admin'
   const [selectedHomeTime, setSelectedHomeTime] = useState(HOME_TIME_CONTROLS[1]); // Default 3 min Blitz
   const [incomingChallenge, setIncomingChallenge] = useState(null);
   const [settings, setSettings] = useState(() => {
@@ -208,7 +208,6 @@ export default function App() {
       (activeTab === 'puzzles' && settings.musicDuringPuzzles) ||
       ((activeTab === 'lessons' || activeTab === 'learn') && settings.musicDuringLessons) ||
       activeTab === 'home' ||
-      activeTab === 'play' ||
       activeTab === 'offline' ||
       activeTab === 'profile';
 
@@ -1058,7 +1057,6 @@ export default function App() {
           }`}>
             {[
               { id: 'home', label: 'Home', icon: Home },
-              { id: 'play', label: 'Play Online', icon: Swords },
               { id: 'puzzles', label: 'Puzzles', icon: Flame },
               { id: 'lessons', label: 'Learn', icon: BookOpen },
               { id: 'profile', label: 'Profile', icon: User },
@@ -1618,34 +1616,11 @@ export default function App() {
           </div>
         )}
 
-        {/* Play Arena Tab (All Competitive Game Modes Hub) */}
-        {activeTab === 'play' && (
-          <PlayView
-            currentUser={currentUser}
-            onStartMatchmaking={handleStartMatchmaking}
-            isSearchingMatch={isSearchingMatch}
-            onCancelMatchmaking={handleCancelMatchmaking}
-            onOpenMatchmakingModal={() => setShowMatchmakingModal(true)}
-            onOpenFriendRoom={() => setShowFriendRoomModal(true)}
-            onStartAIGame={handleStartAIGame}
-            onOpenAIModal={() => setShowAIModal(true)}
-            onOpenOfflineBoard={() => setActiveTab('offline')}
-            onNavigateToPuzzles={() => setActiveTab('puzzles')}
-            onNavigateToLessons={() => setActiveTab('lessons')}
-            onNavigateToTournaments={() => setActiveTab('tournaments')}
-            onNavigateToRankings={() => {
-              setActiveTab('profile');
-            }}
-            activeGameSession={gameSession}
-            onReturnToGame={() => setActiveTab('game')}
-          />
-        )}
-
         {/* Tournaments Championship Tab */}
         {activeTab === 'tournaments' && (
           <TournamentView
             currentUser={currentUser}
-            onBack={() => setActiveTab('play')}
+            onBack={() => setActiveTab('home')}
           />
         )}
 
@@ -1701,14 +1676,13 @@ export default function App() {
         {activeTab === 'admin' && <AdminView />}
       </main>
 
-      {/* Floating Bottom Navigation for Mobile (5 Primary Tabs: Home, Play, Puzzles, Learn, Profile) */}
+      {/* Floating Bottom Navigation for Mobile (4 Primary Tabs: Home, Puzzles, Learn, Profile) */}
       {activeTab !== 'offline' && (
         <footer className={`md:hidden sticky bottom-0 z-40 backdrop-blur-md border-t px-2 py-2 flex items-center justify-around transition-colors ${
           isLight ? 'bg-white/95 border-slate-200' : isOled ? 'bg-black/95 border-zinc-800' : 'bg-slate-950/90 border-slate-800'
         }`}>
           {[
             { id: 'home', label: 'Home', icon: Home },
-            { id: 'play', label: 'Play', icon: Swords },
             { id: 'puzzles', label: 'Puzzles', icon: Flame },
             { id: 'lessons', label: 'Learn', icon: BookOpen },
             { id: 'profile', label: 'Profile', icon: User }
