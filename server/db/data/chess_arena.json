@@ -478,6 +478,117 @@
       "username": "testuser1",
       "email": "test@example.com",
       "passwordHash": "$2b$10$zNLMkfPwgnG6eWmm.u9X1.k2TChBu7FxN17QTQYesFiGvrw5h8roe"
+    },
+    "guest_1795148472771_8213": {
+      "role": "guest",
+      "country": "UN",
+      "countryName": "United States",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Guest_8213",
+      "ratings": {
+        "bullet": 1200,
+        "blitz": 1200,
+        "rapid": 1200,
+        "classical": 1200,
+        "puzzle": 1200
+      },
+      "highestRating": 1200,
+      "stats": {
+        "played": 0,
+        "won": 0,
+        "lost": 0,
+        "drawn": 0,
+        "winStreak": 0,
+        "currentStreak": 0
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-11-20",
+          "rating": 1200,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [],
+      "createdAt": "2026-11-20T04:21:12.800Z",
+      "isOnline": false,
+      "banned": false,
+      "id": "guest_1795148472771_8213",
+      "username": "Guest_8213",
+      "email": "guest_8213@chessarena.local",
+      "passwordHash": ""
+    },
+    "guest_1795148480075_9781": {
+      "role": "guest",
+      "country": "UN",
+      "countryName": "United States",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Guest_9781",
+      "ratings": {
+        "bullet": 1200,
+        "blitz": 1200,
+        "rapid": 1200,
+        "classical": 1200,
+        "puzzle": 1200
+      },
+      "highestRating": 1200,
+      "stats": {
+        "played": 0,
+        "won": 0,
+        "lost": 0,
+        "drawn": 0,
+        "winStreak": 0,
+        "currentStreak": 0
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-11-20",
+          "rating": 1200,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [],
+      "createdAt": "2026-11-20T04:21:20.076Z",
+      "isOnline": false,
+      "banned": false,
+      "id": "guest_1795148480075_9781",
+      "username": "Guest_9781",
+      "email": "guest_9781@chessarena.local",
+      "passwordHash": ""
+    },
+    "u_1795148521255_3g4a": {
+      "role": "user",
+      "country": "US",
+      "countryName": "United States",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=testuser_1795148520931",
+      "ratings": {
+        "bullet": 1200,
+        "blitz": 1200,
+        "rapid": 1200,
+        "classical": 1200,
+        "puzzle": 1200
+      },
+      "highestRating": 1200,
+      "stats": {
+        "played": 0,
+        "won": 0,
+        "lost": 0,
+        "drawn": 0,
+        "winStreak": 0,
+        "currentStreak": 0
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-11-20",
+          "rating": 1200,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [],
+      "createdAt": "2026-11-20T04:22:01.256Z",
+      "isOnline": false,
+      "banned": false,
+      "id": "u_1795148521255_3g4a",
+      "username": "testuser_1795148520931",
+      "email": "testuser_1795148520931@example.com",
+      "passwordHash": "$2b$10$S8qgPjqcStQ78G9BBVlCne73KYSXwpNeT0KdKmauTvyIbmLf1EMZO"
     }
   },
   "games": {},

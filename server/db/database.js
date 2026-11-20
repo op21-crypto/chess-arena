@@ -5,11 +5,19 @@ import bcrypt from 'bcryptjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const DATA_DIR = path.join(__dirname, 'data');
-const DB_FILE = path.join(DATA_DIR, 'chess_arena.json');
+
+// Detect serverless environment (Vercel / Lambda) where only /tmp is writable
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const SEED_FILE = path.join(__dirname, 'data', 'chess_arena.json');
+const DATA_DIR = isServerless ? '/tmp' : path.join(__dirname, 'data');
+const DB_FILE = isServerless ? path.join('/tmp', 'chess_arena.json') : SEED_FILE;
 
 if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+  try {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  } catch (err) {
+    console.warn('Could not create DATA_DIR:', err.message);
+  }
 }
 
 // In-memory state backed by atomic disk persistence
@@ -33,19 +41,32 @@ function saveDb() {
 }
 
 function loadDb() {
+  // First check if writable DB_FILE exists (e.g. /tmp/chess_arena.json on Vercel)
   if (fs.existsSync(DB_FILE)) {
     try {
       const raw = fs.readFileSync(DB_FILE, 'utf-8');
       db = JSON.parse(raw);
+      return;
     } catch (err) {
-      console.error('Error loading DB file, initializing clean database:', err.message);
-      seedDatabase();
-      saveDb();
+      console.error('Error loading DB file:', err.message);
     }
-  } else {
-    seedDatabase();
-    saveDb();
   }
+
+  // Next check if packaged seed file exists
+  if (fs.existsSync(SEED_FILE)) {
+    try {
+      const raw = fs.readFileSync(SEED_FILE, 'utf-8');
+      db = JSON.parse(raw);
+      saveDb();
+      return;
+    } catch (err) {
+      console.error('Error loading SEED file:', err.message);
+    }
+  }
+
+  // Fallback to fresh seed
+  seedDatabase();
+  saveDb();
 }
 
 // Helper: Progression Badge from Elo

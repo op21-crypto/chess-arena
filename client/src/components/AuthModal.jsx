@@ -27,6 +27,38 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
   if (!isOpen) return null;
 
+  const parseAuthResponse = async (res, defaultMsg) => {
+    const contentType = res.headers.get('content-type') || '';
+    let data = null;
+
+    if (contentType.includes('application/json')) {
+      try {
+        data = await res.json();
+      } catch {
+        // Fall through to generic error handling
+      }
+    }
+
+    if (!res.ok) {
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+      if (res.status === 404) {
+        throw new Error('Authentication server endpoint not found (404). Please ensure the API is reachable.');
+      }
+      if (res.status >= 500) {
+        throw new Error('Authentication service temporarily unavailable. Please try again.');
+      }
+      throw new Error(defaultMsg || 'Authentication failed');
+    }
+
+    if (!data?.token || !data?.user) {
+      throw new Error('Invalid response structure received from server');
+    }
+
+    return data;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -44,10 +76,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
         body: JSON.stringify(body)
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Authentication failed');
-      }
+      const data = await parseAuthResponse(res, mode === 'login' ? 'Invalid credentials' : 'Registration failed');
 
       localStorage.setItem('token', data.token);
       onAuthSuccess(data.user);
@@ -64,8 +93,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     setLoading(true);
     try {
       const res = await fetch('/api/auth/guest', { method: 'POST' });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Guest login failed');
+      const data = await parseAuthResponse(res, 'Guest login failed');
 
       localStorage.setItem('token', data.token);
       onAuthSuccess(data.user);
