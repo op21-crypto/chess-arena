@@ -95,6 +95,26 @@ function ensureAdminUser() {
   if (db.users['admin_001']) {
     db.users['admin_001'].role = 'admin';
   }
+
+  if (!db.users['player_magnus']) {
+    db.users['player_magnus'] = {
+      id: 'player_magnus',
+      username: 'VikingKing',
+      email: 'magnus@chessarena.com',
+      passwordHash,
+      role: 'user',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+      country: 'NO',
+      countryName: 'Norway',
+      ratings: { bullet: 2850, blitz: 2890, rapid: 2840, classical: 2860, puzzle: 2950 },
+      highestRating: 2890,
+      stats: { won: 195, lost: 55, played: 280, drawn: 30, winStreak: 14, currentStreak: 5 },
+      achievements: ['first_win', 'checkmate_pro', 'wins_10', 'games_100', 'streak_master'],
+      createdAt: '2026-01-01T00:00:00.000Z',
+      isOnline: false,
+      banned: false
+    };
+  }
 }
 
 function loadDb() {

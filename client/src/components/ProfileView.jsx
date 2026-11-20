@@ -281,8 +281,8 @@ export function ProfileView({
       {/* Sub-Navigation Tabs: Overview & Stats | Rankings & Leaderboard | Settings */}
       <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-slate-900 border border-slate-800 shadow-lg">
         {[
-          { id: 'overview', label: 'Overview & Stats', icon: User },
-          { id: 'rankings', label: 'Rankings & Leaderboard', icon: Trophy },
+          { id: 'overview', label: 'Stats', icon: User },
+          { id: 'rankings', label: 'Rankings', icon: Trophy },
           { id: 'settings', label: 'Settings', icon: Settings }
         ].map((tab) => {
           const Icon = tab.icon;

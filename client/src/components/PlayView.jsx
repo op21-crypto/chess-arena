@@ -31,6 +31,7 @@ export function PlayView({
   onCancelMatchmaking,
   onOpenFriendRoom,
   onStartAIGame,
+  onOpenOfflineBoard,
   activeGameSession,
   onReturnToGame
 }) {
@@ -278,6 +279,35 @@ export function PlayView({
             </div>
           </div>
         </div>
+
+        {/* Play Offline Board Card (Pass & Play on 1 Device) */}
+        {onOpenOfflineBoard && (
+          <div className="md:col-span-2 bg-gradient-to-r from-amber-500/15 via-slate-900 to-amber-500/10 border-2 border-amber-500/40 rounded-3xl p-5 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4 text-center sm:text-left">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/40 shrink-0 shadow-md">
+                <Users className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 justify-center sm:justify-start">
+                  <h3 className="text-base font-extrabold text-white">Play Offline Board</h3>
+                  <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] font-bold">
+                    Pass & Play 👥
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Two players on the same phone or tablet with face-to-face rotated pieces, wood themes, and instant undo.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onOpenOfflineBoard}
+              className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition-transform active:scale-95 shadow-md flex items-center gap-1.5 shrink-0"
+            >
+              <span>Launch Offline Board</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -18,6 +18,7 @@ import { ProfileModal } from './components/ProfileModal.jsx';
 import { ProfileView } from './components/ProfileView.jsx';
 import { FriendsDrawer } from './components/FriendsDrawer.jsx';
 import { PlayView } from './components/PlayView.jsx';
+import { OfflineBoardView } from './components/OfflineBoardView.jsx';
 import { PuzzleView } from './components/PuzzleView.jsx';
 import { LessonView } from './components/LessonView.jsx';
 import { LeaderboardView } from './components/LeaderboardView.jsx';
@@ -147,6 +148,7 @@ export default function App() {
       ((activeTab === 'lessons' || activeTab === 'learn') && settings.musicDuringLessons) ||
       activeTab === 'home' ||
       activeTab === 'play' ||
+      activeTab === 'offline' ||
       activeTab === 'profile';
 
     if (shouldPlay) {
@@ -161,6 +163,15 @@ export default function App() {
     settings.musicDuringPuzzles,
     settings.musicDuringLessons
   ]);
+
+  // Kill any lingering speech synthesis whenever navigating away from lessons/learn
+  useEffect(() => {
+    if (activeTab !== 'lessons' && activeTab !== 'learn') {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     // 1. Check existing auth token
@@ -887,10 +898,11 @@ export default function App() {
     <div className={`min-h-screen flex flex-col font-sans selection:bg-amber-500 selection:text-black transition-colors ${
       isLight ? 'bg-[#f4f7fb] text-slate-900' : 'luxury-bg text-slate-100'
     }`}>
-      {/* Top Navbar */}
-      <header className={`sticky top-0 z-40 backdrop-blur-md border-b px-4 py-2.5 transition-colors ${
-        isLight ? 'bg-white/95 border-slate-200 text-slate-900 shadow-sm' : 'bg-slate-950/80 border-slate-800 text-white'
-      }`}>
+      {/* Top Navbar (Hidden in full-screen offline pass & play mode) */}
+      {activeTab !== 'offline' && (
+        <header className={`sticky top-0 z-40 backdrop-blur-md border-b px-4 py-2.5 transition-colors ${
+          isLight ? 'bg-white/95 border-slate-200 text-slate-900 shadow-sm' : 'bg-slate-950/80 border-slate-800 text-white'
+        }`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Logo & Slogan */}
           <div
@@ -924,7 +936,7 @@ export default function App() {
               { id: 'play', label: 'Play Online', icon: Swords },
               { id: 'puzzles', label: 'Puzzles', icon: Flame },
               { id: 'lessons', label: 'Learn', icon: BookOpen },
-              { id: 'leaderboard', label: 'Rankings', icon: Shield },
+              { id: 'profile', label: 'Profile', icon: User },
               ...(currentUser?.role === 'admin' ? [{ id: 'admin', label: 'Admin', icon: Sparkles }] : [])
             ].map(tab => {
               const Icon = tab.icon;
@@ -1099,6 +1111,7 @@ export default function App() {
           </div>
         </div>
       </header>
+      )}
 
       {/* Main Content View Switcher */}
       <main className="flex-1 flex flex-col relative">
@@ -1197,6 +1210,15 @@ export default function App() {
                       >
                         <Swords className="w-5 h-5 fill-slate-950" />
                         <span>Play Online Now</span>
+                      </button>
+
+                      <button
+                        onClick={() => setActiveTab('offline')}
+                        className="w-full sm:w-auto flex items-center justify-center gap-2.5 py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-500/25 via-orange-500/25 to-amber-500/15 hover:from-amber-500/35 hover:to-orange-500/35 border-2 border-amber-500/60 text-amber-300 hover:text-white font-black text-sm shadow-xl shadow-amber-500/10 transition-all transform hover:-translate-y-0.5 active:scale-95"
+                        title="Two Players Pass & Play Face-to-Face on 1 Device"
+                      >
+                        <Users className="w-4 h-4 text-amber-400" />
+                        <span>Play Offline Board (Pass & Play 👥)</span>
                       </button>
 
                       <button
@@ -1323,6 +1345,30 @@ export default function App() {
                       </h3>
                       <p className="text-xs text-slate-400">
                         Practice against intelligent bots from Beginner (800) to GM (2800).
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 4. Play Offline Board (Two Players Pass & Play) */}
+                  <div
+                    onClick={() => setActiveTab('offline')}
+                    className="luxury-card p-4 rounded-2xl cursor-pointer group space-y-2 border-amber-500/30 bg-amber-500/5 hover:border-amber-500/60 transition-all shadow-md"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform shadow-xs">
+                        <Users className="w-5 h-5" />
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-bold text-[10px] border border-amber-500/30">
+                        Pass & Play 👥
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-extrabold text-white group-hover:text-amber-400 transition-colors flex items-center gap-1.5">
+                        <span>Play Offline Board</span>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold">New</span>
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        Two players on 1 device with face-to-face piece rotation, undo & wood themes.
                       </p>
                     </div>
                   </div>
@@ -1523,30 +1569,13 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Right Column: Mini Music Player, Game Controls, Move History, Voice Bar, Live Chat */}
+              {/* Right Column: Mini Music Player, Game Controls, Live Chat with Embedded Voice Call */}
               <div className="lg:col-span-5 space-y-3 w-full max-w-md mx-auto lg:max-w-none">
                 {/* In-Game Mini Ambient Music Player & Settings Bar */}
                 <MiniMusicPlayer
                   settings={settings}
                   onUpdateSettings={handleUpdateSettings}
                   onOpenSettings={() => setShowSettingsModal(true)}
-                />
-
-                {/* Voice Chat Component */}
-                {!isAIGame && (
-                  <VoiceControls
-                    socket={socketRef.current}
-                    gameId={gameSession.id}
-                    currentUser={currentUser}
-                    opponentUser={opponent}
-                    isPlayer={playerColor === 'w' || playerColor === 'b'}
-                    triggerVoiceCall={voiceCallTrigger}
-                  />
-                )}
-
-                {/* Move History */}
-                <MoveHistory
-                  moves={gameSession.moveHistory || []}
                 />
 
                 {/* Game Controls */}
@@ -1571,12 +1600,17 @@ export default function App() {
                   onVoiceCall={() => setVoiceCallTrigger(c => c + 1)}
                 />
 
-                {/* Live Chat (Toggleable in Settings) */}
+                {/* Live Chat with Unified Voice Call */}
                 {settings.allowChat ? (
                   <GameChat
                     messages={chatMessages}
                     onSendMessage={handleSendMessage}
                     currentUser={currentUser}
+                    opponentUser={opponent}
+                    socket={socketRef.current}
+                    gameId={gameSession.id}
+                    isPlayer={!isAIGame && (playerColor === 'w' || playerColor === 'b')}
+                    triggerVoiceCall={voiceCallTrigger}
                   />
                 ) : (
                   <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-xl text-center text-xs text-slate-500 italic">
@@ -1597,9 +1631,15 @@ export default function App() {
             onCancelMatchmaking={handleCancelMatchmaking}
             onOpenFriendRoom={() => setShowFriendRoomModal(true)}
             onStartAIGame={handleStartAIGame}
+            onOpenOfflineBoard={() => setActiveTab('offline')}
             activeGameSession={gameSession}
             onReturnToGame={() => setActiveTab('game')}
           />
+        )}
+
+        {/* Play Offline Board Tab (Pass & Play Two Players Local) */}
+        {activeTab === 'offline' && (
+          <OfflineBoardView onBack={() => setActiveTab('home')} />
         )}
 
         {/* Puzzles Tab */}
@@ -1650,36 +1690,43 @@ export default function App() {
         {activeTab === 'admin' && <AdminView />}
       </main>
 
-      {/* Floating Bottom Navigation for Mobile (5 Primary Tabs: Home, Play, Puzzles, Learn, Rankings) */}
-      <footer className={`md:hidden sticky bottom-0 z-40 backdrop-blur-md border-t px-2 py-2 flex items-center justify-around transition-colors ${
-        isLight ? 'bg-white/95 border-slate-200' : 'bg-slate-950/90 border-slate-800'
-      }`}>
-        {[
-          { id: 'home', label: 'Home', icon: Home },
-          { id: 'play', label: 'Play', icon: Swords },
-          { id: 'puzzles', label: 'Puzzles', icon: Flame },
-          { id: 'lessons', label: 'Learn', icon: BookOpen },
-          { id: 'leaderboard', label: 'Rankings', icon: Shield }
-        ].map(tab => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl text-[10px] font-bold ${
-                activeTab === tab.id
-                  ? 'text-amber-500'
-                  : isLight
-                  ? 'text-slate-600 hover:text-slate-900'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
-      </footer>
+      {/* Floating Bottom Navigation for Mobile (5 Primary Tabs: Home, Play, Puzzles, Learn, Profile) */}
+      {activeTab !== 'offline' && (
+        <footer className={`md:hidden sticky bottom-0 z-40 backdrop-blur-md border-t px-2 py-2 flex items-center justify-around transition-colors ${
+          isLight ? 'bg-white/95 border-slate-200' : 'bg-slate-950/90 border-slate-800'
+        }`}>
+          {[
+            { id: 'home', label: 'Home', icon: Home },
+            { id: 'play', label: 'Play', icon: Swords },
+            { id: 'puzzles', label: 'Puzzles', icon: Flame },
+            { id: 'lessons', label: 'Learn', icon: BookOpen },
+            { id: 'profile', label: 'Profile', icon: User }
+          ].map(tab => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  if (tab.id === 'profile') {
+                    setProfileSubTab('overview');
+                  }
+                  setActiveTab(tab.id);
+                }}
+                className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl text-[10px] font-bold ${
+                  activeTab === tab.id
+                    ? 'text-amber-500'
+                    : isLight
+                    ? 'text-slate-600 hover:text-slate-900'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </footer>
+      )}
 
       {/* Global Modals */}
       <AuthModal
