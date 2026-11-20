@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { Database, getProgressionTier } from '../db/database.js';
 import { aiEngine } from '../engine/aiEngine.js';
-import { CHESS_PUZZLES, CHESS_LESSONS } from '../puzzles/puzzleData.js';
+import { CHESS_PUZZLES, PUZZLE_THEMES, PUZZLE_OPENINGS_LIST, CHESS_LESSONS } from '../puzzles/puzzleData.js';
 import { tournamentManager } from '../tournaments/tournamentManager.js';
 
 const router = express.Router();
@@ -445,13 +445,41 @@ router.post(['/rooms/move', '/rooms/:id/move'], (req, res) => {
 // ================= PUZZLES & LESSONS =================
 
 router.get('/puzzles', (req, res) => {
-  res.json({ puzzles: CHESS_PUZZLES });
+  const { theme, opening, category } = req.query;
+  let results = [...CHESS_PUZZLES];
+
+  if (theme) {
+    const tLower = theme.toLowerCase().replace(/['\s-]/g, '');
+    results = results.filter(p => {
+      const pTheme = (p.theme || '').toLowerCase().replace(/['\s-]/g, '');
+      const pCat = (p.category || '').toLowerCase().replace(/['\s-]/g, '');
+      return pTheme.includes(tLower) || pCat.includes(tLower) || tLower.includes(pTheme);
+    });
+  }
+
+  if (opening) {
+    const oLower = opening.toLowerCase().replace(/['\s-]/g, '');
+    results = results.filter(p => {
+      const pOp = (p.opening || '').toLowerCase().replace(/['\s-]/g, '');
+      return pOp.includes(oLower) || oLower.includes(pOp);
+    });
+  }
+
+  if (category) {
+    const cLower = category.toLowerCase().replace(/['\s-]/g, '');
+    results = results.filter(p => (p.category || '').toLowerCase().replace(/['\s-]/g, '') === cLower);
+  }
+
+  res.json({
+    puzzles: results.length > 0 ? results : CHESS_PUZZLES,
+    themes: PUZZLE_THEMES,
+    openings: PUZZLE_OPENINGS_LIST
+  });
 });
 
 router.get('/puzzles/daily', (req, res) => {
-  // Rotate based on day of year
-  const dayIndex = Math.floor(Date.now() / (1000 * 60 * 60 * 24)) % CHESS_PUZZLES.length;
-  res.json({ puzzle: CHESS_PUZZLES[dayIndex] });
+  const daily = CHESS_PUZZLES.find(p => p.id === 'puz_daily_1') || CHESS_PUZZLES[0];
+  res.json({ puzzle: daily });
 });
 
 router.post('/puzzles/:id/solve', requireAuth, (req, res) => {

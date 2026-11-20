@@ -4,6 +4,7 @@
   "cleanUrls": true,
   "rewrites": [
     { "source": "/assets/(.*)", "destination": "/assets/$1" },
+    { "source": "/api/leaderboard", "destination": "/api/puzzles" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
