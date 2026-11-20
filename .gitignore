@@ -3,3 +3,5 @@ client/node_modules
 .env
 *.log
 .DS_Store
+android-release
+*.apk

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Chess } from 'chess.js';
 import { PieceIcon, BOARD_THEMES } from './PieceIcons.jsx';
 import { sound } from '../utils/audio.js';

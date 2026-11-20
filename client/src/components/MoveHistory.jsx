@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Copy, Check } from 'lucide-react';
 
 export function MoveHistory({ moves = [], currentMoveIndex = -1, onSelectMove }) {
