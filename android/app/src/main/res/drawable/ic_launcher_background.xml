@@ -4,7 +4,31 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- Deep Luxury Midnight Obsidian Base -->
     <path
-        android:fillColor="#090d16"
+        android:fillColor="#090D18"
         android:pathData="M0,0h108v108h-108z" />
+
+    <!-- Ambient Golden Glow (Layer 1 - Soft Wide Falloff) -->
+    <path
+        android:fillColor="#0FF59E0B"
+        android:pathData="M54,54m-42,0a42,42 0 1,1 84,0a42,42 0 1,1 -84,0" />
+
+    <!-- Ambient Golden Glow (Layer 2 - Concentrated Core) -->
+    <path
+        android:fillColor="#1AF59E0B"
+        android:pathData="M54,54m-32,0a32,32 0 1,1 64,0a32,32 0 1,1 -64,0" />
+
+    <!-- Ambient Golden Glow (Layer 3 - Intense Center) -->
+    <path
+        android:fillColor="#26F59E0B"
+        android:pathData="M54,54m-22,0a22,22 0 1,1 44,0a22,22 0 1,1 -44,0" />
+
+    <!-- Subtle Golden Circular Halo Ring (Inside 72dp Safe Zone) -->
+    <path
+        android:strokeColor="#33F59E0B"
+        android:strokeWidth="1.2"
+        android:pathData="M54,54m-33,0a33,33 0 1,1 66,0a33,33 0 1,1 -66,0" />
+
 </vector>

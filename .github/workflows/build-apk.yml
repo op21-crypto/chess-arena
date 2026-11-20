@@ -41,13 +41,14 @@ jobs:
       - name: Prepare APK Output
         run: |
           mkdir -p release-output
+          cp android/app/build/outputs/apk/debug/app-debug.apk release-output/ChessWithFriends-v1.0.0.apk
           cp android/app/build/outputs/apk/debug/app-debug.apk release-output/ChessArena-v1.0.0.apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ChessArena-Android-APK
-          path: release-output/ChessArena-v1.0.0.apk
+          name: ChessWithFriends-Android-APK
+          path: release-output/ChessWithFriends-v1.0.0.apk
           retention-days: 30
 
       - name: Create or Update GitHub Release with APK
@@ -55,24 +56,26 @@ jobs:
         if: github.ref == 'refs/heads/main'
         with:
           tag_name: apk-latest
-          name: "Chess Arena Android App v1.0.0"
+          name: "Chess with Friends Android App v1.0.0"
           body: |
-            ## ♟️ Chess Arena Android APK (Latest)
+            ## ♟️ Chess with Friends Android APK (Latest)
             
-            Welcome to the official Android build of **Chess Arena**!
+            Welcome to the official Android build of **Chess with Friends**!
             
             ### ✨ Features Included in this Build:
-            - **Mobile-Optimized Chessboard**: Tap-to-move, drag-and-drop, King check indicators, and sound effects.
-            - **Tactics Trainer & Puzzles**: Interactive lichess-style puzzles, puzzle streak, puzzle storm, and on-board captured piece display.
-            - **Live Multiplayer**: Play with friends, shareable game links, and random matchmaking.
-            - **Real-Time WebRTC Voice Chat**: Live voice communication with mutual consent in friends games.
-            - **Stockfish 19 AI Analysis**: Full game evaluation with move accuracies (CAPS) and blunder detection.
-            - **Offline Pass-and-Play**: Full local 2-player board accessible anytime.
+            - **Mobile-Optimized Chessboard**: Tap-to-move, drag-and-drop, King check indicators, and authentic piece sound effects.
+            - **Tactics Trainer & Puzzles**: Interactive puzzles, puzzle streak, puzzle storm, and on-board captured piece display.
+            - **Live Multiplayer**: Play with friends, shareable game links, and instant matchmaking.
+            - **Real-Time WebRTC Voice Chat**: Live voice communication with mutual consent in friends rooms.
+            - **Stockfish AI Analysis**: Engine evaluation, game review, accuracy ratings, and blunder detection.
+            - **Offline Pass-and-Play**: Full local 2-player board accessible without internet.
             
             ### 📥 Download & Installation:
-            1. Download the attached **ChessArena-v1.0.0.apk** below.
+            1. Download the attached **ChessWithFriends-v1.0.0.apk** below.
             2. Open the downloaded file on your Android device.
             3. If prompted, allow "Install from unknown sources" and tap **Install**.
-          files: release-output/ChessArena-v1.0.0.apk
+          files: |
+            release-output/ChessWithFriends-v1.0.0.apk
+            release-output/ChessArena-v1.0.0.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

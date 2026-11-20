@@ -15,7 +15,6 @@ import { MatchmakingModal, FriendRoomModal, PlayAIModal } from './components/Pla
 import { AuthModal } from './components/AuthModal.jsx';
 import { ProfileModal } from './components/ProfileModal.jsx';
 import { ProfileView } from './components/ProfileView.jsx';
-import { PlayView } from './components/PlayView.jsx';
 import { OfflineBoardView } from './components/OfflineBoardView.jsx';
 import { PuzzleView } from './components/PuzzleView.jsx';
 import { LessonView } from './components/LessonView.jsx';

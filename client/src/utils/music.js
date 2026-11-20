@@ -1,17 +1,17 @@
-// Video Game Login & Title Screen Music Engine for Chess Arena
-// 20 iconic login themes, main menu anthems, and chill matchmaking lounges synthesized via Web Audio API.
-// Zero external assets or network dependencies - guaranteed instant, high fidelity, and 100% reliable.
+// Chess Arena Signature Music & Sound Identity Engine
+// 12 curated chess soundscapes: Soft acoustic grand piano, impressionist classical masterpieces,
+// and soothing therapeutic ambient music synthesized via Web Audio API.
+// Zero external mp3 downloads, zero network latency, 100% offline and reliable.
 
 export const MUSIC_CATEGORIES = {
   signature: 'Signature Sound Identity',
-  title: 'Login & Title Anthems',
-  lobby: 'Lobby & Matchmaking Lounge',
-  orchestral: 'Championship Orchestral',
-  cyber: 'Cyberpunk & Arcade Login'
+  piano: 'Piano',
+  classical: 'Classical',
+  ambient: 'Ambient'
 };
 
 export const TRACK_LIST = [
-  // 0. Signature Dynamic Adaptive Soundscape
+  // --- 0. SIGNATURE ADAPTIVE THEME (DEFAULT MUSIC ON APP OPEN) ---
   {
     id: 'sig-adaptive',
     category: 'signature',
@@ -21,15 +21,129 @@ export const TRACK_LIST = [
     type: 'signature_adaptive',
     tempo: 3400
   },
+
+  // --- 10 CURATED CHESS SOUNDSCAPES ---
+  // 1. Nuvole Bianche (Piano - Ludovico Einaudi)
   {
-    id: 'sig-piano',
-    category: 'signature',
-    name: 'Gymnopédie for 64 Squares (Soft Piano Solo)',
-    mood: 'Soothing acoustic grand piano with warm felt hammers, rolling contemplative arpeggios, and delicate raindrop notes',
-    baseFreq: 130.81, // C3
-    type: 'soft_piano',
+    id: 'piano-nuvole',
+    category: 'piano',
+    name: 'Nuvole Bianche',
+    artist: 'Ludovico Einaudi',
+    mood: 'Soulful, emotional acoustic piano arpeggios that clear the mind for profound chess strategy',
+    baseFreq: 110.00, // A2
+    type: 'nuvole_bianche',
+    tempo: 3100
+  },
+
+  // 2. Experience (Piano - Ludovico Einaudi)
+  {
+    id: 'piano-experience',
+    category: 'piano',
+    name: 'Experience',
+    artist: 'Ludovico Einaudi',
+    mood: 'Stirring minimalist piano with ascending cascading arpeggios of growing passion and victory',
+    baseFreq: 110.00, // A2
+    type: 'experience',
+    tempo: 2600
+  },
+
+  // 3. Gymnopédie No. 1 (Classical - Erik Satie)
+  {
+    id: 'classical-gymnopedie',
+    category: 'classical',
+    name: 'Gymnopédie No. 1',
+    artist: 'Erik Satie',
+    mood: 'Iconic classical chess waltz with gentle floating chords and timeless melancholic grace',
+    baseFreq: 98.00, // G2
+    type: 'gymnopedie',
+    tempo: 3500
+  },
+
+  // 4. Snowfall (Ambient - Øneheart)
+  {
+    id: 'ambient-snowfall',
+    category: 'ambient',
+    name: 'Snowfall',
+    artist: 'Øneheart',
+    mood: 'Nostalgic tape-delayed ambient piano with warm sub-bass and tranquil snowfall stillness',
+    baseFreq: 65.41, // C2
+    type: 'snowfall',
     tempo: 3400
   },
+
+  // 5. Clair de Lune (Classical - Claude Debussy)
+  {
+    id: 'classical-clairdelune',
+    category: 'classical',
+    name: 'Clair de Lune',
+    artist: 'Claude Debussy',
+    mood: 'Impressionist moonlight piano masterpiece flowing like water across the 64 squares',
+    baseFreq: 69.30, // Db2
+    type: 'clair_de_lune',
+    tempo: 3600
+  },
+
+  // 6. River Flows in You (Piano - Yiruma)
+  {
+    id: 'piano-riverflows',
+    category: 'piano',
+    name: 'River Flows in You',
+    artist: 'Yiruma',
+    mood: 'Gentle, romantic acoustic piano melody that inspires creative tactics and peaceful focus',
+    baseFreq: 110.00, // A2
+    type: 'river_flows',
+    tempo: 2900
+  },
+
+  // 7. A Walk (Ambient - Tycho)
+  {
+    id: 'ambient-awalk',
+    category: 'ambient',
+    name: 'A Walk',
+    artist: 'Tycho',
+    mood: 'Warm analog synthesizer drifting chords and organic chillwave acoustic plucks',
+    baseFreq: 98.00, // G2
+    type: 'a_walk',
+    tempo: 3200
+  },
+
+  // 8. Moonlight Sonata (Classical - Ludwig van Beethoven)
+  {
+    id: 'classical-moonlight',
+    category: 'classical',
+    name: 'Moonlight Sonata',
+    artist: 'Ludwig van Beethoven',
+    mood: 'Adagio sostenuto in C# minor with hypnotic, solemn triplet arpeggios of deep calculation',
+    baseFreq: 69.30, // C#2
+    type: 'moonlight_sonata',
+    tempo: 3300
+  },
+
+  // 9. Weightless (Ambient - Marconi Union)
+  {
+    id: 'ambient-weightless',
+    category: 'ambient',
+    name: 'Weightless',
+    artist: 'Marconi Union',
+    mood: '60 BPM alpha-wave therapeutic ambient drone designed to lower heart rate and eliminate match anxiety',
+    baseFreq: 77.78, // Eb2
+    type: 'weightless',
+    tempo: 4200
+  },
+
+  // 10. Canon in D (Classical - Johann Pachelbel)
+  {
+    id: 'classical-canond',
+    category: 'classical',
+    name: 'Canon in D',
+    artist: 'Johann Pachelbel',
+    mood: 'Noble, stately baroque cascading harmony celebrating royal chess history',
+    baseFreq: 73.42, // D2
+    type: 'canon_in_d',
+    tempo: 3000
+  },
+
+  // --- DEDICATED INTENSE MATCH ATMOSPHERE ---
   {
     id: 'sig-duel',
     category: 'signature',
@@ -38,234 +152,6 @@ export const TRACK_LIST = [
     baseFreq: 146.83, // D3
     type: 'match_intense',
     tempo: 2200
-  },
-
-  // 1. Login & Title Anthems (5 tracks)
-  {
-    id: 'title-1',
-    category: 'title',
-    name: 'Gate of Champions (Main Title)',
-    mood: 'Majestic grand title screen theme with shimmering crystal bells and deep regal pads',
-    baseFreq: 130.81, // C3
-    scale: [0, 4, 7, 11, 14], // Cmaj9
-    progression: [[0, 4, 7, 11], [5, 9, 12, 16], [7, 11, 14, 18], [0, 4, 7, 11]],
-    type: 'title_anthem',
-    tempo: 3400
-  },
-  {
-    id: 'title-2',
-    category: 'title',
-    name: 'Arena Dawn Login',
-    mood: 'Inspiring morning login screen with warm sweeping harmony and anticipation',
-    baseFreq: 146.83, // D3
-    scale: [0, 4, 7, 9, 14], // Dmaj9
-    progression: [[0, 4, 7], [7, 11, 14], [9, 12, 16], [5, 9, 12]],
-    type: 'title_anthem',
-    tempo: 3200
-  },
-  {
-    id: 'title-3',
-    category: 'title',
-    name: 'Ascension Prelude',
-    mood: 'Classic cascading crystal harp arpeggio prelude over deep sustained sub-bass',
-    baseFreq: 130.81, // C3
-    scale: [0, 4, 7, 11, 12, 16, 19, 23],
-    progression: [[0, 4, 7, 11], [9, 12, 16, 19], [5, 9, 12, 16], [7, 11, 14, 18]],
-    type: 'crystal_prelude',
-    tempo: 2800
-  },
-  {
-    id: 'title-4',
-    category: 'title',
-    name: "The Grandmaster's Sanctum",
-    mood: 'Solemn mystical cathedral title theme celebrating timeless chess mastery',
-    baseFreq: 110.00, // A2
-    scale: [0, 3, 7, 10, 14], // Am9
-    progression: [[0, 3, 7], [5, 8, 12], [8, 12, 15], [7, 11, 14]],
-    type: 'title_anthem',
-    tempo: 3600
-  },
-  {
-    id: 'title-5',
-    category: 'title',
-    name: 'Celestial Gates (Title Theme)',
-    mood: 'Dreamy ethereal gateway theme with heavenly glockenspiel and warm pads',
-    baseFreq: 164.81, // E3
-    scale: [0, 4, 7, 11, 14],
-    progression: [[0, 4, 7, 11], [2, 6, 9, 13], [5, 9, 12, 16], [7, 11, 14, 18]],
-    type: 'crystal_prelude',
-    tempo: 3000
-  },
-
-  // 2. Lobby & Matchmaking Lounge (5 tracks)
-  {
-    id: 'lobby-1',
-    category: 'lobby',
-    name: 'Lobby Velvet Lounge',
-    mood: 'Smooth neo-soul Rhodes electric piano chords for relaxed lobby preparation',
-    baseFreq: 174.61, // F3
-    scale: [0, 4, 7, 11, 14], // Fmaj9
-    progression: [[0, 4, 7, 11], [2, 5, 9, 12], [7, 11, 14, 17], [0, 4, 7, 11]],
-    type: 'lobby_rhodes',
-    tempo: 3300
-  },
-  {
-    id: 'lobby-2',
-    category: 'lobby',
-    name: 'Ranked Queue Chillhop',
-    mood: 'Mellow lo-fi matchmaking groove with warm analog electric piano and bass',
-    baseFreq: 146.83, // D3
-    scale: [0, 3, 7, 10, 14], // Dm9
-    progression: [[0, 3, 7], [10, 14, 17], [5, 8, 12], [0, 3, 7]],
-    type: 'lobby_rhodes',
-    tempo: 3100
-  },
-  {
-    id: 'lobby-3',
-    category: 'lobby',
-    name: 'Waiting Room Groove',
-    mood: 'Hypnotic chill lounge progression with soft vibrato and deep sub-bass glide',
-    baseFreq: 110.00, // A2
-    scale: [0, 3, 7, 10, 14], // Am9
-    progression: [[0, 3, 7, 10], [5, 9, 12, 15], [3, 7, 10, 14], [7, 10, 14, 17]],
-    type: 'lobby_rhodes',
-    tempo: 3200
-  },
-  {
-    id: 'lobby-4',
-    category: 'lobby',
-    name: 'Midnight Strategy Bar',
-    mood: 'Late-night jazz lounge chords for tactical focus and clear mind',
-    baseFreq: 98.00, // G2
-    scale: [0, 3, 7, 10, 14, 17], // Gm11
-    progression: [[0, 3, 7, 10], [5, 8, 12, 15], [8, 12, 15, 19], [7, 10, 14, 17]],
-    type: 'lobby_rhodes',
-    tempo: 3500
-  },
-  {
-    id: 'lobby-5',
-    category: 'lobby',
-    name: 'Coffee & Tactics',
-    mood: 'Cozy morning acoustic warmth with gentle plucked guitar and mellow bass',
-    baseFreq: 130.81, // C3
-    scale: [0, 4, 7, 9, 14], // Cmaj9
-    progression: [[0, 4, 7], [5, 9, 12], [9, 12, 16], [7, 11, 14]],
-    type: 'rpg_pluck',
-    tempo: 3400
-  },
-
-  // 3. Championship Orchestral (5 tracks)
-  {
-    id: 'orch-1',
-    category: 'orchestral',
-    name: 'Crown & Scepter',
-    mood: 'Regal brass fanfare and heraldic symphony for royal tournaments',
-    baseFreq: 110.00, // A2
-    scale: [0, 3, 7, 10, 14],
-    progression: [[0, 3, 7], [5, 9, 12], [8, 12, 15], [7, 11, 14]],
-    type: 'arena_brass',
-    tempo: 3600
-  },
-  {
-    id: 'orch-2',
-    category: 'orchestral',
-    name: 'Immortal Throne',
-    mood: 'Dramatic cinematic battle theme between opposing kings on the 64 squares',
-    baseFreq: 98.00, // G2
-    scale: [0, 3, 7, 8, 10],
-    progression: [[0, 3, 7], [3, 7, 10], [5, 8, 12], [0, 3, 7]],
-    type: 'arena_brass',
-    tempo: 3800
-  },
-  {
-    id: 'orch-3',
-    category: 'orchestral',
-    name: 'Knights of the Round',
-    mood: 'Heroic noble adventure march with driving chordal movement and brass depth',
-    baseFreq: 123.47, // B2
-    scale: [0, 3, 7, 9, 12],
-    progression: [[0, 3, 7], [7, 10, 14], [5, 9, 12], [2, 5, 9]],
-    type: 'arena_brass',
-    tempo: 3500
-  },
-  {
-    id: 'orch-4',
-    category: 'orchestral',
-    name: 'Checkmate Destiny',
-    mood: 'Grand championship finals theme with escalating tension and glory',
-    baseFreq: 146.83, // D3
-    scale: [0, 3, 7, 10, 14],
-    progression: [[0, 3, 7], [8, 12, 15], [10, 14, 17], [5, 8, 12]],
-    type: 'title_anthem',
-    tempo: 3700
-  },
-  {
-    id: 'orch-5',
-    category: 'orchestral',
-    name: 'Halls of Valhalla',
-    mood: 'Thunderous Viking arena anthem with resonant low brass and triumphant peaks',
-    baseFreq: 82.41, // E2
-    scale: [0, 3, 7, 10, 12],
-    progression: [[0, 3, 7], [5, 8, 12], [7, 10, 14], [0, 3, 7]],
-    type: 'arena_brass',
-    tempo: 3900
-  },
-
-  // 4. Cyberpunk & Arcade Login (5 tracks)
-  {
-    id: 'cyber-1',
-    category: 'cyber',
-    name: 'Neon Gateway 2088',
-    mood: 'Iconic 80s analog synth login theme with wide stereo chorus and driving pulse',
-    baseFreq: 110.00, // A2
-    scale: [0, 3, 7, 10, 14],
-    progression: [[0, 3, 7], [8, 12, 15], [5, 8, 12], [7, 10, 14]],
-    type: 'cyber_login',
-    tempo: 3000
-  },
-  {
-    id: 'cyber-2',
-    category: 'cyber',
-    name: 'Arcade Title Select',
-    mood: 'Upbeat coin-op title select theme with catchy 16-bit retro bounce',
-    baseFreq: 146.83, // D3
-    scale: [0, 4, 7, 9, 12],
-    progression: [[0, 4, 7], [7, 11, 14], [9, 12, 16], [5, 9, 12]],
-    type: 'chiptune',
-    tempo: 2500
-  },
-  {
-    id: 'cyber-3',
-    category: 'cyber',
-    name: 'Synthwave Expressway',
-    mood: 'Midnight neon drive synth pads with deep analog bassline glide',
-    baseFreq: 87.31, // F2
-    scale: [0, 7, 10, 14],
-    progression: [[0, 7], [5, 12], [3, 10], [0, 7]],
-    type: 'cyber_login',
-    tempo: 2900
-  },
-  {
-    id: 'cyber-4',
-    category: 'cyber',
-    name: 'Digital Colosseum',
-    mood: 'Retro futuristic cyber battle arena intro with vibrant square wave lead',
-    baseFreq: 98.00, // G2
-    scale: [0, 3, 7, 10, 12],
-    progression: [[0, 3, 7], [3, 7, 10], [5, 8, 12], [2, 5, 8]],
-    type: 'chiptune',
-    tempo: 2700
-  },
-  {
-    id: 'cyber-5',
-    category: 'cyber',
-    name: 'Matrix Reboot',
-    mood: 'Futuristic sci-fi terminal boot screen with zero-gravity stereo sweeps',
-    baseFreq: 82.41, // E2
-    scale: [0, 7, 10, 14, 19],
-    progression: [[0, 7, 10], [5, 12, 15], [3, 10, 14], [0, 7, 10]],
-    type: 'cyber_login',
-    tempo: 3600
   }
 ];
 
@@ -275,7 +161,7 @@ class GameMusicEngine {
     this.masterGain = null;
     this.filterNode = null;
     this.isPlaying = false;
-    this.currentTrackIndex = 0;
+    this.currentTrackIndex = 0; // Default track: 0 (Arena Signature)
     this.volume = 0.30;
     this.currentMode = 'menu'; // 'menu' (soft piano) | 'match' (intense tactical tension)
     this.timer = null;
@@ -284,14 +170,14 @@ class GameMusicEngine {
   }
 
   initCtx() {
-    if (!this.ctx) {
+    if (!this.ctx && typeof window !== 'undefined') {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (AudioCtx) {
         this.ctx = new AudioCtx();
         this.masterGain = this.ctx.createGain();
         this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
 
-        // Warm 24dB/oct lowpass filter for lush, non-fatiguing game sound
+        // Warm 24dB/oct lowpass filter for silky, organic acoustic tones
         this.filterNode = this.ctx.createBiquadFilter();
         this.filterNode.type = 'lowpass';
         this.filterNode.frequency.setValueAtTime(1600, this.ctx.currentTime);
@@ -323,7 +209,6 @@ class GameMusicEngine {
             this.playStep();
           }
         }, newTempo);
-        // Trigger smooth step in the newly selected atmosphere immediately
         this.playStep();
       }
     }
@@ -391,7 +276,7 @@ class GameMusicEngine {
   }
 
   getCurrentTrack() {
-    return TRACK_LIST[this.currentTrackIndex];
+    return TRACK_LIST[this.currentTrackIndex] || TRACK_LIST[0];
   }
 
   getTracksByCategory(cat) {
@@ -399,382 +284,83 @@ class GameMusicEngine {
     return TRACK_LIST.filter(t => t.category === cat);
   }
 
-  // Generate rich, musical game audio step
+  // Master Step Generator
   playStep() {
     if (!this.ctx || !this.isPlaying) return;
     const track = TRACK_LIST[this.currentTrackIndex];
+    if (!track) return;
     const now = this.ctx.currentTime;
     const duration = track.tempo / 1000;
 
-    // Signature adaptive / soft piano / match intense branches
-    if (track.type === 'signature_adaptive') {
-      if (this.currentMode === 'match') {
-        this.playMatchIntenseStep(now, 2.2);
-      } else {
-        this.playSoftPianoStep(now, 3.4);
-      }
-      return;
-    }
-
-    if (track.type === 'soft_piano') {
-      this.playSoftPianoStep(now, duration);
-      return;
-    }
-
-    if (track.type === 'match_intense') {
-      this.playMatchIntenseStep(now, duration);
-      return;
-    }
-
-    // Determine current chord in progression
-    const progression = track.progression || [[0, 4, 7], [5, 9, 12], [7, 11, 14], [0, 4, 7]];
-    const chordIntervals = progression[this.stepIndex % progression.length];
-    this.stepIndex++;
-
-    // Adjust filter per track style
-    if (track.type === 'chiptune') {
-      this.filterNode.frequency.setTargetAtTime(2200, now, 0.1);
-    } else if (track.type === 'arena_brass') {
-      this.filterNode.frequency.setTargetAtTime(950, now, 0.1);
-    } else if (track.type === 'crystal_prelude') {
-      this.filterNode.frequency.setTargetAtTime(2400, now, 0.1);
-    } else if (track.type === 'lobby_rhodes') {
-      this.filterNode.frequency.setTargetAtTime(1150, now, 0.1);
-    } else {
-      this.filterNode.frequency.setTargetAtTime(1450, now, 0.1);
-    }
-
-    if (track.type === 'title_anthem') {
-      // Majestic orchestral title screen anthem with swell & shimmer
-      chordIntervals.forEach((interval, idx) => {
-        const semitoneRatio = Math.pow(2, interval / 12);
-        const freq = track.baseFreq * semitoneRatio;
-
-        const osc1 = this.ctx.createOscillator();
-        const osc2 = this.ctx.createOscillator();
-        const shimmerOsc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-
-        osc1.type = 'sawtooth';
-        osc2.type = 'triangle';
-        shimmerOsc.type = 'sine';
-
-        osc1.frequency.setValueAtTime(freq, now);
-        osc2.frequency.setValueAtTime(freq, now);
-        shimmerOsc.frequency.setValueAtTime(freq * 2, now + 0.1);
-
-        osc1.detune.setValueAtTime((idx % 2 === 0 ? 5 : -5), now);
-        osc2.detune.setValueAtTime((idx % 2 === 0 ? -4 : 4), now);
-
-        const attackTime = 0.55;
-        const releaseTime = duration * 0.95;
-
-        gain.gain.setValueAtTime(0.0001, now);
-        gain.gain.linearRampToValueAtTime(0.18, now + attackTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + releaseTime);
-
-        osc1.connect(gain);
-        osc2.connect(gain);
-        shimmerOsc.connect(gain);
-        gain.connect(this.filterNode);
-
-        osc1.start(now);
-        osc2.start(now);
-        shimmerOsc.start(now + 0.1);
-
-        osc1.stop(now + releaseTime + 0.1);
-        osc2.stop(now + releaseTime + 0.1);
-        shimmerOsc.stop(now + releaseTime + 0.1);
-
-        this.activeNodes.push(osc1, osc2, shimmerOsc);
-      });
-
-      // Majestic sub-bass foundation
-      const bassOsc = this.ctx.createOscillator();
-      const bassGain = this.ctx.createGain();
-      bassOsc.type = 'sine';
-      bassOsc.frequency.setValueAtTime(track.baseFreq * Math.pow(2, chordIntervals[0] / 12) * 0.5, now);
-      bassGain.gain.setValueAtTime(0.0001, now);
-      bassGain.gain.linearRampToValueAtTime(0.28, now + 0.4);
-      bassGain.gain.exponentialRampToValueAtTime(0.0001, now + duration * 0.95);
-
-      bassOsc.connect(bassGain);
-      bassGain.connect(this.filterNode);
-      bassOsc.start(now);
-      bassOsc.stop(now + duration);
-      this.activeNodes.push(bassOsc);
-
-    } else if (track.type === 'lobby_rhodes') {
-      // Warm Rhodes electric piano chords with smooth sine/triangle blend
-      chordIntervals.forEach((interval, idx) => {
-        const strumDelay = idx * 0.04;
-        const semitoneRatio = Math.pow(2, interval / 12);
-        const freq = track.baseFreq * semitoneRatio;
-
-        const osc1 = this.ctx.createOscillator();
-        const osc2 = this.ctx.createOscillator();
-        const tineOsc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-
-        osc1.type = 'sine';
-        osc2.type = 'triangle';
-        tineOsc.type = 'sine'; // Tine bell attack
-
-        osc1.frequency.setValueAtTime(freq, now + strumDelay);
-        osc2.frequency.setValueAtTime(freq, now + strumDelay);
-        tineOsc.frequency.setValueAtTime(freq * 3.01, now + strumDelay);
-
-        osc1.detune.setValueAtTime((idx % 2 === 0 ? 3 : -3), now + strumDelay);
-
-        gain.gain.setValueAtTime(0.0001, now + strumDelay);
-        gain.gain.linearRampToValueAtTime(0.24, now + strumDelay + 0.03); // Fast punchy attack
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + strumDelay + duration * 0.88);
-
-        osc1.connect(gain);
-        osc2.connect(gain);
-        tineOsc.connect(gain);
-        gain.connect(this.filterNode);
-
-        osc1.start(now + strumDelay);
-        osc2.start(now + strumDelay);
-        tineOsc.start(now + strumDelay);
-
-        osc1.stop(now + strumDelay + duration * 0.9);
-        osc2.stop(now + strumDelay + duration * 0.9);
-        tineOsc.stop(now + strumDelay + 0.15); // Fast tine decay
-
-        this.activeNodes.push(osc1, osc2, tineOsc);
-      });
-
-    } else if (track.type === 'crystal_prelude') {
-      // Classic ascending crystal prelude arpeggio (Final Fantasy / Zelda style)
-      chordIntervals.forEach((interval, idx) => {
-        const arpeggioDelay = idx * 0.11;
-        const semitoneRatio = Math.pow(2, interval / 12);
-        const freq = track.baseFreq * semitoneRatio * 2;
-
-        const osc = this.ctx.createOscillator();
-        const bellHarm = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-
-        osc.type = 'sine';
-        bellHarm.type = 'sine';
-
-        osc.frequency.setValueAtTime(freq, now + arpeggioDelay);
-        bellHarm.frequency.setValueAtTime(freq * 2.76, now + arpeggioDelay);
-
-        gain.gain.setValueAtTime(0.0001, now + arpeggioDelay);
-        gain.gain.linearRampToValueAtTime(0.22, now + arpeggioDelay + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + arpeggioDelay + duration * 0.95);
-
-        osc.connect(gain);
-        bellHarm.connect(gain);
-        gain.connect(this.filterNode);
-
-        osc.start(now + arpeggioDelay);
-        bellHarm.start(now + arpeggioDelay);
-        osc.stop(now + arpeggioDelay + duration);
-        bellHarm.stop(now + arpeggioDelay + duration);
-
-        this.activeNodes.push(osc, bellHarm);
-      });
-
-      // Warm background drone
-      const droneOsc = this.ctx.createOscillator();
-      const droneGain = this.ctx.createGain();
-      droneOsc.type = 'triangle';
-      droneOsc.frequency.setValueAtTime(track.baseFreq * Math.pow(2, chordIntervals[0] / 12), now);
-      droneGain.gain.setValueAtTime(0.0001, now);
-      droneGain.gain.linearRampToValueAtTime(0.18, now + 0.4);
-      droneGain.gain.exponentialRampToValueAtTime(0.0001, now + duration * 0.95);
-
-      droneOsc.connect(droneGain);
-      droneGain.connect(this.filterNode);
-      droneOsc.start(now);
-      droneOsc.stop(now + duration);
-      this.activeNodes.push(droneOsc);
-
-    } else if (track.type === 'cyber_login') {
-      // 80s Cyberpunk analog synthwave with dual detuned saw and sub-bass
-      chordIntervals.forEach((interval, idx) => {
-        const semitoneRatio = Math.pow(2, interval / 12);
-        const freq = track.baseFreq * semitoneRatio;
-
-        const osc1 = this.ctx.createOscillator();
-        const osc2 = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-
-        osc1.type = 'sawtooth';
-        osc2.type = 'sawtooth';
-
-        osc1.frequency.setValueAtTime(freq, now);
-        osc2.frequency.setValueAtTime(freq, now);
-
-        osc1.detune.setValueAtTime(7, now);
-        osc2.detune.setValueAtTime(-7, now);
-
-        gain.gain.setValueAtTime(0.0001, now);
-        gain.gain.linearRampToValueAtTime(0.16, now + 0.4);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration * 0.92);
-
-        osc1.connect(gain);
-        osc2.connect(gain);
-        gain.connect(this.filterNode);
-
-        osc1.start(now);
-        osc2.start(now);
-        osc1.stop(now + duration);
-        osc2.stop(now + duration);
-
-        this.activeNodes.push(osc1, osc2);
-      });
-
-      // Punchy analog bass
-      const subOsc = this.ctx.createOscillator();
-      const subGain = this.ctx.createGain();
-      subOsc.type = 'triangle';
-      subOsc.frequency.setValueAtTime(track.baseFreq * Math.pow(2, chordIntervals[0] / 12) * 0.5, now);
-      subGain.gain.setValueAtTime(0.0001, now);
-      subGain.gain.linearRampToValueAtTime(0.26, now + 0.04);
-      subGain.gain.exponentialRampToValueAtTime(0.0001, now + duration * 0.85);
-
-      subOsc.connect(subGain);
-      subGain.connect(this.filterNode);
-      subOsc.start(now);
-      subOsc.stop(now + duration * 0.9);
-      this.activeNodes.push(subOsc);
-
-    } else if (track.type === 'chiptune') {
-      // 8-Bit rapid arpeggio pattern
-      chordIntervals.forEach((interval, i) => {
-        const semitoneRatio = Math.pow(2, interval / 12);
-        const freq = track.baseFreq * semitoneRatio * 2;
-
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-
-        osc.type = i === 0 ? 'triangle' : 'square';
-        osc.frequency.setValueAtTime(freq, now + i * 0.12);
-
-        gain.gain.setValueAtTime(0.0001, now + i * 0.12);
-        gain.gain.linearRampToValueAtTime(0.18, now + i * 0.12 + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.12 + 0.35);
-
-        osc.connect(gain);
-        gain.connect(this.filterNode);
-
-        osc.start(now + i * 0.12);
-        osc.stop(now + i * 0.12 + 0.4);
-
-        this.activeNodes.push(osc);
-      });
-
-      const bassOsc = this.ctx.createOscillator();
-      const bassGain = this.ctx.createGain();
-      bassOsc.type = 'triangle';
-      bassOsc.frequency.setValueAtTime(track.baseFreq * Math.pow(2, chordIntervals[0] / 12), now);
-      bassGain.gain.setValueAtTime(0.0001, now);
-      bassGain.gain.linearRampToValueAtTime(0.24, now + 0.05);
-      bassGain.gain.exponentialRampToValueAtTime(0.0001, now + duration * 0.85);
-
-      bassOsc.connect(bassGain);
-      bassGain.connect(this.filterNode);
-      bassOsc.start(now);
-      bassOsc.stop(now + duration * 0.9);
-      this.activeNodes.push(bassOsc);
-
-    } else if (track.type === 'arena_brass') {
-      // Deep orchestral brass & battle strings
-      chordIntervals.forEach((interval, idx) => {
-        const semitoneRatio = Math.pow(2, interval / 12);
-        const freq = track.baseFreq * semitoneRatio;
-
-        const osc1 = this.ctx.createOscillator();
-        const osc2 = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-
-        osc1.type = 'sawtooth';
-        osc2.type = 'triangle';
-        osc1.frequency.setValueAtTime(freq, now);
-        osc2.frequency.setValueAtTime(freq, now);
-        osc1.detune.setValueAtTime(5, now);
-        osc2.detune.setValueAtTime(-5, now);
-
-        gain.gain.setValueAtTime(0.0001, now);
-        gain.gain.linearRampToValueAtTime(0.17, now + 0.6);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration * 0.9);
-
-        osc1.connect(gain);
-        osc2.connect(gain);
-        gain.connect(this.filterNode);
-
-        osc1.start(now);
-        osc2.start(now);
-        osc1.stop(now + duration);
-        osc2.stop(now + duration);
-
-        this.activeNodes.push(osc1, osc2);
-      });
-
-    } else {
-      // Acoustic Lute / Harp plucked chords
-      chordIntervals.forEach((interval, idx) => {
-        const strumDelay = idx * 0.06;
-        const semitoneRatio = Math.pow(2, interval / 12);
-        const freq = track.baseFreq * semitoneRatio;
-
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(freq, now + strumDelay);
-        osc.detune.setValueAtTime((idx % 2 === 0 ? 3 : -3), now + strumDelay);
-
-        gain.gain.setValueAtTime(0.0001, now + strumDelay);
-        gain.gain.linearRampToValueAtTime(0.22, now + strumDelay + 0.03);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + strumDelay + duration * 0.85);
-
-        osc.connect(gain);
-        gain.connect(this.filterNode);
-
-        osc.start(now + strumDelay);
-        osc.stop(now + strumDelay + duration * 0.9);
-        this.activeNodes.push(osc);
-      });
-    }
-
-    // Clean up finished nodes
-    setTimeout(() => {
-      this.activeNodes = this.activeNodes.filter(n => {
-        try {
-          return n.playbackState !== 3; // Not finished
-        } catch {
-          return false;
+    switch (track.type) {
+      case 'signature_adaptive':
+        if (this.currentMode === 'match') {
+          this.playMatchIntenseStep(now, 2.2);
+        } else {
+          this.playSoftPianoStep(now, 3.4);
         }
-      });
-    }, (duration + 0.2) * 1000);
+        break;
+      case 'nuvole_bianche':
+        this.playNuvoleBiancheStep(now, duration);
+        break;
+      case 'experience':
+        this.playExperienceStep(now, duration);
+        break;
+      case 'gymnopedie':
+        this.playGymnopedieStep(now, duration);
+        break;
+      case 'snowfall':
+        this.playSnowfallStep(now, duration);
+        break;
+      case 'clair_de_lune':
+        this.playClairDeLuneStep(now, duration);
+        break;
+      case 'river_flows':
+        this.playRiverFlowsStep(now, duration);
+        break;
+      case 'a_walk':
+        this.playAWalkStep(now, duration);
+        break;
+      case 'moonlight_sonata':
+        this.playMoonlightSonataStep(now, duration);
+        break;
+      case 'weightless':
+        this.playWeightlessStep(now, duration);
+        break;
+      case 'canon_in_d':
+        this.playCanonInDStep(now, duration);
+        break;
+      case 'match_intense':
+        this.playMatchIntenseStep(now, duration);
+        break;
+      default:
+        this.playSoftPianoStep(now, duration);
+        break;
+    }
   }
 
   // =========================================================================
-  // SIGNATURE SOUND IDENTITY: SOFT GRAND PIANO SYNTHESIS
+  // CORE SYNTHESIZER PRIMITIVES
   // =========================================================================
+
+  // 1. Acoustic Concert Grand Piano Note
   playPianoKey(freq, startTime, duration, velocity = 0.5) {
     if (!this.ctx) return;
 
-    // 1. Piano felt hammer impact transient (short wood strike)
+    // A. Piano felt hammer impact transient (short wood strike)
     const hammerOsc = this.ctx.createOscillator();
     const hammerGain = this.ctx.createGain();
     hammerOsc.type = 'triangle';
     hammerOsc.frequency.setValueAtTime(freq * 3.8, startTime);
     hammerOsc.frequency.exponentialRampToValueAtTime(freq * 0.9, startTime + 0.012);
-    hammerGain.gain.setValueAtTime(0.06 * velocity, startTime);
+    hammerGain.gain.setValueAtTime(0.05 * velocity, startTime);
     hammerGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.016);
     hammerOsc.connect(hammerGain);
     hammerGain.connect(this.filterNode);
     hammerOsc.start(startTime);
     hammerOsc.stop(startTime + 0.02);
 
-    // 2. Multi-string acoustic unison oscillators (Natural piano chorused strings)
+    // B. Multi-string acoustic unison oscillators (Natural piano chorused strings)
     const osc1 = this.ctx.createOscillator(); // Fundamental sine
     const osc2 = this.ctx.createOscillator(); // Warm triangle body
     const osc3 = this.ctx.createOscillator(); // Octave harmonic (warmth)
@@ -792,7 +378,7 @@ class GameMusicEngine {
     osc1.detune.setValueAtTime(-1.6, startTime);
     osc2.detune.setValueAtTime(1.6, startTime);
 
-    // Piano amplitude envelope: 7ms attack -> quick body rebound -> slow soundboard decay
+    // Dynamic envelope: 7ms attack -> quick hammer release -> slow soundboard decay
     const attackTime = 0.007;
     const peakGain = 0.22 * velocity;
     const bodyLevel = peakGain * 0.45;
@@ -819,63 +405,105 @@ class GameMusicEngine {
     this.activeNodes.push(osc1, osc2, osc3, hammerOsc);
   }
 
-  // Generative Soft Grand Piano for App Open, Menus & Study (Gymnopédie / Satie & Chopin Inspired)
+  // 2. Warm Ambient Analog Synthesizer Pad
+  playAmbientPad(freq, startTime, duration, velocity = 0.3) {
+    if (!this.ctx) return;
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const padGain = this.ctx.createGain();
+
+    osc1.type = 'triangle';
+    osc2.type = 'sawtooth';
+    osc1.frequency.setValueAtTime(freq, startTime);
+    osc2.frequency.setValueAtTime(freq, startTime);
+    osc1.detune.setValueAtTime(-4, startTime);
+    osc2.detune.setValueAtTime(4, startTime);
+
+    padGain.gain.setValueAtTime(0.0001, startTime);
+    padGain.gain.linearRampToValueAtTime(0.14 * velocity, startTime + 0.6);
+    padGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration * 0.95);
+
+    osc1.connect(padGain);
+    osc2.connect(padGain);
+    padGain.connect(this.filterNode);
+
+    osc1.start(startTime);
+    osc2.start(startTime);
+    osc1.stop(startTime + duration);
+    osc2.stop(startTime + duration);
+    this.activeNodes.push(osc1, osc2);
+  }
+
+  // 3. Resonant Sub-Bass
+  playSubBass(freq, startTime, duration, velocity = 0.5) {
+    if (!this.ctx) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, startTime);
+
+    gain.gain.setValueAtTime(0.0001, startTime);
+    gain.gain.linearRampToValueAtTime(0.25 * velocity, startTime + 0.2);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration * 0.95);
+
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(startTime);
+    osc.stop(startTime + duration);
+    this.activeNodes.push(osc);
+  }
+
+  // =========================================================================
+  // TRACK 0 & DEFAULT: SIGNATURE SOFT GRAND PIANO
+  // =========================================================================
   playSoftPianoStep(now, duration) {
     if (!this.ctx) return;
-
-    // Warm, silky acoustic low-pass filter (1650Hz)
     this.filterNode.frequency.setTargetAtTime(1650, now, 0.1);
 
     const PIANO_PROGRESSION = [
-      // 0. Cmaj9 (expansive, welcoming, serene)
       {
         bass: 65.41, // C2
-        harmony: [130.81, 196.00, 246.94, 329.63, 293.66], // C3, G3, B3, E4, D4
+        harmony: [130.81, 196.00, 246.94, 329.63, 293.66], // Cmaj9
         melody: [
           { freq: 587.33, delay: 0.45, dur: 1.8, vel: 0.65 }, // D5
           { freq: 493.88, delay: 1.10, dur: 1.6, vel: 0.50 }  // B4
         ]
       },
-      // 1. Em9 (introspective, thoughtful chess calculation)
       {
         bass: 82.41, // E2
-        harmony: [164.81, 246.94, 392.00, 587.33], // E3, B3, G4, D5
+        harmony: [164.81, 246.94, 392.00, 587.33], // Em9
         melody: [
           { freq: 739.99, delay: 0.40, dur: 1.7, vel: 0.65 }, // F#5
           { freq: 659.25, delay: 1.20, dur: 1.8, vel: 0.55 }  // E5
         ]
       },
-      // 2. Fmaj7(#11) (poetic, deep beauty, contemplative wonder)
       {
         bass: 87.31, // F2
-        harmony: [174.61, 261.63, 329.63, 440.00, 493.88], // F3, C4, E4, A4, B4
+        harmony: [174.61, 261.63, 329.63, 440.00, 493.88], // Fmaj7#11
         melody: [
           { freq: 523.25, delay: 0.50, dur: 1.9, vel: 0.60 }, // C5
           { freq: 440.00, delay: 1.30, dur: 1.5, vel: 0.50 }  // A4
         ]
       },
-      // 3. Am9 (solemn intellectual mastery)
       {
         bass: 55.00, // A1
-        harmony: [110.00, 164.81, 261.63, 329.63, 493.88], // A2, E3, C4, E4, B4
+        harmony: [110.00, 164.81, 261.63, 329.63, 493.88], // Am9
         melody: [
           { freq: 659.25, delay: 0.45, dur: 1.8, vel: 0.65 }, // E5
           { freq: 587.33, delay: 1.15, dur: 1.5, vel: 0.55 }  // D5
         ]
       },
-      // 4. Dm9 (soft, delicate emotional depth)
       {
         bass: 73.42, // D2
-        harmony: [146.83, 220.00, 349.23, 523.25], // D3, A3, F4, C5
+        harmony: [146.83, 220.00, 349.23, 523.25], // Dm9
         melody: [
           { freq: 659.25, delay: 0.40, dur: 1.7, vel: 0.60 }, // E5
           { freq: 587.33, delay: 1.20, dur: 1.8, vel: 0.55 }  // D5
         ]
       },
-      // 5. G7sus4 -> G6 (gentle resolution)
       {
         bass: 98.00, // G2
-        harmony: [196.00, 261.63, 293.66, 392.00, 493.88], // G3, C4, D4, G4, B4
+        harmony: [196.00, 261.63, 293.66, 392.00, 493.88], // G7sus4 -> G6
         melody: [
           { freq: 493.88, delay: 0.50, dur: 1.6, vel: 0.60 }, // B4
           { freq: 523.25, delay: 1.25, dur: 1.9, vel: 0.70 }  // C5
@@ -886,84 +514,461 @@ class GameMusicEngine {
     const chord = PIANO_PROGRESSION[this.stepIndex % PIANO_PROGRESSION.length];
     this.stepIndex++;
 
-    // 1. Resonant piano bass note
     this.playPianoKey(chord.bass, now, duration * 0.95, 0.75);
-
-    // 2. Rolled harmony chord with 34ms human strum timing
     chord.harmony.forEach((freq, idx) => {
-      const strumTime = now + 0.04 + (idx * 0.034);
-      this.playPianoKey(freq, strumTime, duration * 0.9, 0.55);
+      this.playPianoKey(freq, now + 0.04 + (idx * 0.034), duration * 0.9, 0.55);
     });
-
-    // 3. Delicate high raindrop melody notes
     if (chord.melody) {
       chord.melody.forEach(({ freq, delay, dur, vel }) => {
         this.playPianoKey(freq, now + delay, dur, vel);
       });
     }
-
-    // Schedule cleanup
-    setTimeout(() => {
-      this.activeNodes = this.activeNodes.filter(n => {
-        try {
-          return n.playbackState !== 3;
-        } catch {
-          return false;
-        }
-      });
-    }, (duration + 0.3) * 1000);
   }
 
   // =========================================================================
-  // SIGNATURE SOUND IDENTITY: INTENSE MATCH BATTLE ATMOSPHERE
+  // TRACK 1: NUVOLE BIANCHE (Ludovico Einaudi)
+  // =========================================================================
+  playNuvoleBiancheStep(now, duration) {
+    if (!this.ctx) return;
+    this.filterNode.frequency.setTargetAtTime(1600, now, 0.1);
+
+    const CHORDS = [
+      // Am - emotional opening
+      {
+        bass: 110.00, // A2
+        harmony: [164.81, 220.00, 261.63, 329.63], // E3, A3, C4, E4
+        melody: [
+          { freq: 523.25, delay: 0.35, dur: 1.6, vel: 0.7 }, // C5
+          { freq: 493.88, delay: 1.05, dur: 1.4, vel: 0.6 }, // B4
+          { freq: 440.00, delay: 1.80, dur: 1.2, vel: 0.5 }  // A4
+        ]
+      },
+      // Fmaj7 - expanding contemplation
+      {
+        bass: 87.31, // F2
+        harmony: [130.81, 174.61, 220.00, 329.63], // C3, F3, A3, E4
+        melody: [
+          { freq: 440.00, delay: 0.40, dur: 1.8, vel: 0.65 }, // A4
+          { freq: 392.00, delay: 1.20, dur: 1.5, vel: 0.55 }  // G4
+        ]
+      },
+      // Cmaj - peaceful clarity
+      {
+        bass: 65.41, // C2
+        harmony: [130.81, 196.00, 261.63, 329.63], // C3, G3, C4, E4
+        melody: [
+          { freq: 523.25, delay: 0.35, dur: 1.6, vel: 0.7 }, // C5
+          { freq: 587.33, delay: 1.10, dur: 1.5, vel: 0.65 } // D5
+        ]
+      },
+      // G6 - noble resolution
+      {
+        bass: 98.00, // G2
+        harmony: [146.83, 196.00, 246.94, 329.63], // D3, G3, B3, E4
+        melody: [
+          { freq: 493.88, delay: 0.40, dur: 1.7, vel: 0.65 }, // B4
+          { freq: 523.25, delay: 1.25, dur: 1.6, vel: 0.60 }  // C5
+        ]
+      }
+    ];
+
+    const c = CHORDS[this.stepIndex % CHORDS.length];
+    this.stepIndex++;
+
+    this.playPianoKey(c.bass, now, duration * 0.95, 0.7);
+    c.harmony.forEach((f, i) => {
+      this.playPianoKey(f, now + 0.05 + (i * 0.038), duration * 0.85, 0.5);
+    });
+    c.melody.forEach(({ freq, delay, dur, vel }) => {
+      this.playPianoKey(freq, now + delay, dur, vel);
+    });
+  }
+
+  // =========================================================================
+  // TRACK 2: EXPERIENCE (Ludovico Einaudi)
+  // =========================================================================
+  playExperienceStep(now, duration) {
+    if (!this.ctx) return;
+    this.filterNode.frequency.setTargetAtTime(1750, now, 0.1);
+
+    const CHORDS = [
+      // Am - ascending driving arpeggios
+      {
+        bass: 110.00,
+        arpeggios: [220.00, 261.63, 329.63, 440.00, 523.25, 659.25] // A3, C4, E4, A4, C5, E5
+      },
+      // F - passionate crescendo
+      {
+        bass: 87.31,
+        arpeggios: [174.61, 220.00, 261.63, 349.23, 440.00, 523.25] // F3, A3, C4, F4, A4, C5
+      },
+      // C - expansive triumph
+      {
+        bass: 65.41,
+        arpeggios: [196.00, 261.63, 329.63, 392.00, 523.25, 659.25] // G3, C4, E4, G4, C5, E5
+      },
+      // Em/G - building anticipation
+      {
+        bass: 98.00,
+        arpeggios: [164.81, 196.00, 246.94, 329.63, 392.00, 493.88] // E3, G3, B3, E4, G4, B4
+      }
+    ];
+
+    const c = CHORDS[this.stepIndex % CHORDS.length];
+    this.stepIndex++;
+
+    this.playPianoKey(c.bass, now, duration * 0.95, 0.8);
+    c.arpeggios.forEach((freq, idx) => {
+      this.playPianoKey(freq, now + 0.08 + (idx * 0.12), duration * 0.75, 0.55);
+    });
+  }
+
+  // =========================================================================
+  // TRACK 3: GYMNOPÉDIE NO. 1 (Erik Satie)
+  // =========================================================================
+  playGymnopedieStep(now, duration) {
+    if (!this.ctx) return;
+    this.filterNode.frequency.setTargetAtTime(1550, now, 0.1);
+
+    const CHORDS = [
+      {
+        bass: 98.00, // G2
+        midChord: [246.94, 293.66, 369.99], // B3, D4, F#4
+        melody: { freq: 440.00, delay: 0.70 } // A4
+      },
+      {
+        bass: 73.42, // D2
+        midChord: [185.00, 220.00, 277.18], // F#3, A3, C#4
+        melody: { freq: 493.88, delay: 0.70 } // B4
+      },
+      {
+        bass: 98.00, // G2
+        midChord: [246.94, 293.66, 369.99],
+        melody: { freq: 392.00, delay: 0.70 } // G4
+      },
+      {
+        bass: 73.42, // D2
+        midChord: [185.00, 220.00, 277.18],
+        melody: { freq: 369.99, delay: 0.70 } // F#4
+      }
+    ];
+
+    const c = CHORDS[this.stepIndex % CHORDS.length];
+    this.stepIndex++;
+
+    // Satie 3/4 waltz timing: bass on beat 1, rolled chord on beat 2, floating melody on beat 3
+    this.playPianoKey(c.bass, now, duration * 0.95, 0.7);
+    c.midChord.forEach((freq, idx) => {
+      this.playPianoKey(freq, now + 0.32 + (idx * 0.03), duration * 0.8, 0.45);
+    });
+    if (c.melody) {
+      this.playPianoKey(c.melody.freq, now + c.melody.delay, duration * 0.7, 0.65);
+    }
+  }
+
+  // =========================================================================
+  // TRACK 4: SNOWFALL (Øneheart)
+  // =========================================================================
+  playSnowfallStep(now, duration) {
+    if (!this.ctx) return;
+    this.filterNode.frequency.setTargetAtTime(1150, now, 0.1);
+
+    const CHORDS = [
+      { sub: 32.70, bass: 65.41, tape: [155.56, 196.00, 233.08, 293.66], chime: 587.33 }, // Cm9
+      { sub: 25.96, bass: 51.91, tape: [155.56, 196.00, 261.63, 311.13], chime: 523.25 }, // Abmaj7
+      { sub: 43.65, bass: 87.31, tape: [130.81, 155.56, 207.65, 392.00], chime: 783.99 }, // Fm9
+      { sub: 29.14, bass: 58.27, tape: [174.61, 233.08, 293.66, 349.23], chime: 698.46 }  // Bb7sus4
+    ];
+
+    const c = CHORDS[this.stepIndex % CHORDS.length];
+    this.stepIndex++;
+
+    this.playSubBass(c.sub, now, duration, 0.6);
+    this.playPianoKey(c.bass, now, duration * 0.9, 0.6);
+    c.tape.forEach((freq, idx) => {
+      this.playPianoKey(freq, now + 0.08 + (idx * 0.04), duration * 0.85, 0.4);
+    });
+    // High tape-delayed chime
+    this.playPianoKey(c.chime, now + 0.6, duration * 0.7, 0.5);
+  }
+
+  // =========================================================================
+  // TRACK 5: CLAIR DE LUNE (Claude Debussy)
+  // =========================================================================
+  playClairDeLuneStep(now, duration) {
+    if (!this.ctx) return;
+    this.filterNode.frequency.setTargetAtTime(1600, now, 0.1);
+
+    const CHORDS = [
+      // Dbmaj9
+      {
+        bass: 69.30,
+        arpeggio: [174.61, 207.65, 261.63, 311.13, 349.23],
+        melody: [{ freq: 698.46, delay: 0.5 }, { freq: 622.25, delay: 1.3 }]
+      },
+      // Gbmaj7
+      {
+        bass: 46.25,
+        arpeggio: [138.59, 185.00, 233.08, 277.18, 349.23],
+        melody: [{ freq: 587.33, delay: 0.5 }, { freq: 523.25, delay: 1.3 }]
+      },
+      // Ebm9
+      {
+        bass: 77.78,
+        arpeggio: [155.56, 185.00, 233.08, 277.18, 349.23],
+        melody: [{ freq: 698.46, delay: 0.6 }]
+      },
+      // Ab7sus4
+      {
+        bass: 51.91,
+        arpeggio: [155.56, 207.65, 261.63, 349.23, 466.16],
+        melody: [{ freq: 466.16, delay: 0.5 }, { freq: 523.25, delay: 1.2 }]
+      }
+    ];
+
+    const c = CHORDS[this.stepIndex % CHORDS.length];
+    this.stepIndex++;
+
+    this.playPianoKey(c.bass, now, duration * 0.95, 0.7);
+    c.arpeggio.forEach((freq, idx) => {
+      this.playPianoKey(freq, now + 0.05 + (idx * 0.038), duration * 0.9, 0.5);
+    });
+    c.melody.forEach(({ freq, delay }) => {
+      this.playPianoKey(freq, now + delay, duration * 0.7, 0.6);
+    });
+  }
+
+  // =========================================================================
+  // TRACK 6: RIVER FLOWS IN YOU (Yiruma)
+  // =========================================================================
+  playRiverFlowsStep(now, duration) {
+    if (!this.ctx) return;
+    this.filterNode.frequency.setTargetAtTime(1700, now, 0.1);
+
+    const CHORDS = [
+      // A Major
+      {
+        bass: 110.00,
+        harmony: [164.81, 220.00, 277.18], // E3, A3, C#4
+        melody: [{ freq: 659.25, delay: 0.35 }, { freq: 739.99, delay: 0.75 }, { freq: 659.25, delay: 1.15 }] // E5, F#5, E5
+      },
+      // E Major
+      {
+        bass: 82.41,
+        harmony: [123.47, 164.81, 207.65], // B2, E3, G#3
+        melody: [{ freq: 587.33, delay: 0.35 }, { freq: 554.37, delay: 0.75 }, { freq: 493.88, delay: 1.15 }] // D5, C#5, B4
+      },
+      // F# Minor
+      {
+        bass: 92.50,
+        harmony: [138.59, 185.00, 220.00], // C#3, F#3, A3
+        melody: [{ freq: 440.00, delay: 0.35 }, { freq: 493.88, delay: 0.75 }, { freq: 554.37, delay: 1.15 }] // A4, B4, C#5
+      },
+      // D Major
+      {
+        bass: 73.42,
+        harmony: [110.00, 146.83, 185.00], // A2, D3, F#3
+        melody: [{ freq: 659.25, delay: 0.35 }, { freq: 587.33, delay: 0.75 }, { freq: 554.37, delay: 1.15 }] // E5, D5, C#5
+      }
+    ];
+
+    const c = CHORDS[this.stepIndex % CHORDS.length];
+    this.stepIndex++;
+
+    this.playPianoKey(c.bass, now, duration * 0.95, 0.7);
+    c.harmony.forEach((freq, idx) => {
+      this.playPianoKey(freq, now + 0.05 + (idx * 0.035), duration * 0.85, 0.5);
+    });
+    c.melody.forEach(({ freq, delay }) => {
+      this.playPianoKey(freq, now + delay, duration * 0.7, 0.65);
+    });
+  }
+
+  // =========================================================================
+  // TRACK 7: A WALK (Tycho)
+  // =========================================================================
+  playAWalkStep(now, duration) {
+    if (!this.ctx) return;
+    this.filterNode.frequency.setTargetAtTime(1100, now, 0.1);
+
+    const CHORDS = [
+      { bass: 98.00, pad: [146.83, 246.94, 369.99], chime: 587.33 }, // Gmaj9
+      { bass: 123.47, pad: [185.00, 293.66, 440.00], chime: 739.99 }, // Bm7
+      { bass: 82.41, pad: [164.81, 246.94, 329.63], chime: 659.25 }, // Em9
+      { bass: 65.41, pad: [130.81, 196.00, 293.66], chime: 523.25 }  // Cadd9
+    ];
+
+    const c = CHORDS[this.stepIndex % CHORDS.length];
+    this.stepIndex++;
+
+    this.playSubBass(c.bass * 0.5, now, duration, 0.6);
+    this.playAmbientPad(c.bass, now, duration, 0.4);
+    c.pad.forEach((freq) => {
+      this.playAmbientPad(freq, now, duration, 0.35);
+    });
+    this.playPianoKey(c.chime, now + 0.4, duration * 0.8, 0.55);
+  }
+
+  // =========================================================================
+  // TRACK 8: MOONLIGHT SONATA (Ludwig van Beethoven)
+  // =========================================================================
+  playMoonlightSonataStep(now, duration) {
+    if (!this.ctx) return;
+    this.filterNode.frequency.setTargetAtTime(1450, now, 0.1);
+
+    const CHORDS = [
+      // C#m
+      {
+        sub: 34.65, bass: 69.30,
+        triplets: [207.65, 277.18, 329.63], // G#3, C#4, E4
+        melody: 415.30 // G#4
+      },
+      // C#m/B
+      {
+        sub: 30.87, bass: 61.74,
+        triplets: [207.65, 246.94, 329.63], // G#3, B3, E4
+        melody: 415.30
+      },
+      // A Major
+      {
+        sub: 27.50, bass: 55.00,
+        triplets: [220.00, 277.18, 329.63], // A3, C#4, E4
+        melody: 440.00 // A4
+      },
+      // G#7
+      {
+        sub: 25.96, bass: 51.91,
+        triplets: [207.65, 261.63, 311.13], // G#3, C4, D#4
+        melody: 415.30
+      }
+    ];
+
+    const c = CHORDS[this.stepIndex % CHORDS.length];
+    this.stepIndex++;
+
+    this.playSubBass(c.sub, now, duration, 0.7);
+    this.playPianoKey(c.bass, now, duration * 0.95, 0.75);
+
+    // Play Beethoven's famous triplet ripples (3 times in each bar)
+    [0, 1, 2].forEach(repeat => {
+      const offset = repeat * (duration / 3.2);
+      c.triplets.forEach((freq, idx) => {
+        this.playPianoKey(freq, now + 0.08 + offset + (idx * 0.08), duration * 0.7, 0.42);
+      });
+    });
+
+    // Solemn sustained dotted melody
+    this.playPianoKey(c.melody, now + 0.65, duration * 0.8, 0.65);
+  }
+
+  // =========================================================================
+  // TRACK 9: WEIGHTLESS (Marconi Union)
+  // =========================================================================
+  playWeightlessStep(now, duration) {
+    if (!this.ctx) return;
+    this.filterNode.frequency.setTargetAtTime(850, now, 0.1);
+
+    const CHORDS = [
+      { root: 38.89, drone: [77.78, 116.54, 155.56], bowl: 528.00 }, // Eb deep relaxation
+      { root: 29.14, drone: [58.27, 87.31, 116.54], bowl: 432.00 },  // Bb calm
+      { root: 32.70, drone: [65.41, 98.00, 130.81], bowl: 528.00 },  // Cm peace
+      { root: 25.96, drone: [51.91, 77.78, 103.83], bowl: 432.00 }   // Ab harmony
+    ];
+
+    const c = CHORDS[this.stepIndex % CHORDS.length];
+    this.stepIndex++;
+
+    // Deep alpha wave sub-harmonic
+    this.playSubBass(c.root, now, duration, 0.7);
+    c.drone.forEach((freq) => {
+      this.playAmbientPad(freq, now, duration, 0.3);
+    });
+
+    // Therapeutic singing bowl sine chime with ultra-smooth 4s decay
+    const bowlOsc = this.ctx.createOscillator();
+    const bowlGain = this.ctx.createGain();
+    bowlOsc.type = 'sine';
+    bowlOsc.frequency.setValueAtTime(c.bowl, now + 0.8);
+    bowlGain.gain.setValueAtTime(0.0001, now + 0.8);
+    bowlGain.gain.linearRampToValueAtTime(0.06, now + 1.2);
+    bowlGain.gain.exponentialRampToValueAtTime(0.0001, now + duration * 0.95);
+    bowlOsc.connect(bowlGain);
+    bowlGain.connect(this.masterGain);
+    bowlOsc.start(now + 0.8);
+    bowlOsc.stop(now + duration);
+    this.activeNodes.push(bowlOsc);
+  }
+
+  // =========================================================================
+  // TRACK 10: CANON IN D (Johann Pachelbel)
+  // =========================================================================
+  playCanonInDStep(now, duration) {
+    if (!this.ctx) return;
+    this.filterNode.frequency.setTargetAtTime(1600, now, 0.1);
+
+    const CHORDS = [
+      { bass: 73.42, arpeggio: [146.83, 220.00, 293.66, 369.99], melody: 587.33 }, // D
+      { bass: 55.00, arpeggio: [110.00, 164.81, 220.00, 277.18], melody: 440.00 }, // A
+      { bass: 61.74, arpeggio: [123.47, 185.00, 246.94, 293.66], melody: 493.88 }, // Bm
+      { bass: 46.25, arpeggio: [92.50, 138.59, 185.00, 220.00], melody: 369.99 },  // F#m
+      { bass: 49.00, arpeggio: [98.00, 146.83, 196.00, 246.94], melody: 392.00 },  // G
+      { bass: 73.42, arpeggio: [146.83, 220.00, 293.66, 369.99], melody: 587.33 }, // D
+      { bass: 49.00, arpeggio: [98.00, 146.83, 196.00, 246.94], melody: 392.00 },  // G
+      { bass: 55.00, arpeggio: [110.00, 164.81, 220.00, 277.18], melody: 440.00 }  // A
+    ];
+
+    const c = CHORDS[this.stepIndex % CHORDS.length];
+    this.stepIndex++;
+
+    this.playPianoKey(c.bass, now, duration * 0.95, 0.75);
+    c.arpeggio.forEach((freq, idx) => {
+      this.playPianoKey(freq, now + 0.06 + (idx * 0.08), duration * 0.8, 0.5);
+    });
+    this.playPianoKey(c.melody, now + 0.45, duration * 0.75, 0.65);
+  }
+
+  // =========================================================================
+  // TRACK 11: THE GRANDMASTER’S DUEL (INTENSE MATCH BATTLE ATMOSPHERE)
   // =========================================================================
   playMatchIntenseStep(now, duration) {
     if (!this.ctx) return;
-
-    // Filter opens to 1950Hz to bring subtle urgency and sharpness
     this.filterNode.frequency.setTargetAtTime(1950, now, 0.1);
 
     const TENSION_PROGRESSION = [
-      // 0. Dm add9 - Deep strategic tension, game begins
       {
         root: 73.42, // D2
         pedal: 36.71, // D1 deep sub
-        harmony: [146.83, 220.00, 349.23, 440.00, 493.88], // D3, A3, F4, A4, B4
+        harmony: [146.83, 220.00, 349.23, 440.00, 493.88], // Dm add9
         tensionChime: 880.00 // A5 high suspended clock chime
       },
-      // 1. Bbmaj7 - Sharp tactical flank & counterattack
       {
         root: 58.27, // Bb1
         pedal: 29.14, // Bb0 deep sub
-        harmony: [116.54, 174.61, 220.00, 293.66, 349.23], // Bb2, F3, A3, D4, F4
+        harmony: [116.54, 174.61, 220.00, 293.66, 349.23], // Bbmaj7
         tensionChime: 932.33 // Bb5
       },
-      // 2. C#dim7 - Pin, critical calculation, maximum tension
       {
         root: 69.30, // C#2
         pedal: 34.65, // C#1
-        harmony: [138.59, 164.81, 196.00, 233.08, 277.18], // C#3, E3, G3, Bb3, C#4
+        harmony: [138.59, 164.81, 196.00, 233.08, 277.18], // C#dim7
         tensionChime: 1108.73 // C#6
       },
-      // 3. Gm6 / E - Time pressure & complications
       {
         root: 82.41, // E2 (inverted)
         pedal: 41.20, // E1
-        harmony: [164.81, 196.00, 246.94, 293.66, 392.00], // E3, G3, B3, D4, G4
+        harmony: [164.81, 196.00, 246.94, 293.66, 392.00], // Gm6 / E
         tensionChime: 783.99 // G5
       },
-      // 4. Dm / A - King under pressure, relentless calculation
       {
         root: 55.00, // A1
         pedal: 55.00,
-        harmony: [110.00, 146.83, 220.00, 349.23, 440.00], // A2, D3, A3, F4, A4
+        harmony: [110.00, 146.83, 220.00, 349.23, 440.00], // Dm / A
         tensionChime: 880.00 // A5
       },
-      // 5. A7(b9) - Decisive endgame crisis / mating net
       {
         root: 55.00, // A1
         pedal: 27.50, // A0
-        harmony: [110.00, 164.81, 220.00, 277.18, 311.13, 392.00], // A2, E3, A3, C#4, Eb4, G4
+        harmony: [110.00, 164.81, 220.00, 277.18, 311.13, 392.00], // A7(b9)
         tensionChime: 1174.66 // D6
       }
     ];
@@ -971,7 +976,7 @@ class GameMusicEngine {
     const chord = TENSION_PROGRESSION[this.stepIndex % TENSION_PROGRESSION.length];
     this.stepIndex++;
 
-    // 1. Deep Bowed Cello / Double-Bass Ostinato (Saw + Triangle with slow swell)
+    // 1. Deep Bowed Cello / Double-Bass Ostinato
     const bassSaw = this.ctx.createOscillator();
     const bassTri = this.ctx.createOscillator();
     const bassGain = this.ctx.createGain();
@@ -988,7 +993,7 @@ class GameMusicEngine {
     bassTri.frequency.setValueAtTime(chord.pedal, now);
 
     bassGain.gain.setValueAtTime(0.001, now);
-    bassGain.gain.linearRampToValueAtTime(0.32, now + 0.35); // Slow bowed cello swell
+    bassGain.gain.linearRampToValueAtTime(0.32, now + 0.35);
     bassGain.gain.exponentialRampToValueAtTime(0.0001, now + duration * 0.95);
 
     bassSaw.connect(bassFilter);
@@ -1017,7 +1022,7 @@ class GameMusicEngine {
     kickOsc.stop(now + 0.1);
     this.activeNodes.push(kickOsc);
 
-    // B. Offbeat second pulse (t = duration * 0.46) - Heartbeat 'lub-dub' + Clock Tick
+    // B. Offbeat second pulse - Heartbeat 'lub-dub' + Clock Tick
     const beatTime = now + (duration * 0.46);
     const subBeatOsc = this.ctx.createOscillator();
     const subBeatGain = this.ctx.createGain();
@@ -1051,7 +1056,7 @@ class GameMusicEngine {
       this.playPianoKey(freq, hitTime, duration * 0.75, 0.48);
     });
 
-    // 4. High Suspended Tension Clock Chime (delicate high bell chime)
+    // 4. High Suspended Tension Clock Chime
     if (chord.tensionChime) {
       const chimeOsc = this.ctx.createOscillator();
       const chimeGain = this.ctx.createGain();
@@ -1066,17 +1071,6 @@ class GameMusicEngine {
       chimeOsc.stop(now + duration * 0.9);
       this.activeNodes.push(chimeOsc);
     }
-
-    // Schedule cleanup
-    setTimeout(() => {
-      this.activeNodes = this.activeNodes.filter(n => {
-        try {
-          return n.playbackState !== 3;
-        } catch {
-          return false;
-        }
-      });
-    }, (duration + 0.3) * 1000);
   }
 }
 

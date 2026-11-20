@@ -4,34 +4,109 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <group
-        android:scaleX="1.3"
-        android:scaleY="1.3"
-        android:translateX="-16"
-        android:translateY="-16">
-        <!-- Chess King Crown -->
-        <path
-            android:fillColor="#F59E0B"
-            android:pathData="M54,22 L54,30 M50,26 L58,26"
-            android:strokeColor="#FFFBEB"
-            android:strokeWidth="2.5" />
-        <path
-            android:fillColor="#F59E0B"
-            android:pathData="M54,30 C50,30 45,34 43,40 C46,40 49,39 51,36 C52,38 53,39 54,39 C55,39 56,38 57,36 C59,39 62,40 65,40 C63,34 58,30 54,30 Z" />
-        <path
-            android:fillColor="#D97706"
-            android:pathData="M54,40 C47,40 42,44 40,52 L68,52 C66,44 61,40 54,40 Z" />
+
+    <!-- Ambient Shadow Under Piece Base -->
+    <path
+        android:fillColor="#55000000"
+        android:pathData="M54,84m-22,0a22,4 0 1,0 44,0a22,4 0 1,0 -44,0" />
+
+    <!-- Group for Centered Royal Golden King Emblem -->
+    <group>
+        <!-- 1. Royal Cross Finial Top (Vertical Stem) -->
         <path
             android:fillColor="#FFFBEB"
-            android:pathData="M54,42 L60,50 L54,58 L48,50 Z" />
+            android:pathData="M52.5,25 L55.5,25 L55.5,33 L52.5,33 Z" />
+        <path
+            android:fillColor="#FDE68A"
+            android:pathData="M54,25 L55.5,25 L55.5,33 L54,33 Z" />
+
+        <!-- Cross Horizontal Arm -->
+        <path
+            android:fillColor="#FFFBEB"
+            android:pathData="M49,27.5 L59,27.5 L59,30.5 L49,30.5 Z" />
+        <path
+            android:fillColor="#F59E0B"
+            android:pathData="M49,29 L59,29 L59,30.5 L49,30.5 Z" />
+
+        <!-- Cross Center Diamond Sparkle -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M54,27.5 L55.5,29 L54,30.5 L52.5,29 Z" />
+
+        <!-- 2. Crown Diadem Upper Arches - Left Specular Highlight -->
+        <path
+            android:fillColor="#FDE68A"
+            android:pathData="M54,33 C49,33 44,36 41,43 C45,43 48,42 50.5,39 C51.5,41 52.8,42 54,42 Z" />
+        <!-- Crown Diadem Upper Arches - Right Rich Shadow -->
+        <path
+            android:fillColor="#D97706"
+            android:pathData="M54,33 C59,33 64,36 67,43 C63,43 60,42 57.5,39 C56.5,41 55.2,42 54,42 Z" />
+
+        <!-- Crown Diadem Center Peak Accent -->
+        <path
+            android:fillColor="#FFFBEB"
+            android:pathData="M54,34 L56,38 L54,41 L52,38 Z" />
+
+        <!-- 3. Main Upper Chest Body - Left Light -->
+        <path
+            android:fillColor="#F59E0B"
+            android:pathData="M54,43 C46,43 40,47 38,55 L54,55 Z" />
+        <!-- Main Upper Chest Body - Right Deep Bronze -->
         <path
             android:fillColor="#B45309"
-            android:pathData="M41,54 L67,54 L68,59 L40,59 Z" />
+            android:pathData="M54,43 C62,43 68,47 70,55 L54,55 Z" />
+
+        <!-- Central Diamond Heart Gem -->
+        <path
+            android:fillColor="#FFFBEB"
+            android:pathData="M54,45 L58.5,50 L54,55 L49.5,50 Z" />
+        <path
+            android:fillColor="#FDE68A"
+            android:pathData="M54,45 L58.5,50 L54,55 Z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M54,47 L56,50 L54,53 L52,50 Z" />
+
+        <!-- 4. Waist Ring Collar -->
+        <path
+            android:fillColor="#FDE68A"
+            android:pathData="M40,56 L54,56 L54,60.5 L40.5,60.5 Z" />
         <path
             android:fillColor="#92400E"
-            android:pathData="M39,60 L69,60 L70,66 L38,66 Z" />
+            android:pathData="M54,56 L68,56 L67.5,60.5 L54,60.5 Z" />
+        <path
+            android:fillColor="#FFFDF0"
+            android:pathData="M40,56 L68,56 L68,57.5 L40,57.5 Z" />
+
+        <!-- 5. Lower Flared Skirt -->
+        <path
+            android:fillColor="#F59E0B"
+            android:pathData="M40.5,61.5 L54,61.5 L54,69.5 L37.5,69.5 Z" />
+        <path
+            android:fillColor="#B45309"
+            android:pathData="M54,61.5 L67.5,61.5 L70.5,69.5 L54,69.5 Z" />
+
+        <!-- 6. Base Pedestal Tier 1 -->
+        <path
+            android:fillColor="#FDE68A"
+            android:pathData="M37,70.5 L54,70.5 L54,76 L36,76 Z" />
+        <path
+            android:fillColor="#92400E"
+            android:pathData="M54,70.5 L71,70.5 L72,76 L54,76 Z" />
+        <path
+            android:fillColor="#FFFBEB"
+            android:pathData="M37,70.5 L71,70.5 L71,72 L37,72 Z" />
+
+        <!-- 7. Base Plinth Tier 2 (Bottom) -->
+        <path
+            android:fillColor="#D97706"
+            android:pathData="M34,77 L54,77 L54,82 L34,82 Z" />
         <path
             android:fillColor="#78350F"
-            android:pathData="M35,67 L73,67 L73,73 L35,73 Z" />
+            android:pathData="M54,77 L74,77 L74,82 L54,82 Z" />
+        <path
+            android:fillColor="#FFFDF0"
+            android:pathData="M34,77 L74,77 L74,78.5 L34,78.5 Z" />
     </group>
+
 </vector>

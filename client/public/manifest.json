@@ -1,6 +1,6 @@
 {
-  "short_name": "Chess Arena",
-  "name": "Chess Arena - Multiplayer Chess & Tactics",
+  "short_name": "Chess with Friends",
+  "name": "Chess with Friends - Multiplayer Chess & Tactics",
   "description": "Premium multiplayer chess gaming platform with live matchmaking, Stockfish 19 AI, puzzles, voice calls, and tournaments.",
   "start_url": "/",
   "scope": "/",
