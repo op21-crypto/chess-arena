@@ -171,12 +171,12 @@ export default function App() {
     settings.musicDuringLessons
   ]);
 
-  // Kill any lingering speech synthesis whenever navigating away from lessons/learn
+  // Cancel any lingering speech synthesis whenever navigating between tabs
   useEffect(() => {
-    if (activeTab !== 'lessons' && activeTab !== 'learn') {
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
         window.speechSynthesis.cancel();
-      }
+      } catch (e) {}
     }
   }, [activeTab]);
 
