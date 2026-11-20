@@ -41,12 +41,12 @@ const DEFAULT_SETTINGS = {
   appTheme: 'dark',
   soundEnabled: true,
   soundOnlyPieceMove: false,
-  musicEnabled: false,
+  musicEnabled: true, // Signature sound identity enabled by default
   musicDuringGame: true,
   musicDuringPuzzles: true,
   musicDuringLessons: true,
-  musicVolume: 0.35,
-  musicTrackIndex: 0,
+  musicVolume: 0.30,
+  musicTrackIndex: 0, // Signature Dynamic Soundscape
   vibrations: true,
   voiceCommentary: false,
   voiceCommentaryOnlyOpponent: true,
@@ -79,9 +79,24 @@ export default function App() {
   const [settings, setSettings] = useState(() => {
     try {
       const saved = safeStorage.getItem('chess_arena_settings');
-      if (saved) return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Signature sound identity initialization: ensure music is enabled for all users
+        const signatureMigrated = safeStorage.getItem('chess_arena_signature_sound_v2');
+        if (!signatureMigrated) {
+          safeStorage.setItem('chess_arena_signature_sound_v2', 'true');
+          parsed.musicEnabled = true;
+          parsed.musicTrackIndex = 0;
+          parsed.musicVolume = parsed.musicVolume || 0.30;
+          safeStorage.setItem('chess_arena_settings', JSON.stringify({ ...DEFAULT_SETTINGS, ...parsed, musicEnabled: true, musicTrackIndex: 0 }));
+          return { ...DEFAULT_SETTINGS, ...parsed, musicEnabled: true, musicTrackIndex: 0 };
+        }
+        return { ...DEFAULT_SETTINGS, ...parsed };
+      } else {
+        safeStorage.setItem('chess_arena_signature_sound_v2', 'true');
+      }
     } catch (e) {}
-    return DEFAULT_SETTINGS;
+    return { ...DEFAULT_SETTINGS, musicEnabled: true };
   });
 
   const handleUpdateSettings = (newSettings) => {
@@ -142,14 +157,52 @@ export default function App() {
   useEffect(() => {
     sound.enabled = settings.soundEnabled;
     musicEngine.setVolume(settings.musicVolume);
-  }, [settings.soundEnabled, settings.musicVolume]);
+    if (settings.musicTrackIndex !== undefined) {
+      musicEngine.currentTrackIndex = settings.musicTrackIndex;
+    }
+  }, [settings.soundEnabled, settings.musicVolume, settings.musicTrackIndex]);
 
-  // Background Music Lifecycle Management across Game, Puzzles, Lessons, Lobby
+  // Auto-unlock Web Audio on user's first touch/click (handling browser autoplay policies)
+  useEffect(() => {
+    const unlockSignatureAudio = () => {
+      musicEngine.initCtx();
+      sound.initContext();
+      if (settings.musicEnabled && !musicEngine.isPlaying) {
+        musicEngine.start();
+      }
+      window.removeEventListener('click', unlockSignatureAudio);
+      window.removeEventListener('touchstart', unlockSignatureAudio);
+      window.removeEventListener('pointerdown', unlockSignatureAudio);
+      window.removeEventListener('keydown', unlockSignatureAudio);
+    };
+
+    window.addEventListener('click', unlockSignatureAudio, { once: true, passive: true });
+    window.addEventListener('touchstart', unlockSignatureAudio, { once: true, passive: true });
+    window.addEventListener('pointerdown', unlockSignatureAudio, { once: true, passive: true });
+    window.addEventListener('keydown', unlockSignatureAudio, { once: true, passive: true });
+
+    // In environments that permit immediate autoplay (such as Android WebView), start right away
+    if (settings.musicEnabled && !musicEngine.isPlaying) {
+      musicEngine.start();
+    }
+
+    return () => {
+      window.removeEventListener('click', unlockSignatureAudio);
+      window.removeEventListener('touchstart', unlockSignatureAudio);
+      window.removeEventListener('pointerdown', unlockSignatureAudio);
+      window.removeEventListener('keydown', unlockSignatureAudio);
+    };
+  }, [settings.musicEnabled]);
+
+  // Signature Sound Atmosphere Lifecycle (Soft Piano in Lobby/Menu vs Intense Tactical Tension in Matches)
   useEffect(() => {
     if (!settings.musicEnabled) {
       musicEngine.stop();
       return;
     }
+
+    const isMatchActive = activeTab === 'game' || activeTab === 'offline' || Boolean(gameSession && !gameSession.isGameOver);
+    musicEngine.setMode(isMatchActive ? 'match' : 'menu');
 
     const shouldPlay =
       (activeTab === 'game' && settings.musicDuringGame) ||
@@ -167,6 +220,7 @@ export default function App() {
     }
   }, [
     activeTab,
+    gameSession?.isGameOver,
     settings.musicEnabled,
     settings.musicDuringGame,
     settings.musicDuringPuzzles,
@@ -222,7 +276,7 @@ export default function App() {
       setChatMessages([]);
       setIsAIGame(false);
       setActiveTab('game');
-      sound.playMove();
+      sound.playMatchStart();
     });
 
     socket.on('room_created', (data) => {
@@ -237,7 +291,7 @@ export default function App() {
         setShowFriendRoomModal(false);
         setShowGameOverModal(false);
         setActiveTab('game');
-        sound.playMove();
+        sound.playMatchStart();
       }
     });
 
@@ -538,6 +592,7 @@ export default function App() {
     setShowAIModal(false);
     setShowGameOverModal(false);
     setActiveTab('game');
+    sound.playMatchStart();
 
     const initialTimeMs = timeMinutes === 0 ? 3600000 : timeMinutes * 60 * 1000;
 

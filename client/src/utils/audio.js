@@ -377,6 +377,62 @@ class ChessAudio {
     } catch (e) {}
   }
 
+  // Signature match start chime: subtle deep wooden tournament gavel + resonant dual harmonic chime (D4 -> A4)
+  playMatchStart() {
+    if (!this.enabled) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+
+      // 1. Warm wood gavel impact
+      const gavelOsc = this.ctx.createOscillator();
+      const gavelGain = this.ctx.createGain();
+      gavelOsc.type = 'triangle';
+      gavelOsc.frequency.setValueAtTime(220, now);
+      gavelOsc.frequency.exponentialRampToValueAtTime(80, now + 0.08);
+      gavelGain.gain.setValueAtTime(0.35, now);
+      gavelGain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+      gavelOsc.connect(gavelGain);
+      gavelGain.connect(this.ctx.destination);
+      gavelOsc.start(now);
+      gavelOsc.stop(now + 0.09);
+
+      // 2. Resonant signature match bells (D4 293.66Hz -> A4 440Hz -> D5 587.33Hz)
+      const chimes = [
+        { freq: 293.66, delay: 0.02, dur: 0.65 },
+        { freq: 440.00, delay: 0.10, dur: 0.85 },
+        { freq: 587.33, delay: 0.18, dur: 1.20 }
+      ];
+
+      chimes.forEach(({ freq, delay, dur }) => {
+        const osc = this.ctx.createOscillator();
+        const harm = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        harm.type = 'triangle';
+
+        osc.frequency.setValueAtTime(freq, now + delay);
+        harm.frequency.setValueAtTime(freq * 2.01, now + delay);
+
+        gain.gain.setValueAtTime(0.001, now + delay);
+        gain.gain.linearRampToValueAtTime(0.22, now + delay + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + dur);
+
+        osc.connect(gain);
+        harm.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now + delay);
+        harm.start(now + delay);
+        osc.stop(now + delay + dur);
+        harm.stop(now + delay + dur);
+      });
+    } catch (e) {}
+  }
+
   playLowTime() {
     if (!this.enabled) return;
     this.initContext();

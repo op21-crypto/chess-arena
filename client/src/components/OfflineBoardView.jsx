@@ -372,7 +372,7 @@ export function OfflineBoardView({ onBack }) {
     setLegalMoves([]);
     setShowRestartConfirm(false);
     setShowGameOverModal(false);
-    if (soundEnabled) sound.playMove();
+    if (soundEnabled) sound.playMatchStart();
   };
 
   // Check square for king in check
