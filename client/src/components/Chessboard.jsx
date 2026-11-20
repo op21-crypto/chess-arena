@@ -15,6 +15,7 @@ export function Chessboard({
   lastMove = null,
   disabled = false,
   // Game Option toggles from Settings
+  highlightSquares = [],
   showLegalMoves = true,
   highlightLastMove = true,
   showCoordinates = true,
@@ -27,7 +28,43 @@ export function Chessboard({
   const [promotionPending, setPromotionPending] = useState(null); // { from, to }
   const [premove, setPremove] = useState(null); // { from, to }
 
-  const chess = new Chess(fen);
+  let chess = null;
+  try {
+    chess = new Chess(fen);
+  } catch (e) {
+    chess = null;
+  }
+
+  // Parse board pieces directly as fallback for incomplete educational FENs
+  const boardPieces = React.useMemo(() => {
+    const pieces = {};
+    if (!fen) return pieces;
+    const boardPart = fen.split(' ')[0];
+    const rows = boardPart.split('/');
+    const filesList = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+    for (let r = 0; r < 8; r++) {
+      const rank = 8 - r;
+      const row = rows[r] || '8';
+      let fIdx = 0;
+      for (const char of row) {
+        if (char >= '1' && char <= '8') {
+          fIdx += parseInt(char, 10);
+        } else {
+          const file = filesList[fIdx];
+          if (file) {
+            const isWhite = char === char.toUpperCase();
+            pieces[`${file}${rank}`] = {
+              type: char.toLowerCase(),
+              color: isWhite ? 'w' : 'b'
+            };
+          }
+          fIdx++;
+        }
+      }
+    }
+    return pieces;
+  }, [fen]);
+
   const theme = BOARD_THEMES[boardTheme] || BOARD_THEMES.cappuccino;
 
   // Determine board orientation
@@ -43,7 +80,7 @@ export function Chessboard({
     setLegalMoves([]);
 
     // Check if queued premove is now valid and playable
-    if (premove && chess.turn() === playerColor) {
+    if (premove && chess && chess.turn() === playerColor) {
       const moves = chess.moves({ square: premove.from, verbose: true });
       const valid = moves.find(m => m.to === premove.to);
       if (valid) {
@@ -60,7 +97,7 @@ export function Chessboard({
 
   // Find King square for check highlight
   let checkSquare = null;
-  if (inCheck && kingInCheckIndicator) {
+  if (inCheck && kingInCheckIndicator && chess) {
     const turn = chess.turn();
     for (let r = 1; r <= 8; r++) {
       for (const f of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']) {
@@ -76,7 +113,7 @@ export function Chessboard({
   }
 
   const handleSquareClick = (square) => {
-    if (disabled || playerColor === 'spectator') return;
+    if (disabled || playerColor === 'spectator' || !chess) return;
 
     const pieceAtSquare = chess.get(square);
     const isPlayerTurn = chess.turn() === playerColor;

@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import { Chess } from 'chess.js';
 import {
   Trophy, Swords, Users, BookOpen, Bot, Shield, Volume2, VolumeX,
-  Palette, User, LogOut, Bell, Flame, Sparkles, ChevronRight
+  Palette, User, LogOut, Bell, Flame, Sparkles, ChevronRight, Settings, Music
 } from 'lucide-react';
 
 import { Chessboard } from './components/Chessboard.jsx';
@@ -23,14 +23,58 @@ import { LeaderboardView } from './components/LeaderboardView.jsx';
 import { AnalysisView } from './components/AnalysisView.jsx';
 import { AdminView } from './components/AdminView.jsx';
 import { GameOverModal } from './components/GameOverModal.jsx';
+import { SettingsModal } from './components/SettingsModal.jsx';
+import { MiniMusicPlayer } from './components/MiniMusicPlayer.jsx';
 import { BOARD_THEMES } from './components/PieceIcons.jsx';
 import { sound } from './utils/audio.js';
+import { musicEngine } from './utils/music.js';
+import { triggerHaptic, speakMove } from './utils/device.js';
+import { getOpeningName } from './utils/openings.js';
+
+const DEFAULT_SETTINGS = {
+  appTheme: 'dark',
+  soundEnabled: true,
+  soundOnlyPieceMove: false,
+  musicEnabled: false,
+  musicDuringGame: true,
+  musicDuringPuzzles: true,
+  musicDuringLessons: true,
+  musicVolume: 0.35,
+  musicTrackIndex: 0,
+  vibrations: true,
+  voiceCommentary: false,
+  voiceCommentaryOnlyOpponent: true,
+  boardTheme: 'cappuccino',
+  pieceTheme: 'alexander',
+  showLegalMoves: true,
+  highlightLastMove: true,
+  showCoordinates: true,
+  kingInCheckIndicator: true,
+  showOpenings: true,
+  allowChat: true,
+  alwaysPromoteToQueen: false,
+  enablePremoves: true
+};
 
 export default function App() {
   // Navigation & View State
   const [activeTab, setActiveTab] = useState('home'); // 'home', 'game', 'puzzles', 'lessons', 'tournaments', 'leaderboard', 'admin'
-  const [boardTheme, setBoardTheme] = useState('emerald');
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [settings, setSettings] = useState(() => {
+    try {
+      const saved = localStorage.getItem('chess_arena_settings');
+      if (saved) return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+    } catch (e) {}
+    return DEFAULT_SETTINGS;
+  });
+
+  const handleUpdateSettings = (newSettings) => {
+    setSettings(newSettings);
+    try {
+      localStorage.setItem('chess_arena_settings', JSON.stringify(newSettings));
+    } catch (e) {}
+  };
+
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   // Authentication State
   const [currentUser, setCurrentUser] = useState(null);
@@ -59,10 +103,37 @@ export default function App() {
   // Socket reference
   const socketRef = useRef(null);
 
-  // Initialize Auth & Socket
+  // Initialize Audio & Music Settings
   useEffect(() => {
-    sound.enabled = soundEnabled;
-  }, [soundEnabled]);
+    sound.enabled = settings.soundEnabled;
+    musicEngine.setVolume(settings.musicVolume);
+  }, [settings.soundEnabled, settings.musicVolume]);
+
+  // Background Music Lifecycle Management across Game, Puzzles, Lessons, Lobby
+  useEffect(() => {
+    if (!settings.musicEnabled) {
+      musicEngine.stop();
+      return;
+    }
+
+    const shouldPlay =
+      (activeTab === 'game' && settings.musicDuringGame) ||
+      (activeTab === 'puzzles' && settings.musicDuringPuzzles) ||
+      (activeTab === 'lessons' && settings.musicDuringLessons) ||
+      activeTab === 'home';
+
+    if (shouldPlay) {
+      musicEngine.start();
+    } else {
+      musicEngine.stop();
+    }
+  }, [
+    activeTab,
+    settings.musicEnabled,
+    settings.musicDuringGame,
+    settings.musicDuringPuzzles,
+    settings.musicDuringLessons
+  ]);
 
   useEffect(() => {
     // 1. Check existing auth token
@@ -132,6 +203,17 @@ export default function App() {
         moveHistory: data.moveHistory,
         turn: new Chess(data.fen).turn()
       } : null);
+
+      // Voice Commentary & Haptics
+      const lastMoveObj = data.moveHistory?.[data.moveHistory.length - 1];
+      if (lastMoveObj) {
+        if (settings.voiceCommentary) {
+          const isOpponentMove = lastMoveObj.color !== playerColor;
+          if (!settings.voiceCommentaryOnlyOpponent || isOpponentMove) {
+            speakMove(lastMoveObj.san);
+          }
+        }
+      }
     });
 
     socket.on('clock_sync', (data) => {
@@ -334,6 +416,9 @@ export default function App() {
 
       if (moveRes) {
         sound.playMove();
+        if (settings.voiceCommentary) {
+          speakMove(moveRes.san);
+        }
         const updatedMoves = [
           ...session.moveHistory,
           {
