@@ -58,7 +58,7 @@ export function LessonView({ onBack }) {
 
   const [unlockAll, setUnlockAll] = useState(() => {
     const saved = safeStorage.getItem('chess_lessons_unlock_all');
-    return saved === null ? true : saved === 'true';
+    return saved === null ? false : saved === 'true';
   });
   const [completedLessons, setCompletedLessons] = useState(() => {
     try {
@@ -578,96 +578,107 @@ export function LessonView({ onBack }) {
 
       {/* "Choose a lesson" Modal Dialog */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fade-in">
-          <div className="bg-[#f0f4f9] rounded-[28px] max-w-md w-full max-h-[88vh] flex flex-col overflow-hidden shadow-2xl border border-slate-200 animate-scale-up">
+        <div 
+          onClick={() => setIsModalOpen(false)}
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-fade-in"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#edf2f7] rounded-[28px] max-w-sm sm:max-w-md w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl border border-slate-300/80 animate-scale-up"
+          >
             {/* Modal Header */}
-            <div className="px-6 pt-5 pb-3 border-b border-slate-200/80 flex items-center justify-between bg-white/70 backdrop-blur-sm">
+            <div className="px-6 pt-5 pb-2 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <GraduationCap className="w-6 h-6 text-sky-800" />
-                <h3 className="text-xl font-bold text-slate-800">Choose a lesson</h3>
+                <GraduationCap className="w-6 h-6 text-[#1e4a73] stroke-[1.8]" />
+                <h3 className="text-[20px] font-semibold text-[#1e4a73] tracking-tight">Choose a lesson</h3>
               </div>
 
-              {/* Progress & Free Mode Toggle */}
+              {/* Progress & Sequential / Free Mode Toggle */}
               <button
                 onClick={() => {
                   const nextVal = !unlockAll;
                   setUnlockAll(nextVal);
                   safeStorage.setItem('chess_lessons_unlock_all', nextVal.toString());
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all ${
                   unlockAll
                     ? 'bg-amber-500/15 border-amber-500/30 text-amber-800'
                     : 'bg-slate-200 border-slate-300 text-slate-600'
                 }`}
-                title={unlockAll ? 'Free mode active: all lessons open' : 'Sequential mode: complete lessons in order'}
+                title={unlockAll ? 'Free mode: all lessons open' : 'Sequential mode: complete lessons in order'}
               >
-                {unlockAll ? <LockOpen className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                {unlockAll ? <LockOpen className="w-3 h-3 text-amber-700" /> : <Lock className="w-3 h-3 text-slate-500" />}
                 <span>{unlockAll ? 'All Open' : 'Sequential'}</span>
               </button>
             </div>
 
             {/* Scrollable Lesson List by Category */}
-            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-6">
-              {LESSON_CATEGORIES.map((cat, catIdx) => (
-                <div key={catIdx} className="space-y-2">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 px-1">
-                    {cat.name}
-                  </h4>
+            <div className="flex-1 overflow-y-auto px-5 py-2 space-y-4">
+              {LESSON_CATEGORIES.map((cat, catIdx) => {
+                const isEmerald = catIdx < 2 || cat.color === 'emerald';
+                const bottomBorderClass = isEmerald ? 'border-b-[3.5px] border-[#22c55e]' : 'border-b-[3.5px] border-[#f59e0b]';
 
-                  <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 divide-y divide-slate-100 overflow-hidden">
-                    {cat.lessons.map((lesson) => {
-                      const isUnlocked = unlockAll || completedLessons.has(lesson.num) || lesson.num === 1;
-                      const isCompleted = completedLessons.has(lesson.num);
-                      const isCurrent = lesson.num === currentLesson.num;
+                return (
+                  <div key={catIdx} className="space-y-2">
+                    <h4 className="text-[15px] font-semibold text-[#1e4a73] px-1 pt-1">
+                      {cat.name}
+                    </h4>
 
-                      return (
-                        <button
-                          key={lesson.num}
-                          disabled={!isUnlocked}
-                          onClick={() => handleSelectLesson(lesson.num)}
-                          className={`w-full px-4 py-3 flex items-center justify-between transition-colors text-left ${
-                            isCurrent
-                              ? 'bg-sky-50 text-sky-900 font-semibold'
-                              : isUnlocked
-                              ? 'hover:bg-slate-50 text-slate-700'
-                              : 'opacity-40 cursor-not-allowed bg-slate-50/50'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="w-6 text-xs font-bold text-slate-400">
-                              {lesson.num}.
+                    <div className="space-y-2.5">
+                      {cat.lessons.map((lesson) => {
+                        const isUnlocked = unlockAll || completedLessons.has(lesson.num) || lesson.num === 1;
+                        const isCompleted = completedLessons.has(lesson.num);
+                        const isCurrent = lesson.num === currentLesson.num;
+
+                        return (
+                          <button
+                            key={lesson.num}
+                            disabled={!isUnlocked}
+                            onClick={() => handleSelectLesson(lesson.num)}
+                            className={`w-full bg-white rounded-xl shadow-[0_2px_6px_rgba(0,0,0,0.06)] hover:shadow-md px-4 py-3 flex items-center transition-all text-left active:scale-[0.99] cursor-pointer select-none ${bottomBorderClass} ${
+                              isCurrent
+                                ? 'ring-2 ring-sky-500/40 bg-sky-50/50'
+                                : isUnlocked
+                                ? 'hover:bg-slate-50'
+                                : 'opacity-70 bg-slate-50/60 cursor-not-allowed'
+                            }`}
+                          >
+                            {/* Lock / Unlocked Status Icon */}
+                            {!isUnlocked ? (
+                              <Lock className="w-[18px] h-[18px] text-slate-400 stroke-[1.8] mr-3 shrink-0" />
+                            ) : isCompleted ? (
+                              <span className="w-[18px] mr-3 shrink-0 flex items-center justify-center">
+                                <CheckCircle2 className="w-4 h-4 text-emerald-500 stroke-[2.2]" />
+                              </span>
+                            ) : (
+                              <span className="w-[18px] mr-3 shrink-0" />
+                            )}
+
+                            {/* Lesson Number */}
+                            <span className="text-[#1d6394] font-bold text-base w-7 shrink-0">
+                              {lesson.num}
                             </span>
-                            <span className="text-sm font-medium">
+
+                            {/* Lesson Title */}
+                            <span className="text-slate-800 font-medium text-[15px] leading-tight truncate">
                               {lesson.title}
                             </span>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            {isCompleted && (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                            )}
-                            {!isUnlocked && (
-                              <Lock className="w-4 h-4 text-slate-400" />
-                            )}
-                          </div>
-                        </button>
-                      );
-                    })}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 bg-white/70 border-t border-slate-200 flex items-center justify-between">
-              <span className="text-xs text-slate-500">
-                {completedLessons.size} of 64 completed
-              </span>
+            <div className="px-6 py-3.5 flex items-center justify-end bg-transparent">
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="px-5 py-2 bg-sky-700 hover:bg-sky-800 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors"
+                className="text-[#1e4a73] font-semibold text-sm hover:text-sky-950 transition-colors cursor-pointer"
               >
-                Close
+                Cancel
               </button>
             </div>
           </div>

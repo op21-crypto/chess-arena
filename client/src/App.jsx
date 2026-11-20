@@ -144,7 +144,7 @@ export default function App() {
     const shouldPlay =
       (activeTab === 'game' && settings.musicDuringGame) ||
       (activeTab === 'puzzles' && settings.musicDuringPuzzles) ||
-      (activeTab === 'lessons' && settings.musicDuringLessons) ||
+      ((activeTab === 'lessons' || activeTab === 'learn') && settings.musicDuringLessons) ||
       activeTab === 'home' ||
       activeTab === 'play' ||
       activeTab === 'profile';
@@ -1618,7 +1618,7 @@ export default function App() {
         )}
 
         {/* Lessons Tab */}
-        {activeTab === 'lessons' && (
+        {(activeTab === 'lessons' || activeTab === 'learn') && (
           <LessonView onBack={() => setActiveTab('home')} />
         )}
 
