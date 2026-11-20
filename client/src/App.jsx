@@ -524,11 +524,11 @@ export default function App() {
     }
 
     const botRoster = [
-      { name: 'Apprentice Bot', elo: 800 },
-      { name: 'Club Amateur', elo: 1200 },
-      { name: 'Tournament Vet', elo: 1600 },
-      { name: 'Master Bot', elo: 2000 },
-      { name: 'Stockfish 19 NNUE', elo: 2500 }
+      { name: 'Beginner', elo: 800 },
+      { name: 'Casual', elo: 1200 },
+      { name: 'Master', elo: 1600 },
+      { name: 'FIDE Master', elo: 2000 },
+      { name: 'Grandmaster', elo: 2500 }
     ];
     const bot = botRoster[level - 1] || { name: `Stockfish Level ${level}`, elo: 800 + level * 350 };
 
