@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Trophy, Globe, User, Shield, Flame, Sparkles, ChevronRight, Zap, Clock, Rocket } from 'lucide-react';
+import { Trophy, Globe, User, Shield, Flame, Sparkles, ChevronRight, Zap, Clock, Rocket, Award, Medal } from 'lucide-react';
 import {
   COUNTRY_NAMES,
   COUNTRY_FLAGS,
   getLeaderboard,
   calculateUserRanking
 } from '../data/leaderboardData.js';
+import { sound } from '../utils/audio.js';
+import { triggerHaptic } from '../utils/device.js';
 
 const AVAILABLE_COUNTRIES = [
   { code: 'world', label: 'Global', flag: '🌐' },
@@ -144,68 +146,84 @@ export function LeaderboardView({ currentUser, onBack }) {
         </div>
       </div>
 
-      {/* Android Segmented Control: Time Controls (Rapid, Blitz, Bullet, Classic) */}
-      <div className="grid grid-cols-4 gap-1 p-1 bg-slate-200/80 dark:bg-slate-900 rounded-2xl border border-slate-300/50 dark:border-slate-800 shadow-xs">
+      {/* Time Controls Segmented Control: Bullet, Blitz, Rapid, Classical */}
+      <div className="grid grid-cols-4 gap-1.5 p-1.5 bg-slate-900/90 rounded-2xl border border-slate-800 shadow-md">
         {FORMAT_CONFIG.map((fmt) => {
           const Icon = fmt.icon;
           const isActive = format === fmt.id;
           return (
             <button
               key={fmt.id}
-              onClick={() => setFormat(fmt.id)}
-              className={`py-1.5 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all ${
+              onClick={() => {
+                sound.playClick();
+                triggerHaptic('move');
+                setFormat(fmt.id);
+              }}
+              className={`py-2 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 ${
                 isActive
-                  ? 'bg-amber-500 text-slate-950 shadow-sm shadow-amber-500/30 font-black'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 text-slate-950 font-black shadow-md shadow-amber-500/30'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
               }`}
             >
-              <Icon className="w-3 h-3" />
-              <span>{fmt.label}</span>
+              <Icon className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{fmt.label}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Android Horizontal Scroll Region Chips */}
-      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+      {/* Horizontal Scroll Region Chips */}
+      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
         {AVAILABLE_COUNTRIES.map((c) => {
           const isSelected = selectedCountry === c.code;
           return (
             <button
               key={c.code}
-              onClick={() => setSelectedCountry(c.code)}
-              className={`py-1 px-2.5 rounded-full text-xs font-bold whitespace-nowrap flex items-center gap-1 shrink-0 transition-all ${
+              onClick={() => {
+                sound.playClick();
+                triggerHaptic('move');
+                setSelectedCountry(c.code);
+              }}
+              className={`py-1.5 px-3 rounded-xl text-xs font-bold whitespace-nowrap flex items-center gap-1.5 shrink-0 transition-all cursor-pointer active:scale-95 ${
                 isSelected
-                  ? 'bg-amber-500 text-slate-950 shadow-xs font-black'
-                  : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800'
+                  ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/25 border border-amber-400'
+                  : 'bg-slate-900/90 text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-800'
               }`}
             >
-              <span className="text-xs">{c.flag}</span>
+              <span className="text-sm">{c.flag}</span>
               <span>{c.label}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Android 2-Way Tab Switch: Leaders vs My Rank */}
-      <div className="grid grid-cols-2 gap-1 p-1 bg-slate-200/70 dark:bg-slate-900/80 rounded-xl border border-slate-300/40 dark:border-slate-800">
+      {/* 2-Way Tab Switch: Top Leaders vs My Ranking */}
+      <div className="grid grid-cols-2 gap-1.5 p-1.5 bg-slate-900/90 rounded-2xl border border-slate-800 shadow-md">
         <button
-          onClick={() => setViewFilter('leaders')}
-          className={`py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+          onClick={() => {
+            sound.playClick();
+            triggerHaptic('move');
+            setViewFilter('leaders');
+          }}
+          className={`py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 ${
             viewFilter === 'leaders'
-              ? 'bg-white dark:bg-slate-800 text-amber-500 shadow-xs font-black'
-              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+              ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-md shadow-amber-500/30'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
           }`}
         >
           <Trophy className="w-3.5 h-3.5" />
-          <span>Top Leaders</span>
+          <span>Top Leaders (50)</span>
         </button>
         <button
-          onClick={() => setViewFilter('my_rank')}
-          className={`py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+          onClick={() => {
+            sound.playClick();
+            triggerHaptic('move');
+            setViewFilter('my_rank');
+          }}
+          className={`py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 ${
             viewFilter === 'my_rank'
-              ? 'bg-white dark:bg-slate-800 text-amber-500 shadow-xs font-black'
-              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+              ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-md shadow-amber-500/30'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
           }`}
         >
           <User className="w-3.5 h-3.5" />

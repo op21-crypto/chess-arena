@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import confetti from 'canvas-confetti';
 import { Chessboard } from './Chessboard.jsx';
-import { OwlMascot } from './OwlMascot.jsx';
+import { MentorAvatar } from './MentorAvatar.jsx';
 import {
   GraduationCap,
   List,
@@ -11,7 +11,6 @@ import {
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
-  Lock,
   LockOpen,
   CheckCircle2,
   Sparkles,
@@ -24,10 +23,7 @@ import {
   ChevronDown,
   ChevronUp,
   Trophy,
-  Star,
-  Award,
   Flame,
-  Zap,
   Compass
 } from 'lucide-react';
 import { ALL_LESSONS, LESSON_CATEGORIES, getPracticeDrills } from '../data/lessonsData.js';
@@ -64,10 +60,10 @@ export function LessonView({ onBack }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expandedCategoryIdx, setExpandedCategoryIdx] = useState(0);
 
-  // Audio toggles (Voice defaults to false to avoid unwanted automatic speech)
+  // Voice narration enabled by default so the AI mentor speaks
   const [voiceEnabled, setVoiceEnabled] = useState(() => {
     const saved = safeStorage.getItem('chess_lesson_voice');
-    return saved === 'true';
+    return saved === null ? true : saved === 'true';
   });
   const [musicEnabled, setMusicEnabled] = useState(() => {
     const saved = safeStorage.getItem('chess_lesson_music');
@@ -82,9 +78,6 @@ export function LessonView({ onBack }) {
   const [errorSquares, setErrorSquares] = useState([]);
   const [practiceFeedback, setPracticeFeedback] = useState(null);
   const [practiceComplete, setPracticeComplete] = useState(false);
-
-  // All lessons are 100% unlocked by default
-  const [unlockAll, setUnlockAll] = useState(true);
 
   const [completedLessons, setCompletedLessons] = useState(() => {
     try {
@@ -114,12 +107,13 @@ export function LessonView({ onBack }) {
 
   const currentPractice = practiceDrills[practiceStepIdx] || practiceDrills[0];
 
-  // Silence speech synthesis immediately upon entering or leaving the component
+  // Pre-load voices on component mount
   useEffect(() => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      try {
-        window.speechSynthesis.cancel();
-      } catch (e) {}
+      window.speechSynthesis.getVoices();
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+      };
     }
     return () => {
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -140,42 +134,91 @@ export function LessonView({ onBack }) {
     safeStorage.setItem('chess_completed_lessons', JSON.stringify([...completedLessons]));
   }, [completedLessons]);
 
-  // Text-To-Speech Narrator for Owl
+  // Robust Text-To-Speech Narrator for Anime Mentor
   const speakText = (text) => {
-    if (!voiceEnabled || !text || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    if (!text || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    if (!voiceEnabled) return;
+
     try {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1.0;
-      utterance.pitch = 1.1;
 
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
+      setTimeout(() => {
+        try {
+          const cleanText = text.replace(/[*#_~`]/g, '').trim();
+          const utterance = new SpeechSynthesisUtterance(cleanText);
+          utterance.lang = 'en-US';
+          utterance.rate = 1.0;
+          utterance.pitch = 1.05;
 
-      window.speechSynthesis.speak(utterance);
+          const voices = window.speechSynthesis.getVoices();
+          if (voices && voices.length > 0) {
+            const naturalVoice = voices.find(v => (v.lang.startsWith('en') || v.lang.includes('US')) && v.name.includes('Google'))
+              || voices.find(v => v.lang.startsWith('en'))
+              || voices[0];
+            if (naturalVoice) utterance.voice = naturalVoice;
+          }
+
+          utterance.onstart = () => setIsSpeaking(true);
+          utterance.onend = () => setIsSpeaking(false);
+          utterance.onerror = () => setIsSpeaking(false);
+
+          window.speechSynthesis.speak(utterance);
+        } catch (err) {
+          setIsSpeaking(false);
+        }
+      }, 50);
     } catch (e) {
       setIsSpeaking(false);
     }
   };
 
+  // Explicit user-triggered voice speaking
   const speakExplicitly = (text) => {
     if (!text || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     try {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1.0;
-      utterance.pitch = 1.1;
+      if (!voiceEnabled) {
+        setVoiceEnabled(true);
+        safeStorage.setItem('chess_lesson_voice', 'true');
+      }
 
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
+      setTimeout(() => {
+        try {
+          const cleanText = text.replace(/[*#_~`]/g, '').trim();
+          const utterance = new SpeechSynthesisUtterance(cleanText);
+          utterance.lang = 'en-US';
+          utterance.rate = 1.0;
+          utterance.pitch = 1.05;
 
-      window.speechSynthesis.speak(utterance);
+          const voices = window.speechSynthesis.getVoices();
+          if (voices && voices.length > 0) {
+            const naturalVoice = voices.find(v => (v.lang.startsWith('en') || v.lang.includes('US')) && v.name.includes('Google'))
+              || voices.find(v => v.lang.startsWith('en'))
+              || voices[0];
+            if (naturalVoice) utterance.voice = naturalVoice;
+          }
+
+          utterance.onstart = () => setIsSpeaking(true);
+          utterance.onend = () => setIsSpeaking(false);
+          utterance.onerror = () => setIsSpeaking(false);
+
+          window.speechSynthesis.speak(utterance);
+        } catch (err) {
+          setIsSpeaking(false);
+        }
+      }, 50);
     } catch (e) {
       setIsSpeaking(false);
     }
   };
+
+  // Automatically speak when advancing steps in Lesson Guide mode
+  useEffect(() => {
+    if (isLessonStarted && activeMode === 'lesson' && voiceEnabled && currentStep) {
+      const textToSpeak = currentStep.speech || currentStep.content || currentLesson.title;
+      speakText(textToSpeak);
+    }
+  }, [isLessonStarted, activeMode, currentStepIdx, selectedLessonIdx, voiceEnabled]);
 
   // Toggle Voice Narration ON/OFF
   const toggleVoice = () => {
@@ -214,6 +257,22 @@ export function LessonView({ onBack }) {
     } else {
       musicEngine.stop();
       setIsMusicPlaying(false);
+    }
+  };
+
+  const handleManualSpeak = () => {
+    sound.playClick();
+    triggerHaptic('move');
+    if (isSpeaking) {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      setIsSpeaking(false);
+    } else {
+      const textToSpeak = activeMode === 'lesson'
+        ? (currentStep?.speech || currentStep?.content || currentLesson.title)
+        : (practiceFeedback || currentPractice?.prompt || 'Your turn!');
+      speakExplicitly(textToSpeak);
     }
   };
 
@@ -363,19 +422,19 @@ export function LessonView({ onBack }) {
   // Dynamic Encouragement Quote based on user progress
   const dynamicEncouragement = useMemo(() => {
     if (completedCount === 0) {
-      return "🌱 Every Grandmaster began with a single move. Tap any lesson below to begin your path!";
+      return "🌱 Every Grandmaster began with a single move. Tap any lesson below to start!";
     } else if (completedCount <= 5) {
-      return "🔥 Brilliant start! You are building the muscle memory and tactical fundamentals of a champion.";
+      return "🔥 Brilliant start! You are building muscle memory and tactical fundamentals.";
     } else if (completedCount <= 15) {
-      return "⚔️ Tactical vision sharpening! You're mastering critical piece dynamics and board control.";
+      return "⚔️ Tactical vision sharpening! You're mastering critical piece dynamics.";
     } else if (completedCount <= 30) {
-      return "⚡ Impressive momentum! Core strategic patterns and mating nets are becoming second nature.";
+      return "⚡ Impressive momentum! Core strategic patterns are becoming second nature.";
     } else if (completedCount <= 50) {
-      return "🛡️ Advanced mastery in progress! You are calculating complex multi-step lines with ease.";
+      return "🛡️ Advanced mastery in progress! You calculate complex lines with ease.";
     } else if (completedCount < 64) {
-      return "💎 Elite Grandmaster tier within reach! Finish the remaining drills and conquer the board!";
+      return "💎 Elite Grandmaster tier within reach! Finish the remaining drills and conquer!";
     } else {
-      return "👑 Academy Graduate! You have mastered the entire 64-lesson grandmaster curriculum!";
+      return "👑 Academy Graduate! You have mastered the complete 64-lesson curriculum!";
     }
   }, [completedCount]);
 
@@ -391,11 +450,12 @@ export function LessonView({ onBack }) {
 
   // =========================================================================
   // VIEW 1: LESSON OVERVIEW & ACADEMY HUB (!isLessonStarted)
+  // Clean, uncluttered, luxury academic aesthetic
   // =========================================================================
   if (!isLessonStarted) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-950 via-[#070b14] to-slate-950 text-slate-100 flex flex-col justify-between selection:bg-emerald-500/30 pb-20 md:pb-8 animate-fade-in">
-        {/* Top Header */}
+        {/* Streamlined Top Header */}
         <header className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/80 px-4 py-3 shadow-lg">
           <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
             {/* Back Button to Home */}
@@ -416,20 +476,15 @@ export function LessonView({ onBack }) {
 
             {/* Academy Title with Emerald & Gold Accent */}
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-md shadow-emerald-500/10">
-                <GraduationCap className="w-5 h-5" />
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-md shadow-emerald-500/10">
+                <GraduationCap className="w-4 h-4" />
               </div>
-              <div>
-                <h1 className="text-base sm:text-lg font-black text-white leading-tight flex items-center gap-1.5">
-                  <span>Chess Academy</span>
-                  <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase tracking-wider">
-                    PRO
-                  </span>
-                </h1>
-                <p className="text-[11px] text-slate-400 font-medium">
-                  64 Interactive Master Lessons • FIDE Curriculum
-                </p>
-              </div>
+              <h1 className="text-base sm:text-lg font-black text-white leading-tight flex items-center gap-1.5">
+                <span>Chess Academy</span>
+                <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase tracking-wider">
+                  PRO
+                </span>
+              </h1>
             </div>
 
             {/* Quick Actions (Browse All, Voice Toggle, Music) */}
@@ -451,9 +506,9 @@ export function LessonView({ onBack }) {
                 className={`p-2 rounded-xl transition-all cursor-pointer active:scale-95 ${
                   voiceEnabled
                     ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/25 ring-2 ring-emerald-400/40'
-                    : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                    : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
                 }`}
-                title={voiceEnabled ? 'Voice Narration: ON (Tap to mute)' : 'Voice Narration: OFF (Tap to enable)'}
+                title={voiceEnabled ? 'Sensei Voice: ON' : 'Sensei Voice: OFF'}
               >
                 {voiceEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
               </button>
@@ -463,7 +518,7 @@ export function LessonView({ onBack }) {
                 className={`p-2 rounded-xl transition-all cursor-pointer active:scale-95 ${
                   musicEnabled
                     ? 'bg-amber-400 text-slate-950 font-bold shadow-md shadow-amber-400/25 ring-2 ring-amber-300/40'
-                    : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                    : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
                 }`}
                 title={musicEnabled ? 'Ambient Music: ON' : 'Ambient Music: OFF'}
               >
@@ -475,27 +530,18 @@ export function LessonView({ onBack }) {
 
         {/* Academy Hub Main Body */}
         <main className="flex-1 max-w-2xl w-full mx-auto px-3.5 py-4 space-y-4">
-          {/* REAL LIVE PROGRESS TRACKER CARD (Emerald + 24K Gold Couple Combination) */}
+          {/* Streamlined Live Progress Tracker Card */}
           <div className="bg-gradient-to-br from-slate-900/90 via-slate-900/75 to-slate-950/90 border border-slate-800/80 rounded-3xl p-4 sm:p-5 shadow-2xl backdrop-blur-xl space-y-3.5 relative overflow-hidden">
-            {/* Ambient Background Bloom */}
-            <div className="absolute -top-12 -right-12 w-40 h-40 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
-            <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
-
-            {/* Header: Title & Academic Rank Badge */}
             <div className="flex items-center justify-between gap-2 relative z-10">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-slate-950 font-black shadow-md shadow-emerald-500/20">
                   <Trophy className="w-4 h-4 text-slate-950" />
                 </div>
-                <div>
-                  <h2 className="text-xs sm:text-sm font-black text-white uppercase tracking-wider">
-                    Academic Mastery Tracker
-                  </h2>
-                  <span className="text-[10px] text-slate-400 font-medium">Real-Time Progression</span>
-                </div>
+                <h2 className="text-xs sm:text-sm font-black text-white uppercase tracking-wider">
+                  Academic Mastery Tracker
+                </h2>
               </div>
 
-              {/* Dynamic Rank Badge */}
               <div className="px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[11px] font-extrabold text-emerald-400 flex items-center gap-1 shadow-xs">
                 <span>{academicTier.badge}</span>
               </div>
@@ -513,8 +559,7 @@ export function LessonView({ onBack }) {
                 </span>
               </div>
 
-              {/* Glowing Dual Gradient Track */}
-              <div className="w-full h-3 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-800">
+              <div className="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-800">
                 <div
                   className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-400 rounded-full transition-all duration-700 shadow-lg shadow-emerald-500/30"
                   style={{ width: `${Math.max(4, progressPercent)}%` }}
@@ -522,10 +567,10 @@ export function LessonView({ onBack }) {
               </div>
             </div>
 
-            {/* Metrics Strip: Completed, XP, Mastery */}
-            <div className="grid grid-cols-3 gap-2 pt-1 text-center relative z-10">
+            {/* Metrics Strip: Completed & XP */}
+            <div className="grid grid-cols-2 gap-2 pt-1 text-center relative z-10">
               <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-2">
-                <span className="text-[10px] text-slate-400 font-bold uppercase block">Lessons</span>
+                <span className="text-[10px] text-slate-400 font-bold uppercase block">Lessons Done</span>
                 <span className="text-sm sm:text-base font-black font-mono text-emerald-400">
                   {completedCount}<span className="text-xs text-slate-500 font-medium">/64</span>
                 </span>
@@ -536,19 +581,12 @@ export function LessonView({ onBack }) {
                   {completedCount * 50}
                 </span>
               </div>
-              <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-2">
-                <span className="text-[10px] text-slate-400 font-bold uppercase block">Status</span>
-                <span className="text-xs sm:text-sm font-extrabold text-white flex items-center justify-center gap-1 mt-0.5">
-                  <LockOpen className="w-3 h-3 text-emerald-400" />
-                  <span>All Open</span>
-                </span>
-              </div>
             </div>
 
-            {/* REAL-TIME ENCOURAGEMENT BANNER */}
-            <div className="pt-1 relative z-10">
+            {/* Encouragement Banner */}
+            <div className="pt-0.5 relative z-10">
               <div className="p-3 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-slate-900 to-amber-500/10 border border-emerald-500/25 flex items-center gap-2.5 shadow-xs">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                <div className="w-7 h-7 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
                   <Flame className="w-4 h-4 animate-bounce" />
                 </div>
                 <p className="text-xs text-slate-200 font-medium leading-relaxed flex-1">
@@ -558,93 +596,80 @@ export function LessonView({ onBack }) {
             </div>
           </div>
 
-          {/* FEATURED / RESUME LESSON CARD */}
-          <div className="bg-gradient-to-br from-slate-900/95 via-slate-900/85 to-slate-950/95 border border-slate-800/90 rounded-3xl p-4 sm:p-5 shadow-2xl backdrop-blur-xl space-y-4">
-            {/* Category & Lesson Num Badge */}
+          {/* Featured Resume Lesson Card with New Anime Sensei Mentor */}
+          <div className="bg-gradient-to-br from-slate-900/95 via-slate-900/85 to-slate-950/95 border border-slate-800/90 rounded-3xl p-4 sm:p-5 shadow-2xl backdrop-blur-xl space-y-3.5">
             <div className="flex items-center justify-between gap-2">
-              <span className="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
-                <Compass className="w-3.5 h-3.5" />
-                <span>{currentCategory?.name || 'The Board and the Pieces'}</span>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+                <Compass className="w-3 h-3" />
+                <span>{currentCategory?.name || 'Tactics'}</span>
               </span>
               <span className="text-xs font-bold text-slate-400 font-mono">
                 Lesson {currentLesson.num} of 64
               </span>
             </div>
 
-            {/* Lesson Title */}
             <div>
               <h2 className="text-xl sm:text-2xl font-black text-white leading-tight tracking-tight">
                 {currentLesson.title}
               </h2>
-              <p className="text-xs text-slate-400 mt-1 font-medium">
-                Master core principles step-by-step with interactive drills on the board.
-              </p>
             </div>
 
-            {/* Owl Mascot Preview */}
-            <div className="flex items-start gap-3.5 bg-slate-950/80 rounded-2xl p-3.5 border border-slate-800/80">
+            {/* Anime Mentor Preview with Audio Button */}
+            <div className="flex items-center gap-3 bg-slate-950/80 rounded-2xl p-3 border border-slate-800/80">
               <div
                 className="shrink-0 cursor-pointer hover:scale-105 transition-transform"
-                onClick={() => speakExplicitly(currentStep?.speech || currentLesson.title)}
-                title="Tap owl to hear voice preview"
+                onClick={handleManualSpeak}
+                title="Tap Anime Sensei to speak"
               >
-                <OwlMascot size={52} isSpeaking={isSpeaking} />
+                <MentorAvatar size={52} isSpeaking={isSpeaking} />
               </div>
 
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-slate-300 font-medium leading-relaxed italic">
+                <p className="text-xs text-slate-300 font-medium leading-relaxed italic line-clamp-2">
                   "{currentStep?.speech || currentStep?.content || currentLesson.title}"
                 </p>
                 <button
                   type="button"
-                  onClick={() => speakExplicitly(currentStep?.speech || currentLesson.title)}
-                  className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-400 hover:text-emerald-300 mt-2 cursor-pointer transition-colors"
+                  onClick={handleManualSpeak}
+                  className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-400 hover:text-emerald-300 mt-1 cursor-pointer transition-colors"
                 >
-                  <Volume2 className="w-3.5 h-3.5" />
-                  <span>Preview narration</span>
+                  {isSpeaking ? (
+                    <>
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                      <span>Speaking... (Tap to stop)</span>
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 className="w-3.5 h-3.5" />
+                      <span>Tap to Hear Sensei</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
 
-            {/* Lesson Breakdown Pills */}
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <div className="bg-slate-950/60 rounded-xl p-2 border border-slate-800">
-                <div className="flex items-center justify-center text-emerald-400 mb-0.5">
-                  <BookOpen className="w-3.5 h-3.5" />
-                </div>
-                <span className="block text-xs font-black text-white">
-                  {currentLesson.steps.length} Steps
-                </span>
-                <span className="text-[10px] text-slate-400 font-medium">Concept</span>
-              </div>
-
-              <div className="bg-slate-950/60 rounded-xl p-2 border border-slate-800">
-                <div className="flex items-center justify-center text-amber-400 mb-0.5">
-                  <Target className="w-3.5 h-3.5" />
-                </div>
-                <span className="block text-xs font-black text-white">
-                  {practiceDrills.length} Drills
-                </span>
-                <span className="text-[10px] text-slate-400 font-medium">Practice</span>
-              </div>
-
-              <div className="bg-slate-950/60 rounded-xl p-2 border border-slate-800">
-                <div className="flex items-center justify-center text-teal-400 mb-0.5">
-                  <Clock className="w-3.5 h-3.5" />
-                </div>
-                <span className="block text-xs font-black text-white">
-                  ~2 Mins
-                </span>
-                <span className="text-[10px] text-slate-400 font-medium">Duration</span>
-              </div>
+            {/* Quick Steps & Duration Strip */}
+            <div className="flex items-center justify-between text-xs font-bold text-slate-400 px-1">
+              <span className="flex items-center gap-1.5 text-white">
+                <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
+                <span>{currentLesson.steps.length} Steps</span>
+              </span>
+              <span className="flex items-center gap-1.5 text-white">
+                <Target className="w-3.5 h-3.5 text-amber-400" />
+                <span>{practiceDrills.length} Drills</span>
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-400">
+                <Clock className="w-3.5 h-3.5 text-teal-400" />
+                <span>~2 Mins</span>
+              </span>
             </div>
 
-            {/* Primary Action Button - IMMEDIATELY OPENS LESSON BOARD */}
-            <div className="space-y-2.5 pt-1">
+            {/* Primary Action Button */}
+            <div className="space-y-2 pt-1">
               <button
                 type="button"
                 onClick={() => handleSelectLesson(currentLesson.num, true)}
-                className="w-full py-4 px-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-amber-500 hover:from-emerald-400 hover:to-amber-400 text-slate-950 font-black text-sm sm:text-base shadow-xl shadow-emerald-500/25 flex items-center justify-center gap-2.5 transition-all transform active:scale-[0.98] cursor-pointer"
+                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-amber-500 hover:from-emerald-400 hover:to-amber-400 text-slate-950 font-black text-sm sm:text-base shadow-xl shadow-emerald-500/25 flex items-center justify-center gap-2.5 transition-all transform active:scale-[0.98] cursor-pointer"
               >
                 <Play className="w-4 h-4 fill-current text-slate-950" />
                 <span>Start Lesson {currentLesson.num}: {currentLesson.title}</span>
@@ -657,20 +682,20 @@ export function LessonView({ onBack }) {
                   triggerHaptic('move');
                   setIsModalOpen(true);
                 }}
-                className="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white font-extrabold text-xs border border-slate-700/80 hover:border-emerald-500/50 flex items-center justify-center gap-2 transition-all shadow-md active:scale-98 cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white font-extrabold text-xs border border-slate-700/80 hover:border-emerald-500/50 flex items-center justify-center gap-2 transition-all shadow-md active:scale-98 cursor-pointer"
               >
                 <List className="w-4 h-4 text-emerald-400" />
-                <span>Browse All 64 Lessons (All Unlocked)</span>
+                <span>Browse All 64 Lessons</span>
               </button>
             </div>
           </div>
 
-          {/* CURRICULUM CATEGORIES EXPLORER */}
-          <div className="space-y-3 pt-1">
+          {/* Curriculum Categories Explorer */}
+          <div className="space-y-2.5 pt-1">
             <div className="flex items-center justify-between px-1">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                 <Layers className="w-3.5 h-3.5 text-amber-400" />
-                <span>Full Curriculum Categories</span>
+                <span>Curriculum Chapters</span>
               </span>
               <button
                 onClick={() => {
@@ -684,7 +709,7 @@ export function LessonView({ onBack }) {
               </button>
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {LESSON_CATEGORIES.map((cat, catIdx) => {
                 const isExpanded = expandedCategoryIdx === catIdx;
                 const completedInCat = cat.lessons.filter(l => completedLessons.has(l.num)).length;
@@ -712,7 +737,7 @@ export function LessonView({ onBack }) {
                             {cat.name}
                           </span>
                           <span className="text-[10px] text-slate-400 font-mono">
-                            {cat.lessons.length} Lessons • {completedInCat} Completed
+                            {cat.lessons.length} Lessons • {completedInCat} Done
                           </span>
                         </div>
                       </div>
@@ -729,7 +754,6 @@ export function LessonView({ onBack }) {
                       </div>
                     </button>
 
-                    {/* Expandable Lesson List */}
                     {isExpanded && (
                       <div className="px-3 pb-3 pt-1 space-y-1.5 border-t border-slate-800/80 bg-slate-950/60">
                         {cat.lessons.map((lesson) => {
@@ -789,12 +813,13 @@ export function LessonView({ onBack }) {
 
   // =========================================================================
   // VIEW 2: ACTIVE LESSON BOARD VIEW (isLessonStarted === true)
+  // Mobile-optimized, compact, with Anime Sensei and direct audio controls
   // =========================================================================
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-[#070b14] to-slate-950 text-slate-100 flex flex-col justify-between selection:bg-emerald-500/30 pb-20 md:pb-6 animate-fade-in">
-      {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/80 px-4 py-3 shadow-lg">
-        <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+      {/* Compact Top Navigation Bar */}
+      <header className="sticky top-0 z-30 bg-slate-950/85 backdrop-blur-xl border-b border-slate-800/80 px-3 py-2.5 shadow-md">
+        <div className="max-w-3xl mx-auto flex items-center justify-between gap-2">
           {/* Back Button -> Returns to Lesson Overview Hub */}
           <button
             onClick={() => {
@@ -806,10 +831,11 @@ export function LessonView({ onBack }) {
               setIsSpeaking(false);
               setIsLessonStarted(false);
             }}
-            className="p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 hover:text-white text-slate-400 transition-colors shadow-xs active:scale-95 cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 hover:text-white text-slate-300 transition-colors shadow-xs active:scale-95 cursor-pointer text-xs font-bold"
             title="Exit Lesson to Overview Hub"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
+            <span className="hidden sm:inline">Exit</span>
           </button>
 
           {/* Lesson Title & Number */}
@@ -819,66 +845,58 @@ export function LessonView({ onBack }) {
               triggerHaptic('move');
               setIsModalOpen(true);
             }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-emerald-500/50 transition-all cursor-pointer group"
+            className="flex items-center gap-1.5 px-3 py-1 rounded-2xl bg-slate-900 border border-slate-800 hover:border-emerald-500/50 transition-all cursor-pointer truncate max-w-[200px] sm:max-w-none"
           >
-            <GraduationCap className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
-            <span className="font-extrabold text-white text-xs sm:text-sm font-mono">
-              Lesson {currentLesson.num}/64
+            <GraduationCap className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span className="font-extrabold text-white text-xs sm:text-sm font-mono truncate">
+              Lesson {currentLesson.num}: {currentLesson.title}
             </span>
           </button>
 
           {/* Right Action Icons (Chapter List, Voice, Music) */}
-          <div className="flex items-center gap-1.5 md:gap-2">
-            {/* Choose Lesson Modal Trigger */}
+          <div className="flex items-center gap-1">
             <button
               onClick={() => {
                 sound.playClick();
                 triggerHaptic('move');
                 setIsModalOpen(true);
               }}
-              className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-emerald-400 hover:border-emerald-500/50 transition-colors cursor-pointer active:scale-95 shadow-xs"
-              title="Choose a lesson"
+              className="p-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-emerald-400 transition-colors cursor-pointer active:scale-95"
+              title="All Lessons"
             >
-              <List className="w-5 h-5" />
+              <List className="w-4 h-4" />
             </button>
 
-            {/* Text-To-Speech Voice Narration Toggle */}
             <button
               onClick={toggleVoice}
-              className={`p-2 rounded-xl transition-all cursor-pointer active:scale-95 ${
+              className={`p-1.5 rounded-xl transition-all cursor-pointer active:scale-95 ${
                 voiceEnabled
-                  ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/25 ring-2 ring-emerald-400/40'
+                  ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/25'
                   : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
               }`}
-              title={voiceEnabled ? 'Voice Narration: ON (Tap to mute)' : 'Voice Narration: OFF (Tap to speak)'}
+              title={voiceEnabled ? 'Sensei Voice: ON' : 'Sensei Voice: OFF'}
             >
-              {voiceEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+              {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </button>
 
-            {/* Light Ambient Background Music Toggle */}
             <button
               onClick={toggleMusic}
-              className={`p-2 rounded-xl transition-all cursor-pointer active:scale-95 ${
+              className={`p-1.5 rounded-xl transition-all cursor-pointer active:scale-95 ${
                 musicEnabled
-                  ? 'bg-amber-400 text-slate-950 font-bold shadow-md shadow-amber-400/25 ring-2 ring-amber-300/40'
+                  ? 'bg-amber-400 text-slate-950 font-bold shadow-md shadow-amber-400/25'
                   : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
               }`}
               title={musicEnabled ? 'Ambient Music: ON' : 'Ambient Music: OFF'}
             >
-              <Music className="w-5 h-5" />
+              <Music className="w-4 h-4" />
             </button>
           </div>
         </div>
       </header>
 
-      {/* Subtitle Header & Lesson / Practice Switcher */}
-      <div className="w-full text-center pt-3 pb-1 px-4 space-y-2">
-        <h2 className="text-sm sm:text-base md:text-lg font-black text-white tracking-tight">
-          {currentLesson.title}
-        </h2>
-
-        {/* Mode Switcher: [ 📖 Lesson Guide ]  [ 🎯 Practice Drills ] */}
-        <div className="flex items-center justify-center gap-2">
+      {/* Mode Switcher: [ 📖 Lesson Guide ]  [ 🎯 Practice Drills ] */}
+      <div className="w-full text-center pt-2 pb-1 px-3">
+        <div className="inline-flex items-center justify-center gap-1.5 p-1 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-md">
           <button
             onClick={() => {
               sound.playClick();
@@ -888,10 +906,10 @@ export function LessonView({ onBack }) {
               setErrorSquares([]);
               setPracticeFeedback(null);
             }}
-            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeMode === 'lesson'
                 ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black shadow-md shadow-emerald-500/20'
-                : 'bg-slate-900/80 text-slate-300 hover:text-white border border-slate-800'
+                : 'text-slate-400 hover:text-white'
             }`}
           >
             <BookOpen className="w-3.5 h-3.5" />
@@ -907,15 +925,15 @@ export function LessonView({ onBack }) {
               setErrorSquares([]);
               setPracticeFeedback(null);
             }}
-            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeMode === 'practice'
                 ? 'bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-black shadow-md shadow-amber-500/20'
-                : 'bg-slate-900/80 text-slate-300 hover:text-white border border-slate-800'
+                : 'text-slate-400 hover:text-white'
             }`}
           >
             <Target className="w-3.5 h-3.5" />
             <span>Practice Drills</span>
-            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-950/40 text-slate-950 font-black">
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-950/40 text-slate-950 font-black">
               {practiceDrills.length}
             </span>
           </button>
@@ -923,27 +941,43 @@ export function LessonView({ onBack }) {
       </div>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-2xl w-full mx-auto px-4 py-1 flex flex-col justify-around items-center gap-3">
-        {/* Owl Mascot & Speech Bubble */}
-        <div className="w-full flex items-start gap-3 md:gap-4 max-w-[500px]">
+      <main className="flex-1 max-w-2xl w-full mx-auto px-3.5 py-1 flex flex-col justify-around items-center gap-2">
+        {/* Anime Mentor & Speech Bubble with Audio Playback Button */}
+        <div className="w-full flex items-start gap-2.5 max-w-[500px]">
           <div
-            className="shrink-0 pt-1 cursor-pointer hover:scale-105 transition-transform"
-            onClick={() => {
-              const textToSpeak = activeMode === 'lesson'
-                ? (currentStep?.speech || currentStep?.content || currentLesson.title)
-                : (practiceFeedback || currentPractice?.prompt || 'Your turn!');
-              speakExplicitly(textToSpeak);
-            }}
-            title="Tap owl to speak"
+            className="shrink-0 pt-0.5 cursor-pointer hover:scale-105 transition-transform"
+            onClick={handleManualSpeak}
+            title="Tap Anime Sensei to hear voice"
           >
-            <OwlMascot size={60} isSpeaking={isSpeaking} />
+            <MentorAvatar size={54} isSpeaking={isSpeaking} />
           </div>
 
-          <div className="relative flex-1 bg-gradient-to-br from-slate-900/90 to-slate-950/90 rounded-2xl p-4 md:p-5 shadow-xl border border-slate-800 text-slate-100 text-xs sm:text-sm md:text-base leading-relaxed backdrop-blur-md">
-            <div className="absolute top-5 -left-2 w-0 h-0 border-t-8 border-t-transparent border-r-8 border-r-slate-900 border-b-8 border-b-transparent" />
+          <div className="relative flex-1 bg-gradient-to-br from-slate-900/95 to-slate-950/95 rounded-2xl p-3 shadow-xl border border-slate-800 text-slate-100 text-xs sm:text-sm leading-relaxed backdrop-blur-md">
+            <div className="absolute top-4 -left-2 w-0 h-0 border-t-6 border-t-transparent border-r-8 border-r-slate-900 border-b-6 border-b-transparent" />
 
             {activeMode === 'lesson' ? (
-              <p className="font-medium text-slate-200">{currentStep?.speech || currentStep?.content}</p>
+              <div className="space-y-2">
+                <p className="font-medium text-slate-200 leading-normal">
+                  {currentStep?.speech || currentStep?.content}
+                </p>
+                <div className="flex items-center justify-between pt-1 border-t border-slate-800/60">
+                  <button
+                    type="button"
+                    onClick={handleManualSpeak}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black transition-all cursor-pointer ${
+                      isSpeaking
+                        ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/30 animate-pulse'
+                        : 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/30'
+                    }`}
+                  >
+                    <Volume2 className="w-3.5 h-3.5" />
+                    <span>{isSpeaking ? 'Speaking... (Tap to stop)' : 'Listen to Sensei'}</span>
+                  </button>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    Step {currentStepIdx + 1}/{currentLesson.steps.length}
+                  </span>
+                </div>
+              </div>
             ) : (
               <div>
                 <p className="font-bold text-white">
@@ -951,7 +985,7 @@ export function LessonView({ onBack }) {
                 </p>
                 {practiceFeedback && practiceFeedback.includes("!") && (
                   <span className="inline-flex items-center gap-1 text-xs text-emerald-400 font-extrabold mt-1">
-                    <Check className="w-3.5 h-3.5" /> Drill moving forward...
+                    <Check className="w-3.5 h-3.5" /> Correct! Moving to next drill...
                   </span>
                 )}
               </div>
@@ -961,14 +995,14 @@ export function LessonView({ onBack }) {
 
         {/* Completion Announcement Banner */}
         {showCompletionBanner && (
-          <div className="w-full max-w-[500px] p-4 bg-gradient-to-r from-emerald-500/20 via-slate-900 to-amber-500/15 border border-emerald-500/40 rounded-2xl flex items-center justify-between text-white shadow-xl animate-fade-in backdrop-blur-xl">
-            <div className="flex items-center gap-2.5">
+          <div className="w-full max-w-[500px] p-3.5 bg-gradient-to-r from-emerald-500/20 via-slate-900 to-amber-500/15 border border-emerald-500/40 rounded-2xl flex items-center justify-between text-white shadow-xl animate-fade-in backdrop-blur-xl">
+            <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-emerald-400 animate-spin" />
               <div>
                 <p className="text-[11px] font-black uppercase tracking-wider text-emerald-400">
                   {activeMode === 'practice' ? 'Practice Complete! 🏆' : 'Lesson Complete! 🎉'}
                 </p>
-                <p className="text-xs sm:text-sm font-bold text-slate-200">
+                <p className="text-xs font-bold text-slate-200">
                   {activeMode === 'practice'
                     ? `Mastered all drills for ${currentLesson.title}!`
                     : `Great job on ${currentLesson.title}! Ready for practice?`}
@@ -1000,7 +1034,7 @@ export function LessonView({ onBack }) {
         )}
 
         {/* Chessboard */}
-        <div className="w-full flex justify-center items-center my-1 shrink-0">
+        <div className="w-full flex justify-center items-center my-0.5 shrink-0">
           <div
             className="flex justify-center items-center shadow-2xl rounded-2xl overflow-hidden border border-slate-800"
             style={{
@@ -1023,8 +1057,8 @@ export function LessonView({ onBack }) {
         </div>
       </main>
 
-      {/* Premium Step Navigation Bar */}
-      <footer className="w-full py-4 px-4 bg-transparent">
+      {/* Step Navigation Bar */}
+      <footer className="w-full py-3 px-4 bg-transparent">
         <div className="max-w-md mx-auto flex items-center justify-between gap-3 sm:gap-4">
           {/* Previous Step Button */}
           <button
@@ -1091,11 +1125,6 @@ export function LessonView({ onBack }) {
                 ? 'bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-400 text-slate-950 shadow-emerald-500/30'
                 : 'bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 shadow-amber-500/25'
             }`}
-            title={
-              activeMode === 'lesson'
-                ? currentStepIdx === currentLesson.steps.length - 1 ? 'Finish Lesson' : 'Next Step'
-                : practiceStepIdx === practiceDrills.length - 1 ? 'Finish Practice' : 'Next Drill'
-            }
           >
             {activeMode === 'lesson' ? (
               currentStepIdx === currentLesson.steps.length - 1 ? (
@@ -1129,94 +1158,89 @@ export function LessonView({ onBack }) {
     </div>
   );
 
-  // Helper renderer for the 64-lesson picker dialog (EXACT MATCH TO REFERENCE SCREENSHOTS)
+  // Helper renderer for the 64-lesson picker dialog
   function renderLessonPickerModal() {
     if (!isModalOpen) return null;
-
-    const getCategoryBorder = (catName) => {
-      switch (catName) {
-        case "The board and the pieces":
-        case "The goal and special rules":
-          return "border-b-[4px] border-[#38a169]"; // Green
-        case "First checkmates":
-        case "Material":
-        case "How to start a game":
-          return "border-b-[4px] border-[#f5a623]"; // Yellow / Amber
-        case "Tactics":
-          return "border-b-[4px] border-[#f97316]"; // Orange
-        case "Checkmate patterns":
-          return "border-b-[4px] border-[#3b82f6]"; // Blue
-        case "Planning":
-        default:
-          return "border-b-[4px] border-[#8b5cf6]"; // Purple
-      }
-    };
-
     return (
       <div
         onClick={() => {
           sound.playClick();
           setIsModalOpen(false);
         }}
-        className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-fade-in"
+        className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 animate-fade-in"
       >
         <div
           onClick={(e) => e.stopPropagation()}
-          className="bg-[#f0f4f8] rounded-[28px] max-w-[360px] w-full max-h-[82vh] flex flex-col overflow-hidden shadow-2xl border border-slate-200/90 animate-scale-up"
+          className="bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 rounded-3xl max-w-sm sm:max-w-md w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl border border-slate-700/80 animate-scale-up"
         >
           {/* Modal Header */}
-          <div className="px-5 pt-5 pb-1 flex items-center gap-2.5">
-            <GraduationCap className="w-6 h-6 text-[#1d6394] stroke-[2.2]" />
-            <h3 className="text-xl font-semibold text-[#1d6394] tracking-normal">
-              Choose a lesson
-            </h3>
+          <div className="px-5 pt-4 pb-3 flex items-center justify-between border-b border-slate-800">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                <GraduationCap className="w-4 h-4" />
+              </div>
+              <h3 className="text-base font-black text-white tracking-tight">
+                Chess Academy Lessons
+              </h3>
+            </div>
+
+            <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              64 Unlocked
+            </span>
           </div>
 
           {/* Scrollable Lesson List by Category */}
-          <div className="flex-1 overflow-y-auto px-4 py-2 space-y-3.5 no-scrollbar">
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4 no-scrollbar">
             {LESSON_CATEGORIES.map((cat, catIdx) => {
-              const borderStyle = getCategoryBorder(cat.name);
-
               return (
                 <div key={catIdx} className="space-y-2">
-                  <h4 className="text-[15px] font-semibold text-[#1d6394] px-1 pt-2 pb-0.5">
-                    {cat.name}
-                  </h4>
+                  <div className="flex items-center gap-2 px-1 pt-1">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                    <h4 className="text-xs font-black text-emerald-400 uppercase tracking-wider">
+                      {cat.name}
+                    </h4>
+                  </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     {cat.lessons.map((lesson) => {
                       const isCompleted = completedLessons.has(lesson.num);
-                      const isLocked = lesson.num > 1 && !isCompleted;
+                      const isCurrent = lesson.num === currentLesson.num;
 
                       return (
                         <button
                           key={lesson.num}
                           type="button"
-                          onClick={() => {
-                            sound.playClick();
-                            triggerHaptic('move');
-                            handleSelectLesson(lesson.num, true);
-                          }}
-                          className={`w-full bg-white rounded-xl shadow-[0_2px_6px_rgba(0,0,0,0.06)] hover:shadow-md ${borderStyle} px-3.5 py-3 flex items-center transition-all text-left active:scale-[0.99] cursor-pointer select-none mb-2.5`}
+                          onClick={() => handleSelectLesson(lesson.num, true)}
+                          className={`w-full rounded-2xl p-2.5 flex items-center justify-between transition-all text-left active:scale-[0.98] cursor-pointer select-none border ${
+                            isCurrent
+                              ? 'bg-gradient-to-r from-emerald-500/20 via-slate-800 to-amber-500/10 border-emerald-500/60 shadow-lg ring-1 ring-emerald-400/50'
+                              : 'bg-slate-950/70 border-slate-800/80 hover:border-emerald-500/40 hover:bg-slate-800/80'
+                          }`}
                         >
-                          {/* Lock / Completed icon on left */}
-                          {isCompleted ? (
-                            <CheckCircle2 className="w-[18px] h-[18px] text-[#38a169] stroke-[2.2] shrink-0" />
-                          ) : isLocked ? (
-                            <Lock className="w-[18px] h-[18px] text-slate-400 stroke-[1.8] shrink-0" />
-                          ) : (
-                            <div className="w-[18px] shrink-0" />
-                          )}
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            {isCompleted ? (
+                              <div className="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                              </div>
+                            ) : (
+                              <div className="w-6 h-6 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center justify-center shrink-0 font-mono text-[11px] font-black text-amber-400">
+                                {lesson.num}
+                              </div>
+                            )}
 
-                          {/* Lesson Number */}
-                          <span className="text-[#1d6394] font-bold text-base w-7 shrink-0 text-center ml-2">
-                            {lesson.num}
-                          </span>
+                            <span className="text-white font-extrabold text-xs block truncate">
+                              {lesson.title}
+                            </span>
+                          </div>
 
-                          {/* Lesson Title */}
-                          <span className="text-slate-800 font-medium text-[15px] leading-tight truncate ml-2">
-                            {lesson.title}
-                          </span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {isCurrent && (
+                              <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 text-[9px] font-black border border-emerald-500/30">
+                                Current
+                              </span>
+                            )}
+                            <Play className="w-3 h-3 text-emerald-400" />
+                          </div>
                         </button>
                       );
                     })}
@@ -1227,16 +1251,15 @@ export function LessonView({ onBack }) {
           </div>
 
           {/* Modal Footer */}
-          <div className="px-5 py-3 flex items-center justify-end bg-transparent">
+          <div className="px-5 py-2.5 flex items-center justify-end bg-slate-950 border-t border-slate-800">
             <button
-              type="button"
               onClick={() => {
                 sound.playClick();
                 setIsModalOpen(false);
               }}
-              className="text-[#1d6394] font-semibold text-sm hover:underline cursor-pointer"
+              className="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-extrabold text-xs transition-colors cursor-pointer"
             >
-              Cancel
+              Close
             </button>
           </div>
         </div>

@@ -859,18 +859,26 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
                   <span className="font-bold text-sky-500">{streakCount}</span>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2.5 pt-2">
                 <button
-                  onClick={() => setViewState('hub')}
-                  className="flex-1 py-3 rounded-xl border border-slate-300 dark:border-slate-700 font-bold text-xs"
+                  onClick={() => {
+                    sound.playClick();
+                    triggerHaptic('move');
+                    setViewState('hub');
+                  }}
+                  className="flex-1 py-3 px-4 rounded-2xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 font-bold text-xs transition-all active:scale-95 shadow-md"
                 >
-                  Exit
+                  Exit to Hub
                 </button>
                 <button
-                  onClick={startStreakMode}
-                  className="flex-1 py-3 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs shadow-md"
+                  onClick={() => {
+                    sound.playClick();
+                    triggerHaptic('move');
+                    startStreakMode();
+                  }}
+                  className="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/25 transition-all active:scale-95"
                 >
-                  New Streak
+                  New Streak 🏹
                 </button>
               </div>
             </div>
@@ -1081,18 +1089,26 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
                   <span className="font-bold text-slate-900 dark:text-white">{stormCombo}</span>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2.5 pt-2">
                 <button
-                  onClick={() => setViewState('hub')}
-                  className="flex-1 py-3 rounded-xl border border-slate-300 dark:border-slate-700 font-bold text-xs"
+                  onClick={() => {
+                    sound.playClick();
+                    triggerHaptic('move');
+                    setViewState('hub');
+                  }}
+                  className="flex-1 py-3 px-4 rounded-2xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 font-bold text-xs transition-all active:scale-95 shadow-md"
                 >
-                  Exit
+                  Exit to Hub
                 </button>
                 <button
-                  onClick={startStormMode}
-                  className="flex-1 py-3 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs shadow-md"
+                  onClick={() => {
+                    sound.playClick();
+                    triggerHaptic('move');
+                    startStormMode();
+                  }}
+                  className="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/25 transition-all active:scale-95"
                 >
-                  Play Again
+                  Play Again 🌪️
                 </button>
               </div>
             </div>

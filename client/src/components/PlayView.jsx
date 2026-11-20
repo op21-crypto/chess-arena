@@ -473,7 +473,7 @@ export function PlayView({
                 <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-sky-400 group-hover:translate-x-0.5 transition-all" />
               </h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Step-by-step master lessons with owl mascot speech synthesis tutor and interactive drills.
+                Step-by-step master lessons with anime chess sensei tutor and interactive drills.
               </p>
             </div>
           </div>
