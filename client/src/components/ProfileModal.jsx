@@ -3,7 +3,7 @@ import { Award, Trophy, Zap, Shield, Flame, X, Check, Edit2, Crown, Globe, Arrow
 import { safeStorage } from '../utils/storage.js';
 import { calculateUserRanking } from '../data/leaderboardData.js';
 
-const ACHIEVEMENTS_DATA = [
+export const ACHIEVEMENTS_DATA = [
   { id: 'first_win', name: 'First Victory', desc: 'Won your first chess match in the arena', icon: '🏆' },
   { id: 'checkmate_pro', name: 'Master Checkmate', desc: 'Finished an opponent with an official checkmate', icon: '⚔️' },
   { id: 'wins_10', name: 'Decathlete', desc: 'Achieved 10 career victories', icon: '⭐' },

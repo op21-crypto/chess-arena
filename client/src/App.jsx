@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { Chess } from 'chess.js';
 import {
-  Trophy, Swords, Users, BookOpen, Bot, Shield, Volume2, VolumeX,
-  Palette, User, LogOut, Bell, Flame, Sparkles, ChevronRight, Settings, Music
+  Home, Trophy, Swords, Users, BookOpen, Bot, Shield, Volume2, VolumeX,
+  Palette, User, LogOut, Bell, Flame, Sparkles, ChevronRight, Settings, Music, Zap, ArrowRight
 } from 'lucide-react';
 
 import { Chessboard } from './components/Chessboard.jsx';
@@ -15,10 +15,11 @@ import { VoiceControls } from './components/VoiceControls.jsx';
 import { MatchmakingModal, FriendRoomModal, PlayAIModal } from './components/PlayModals.jsx';
 import { AuthModal } from './components/AuthModal.jsx';
 import { ProfileModal } from './components/ProfileModal.jsx';
+import { ProfileView } from './components/ProfileView.jsx';
 import { FriendsDrawer } from './components/FriendsDrawer.jsx';
+import { PlayView } from './components/PlayView.jsx';
 import { PuzzleView } from './components/PuzzleView.jsx';
 import { LessonView } from './components/LessonView.jsx';
-import { TournamentView } from './components/TournamentView.jsx';
 import { LeaderboardView } from './components/LeaderboardView.jsx';
 import { AnalysisView } from './components/AnalysisView.jsx';
 import { AdminView } from './components/AdminView.jsx';
@@ -32,6 +33,8 @@ import { musicEngine } from './utils/music.js';
 import { triggerHaptic, speakMove } from './utils/device.js';
 import { getOpeningName } from './utils/openings.js';
 import { safeStorage } from './utils/storage.js';
+import { getLocalAIMove } from './utils/aiEngine.js';
+import { calculateUserRanking } from './data/leaderboardData.js';
 
 const DEFAULT_SETTINGS = {
   appTheme: 'dark',
@@ -59,8 +62,9 @@ const DEFAULT_SETTINGS = {
 };
 
 export default function App() {
-  // Navigation & View State
-  const [activeTab, setActiveTab] = useState('home'); // 'home', 'game', 'puzzles', 'lessons', 'tournaments', 'leaderboard', 'admin'
+  // Navigation & View State (5 Primary: Home, Play Online, Puzzles, Learn, Profile)
+  const [activeTab, setActiveTab] = useState('home'); // 'home' | 'play' | 'game' | 'puzzles' | 'lessons' | 'profile' | 'admin'
+  const [profileSubTab, setProfileSubTab] = useState('overview'); // 'overview' | 'rankings' | 'settings'
   const [settings, setSettings] = useState(() => {
     try {
       const saved = safeStorage.getItem('chess_arena_settings');
@@ -141,7 +145,9 @@ export default function App() {
       (activeTab === 'game' && settings.musicDuringGame) ||
       (activeTab === 'puzzles' && settings.musicDuringPuzzles) ||
       (activeTab === 'lessons' && settings.musicDuringLessons) ||
-      activeTab === 'home';
+      activeTab === 'home' ||
+      activeTab === 'play' ||
+      activeTab === 'profile';
 
     if (shouldPlay) {
       musicEngine.start();
@@ -470,6 +476,8 @@ export default function App() {
   const handleStartAIGame = ({ level, color }) => {
     setIsAIGame(true);
     setAiLevel(level);
+    setBoardFlipped(false);
+    setAiThinking(false);
     setShowAIModal(false);
     setShowGameOverModal(false);
     setActiveTab('game');
@@ -494,7 +502,9 @@ export default function App() {
 
     // If user chose black, AI makes first move as White
     if (color === 'b') {
-      triggerAIMove(startingSession.fen, startingSession, level);
+      setTimeout(() => {
+        triggerAIMove(startingSession.fen, startingSession, level);
+      }, 350);
     }
   };
 
@@ -542,14 +552,38 @@ export default function App() {
   const triggerAIMove = async (fen, session, level) => {
     setAiThinking(true);
     try {
-      const res = await fetch('/api/ai/move', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fen, level })
-      });
-      const aiMove = await res.json();
+      let aiMove = null;
 
-      const chess = new Chess(session.fen);
+      // 1. Try server endpoint with fast timeout (1200ms)
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1200);
+        const res = await fetch('/api/ai/move', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fen, level }),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+          aiMove = await res.json();
+        }
+      } catch (networkErr) {
+        // Fallback to client-side engine immediately
+      }
+
+      // 2. Fallback to ultra-fast client-side AI engine if server is slow, offline, or returns error
+      if (!aiMove || !aiMove.from || !aiMove.to) {
+        aiMove = getLocalAIMove(fen, level);
+      }
+
+      if (!aiMove || !aiMove.from || !aiMove.to) {
+        console.warn('AI could not find legal move.');
+        return;
+      }
+
+      const currentFen = session?.fen || fen;
+      const chess = new Chess(currentFen);
       const moveRes = chess.move({
         from: aiMove.from,
         to: aiMove.to,
@@ -562,7 +596,7 @@ export default function App() {
           speakMove(moveRes.san);
         }
         const updatedMoves = [
-          ...session.moveHistory,
+          ...(session?.moveHistory || []),
           {
             from: moveRes.from,
             to: moveRes.to,
@@ -614,7 +648,7 @@ export default function App() {
         }));
       }
     } catch (err) {
-      console.error('AI move error:', err);
+      console.error('AI move execution error:', err);
     } finally {
       setAiThinking(false);
     }
@@ -851,7 +885,7 @@ export default function App() {
 
   return (
     <div className={`min-h-screen flex flex-col font-sans selection:bg-amber-500 selection:text-black transition-colors ${
-      isLight ? 'bg-[#f4f7fb] text-slate-900' : 'bg-slate-950 text-slate-100'
+      isLight ? 'bg-[#f4f7fb] text-slate-900' : 'luxury-bg text-slate-100'
     }`}>
       {/* Top Navbar */}
       <header className={`sticky top-0 z-40 backdrop-blur-md border-b px-4 py-2.5 transition-colors ${
@@ -881,8 +915,8 @@ export default function App() {
             </div>
           </div>
 
-          {/* Navigation Links */}
-          <nav className={`hidden md:flex items-center gap-1 p-1 rounded-2xl border transition-colors ${
+          {/* Navigation Links (Visible on desktop/laptop, hidden on mobile/small tablets to prevent cramping) */}
+          <nav className={`hidden lg:flex items-center gap-1 p-1 rounded-2xl border transition-colors ${
             isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-900/80 border-slate-800'
           }`}>
             {[

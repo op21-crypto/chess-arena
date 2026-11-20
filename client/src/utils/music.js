@@ -1,74 +1,254 @@
-// Premium Soothing Music & Soundscape Engine for Chess Arena
-// Over 35 categorized, ultra-relaxing, non-irritating tracks engineered for deep concentration.
+// Video Game Music & Atmospheric Soundscape Engine for Chess Arena
+// 20 iconic video game tracks engineered for immersive, focused, and enjoyable gaming.
 
 export const MUSIC_CATEGORIES = {
-  lofi: 'Lo-Fi Chill & Study',
-  classical: 'Classical & Acoustic Piano',
-  zen: 'Zen & Meditation (432Hz)',
-  nature: 'Nature & Atmosphere',
-  focus: 'Grandmaster Deep Focus'
+  rpg: 'Retro RPG & Adventure',
+  chiptune: '8-Bit & 16-Bit Classics',
+  arena: 'Epic Chess Strategy',
+  cozy: 'Cozy Worlds & Synthwave'
 };
 
 export const TRACK_LIST = [
-  // 1. Lo-Fi Chill & Study (8 tracks)
-  { id: 'lofi-1', category: 'lofi', name: 'Coffee & Pawns', mood: 'Warm Rhodes chords & soft vinyl rain', baseFreq: 130.81, scale: [0, 4, 7, 11, 14], type: 'rhodes', tempo: 3400 },
-  { id: 'lofi-2', category: 'lofi', name: 'Midnight Study', mood: 'Late night cozy bedroom lofi chords', baseFreq: 146.83, scale: [0, 3, 7, 10, 14], type: 'rhodes', tempo: 3600 },
-  { id: 'lofi-3', category: 'lofi', name: 'Tokyo Rain', mood: 'Gentle raindrops & mellow jazz piano', baseFreq: 164.81, scale: [0, 4, 7, 9, 12], type: 'piano', tempo: 3200 },
-  { id: 'lofi-4', category: 'lofi', name: 'Autumn Breeze', mood: 'Golden leaves & peaceful acoustic warmth', baseFreq: 130.81, scale: [0, 2, 4, 7, 9], type: 'warm_pad', tempo: 3800 },
-  { id: 'lofi-5', category: 'lofi', name: 'Sunday Gambit', mood: 'Relaxed Sunday morning coffee vibes', baseFreq: 174.61, scale: [0, 4, 7, 11, 14], type: 'rhodes', tempo: 3500 },
-  { id: 'lofi-6', category: 'lofi', name: 'Vinyl Twilight', mood: 'Subtle analog crackle & dusk melodies', baseFreq: 110.00, scale: [0, 3, 7, 10, 12], type: 'ambient', tempo: 4000 },
-  { id: 'lofi-7', category: 'lofi', name: 'Rook on the 7th', mood: 'Smooth bassline & velvet electric piano', baseFreq: 146.83, scale: [0, 4, 7, 9, 12], type: 'rhodes', tempo: 3300 },
-  { id: 'lofi-8', category: 'lofi', name: 'City Lights Drift', mood: 'Distant urban glow & serene chillhop', baseFreq: 130.81, scale: [0, 2, 5, 7, 11], type: 'piano', tempo: 3700 },
+  // 1. Retro RPG & Adventure (5 tracks)
+  {
+    id: 'rpg-1',
+    category: 'rpg',
+    name: 'Village of Dawn',
+    mood: 'Peaceful RPG starter village with cheerful acoustic tavern melodies',
+    baseFreq: 130.81, // C3
+    scale: [0, 4, 7, 11, 14], // Cmaj9
+    progression: [[0, 4, 7], [5, 9, 12], [7, 11, 14], [0, 4, 7]],
+    type: 'rpg_pluck',
+    tempo: 3200
+  },
+  {
+    id: 'rpg-2',
+    category: 'rpg',
+    name: "The King's Tavern",
+    mood: 'Warm medieval inn lute, crackling hearthside, and cozy fellowship',
+    baseFreq: 146.83, // D3
+    scale: [0, 3, 7, 10, 14], // Dm9
+    progression: [[0, 3, 7], [10, 14, 17], [5, 9, 12], [0, 3, 7]],
+    type: 'rpg_pluck',
+    tempo: 3400
+  },
+  {
+    id: 'rpg-3',
+    category: 'rpg',
+    name: 'Fairy Fountain Glade',
+    mood: 'Mystical Great Fairy spring with cascading harp arpeggios and magic dust',
+    baseFreq: 164.81, // E3
+    scale: [0, 4, 7, 11, 16], // Emaj7
+    progression: [[0, 4, 7, 11], [2, 6, 9, 13], [5, 9, 12, 16], [7, 11, 14, 18]],
+    type: 'cozy_bell',
+    tempo: 3000
+  },
+  {
+    id: 'rpg-4',
+    category: 'rpg',
+    name: 'Royal Citadel March',
+    mood: 'Noble castle throne room with cathedral organ and chamber heraldry',
+    baseFreq: 110.00, // A2
+    scale: [0, 3, 7, 10, 12], // Am7
+    progression: [[0, 3, 7], [5, 8, 12], [7, 11, 14], [0, 3, 7]],
+    type: 'hero_strings',
+    tempo: 3600
+  },
+  {
+    id: 'rpg-5',
+    category: 'rpg',
+    name: 'Whispering Woods',
+    mood: 'Enchanted ancient forest with Celtic flute echoes and leafy light',
+    baseFreq: 123.47, // B2
+    scale: [0, 2, 5, 7, 10], // B dorian
+    progression: [[0, 3, 7], [5, 9, 12], [2, 5, 9], [0, 3, 7]],
+    type: 'rpg_pluck',
+    tempo: 3300
+  },
 
-  // 2. Classical & Acoustic Piano (8 tracks)
-  { id: 'class-1', category: 'classical', name: 'Gymnopédie Calm', mood: 'Satie-inspired meditative minor chords', baseFreq: 146.83, scale: [0, 4, 7, 9, 11], type: 'piano', tempo: 4200 },
-  { id: 'class-2', category: 'classical', name: 'Clair de Lune Drift', mood: 'Impressionist piano waves in Db major', baseFreq: 138.59, scale: [0, 4, 7, 11, 12], type: 'piano', tempo: 4000 },
-  { id: 'class-3', category: 'classical', name: 'Bach Cello Serenade', mood: 'Baroque counterpoint & deep resonant strings', baseFreq: 98.00, scale: [0, 2, 4, 7, 9], type: 'strings', tempo: 3800 },
-  { id: 'class-4', category: 'classical', name: 'Nocturne Dreams', mood: 'Chopin romantic nocturne in Eb', baseFreq: 155.56, scale: [0, 3, 7, 8, 10], type: 'piano', tempo: 3900 },
-  { id: 'class-5', category: 'classical', name: 'Moonlight Softness', mood: 'Beethoven Adagio sostenuto stillness', baseFreq: 110.00, scale: [0, 3, 7, 8, 12], type: 'piano', tempo: 4400 },
-  { id: 'class-6', category: 'classical', name: 'Baroque Reverie', mood: 'Harpsichord-like gentle acoustic cadence', baseFreq: 130.81, scale: [0, 4, 7, 9, 12], type: 'chime', tempo: 3600 },
-  { id: 'class-7', category: 'classical', name: 'Prelude in C Major', mood: 'Arpeggiated gentle cascades of harmony', baseFreq: 130.81, scale: [0, 2, 4, 5, 7, 9, 11], type: 'piano', tempo: 3100 },
-  { id: 'class-8', category: 'classical', name: 'Pastoral Grace', mood: 'Soft woodwinds & tranquil chamber warmth', baseFreq: 146.83, scale: [0, 4, 7, 9, 14], type: 'strings', tempo: 4100 },
+  // 2. 8-Bit & 16-Bit Classics (5 tracks)
+  {
+    id: 'chip-1',
+    category: 'chiptune',
+    name: 'Overworld Hero',
+    mood: 'Iconic 8-bit NES overworld quest with buoyant arpeggiated bounce',
+    baseFreq: 130.81, // C3
+    scale: [0, 4, 7, 12, 16],
+    progression: [[0, 4, 7, 12], [5, 9, 12, 17], [7, 11, 14, 19], [0, 4, 7, 12]],
+    type: 'chiptune',
+    tempo: 2600
+  },
+  {
+    id: 'chip-2',
+    category: 'chiptune',
+    name: 'Pixel Dungeon Crawl',
+    mood: 'Stealthy 16-bit dungeon exploration with mysterious square-wave pulse',
+    baseFreq: 110.00, // A2
+    scale: [0, 3, 7, 8, 12],
+    progression: [[0, 3, 7], [3, 7, 10], [5, 8, 12], [2, 5, 8]],
+    type: 'chiptune',
+    tempo: 2800
+  },
+  {
+    id: 'chip-3',
+    category: 'chiptune',
+    name: 'Neon Arcade Fever',
+    mood: 'Upbeat coin-op arcade champion rhythm with vibrant retro chords',
+    baseFreq: 146.83, // D3
+    scale: [0, 4, 7, 9, 12],
+    progression: [[0, 4, 7], [7, 11, 14], [9, 12, 16], [5, 9, 12]],
+    type: 'chiptune',
+    tempo: 2400
+  },
+  {
+    id: 'chip-4',
+    category: 'chiptune',
+    name: 'Battle of the Titans',
+    mood: 'Dramatic 16-bit boss battle confrontation with driving counterpoint',
+    baseFreq: 98.00, // G2
+    scale: [0, 3, 6, 9, 12], // Diminished / intense
+    progression: [[0, 3, 7], [1, 5, 8], [6, 9, 12], [0, 3, 7]],
+    type: 'chiptune',
+    tempo: 2500
+  },
+  {
+    id: 'chip-5',
+    category: 'chiptune',
+    name: 'Stage Clear Fanfare',
+    mood: 'Joyful post-victory level clear melody with sparkling tri-tone flourishes',
+    baseFreq: 130.81, // C3
+    scale: [0, 4, 7, 11, 14, 18],
+    progression: [[0, 4, 7], [4, 7, 11], [5, 9, 12], [7, 11, 14]],
+    type: 'chiptune',
+    tempo: 2700
+  },
 
-  // 3. Zen & Meditation 432Hz (8 tracks)
-  { id: 'zen-1', category: 'zen', name: 'Tibetan Singing Bowls', mood: 'Resonant harmonic bell tones & peace', baseFreq: 108.00, scale: [0, 4, 7, 11, 14], type: 'bowl', tempo: 5000 },
-  { id: 'zen-2', category: 'zen', name: '432Hz Pure Theta', mood: 'Deep binaural alignment & calm mind', baseFreq: 108.00, scale: [0, 7, 12, 16], type: 'ambient', tempo: 5500 },
-  { id: 'zen-3', category: 'zen', name: 'Mountain Mist', mood: 'Himalayan temple stillness & prayer bells', baseFreq: 120.00, scale: [0, 3, 7, 10, 14], type: 'bowl', tempo: 4800 },
-  { id: 'zen-4', category: 'zen', name: 'Golden Dawn Sanctuary', mood: 'Soft sunrise light & harmonic healing', baseFreq: 135.00, scale: [0, 4, 7, 9, 12], type: 'warm_pad', tempo: 4600 },
-  { id: 'zen-5', category: 'zen', name: 'Lotus Pond Serenity', mood: 'Gentle water drops & bamboo flute essence', baseFreq: 144.00, scale: [0, 2, 5, 7, 9], type: 'flute', tempo: 4200 },
-  { id: 'zen-6', category: 'zen', name: 'Breathe & Calculate', mood: 'Focused alpha waves for tactical clarity', baseFreq: 108.00, scale: [0, 5, 7, 12], type: 'ambient', tempo: 5200 },
-  { id: 'zen-7', category: 'zen', name: 'Zen Rock Garden', mood: 'Minimalist stones, moss and pure space', baseFreq: 115.00, scale: [0, 3, 7, 10], type: 'chime', tempo: 4700 },
-  { id: 'zen-8', category: 'zen', name: 'Still Waters', mood: 'Mirror lake reflection & total quietude', baseFreq: 108.00, scale: [0, 4, 7, 11], type: 'warm_pad', tempo: 5400 },
+  // 3. Epic Chess Strategy (5 tracks)
+  {
+    id: 'arena-1',
+    category: 'arena',
+    name: 'Grandmaster Arena',
+    mood: 'Regal orchestral arena march for calculating masterminds',
+    baseFreq: 110.00, // A2
+    scale: [0, 3, 7, 10, 14],
+    progression: [[0, 3, 7], [5, 9, 12], [8, 12, 15], [7, 11, 14]],
+    type: 'arena_brass',
+    tempo: 3600
+  },
+  {
+    id: 'arena-2',
+    category: 'arena',
+    name: 'Clash of Kings',
+    mood: 'Dark cinematic battle between opposing royal armies on the 64 squares',
+    baseFreq: 98.00, // G2
+    scale: [0, 3, 7, 8, 10],
+    progression: [[0, 3, 7], [3, 7, 10], [5, 8, 12], [0, 3, 7]],
+    type: 'arena_brass',
+    tempo: 3800
+  },
+  {
+    id: 'arena-3',
+    category: 'arena',
+    name: 'Tactical Siege',
+    mood: 'Resonant war drums and sweeping brass tactical anticipation',
+    baseFreq: 123.47, // B2
+    scale: [0, 3, 7, 9, 12],
+    progression: [[0, 3, 7], [7, 10, 14], [5, 9, 12], [2, 5, 9]],
+    type: 'arena_brass',
+    tempo: 3500
+  },
+  {
+    id: 'arena-4',
+    category: 'arena',
+    name: 'Clock Pressure Pulse',
+    mood: 'Minimalist high-stakes blitz tension echoing the heartbeat of the clock',
+    baseFreq: 87.31, // F2
+    scale: [0, 7, 12, 15],
+    progression: [[0, 7], [5, 12], [3, 10], [0, 7]],
+    type: 'synthwave',
+    tempo: 3100
+  },
+  {
+    id: 'arena-5',
+    category: 'arena',
+    name: 'The Immortal Duel',
+    mood: 'Heroic romantic gambit theme celebrating timeless sacrificial beauty',
+    baseFreq: 130.81, // C3
+    scale: [0, 4, 7, 9, 12],
+    progression: [[0, 4, 7], [9, 12, 16], [5, 9, 12], [7, 11, 14]],
+    type: 'hero_strings',
+    tempo: 3700
+  },
 
-  // 4. Nature & Atmosphere (8 tracks)
-  { id: 'nat-1', category: 'nature', name: 'Gentle Rain on Leaves', mood: 'Soft pink noise rainfall & warm piano', baseFreq: 130.81, scale: [0, 4, 7, 11], type: 'nature_rain', tempo: 3600 },
-  { id: 'nat-2', category: 'nature', name: 'Cozy Fireplace Hearth', mood: 'Warm timber crackle & acoustic shelter', baseFreq: 146.83, scale: [0, 3, 7, 10], type: 'nature_fire', tempo: 3900 },
-  { id: 'nat-3', category: 'nature', name: 'Pine Forest Wind', mood: 'Whispering evergreens & mountain breeze', baseFreq: 110.00, scale: [0, 4, 7, 9], type: 'nature_wind', tempo: 4500 },
-  { id: 'nat-4', category: 'nature', name: 'Ocean Waves & Tides', mood: 'Rhythmic rolling surf & calming horizon', baseFreq: 98.00, scale: [0, 5, 7, 12], type: 'nature_sea', tempo: 4800 },
-  { id: 'nat-5', category: 'nature', name: 'Morning Birds & Dew', mood: 'Dawn chorus & peaceful morning sunshine', baseFreq: 164.81, scale: [0, 2, 4, 7, 9], type: 'chime', tempo: 3400 },
-  { id: 'nat-6', category: 'nature', name: 'Deep Space Cosmic Drift', mood: 'Interstellar nebulas & infinite stillness', baseFreq: 82.41, scale: [0, 7, 10, 14], type: 'ambient', tempo: 5600 },
-  { id: 'nat-7', category: 'nature', name: 'Summer Meadow Grass', mood: 'Warm sunlit hills & gentle cicada song', baseFreq: 130.81, scale: [0, 4, 7, 9, 14], type: 'warm_pad', tempo: 4100 },
-  { id: 'nat-8', category: 'nature', name: 'Night Campfire Stars', mood: 'Under the Milky Way with glowing embers', baseFreq: 110.00, scale: [0, 3, 7, 12], type: 'nature_fire', tempo: 4300 },
-
-  // 5. Grandmaster Deep Focus (4 tracks)
-  { id: 'foc-1', category: 'focus', name: 'Deep Calculation', mood: 'Unbroken concentration & strategic clarity', baseFreq: 110.00, scale: [0, 2, 4, 7, 9], type: 'warm_pad', tempo: 4200 },
-  { id: 'foc-2', category: 'focus', name: 'Grandmaster Flow', mood: 'Effortless positional intuition & grace', baseFreq: 130.81, scale: [0, 4, 7, 11, 14], type: 'rhodes', tempo: 3800 },
-  { id: 'foc-3', category: 'focus', name: 'Endgame Silence', mood: 'Pawn breakthroughs in quiet tension', baseFreq: 98.00, scale: [0, 3, 7, 10], type: 'ambient', tempo: 4600 },
-  { id: 'foc-4', category: 'focus', name: 'The Immortal Game', mood: 'Sacrificial beauty & timeless mastery', baseFreq: 146.83, scale: [0, 4, 7, 9, 12], type: 'strings', tempo: 4000 }
+  // 4. Cozy Game Worlds & Synthwave (5 tracks)
+  {
+    id: 'cozy-1',
+    category: 'cozy',
+    name: 'Floating Cloud Isle',
+    mood: 'Dreamy floating sky garden with gentle kalimba and crystal bells',
+    baseFreq: 146.83, // D3
+    scale: [0, 4, 7, 11, 14],
+    progression: [[0, 4, 7], [2, 6, 9], [5, 9, 12], [7, 11, 14]],
+    type: 'cozy_bell',
+    tempo: 3200
+  },
+  {
+    id: 'cozy-2',
+    category: 'cozy',
+    name: 'Cyber Knight 2077',
+    mood: 'Glowing cyberpunk neon city with lush analog synth bassline glide',
+    baseFreq: 110.00, // A2
+    scale: [0, 3, 7, 10, 14],
+    progression: [[0, 3, 7], [8, 12, 15], [5, 8, 12], [7, 10, 14]],
+    type: 'synthwave',
+    tempo: 3000
+  },
+  {
+    id: 'cozy-3',
+    category: 'cozy',
+    name: 'Valley Sunset Farm',
+    mood: 'Relaxing harvest simulator golden hour with acoustic porch warmth',
+    baseFreq: 130.81, // C3
+    scale: [0, 4, 7, 9, 12],
+    progression: [[0, 4, 7], [5, 9, 12], [9, 12, 16], [7, 11, 14]],
+    type: 'rpg_pluck',
+    tempo: 3400
+  },
+  {
+    id: 'cozy-4',
+    category: 'cozy',
+    name: 'Star Sanctuary',
+    mood: 'Peaceful celestial puzzle oasis beneath glowing constellations',
+    baseFreq: 164.81, // E3
+    scale: [0, 4, 7, 11, 14],
+    progression: [[0, 4, 7], [7, 11, 14], [9, 12, 16], [5, 9, 12]],
+    type: 'cozy_bell',
+    tempo: 3500
+  },
+  {
+    id: 'cozy-5',
+    category: 'cozy',
+    name: 'Space Station Orbit',
+    mood: 'Zero-gravity ambient sci-fi glide with deep cosmic resonance',
+    baseFreq: 82.41, // E2
+    scale: [0, 7, 10, 14, 19],
+    progression: [[0, 7, 10], [5, 12, 15], [3, 10, 14], [0, 7, 10]],
+    type: 'synthwave',
+    tempo: 3900
+  }
 ];
 
-class SoothingMusicEngine {
+class GameMusicEngine {
   constructor() {
     this.ctx = null;
     this.masterGain = null;
     this.filterNode = null;
     this.isPlaying = false;
     this.currentTrackIndex = 0;
-    this.volume = 0.28;
+    this.volume = 0.35;
     this.timer = null;
+    this.stepIndex = 0;
     this.activeNodes = [];
-    this.noiseNode = null;
-    this.noiseGain = null;
   }
 
   initCtx() {
@@ -79,11 +259,11 @@ class SoothingMusicEngine {
         this.masterGain = this.ctx.createGain();
         this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
 
-        // Warm 24dB/oct lowpass filter to remove any harshness or sharp beeps
+        // Warm 24dB/oct lowpass filter for lush, non-fatiguing game sound
         this.filterNode = this.ctx.createBiquadFilter();
         this.filterNode.type = 'lowpass';
-        this.filterNode.frequency.setValueAtTime(450, this.ctx.currentTime);
-        this.filterNode.Q.setValueAtTime(0.7, this.ctx.currentTime);
+        this.filterNode.frequency.setValueAtTime(1400, this.ctx.currentTime);
+        this.filterNode.Q.setValueAtTime(1.1, this.ctx.currentTime);
 
         this.filterNode.connect(this.masterGain);
         this.masterGain.connect(this.ctx.destination);
@@ -99,6 +279,7 @@ class SoothingMusicEngine {
     if (!this.ctx || this.isPlaying) return;
 
     this.isPlaying = true;
+    this.stepIndex = 0;
     this.playStep();
 
     const track = TRACK_LIST[this.currentTrackIndex];
@@ -115,7 +296,6 @@ class SoothingMusicEngine {
       clearInterval(this.timer);
       this.timer = null;
     }
-    this.stopNoise();
     this.activeNodes.forEach(node => {
       try {
         node.stop();
@@ -128,7 +308,7 @@ class SoothingMusicEngine {
   setVolume(vol) {
     this.volume = Math.max(0, Math.min(1, vol));
     if (this.masterGain && this.ctx) {
-      this.masterGain.gain.setTargetAtTime(this.volume, this.ctx.currentTime, 0.08);
+      this.masterGain.gain.setTargetAtTime(this.volume, this.ctx.currentTime, 0.05);
     }
   }
 
@@ -136,6 +316,7 @@ class SoothingMusicEngine {
     const wasPlaying = this.isPlaying;
     this.stop();
     this.currentTrackIndex = (index + TRACK_LIST.length) % TRACK_LIST.length;
+    this.stepIndex = 0;
     if (wasPlaying) {
       this.start();
     }
@@ -158,110 +339,199 @@ class SoothingMusicEngine {
     return TRACK_LIST.filter(t => t.category === cat);
   }
 
-  // Soft atmospheric noise for rain, fire, ocean waves
-  setupNoise(type) {
-    if (!this.ctx || this.noiseNode) return;
-    try {
-      const bufferSize = this.ctx.sampleRate * 2;
-      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      let lastOut = 0.0;
-
-      for (let i = 0; i < bufferSize; i++) {
-        const white = Math.random() * 2 - 1;
-        // Soft pink noise filter
-        lastOut = (lastOut + 0.02 * white) / 1.02;
-        data[i] = lastOut * 1.5;
-      }
-
-      this.noiseNode = this.ctx.createBufferSource();
-      this.noiseNode.buffer = buffer;
-      this.noiseNode.loop = true;
-
-      const noiseFilter = this.ctx.createBiquadFilter();
-      noiseFilter.type = type === 'nature_fire' ? 'bandpass' : 'lowpass';
-      noiseFilter.frequency.setValueAtTime(type === 'nature_fire' ? 800 : 350, this.ctx.currentTime);
-
-      this.noiseGain = this.ctx.createGain();
-      this.noiseGain.gain.setValueAtTime(0.02, this.ctx.currentTime);
-
-      this.noiseNode.connect(noiseFilter);
-      noiseFilter.connect(this.noiseGain);
-      this.noiseGain.connect(this.masterGain);
-
-      this.noiseNode.start();
-    } catch (e) {}
-  }
-
-  stopNoise() {
-    if (this.noiseNode) {
-      try {
-        this.noiseNode.stop();
-        this.noiseNode.disconnect();
-      } catch (e) {}
-      this.noiseNode = null;
-    }
-  }
-
-  // Generate silky, warm, resonant chords without high-frequency clicks
+  // Generate immersive game music step
   playStep() {
     if (!this.ctx || !this.isPlaying) return;
     const track = TRACK_LIST[this.currentTrackIndex];
-
-    // Handle background environmental texture
-    if (track.type.startsWith('nature_')) {
-      if (!this.noiseNode) this.setupNoise(track.type);
-    } else {
-      this.stopNoise();
-    }
-
     const now = this.ctx.currentTime;
     const duration = track.tempo / 1000;
 
-    // Pick 3-4 harmonic intervals from track scale
-    const chordIntervals = [0];
-    const pick1 = track.scale[Math.floor(Math.random() * (track.scale.length - 1)) + 1];
-    const pick2 = track.scale[Math.floor(Math.random() * (track.scale.length - 1)) + 1];
-    chordIntervals.push(pick1);
-    if (pick2 !== pick1) chordIntervals.push(pick2);
+    // Determine current chord in progression
+    const progression = track.progression || [[0, 4, 7], [5, 9, 12], [7, 11, 14], [0, 4, 7]];
+    const chordIntervals = progression[this.stepIndex % progression.length];
+    this.stepIndex++;
 
-    chordIntervals.forEach((interval, idx) => {
-      const semitoneRatio = Math.pow(2, interval / 12);
-      const freq = track.baseFreq * semitoneRatio;
+    // Adjust filter per track style
+    if (track.type === 'chiptune') {
+      this.filterNode.frequency.setTargetAtTime(2200, now, 0.1);
+    } else if (track.type === 'arena_brass') {
+      this.filterNode.frequency.setTargetAtTime(950, now, 0.1);
+    } else if (track.type === 'cozy_bell') {
+      this.filterNode.frequency.setTargetAtTime(2600, now, 0.1);
+    } else {
+      this.filterNode.frequency.setTargetAtTime(1400, now, 0.1);
+    }
 
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
+    if (track.type === 'chiptune') {
+      // 8-Bit rapid arpeggio pattern (authentic retro gaming chiptune!)
+      chordIntervals.forEach((interval, i) => {
+        const semitoneRatio = Math.pow(2, interval / 12);
+        const freq = track.baseFreq * semitoneRatio * 2; // Octave up for melody
 
-      // Ultra-gentle pure wave shapes: sine or low-harmonic triangle
-      osc.type = track.type === 'rhodes' ? 'triangle' : 'sine';
-      osc.frequency.setValueAtTime(freq, now);
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
 
-      // Warm organic detuning for lush stereo chorus effect
-      const detuneCents = (idx % 2 === 0 ? 3.5 : -3.5) + (Math.random() * 2 - 1);
-      osc.detune.setValueAtTime(detuneCents, now);
+        osc.type = i === 0 ? 'triangle' : 'square';
+        osc.frequency.setValueAtTime(freq, now + i * 0.12);
 
-      // Silky slow attack (no sharp clicks) & exponential decay
-      const attackTime = idx === 0 ? 1.4 : 1.8;
-      const releaseTime = duration * 0.95;
-      const notePeakGain = (idx === 0 ? 0.22 : 0.12) / Math.sqrt(chordIntervals.length);
+        gain.gain.setValueAtTime(0.0001, now + i * 0.12);
+        gain.gain.linearRampToValueAtTime(0.18, now + i * 0.12 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.12 + 0.35);
 
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(notePeakGain, now + attackTime);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + releaseTime);
+        osc.connect(gain);
+        gain.connect(this.filterNode);
 
-      osc.connect(gain);
-      gain.connect(this.filterNode);
+        osc.start(now + i * 0.12);
+        osc.stop(now + i * 0.12 + 0.4);
 
-      osc.start(now);
-      osc.stop(now + releaseTime + 0.1);
+        this.activeNodes.push(osc);
+      });
 
-      this.activeNodes.push(osc);
-      setTimeout(() => {
-        const i = this.activeNodes.indexOf(osc);
-        if (i !== -1) this.activeNodes.splice(i, 1);
-      }, (releaseTime + 0.2) * 1000);
-    });
+      // Solid 8-bit bass note
+      const bassOsc = this.ctx.createOscillator();
+      const bassGain = this.ctx.createGain();
+      bassOsc.type = 'triangle';
+      bassOsc.frequency.setValueAtTime(track.baseFreq * Math.pow(2, chordIntervals[0] / 12), now);
+      bassGain.gain.setValueAtTime(0.0001, now);
+      bassGain.gain.linearRampToValueAtTime(0.24, now + 0.05);
+      bassGain.gain.exponentialRampToValueAtTime(0.0001, now + duration * 0.85);
+
+      bassOsc.connect(bassGain);
+      bassGain.connect(this.filterNode);
+      bassOsc.start(now);
+      bassOsc.stop(now + duration * 0.9);
+      this.activeNodes.push(bassOsc);
+
+    } else if (track.type === 'rpg_pluck') {
+      // Acoustic Lute / Harp plucked chords
+      chordIntervals.forEach((interval, idx) => {
+        const strumDelay = idx * 0.06; // Strummed chord effect
+        const semitoneRatio = Math.pow(2, interval / 12);
+        const freq = track.baseFreq * semitoneRatio;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now + strumDelay);
+        osc.detune.setValueAtTime((idx % 2 === 0 ? 3 : -3), now + strumDelay);
+
+        gain.gain.setValueAtTime(0.0001, now + strumDelay);
+        gain.gain.linearRampToValueAtTime(0.22, now + strumDelay + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + strumDelay + duration * 0.85);
+
+        osc.connect(gain);
+        gain.connect(this.filterNode);
+
+        osc.start(now + strumDelay);
+        osc.stop(now + strumDelay + duration * 0.9);
+        this.activeNodes.push(osc);
+      });
+
+    } else if (track.type === 'cozy_bell') {
+      // Shimmering crystal bells & celestial glockenspiel
+      chordIntervals.forEach((interval, idx) => {
+        const semitoneRatio = Math.pow(2, interval / 12);
+        const freq = track.baseFreq * semitoneRatio * 2;
+
+        const osc = this.ctx.createOscillator();
+        const harmOsc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        harmOsc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+        harmOsc.frequency.setValueAtTime(freq * 2.76, now + idx * 0.08); // Bell inharmonicity
+
+        gain.gain.setValueAtTime(0.0001, now + idx * 0.08);
+        gain.gain.linearRampToValueAtTime(0.18, now + idx * 0.08 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.08 + duration * 0.95);
+
+        osc.connect(gain);
+        harmOsc.connect(gain);
+        gain.connect(this.filterNode);
+
+        osc.start(now + idx * 0.08);
+        harmOsc.start(now + idx * 0.08);
+        osc.stop(now + idx * 0.08 + duration);
+        harmOsc.stop(now + idx * 0.08 + duration);
+
+        this.activeNodes.push(osc, harmOsc);
+      });
+
+    } else if (track.type === 'arena_brass') {
+      // Deep orchestral brass & battle strings
+      chordIntervals.forEach((interval, idx) => {
+        const semitoneRatio = Math.pow(2, interval / 12);
+        const freq = track.baseFreq * semitoneRatio;
+
+        const osc1 = this.ctx.createOscillator();
+        const osc2 = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc1.type = 'sawtooth';
+        osc2.type = 'triangle';
+        osc1.frequency.setValueAtTime(freq, now);
+        osc2.frequency.setValueAtTime(freq, now);
+        osc1.detune.setValueAtTime(5, now);
+        osc2.detune.setValueAtTime(-5, now);
+
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(0.15, now + 0.6);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration * 0.9);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(this.filterNode);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + duration);
+        osc2.stop(now + duration);
+
+        this.activeNodes.push(osc1, osc2);
+      });
+
+    } else {
+      // Default synthwave & hero strings
+      chordIntervals.forEach((interval, idx) => {
+        const semitoneRatio = Math.pow(2, interval / 12);
+        const freq = track.baseFreq * semitoneRatio;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = track.type === 'synthwave' ? 'sawtooth' : 'triangle';
+        osc.frequency.setValueAtTime(freq, now);
+        osc.detune.setValueAtTime((idx % 2 === 0 ? 4 : -4), now);
+
+        const attackTime = 0.8;
+        const releaseTime = duration * 0.92;
+
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(0.2, now + attackTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + releaseTime);
+
+        osc.connect(gain);
+        gain.connect(this.filterNode);
+
+        osc.start(now);
+        osc.stop(now + releaseTime + 0.1);
+        this.activeNodes.push(osc);
+      });
+    }
+
+    // Clean up finished nodes
+    setTimeout(() => {
+      this.activeNodes = this.activeNodes.filter(n => {
+        try {
+          return n.playbackState !== 3; // Not finished
+        } catch {
+          return false;
+        }
+      });
+    }, (duration + 0.2) * 1000);
   }
 }
 
-export const musicEngine = new SoothingMusicEngine();
+export const musicEngine = new GameMusicEngine();

@@ -12,13 +12,14 @@ export function SettingsModal({
   isOpen,
   onClose,
   settings,
-  onUpdateSettings
+  onUpdateSettings,
+  isEmbedded = false
 }) {
   const [activeSubModal, setActiveSubModal] = useState(null); // 'board_picker' | 'piece_picker' | 'color_picker' | 'music_library' | null
   const [selectedMusicCategory, setSelectedMusicCategory] = useState('all');
   const [musicIsPlaying, setMusicIsPlaying] = useState(musicEngine.isPlaying);
 
-  if (!isOpen) return null;
+  if (!isOpen && !isEmbedded) return null;
 
   const currentBoard = BOARD_THEMES[settings.boardTheme] || BOARD_THEMES.cappuccino;
   const currentPiece = PIECE_THEMES[settings.pieceTheme] || PIECE_THEMES.alexander;
@@ -79,14 +80,34 @@ export function SettingsModal({
     onUpdateSettings({ ...settings, musicVolume: vol });
   };
 
+  const renderSubModal = (title, subtitle, content) => (
+    <div className={isEmbedded ? "fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-fade-in" : "absolute inset-0 z-30 bg-slate-950/95 p-4 flex flex-col animate-fade-in"}>
+      <div className={isEmbedded ? "bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full max-h-[85vh] p-4 flex flex-col shadow-2xl overflow-hidden relative" : "flex flex-col h-full w-full overflow-hidden"}>
+        <div className="flex items-center justify-between pb-3 border-b border-slate-800 shrink-0">
+          <div>
+            <h4 className="text-sm font-bold text-white">{title}</h4>
+            {subtitle && <p className="text-[11px] text-slate-400">{subtitle}</p>}
+          </div>
+          <button
+            onClick={() => setActiveSubModal(null)}
+            className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        {content}
+      </div>
+    </div>
+  );
+
   const filteredTracks = selectedMusicCategory === 'all'
     ? TRACK_LIST
     : TRACK_LIST.filter(t => t.category === selectedMusicCategory);
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 md:p-6 animate-fade-in">
-      <div className="bg-slate-900 border-2 border-slate-700/80 rounded-3xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden relative">
-        {/* Header */}
+  const modalContent = (
+    <div className={`${isEmbedded ? 'w-full bg-slate-900 border border-slate-800 rounded-3xl' : 'bg-slate-900 border-2 border-slate-700/80 rounded-3xl max-w-lg w-full max-h-[92vh]'} flex flex-col shadow-2xl overflow-hidden relative`}>
+      {/* Header */}
+      {!isEmbedded && (
         <div className="flex items-center justify-between px-6 py-4 bg-slate-950/80 border-b border-slate-800">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
@@ -101,9 +122,10 @@ export function SettingsModal({
             <X className="w-5 h-5" />
           </button>
         </div>
+      )}
 
-        {/* Scrollable Settings Body */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-6">
+      {/* Scrollable Settings Body */}
+      <div className={`flex-1 ${isEmbedded ? 'p-4 sm:p-6' : 'overflow-y-auto p-5'} space-y-6`}>
           {/* ================= SECTION 1: THEME & COLOR COMBINATION ================= */}
           <div className="space-y-3">
             <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -474,33 +496,24 @@ export function SettingsModal({
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-slate-950/80 border-t border-slate-800 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-lg shadow-amber-500/10 transition-all active:scale-95"
-          >
-            Done
-          </button>
-        </div>
+        {!isEmbedded && (
+          <div className="p-4 bg-slate-950/80 border-t border-slate-800 flex justify-end">
+            <button
+              onClick={onClose}
+              className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-lg shadow-amber-500/10 transition-all active:scale-95"
+            >
+              Done
+            </button>
+          </div>
+        )}
 
         {/* ================= SUB-MODAL: 36+ TRACK MUSIC LIBRARY ================= */}
-        {activeSubModal === 'music_library' && (
-          <div className="absolute inset-0 z-30 bg-slate-950/95 p-4 flex flex-col animate-fade-in">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div>
-                <h4 className="text-sm font-bold text-white">Soothing Chess Music Library</h4>
-                <p className="text-[11px] text-slate-400">36 handcrafted calm, organic tracks</p>
-              </div>
-              <button
-                onClick={() => setActiveSubModal(null)}
-                className="p-1 rounded-full text-slate-400 hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
+        {activeSubModal === 'music_library' && renderSubModal(
+          'Soothing Chess Music Library',
+          '36 handcrafted calm, organic tracks',
+          <>
             {/* Category Filter Pills */}
-            <div className="flex gap-1.5 py-3 overflow-x-auto no-scrollbar">
+            <div className="flex gap-1.5 py-3 overflow-x-auto no-scrollbar shrink-0">
               <button
                 onClick={() => setSelectedMusicCategory('all')}
                 className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
@@ -509,7 +522,7 @@ export function SettingsModal({
                     : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
                 }`}
               >
-                All (36)
+                All ({TRACK_LIST.length})
               </button>
               {Object.keys(MUSIC_CATEGORIES).map((catKey) => (
                 <button
@@ -566,169 +579,148 @@ export function SettingsModal({
                 );
               })}
             </div>
-          </div>
+          </>
         )}
 
         {/* ================= SUB-MODAL: BOARD THEME PICKER ================= */}
-        {activeSubModal === 'board_picker' && (
-          <div className="absolute inset-0 z-30 bg-slate-950/95 p-4 flex flex-col animate-fade-in">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <h4 className="text-sm font-bold text-white">Select Chessboard Theme</h4>
-              <button
-                onClick={() => setActiveSubModal(null)}
-                className="p-1 rounded-full text-slate-400 hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto py-3 space-y-2">
-              {Object.keys(BOARD_THEMES).map((key) => {
-                const b = BOARD_THEMES[key];
-                const isSelected = settings.boardTheme === key;
-                return (
-                  <button
-                    key={key}
-                    onClick={() => {
-                      triggerHaptic('move');
-                      onUpdateSettings({ ...settings, boardTheme: key });
-                      setActiveSubModal(null);
-                    }}
-                    className={`w-full flex items-center justify-between p-3 rounded-2xl border transition-all ${
-                      isSelected
-                        ? 'bg-amber-500/15 border-amber-500/60 shadow-md'
-                        : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-14 h-9 rounded-lg overflow-hidden border border-slate-700/80 grid grid-cols-4 grid-rows-2 shrink-0">
-                        {[0, 1, 0, 1, 1, 0, 1, 0].map((val, idx) => (
-                          <div
-                            key={idx}
-                            style={{ backgroundColor: val === 0 ? b.light : b.dark }}
-                          />
-                        ))}
-                      </div>
-                      <div className="text-left">
-                        <span className="text-xs font-bold text-white block capitalize">{b.name}</span>
-                        {b.isLight && <span className="text-[10px] text-amber-400 font-medium">Light Luxury Theme</span>}
-                      </div>
+        {activeSubModal === 'board_picker' && renderSubModal(
+          'Select Chessboard Theme',
+          null,
+          <div className="flex-1 overflow-y-auto py-3 space-y-2">
+            {Object.keys(BOARD_THEMES).map((key) => {
+              const b = BOARD_THEMES[key];
+              const isSelected = settings.boardTheme === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => {
+                    triggerHaptic('move');
+                    onUpdateSettings({ ...settings, boardTheme: key });
+                    setActiveSubModal(null);
+                  }}
+                  className={`w-full flex items-center justify-between p-3 rounded-2xl border transition-all ${
+                    isSelected
+                      ? 'bg-amber-500/15 border-amber-500/60 shadow-md'
+                      : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-9 rounded-lg overflow-hidden border border-slate-700/80 grid grid-cols-4 grid-rows-2 shrink-0">
+                      {[0, 1, 0, 1, 1, 0, 1, 0].map((val, idx) => (
+                        <div
+                          key={idx}
+                          style={{ backgroundColor: val === 0 ? b.light : b.dark }}
+                        />
+                      ))}
                     </div>
-                    {isSelected && <Check className="w-4 h-4 text-amber-400" />}
-                  </button>
-                );
-              })}
-            </div>
+                    <div className="text-left">
+                      <span className="text-xs font-bold text-white block capitalize">{b.name}</span>
+                      {b.isLight && <span className="text-[10px] text-amber-400 font-medium">Light Luxury Theme</span>}
+                    </div>
+                  </div>
+                  {isSelected && <Check className="w-4 h-4 text-amber-400" />}
+                </button>
+              );
+            })}
           </div>
         )}
 
         {/* ================= SUB-MODAL: PIECE CARVING PICKER ================= */}
-        {activeSubModal === 'piece_picker' && (
-          <div className="absolute inset-0 z-30 bg-slate-950/95 p-4 flex flex-col animate-fade-in">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <h4 className="text-sm font-bold text-white">Select Chess Pieces Style</h4>
-              <button
-                onClick={() => setActiveSubModal(null)}
-                className="p-1 rounded-full text-slate-400 hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+        {activeSubModal === 'piece_picker' && renderSubModal(
+          'Select Chess Pieces Style',
+          null,
+          <div className="flex-1 overflow-y-auto py-3 space-y-2.5">
+            {Object.keys(PIECE_THEMES).map((key) => {
+              const p = PIECE_THEMES[key];
+              const isSelected = settings.pieceTheme === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => {
+                    triggerHaptic('move');
+                    onUpdateSettings({ ...settings, pieceTheme: key });
+                    setActiveSubModal(null);
+                  }}
+                  className={`w-full p-3 rounded-2xl border transition-all text-left space-y-2 ${
+                    isSelected
+                      ? 'bg-amber-500/15 border-amber-500/60 shadow-md'
+                      : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white">{p.name}</span>
+                    {isSelected && <Check className="w-4 h-4 text-amber-400" />}
+                  </div>
 
-            <div className="flex-1 overflow-y-auto py-3 space-y-2.5">
-              {Object.keys(PIECE_THEMES).map((key) => {
-                const p = PIECE_THEMES[key];
-                const isSelected = settings.pieceTheme === key;
-                return (
-                  <button
-                    key={key}
-                    onClick={() => {
-                      triggerHaptic('move');
-                      onUpdateSettings({ ...settings, pieceTheme: key });
-                      setActiveSubModal(null);
-                    }}
-                    className={`w-full p-3 rounded-2xl border transition-all text-left space-y-2 ${
-                      isSelected
-                        ? 'bg-amber-500/15 border-amber-500/60 shadow-md'
-                        : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-white">{p.name}</span>
-                      {isSelected && <Check className="w-4 h-4 text-amber-400" />}
-                    </div>
+                  <div className="flex items-center justify-between p-2 bg-slate-950/70 rounded-xl border border-slate-800/80">
+                    {['k', 'q', 'r', 'b', 'n', 'p'].map((pieceType, pIdx) => (
+                      <div key={pIdx} className="w-7 h-7 flex items-center justify-center">
+                        <PieceIcon
+                          piece={pieceType}
+                          color={pIdx % 2 === 0 ? 'w' : 'b'}
+                          size={26}
+                          theme={key}
+                          colorPalette={settings.pieceColorPalette || 'classic'}
+                        />
+                      </div>
+                    ))}
+                  </div>
 
-                    <div className="flex items-center justify-between p-2 bg-slate-950/70 rounded-xl border border-slate-800/80">
-                      {['k', 'q', 'r', 'b', 'n', 'p'].map((pieceType, pIdx) => (
-                        <div key={pIdx} className="w-7 h-7 flex items-center justify-center">
-                          <PieceIcon
-                            piece={pieceType}
-                            color={pIdx % 2 === 0 ? 'w' : 'b'}
-                            size={26}
-                            theme={key}
-                            colorPalette={settings.pieceColorPalette || 'classic'}
-                          />
-                        </div>
-                      ))}
-                    </div>
-
-                    <p className="text-[10px] text-slate-400 truncate">{p.desc}</p>
-                  </button>
-                );
-              })}
-            </div>
+                  <p className="text-[10px] text-slate-400 truncate">{p.desc}</p>
+                </button>
+              );
+            })}
           </div>
         )}
 
         {/* ================= SUB-MODAL: PIECE COLOR PALETTE PICKER ================= */}
-        {activeSubModal === 'color_picker' && (
-          <div className="absolute inset-0 z-30 bg-slate-950/95 p-4 flex flex-col animate-fade-in">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <h4 className="text-sm font-bold text-white">Select Pieces Color Palette</h4>
-              <button
-                onClick={() => setActiveSubModal(null)}
-                className="p-1 rounded-full text-slate-400 hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto py-3 space-y-2.5">
-              {Object.keys(PIECE_COLOR_PALETTES).map((palKey) => {
-                const pal = PIECE_COLOR_PALETTES[palKey];
-                const isSelected = (settings.pieceColorPalette || 'classic') === palKey;
-                return (
-                  <button
-                    key={palKey}
-                    onClick={() => {
-                      triggerHaptic('move');
-                      onUpdateSettings({ ...settings, pieceColorPalette: palKey });
-                      setActiveSubModal(null);
-                    }}
-                    className={`w-full p-3.5 rounded-2xl border transition-all text-left flex items-center justify-between ${
-                      isSelected
-                        ? 'bg-amber-500/15 border-amber-500/60 shadow-md'
-                        : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1.5 p-1 bg-slate-950 rounded-xl border border-slate-800">
-                        <span className="w-5 h-5 rounded-full border border-slate-600" style={{ backgroundColor: pal.white }} />
-                        <span className="w-5 h-5 rounded-full border border-slate-600" style={{ backgroundColor: pal.black }} />
-                      </div>
-                      <div>
-                        <span className="text-xs font-bold text-white block">{pal.name}</span>
-                        <span className="text-[10px] text-slate-400">White & Black color finish</span>
-                      </div>
+        {activeSubModal === 'color_picker' && renderSubModal(
+          'Select Pieces Color Palette',
+          null,
+          <div className="flex-1 overflow-y-auto py-3 space-y-2.5">
+            {Object.keys(PIECE_COLOR_PALETTES).map((palKey) => {
+              const pal = PIECE_COLOR_PALETTES[palKey];
+              const isSelected = (settings.pieceColorPalette || 'classic') === palKey;
+              return (
+                <button
+                  key={palKey}
+                  onClick={() => {
+                    triggerHaptic('move');
+                    onUpdateSettings({ ...settings, pieceColorPalette: palKey });
+                    setActiveSubModal(null);
+                  }}
+                  className={`w-full p-3.5 rounded-2xl border transition-all text-left flex items-center justify-between ${
+                    isSelected
+                      ? 'bg-amber-500/15 border-amber-500/60 shadow-md'
+                      : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5 p-1 bg-slate-950 rounded-xl border border-slate-800">
+                      <span className="w-5 h-5 rounded-full border border-slate-600" style={{ backgroundColor: pal.white }} />
+                      <span className="w-5 h-5 rounded-full border border-slate-600" style={{ backgroundColor: pal.black }} />
                     </div>
-                    {isSelected && <Check className="w-4 h-4 text-amber-400" />}
-                  </button>
-                );
-              })}
-            </div>
+                    <div>
+                      <span className="text-xs font-bold text-white block">{pal.name}</span>
+                      <span className="text-[10px] text-slate-400">White & Black color finish</span>
+                    </div>
+                  </div>
+                  {isSelected && <Check className="w-4 h-4 text-amber-400" />}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
+  );
+
+  if (isEmbedded) {
+    return modalContent;
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 md:p-6 animate-fade-in">
+      {modalContent}
     </div>
   );
 }
