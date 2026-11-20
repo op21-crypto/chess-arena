@@ -7,20 +7,9 @@ import { calculateUserRanking } from '../data/leaderboardData.js';
 import { safeStorage } from '../utils/storage.js';
 import { LeaderboardView } from './LeaderboardView.jsx';
 import { SettingsModal } from './SettingsModal.jsx';
-import { ANIME_AVATARS, ACHIEVEMENTS_DATA } from './ProfileModal.jsx';
+import { ACHIEVEMENTS_DATA } from './ProfileModal.jsx';
+import { FAMOUS_AVATARS, AVATAR_CATEGORIES, ANIME_AVATARS } from '../data/avatarData.js';
 import { triggerHaptic } from '../utils/device.js';
-
-const CLASSIC_AVATARS = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
-  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150',
-  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
-  'https://api.dicebear.com/7.x/bottts/svg?seed=GrandmasterAlpha',
-  'https://api.dicebear.com/7.x/bottts/svg?seed=CyberKnight'
-];
 
 export function ProfileView({
   user,
@@ -36,7 +25,12 @@ export function ProfileView({
   const [activeSubTab, setActiveSubTab] = useState(initialSubTab); // 'overview' | 'rankings' | 'settings'
   const [selectedAvatar, setSelectedAvatar] = useState(user?.avatar || '');
   const [isEditingAvatar, setIsEditingAvatar] = useState(false);
-  const [avatarCategory, setAvatarCategory] = useState('anime'); // 'anime' | 'classic'
+  const [avatarCategory, setAvatarCategory] = useState('all');
+
+  const filteredAvatars = useMemo(() => {
+    if (avatarCategory === 'all') return FAMOUS_AVATARS;
+    return FAMOUS_AVATARS.filter(a => a.category === avatarCategory);
+  }, [avatarCategory]);
 
   // Current ranking calculation
   const userElo = user?.ratings?.rapid || user?.elo || 1078;
@@ -184,81 +178,90 @@ export function ProfileView({
           </div>
         </div>
 
-        {/* 32+ Anime & Grandmaster Avatar Drawer (When Edit is Clicked) */}
+        {/* Famous Avatars Selector Drawer (Across Categories) */}
         {isEditingAvatar && (
           <div className="mt-5 p-4 bg-slate-950 border border-slate-800 rounded-2xl space-y-3 animate-fade-in shadow-xl">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span>Choose Anime or Grandmaster Avatar</span>
+                <span>Choose Your Avatar ({FAMOUS_AVATARS.length} Famous Characters)</span>
               </span>
-              <div className="flex gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
-                <button
-                  onClick={() => setAvatarCategory('anime')}
-                  className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
-                    avatarCategory === 'anime' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Anime (32)
-                </button>
-                <button
-                  onClick={() => setAvatarCategory('classic')}
-                  className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
-                    avatarCategory === 'classic' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Classic (9)
-                </button>
-              </div>
+            </div>
+
+            {/* Category Filter Pills */}
+            <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+              {AVATAR_CATEGORIES.map(cat => {
+                const count = cat.id === 'all'
+                  ? FAMOUS_AVATARS.length
+                  : FAMOUS_AVATARS.filter(a => a.category === cat.id).length;
+                const isActive = avatarCategory === cat.id;
+
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      triggerHaptic('move');
+                      setAvatarCategory(cat.id);
+                    }}
+                    className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
+                      isActive
+                        ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                        : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                    }`}
+                  >
+                    <span>{cat.icon}</span>
+                    <span>{cat.label}</span>
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                      isActive ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-800 text-slate-400'
+                    }`}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Grid of Avatars */}
-            {avatarCategory === 'anime' ? (
-              <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 max-h-56 overflow-y-auto p-1 border border-slate-800/80 rounded-xl bg-slate-900/60">
-                {ANIME_AVATARS.map((av, idx) => {
-                  const isSelected = selectedAvatar === av.url;
-                  return (
-                    <div
-                      key={idx}
-                      onClick={() => {
-                        triggerHaptic('move');
-                        setSelectedAvatar(av.url);
-                      }}
-                      className={`p-1.5 rounded-xl border flex flex-col items-center gap-1 cursor-pointer transition-all ${
-                        isSelected
-                          ? 'bg-amber-500/20 border-amber-400 ring-2 ring-amber-400/50 scale-105'
-                          : 'bg-slate-950/70 border-slate-800 hover:border-slate-600'
-                      }`}
-                    >
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2.5 max-h-60 overflow-y-auto p-2 border border-slate-800/80 rounded-xl bg-slate-900/60 custom-scrollbar">
+              {filteredAvatars.map((av, idx) => {
+                const isSelected = selectedAvatar === av.url;
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => {
+                      triggerHaptic('move');
+                      setSelectedAvatar(av.url);
+                    }}
+                    className={`p-2 rounded-xl border flex flex-col items-center gap-1 cursor-pointer transition-all ${
+                      isSelected
+                        ? 'bg-amber-500/20 border-amber-400 ring-2 ring-amber-400/50 scale-105'
+                        : 'bg-slate-950/70 border-slate-800 hover:border-slate-600 hover:bg-slate-900/80'
+                    }`}
+                    title={`${av.name} (${av.series})`}
+                  >
+                    <div className="relative">
                       <img
                         src={av.url}
                         alt={av.name}
-                        className="w-12 h-12 rounded-full bg-slate-800 object-cover"
+                        className="w-12 h-12 rounded-full bg-slate-800 object-cover shadow-xs"
+                        loading="lazy"
                       />
-                      <span className="text-[10px] font-bold text-slate-200 truncate w-full text-center">
-                        {av.name}
-                      </span>
+                      {isSelected && (
+                        <div className="absolute -top-1 -right-1 bg-amber-400 text-slate-950 rounded-full p-0.5 shadow">
+                          <Check className="w-2.5 h-2.5 stroke-[3]" />
+                        </div>
+                      )}
                     </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-                {CLASSIC_AVATARS.map((av, idx) => (
-                  <img
-                    key={idx}
-                    src={av}
-                    onClick={() => {
-                      triggerHaptic('move');
-                      setSelectedAvatar(av);
-                    }}
-                    className={`w-14 h-14 rounded-full cursor-pointer object-cover border-2 transition-all shrink-0 ${
-                      selectedAvatar === av ? 'border-amber-400 scale-105 ring-2 ring-amber-400/50' : 'border-slate-700 hover:border-slate-500'
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
+                    <span className="text-[10px] font-bold text-slate-200 truncate w-full text-center">
+                      {av.name}
+                    </span>
+                    <span className="text-[8px] text-slate-500 truncate w-full text-center -mt-0.5">
+                      {av.series}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
 
             <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
               <button

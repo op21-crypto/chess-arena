@@ -1044,6 +1044,8 @@ export default function App() {
                 )}
                 <button
                   onClick={() => {
+                    sound.playClick();
+                    triggerHaptic('move');
                     setProfileSubTab('overview');
                     setActiveTab('profile');
                   }}
@@ -1066,21 +1068,6 @@ export default function App() {
                     alt={currentUser.username}
                     className="w-7 h-7 rounded-full object-cover border border-amber-400"
                   />
-                </button>
-                <button
-                  onClick={() => {
-                    safeStorage.removeItem('token');
-                    setCurrentUser(null);
-                  }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-bold text-xs shadow-xs transition-all active:scale-95 cursor-pointer ${
-                    isLight
-                      ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-red-600 hover:bg-red-50'
-                      : 'bg-slate-900 border-slate-800 text-slate-300 hover:text-red-400 hover:border-red-500/40 hover:bg-red-500/10'
-                  }`}
-                  title="Sign Out"
-                >
-                  <LogOut className="w-3.5 h-3.5 text-red-400" />
-                  <span className="hidden sm:inline">Sign Out</span>
                 </button>
               </div>
             ) : (
@@ -1702,14 +1689,16 @@ export default function App() {
               <button
                 key={tab.id}
                 onClick={() => {
+                  sound.playClick();
+                  triggerHaptic('move');
                   if (tab.id === 'profile') {
                     setProfileSubTab('overview');
                   }
                   setActiveTab(tab.id);
                 }}
-                className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl text-[10px] font-bold ${
+                className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl text-[10px] font-bold transition-all active:scale-95 cursor-pointer ${
                   activeTab === tab.id
-                    ? 'text-amber-500'
+                    ? 'text-amber-400 font-black scale-105'
                     : isLight
                     ? 'text-slate-600 hover:text-slate-900'
                     : 'text-slate-400 hover:text-slate-200'

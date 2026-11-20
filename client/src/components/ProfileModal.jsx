@@ -2,6 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { Award, Trophy, Zap, Shield, Flame, X, Check, Edit2, Crown, Globe, ArrowRight, Sparkles } from 'lucide-react';
 import { safeStorage } from '../utils/storage.js';
 import { calculateUserRanking } from '../data/leaderboardData.js';
+import { FAMOUS_AVATARS, AVATAR_CATEGORIES, ANIME_AVATARS } from '../data/avatarData.js';
+
+export { ANIME_AVATARS, FAMOUS_AVATARS, AVATAR_CATEGORIES };
 
 export const ACHIEVEMENTS_DATA = [
   { id: 'first_win', name: 'First Victory', desc: 'Won your first chess match in the arena', icon: '🏆' },
@@ -17,60 +20,15 @@ export const ACHIEVEMENTS_DATA = [
   { id: 'knight_badge', name: 'Tricky Steed', desc: 'Delivered an en prise knight fork', icon: '🐴' }
 ];
 
-export const ANIME_AVATARS = [
-  { name: 'Luffy', series: 'One Piece', seed: 'LuffyGear5' },
-  { name: 'Zoro', series: 'One Piece', seed: 'ZoroSwordsman' },
-  { name: 'Sanji', series: 'One Piece', seed: 'SanjiCook' },
-  { name: 'Naruto', series: 'Naruto', seed: 'NarutoSage' },
-  { name: 'Sasuke', series: 'Naruto', seed: 'SasukeUchiha' },
-  { name: 'Kakashi', series: 'Naruto', seed: 'KakashiHatake' },
-  { name: 'Itachi', series: 'Naruto', seed: 'ItachiCrow' },
-  { name: 'Gojo', series: 'Jujutsu Kaisen', seed: 'GojoSatoru' },
-  { name: 'Sukuna', series: 'Jujutsu Kaisen', seed: 'RyomenSukuna' },
-  { name: 'Megumi', series: 'Jujutsu Kaisen', seed: 'MegumiFushiguro' },
-  { name: 'Levi', series: 'Attack on Titan', seed: 'LeviAckerman' },
-  { name: 'Eren', series: 'Attack on Titan', seed: 'ErenJaeger' },
-  { name: 'Mikasa', series: 'Attack on Titan', seed: 'MikasaAckerman' },
-  { name: 'Tanjiro', series: 'Demon Slayer', seed: 'TanjiroKamado' },
-  { name: 'Nezuko', series: 'Demon Slayer', seed: 'NezukoDemon' },
-  { name: 'Zenitsu', series: 'Demon Slayer', seed: 'ZenitsuThunder' },
-  { name: 'Inosuke', series: 'Demon Slayer', seed: 'InosukeBeast' },
-  { name: 'Rengoku', series: 'Demon Slayer', seed: 'KyojuroRengoku' },
-  { name: 'Killua', series: 'Hunter x Hunter', seed: 'KilluaZoldyck' },
-  { name: 'Gon', series: 'Hunter x Hunter', seed: 'GonFreecss' },
-  { name: 'Kurapika', series: 'Hunter x Hunter', seed: 'KurapikaChains' },
-  { name: 'Saitama', series: 'One Punch Man', seed: 'SaitamaHero' },
-  { name: 'Genos', series: 'One Punch Man', seed: 'GenosCyborg' },
-  { name: 'Deku', series: 'My Hero Academia', seed: 'IzukuMidoriya' },
-  { name: 'Todoroki', series: 'My Hero Academia', seed: 'ShotoTodoroki' },
-  { name: 'Bakugo', series: 'My Hero Academia', seed: 'KatsukiBakugo' },
-  { name: 'Edward', series: 'Fullmetal Alchemist', seed: 'EdwardElric' },
-  { name: 'Spike', series: 'Cowboy Bebop', seed: 'SpikeSpiegel' },
-  { name: 'Kaneki', series: 'Tokyo Ghoul', seed: 'KenKaneki' },
-  { name: 'Mob', series: 'Mob Psycho 100', seed: 'ShigeoKageyama' },
-  { name: 'Frieren', series: 'Frieren', seed: 'FrierenMage' },
-  { name: 'Sung Jin-woo', series: 'Solo Leveling', seed: 'ShadowMonarch' }
-].map(a => ({
-  ...a,
-  url: `https://api.dicebear.com/7.x/adventurer/svg?seed=${a.seed}&radius=50`
-}));
-
-const CLASSIC_AVATARS = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
-  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150',
-  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
-  'https://api.dicebear.com/7.x/bottts/svg?seed=GrandmasterAlpha',
-  'https://api.dicebear.com/7.x/bottts/svg?seed=CyberKnight'
-];
-
 export function ProfileModal({ user, isOpen, onClose, onUpdateUser, onNavigateToRankings, onOpenStreak, onOpenAdmin }) {
   const [selectedAvatar, setSelectedAvatar] = useState(user?.avatar || '');
   const [isEditing, setIsEditing] = useState(false);
-  const [avatarCategory, setAvatarCategory] = useState('anime'); // 'anime' | 'classic'
+  const [avatarCategory, setAvatarCategory] = useState('all');
+
+  const filteredAvatars = useMemo(() => {
+    if (avatarCategory === 'all') return FAMOUS_AVATARS;
+    return FAMOUS_AVATARS.filter(a => a.category === avatarCategory);
+  }, [avatarCategory]);
 
   // Current ranking calculation
   const userElo = user?.ratings?.rapid || user?.elo || 1078;
@@ -177,75 +135,84 @@ export function ProfileModal({ user, isOpen, onClose, onUpdateUser, onNavigateTo
           </div>
         </div>
 
-        {/* 30+ Anime Avatars Selector Drawer */}
+        {/* Famous Avatars Selector Drawer (Across Categories) */}
         {isEditing && (
           <div className="p-3.5 bg-slate-950 border border-slate-800 rounded-2xl space-y-3 animate-fade-in shadow-xl">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span>Choose Anime or Grandmaster Avatar</span>
+                <span>Choose Your Avatar ({FAMOUS_AVATARS.length} Famous Characters)</span>
               </span>
-              <div className="flex gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
-                <button
-                  onClick={() => setAvatarCategory('anime')}
-                  className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
-                    avatarCategory === 'anime' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Anime (32)
-                </button>
-                <button
-                  onClick={() => setAvatarCategory('classic')}
-                  className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
-                    avatarCategory === 'classic' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Classic (9)
-                </button>
-              </div>
+            </div>
+
+            {/* Category Filter Pills */}
+            <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+              {AVATAR_CATEGORIES.map(cat => {
+                const count = cat.id === 'all'
+                  ? FAMOUS_AVATARS.length
+                  : FAMOUS_AVATARS.filter(a => a.category === cat.id).length;
+                const isActive = avatarCategory === cat.id;
+
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => setAvatarCategory(cat.id)}
+                    className={`px-2.5 py-1 rounded-xl text-[10px] font-bold whitespace-nowrap transition-all flex items-center gap-1 shrink-0 ${
+                      isActive
+                        ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                        : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                    }`}
+                  >
+                    <span>{cat.icon}</span>
+                    <span>{cat.label}</span>
+                    <span className={`px-1 py-0.2 rounded-full text-[9px] ${
+                      isActive ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-800 text-slate-400'
+                    }`}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Grid of Avatars */}
-            {avatarCategory === 'anime' ? (
-              <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-52 overflow-y-auto p-1 border border-slate-800/80 rounded-xl bg-slate-900/60">
-                {ANIME_AVATARS.map((av, idx) => {
-                  const isSelected = selectedAvatar === av.url;
-                  return (
-                    <div
-                      key={idx}
-                      onClick={() => setSelectedAvatar(av.url)}
-                      className={`p-1.5 rounded-xl border flex flex-col items-center gap-1 cursor-pointer transition-all ${
-                        isSelected
-                          ? 'bg-amber-500/20 border-amber-400 ring-2 ring-amber-400/50 scale-105'
-                          : 'bg-slate-950/70 border-slate-800 hover:border-slate-600'
-                      }`}
-                    >
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-56 overflow-y-auto p-1.5 border border-slate-800/80 rounded-xl bg-slate-900/60 custom-scrollbar">
+              {filteredAvatars.map((av, idx) => {
+                const isSelected = selectedAvatar === av.url;
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => setSelectedAvatar(av.url)}
+                    className={`p-1.5 rounded-xl border flex flex-col items-center gap-1 cursor-pointer transition-all ${
+                      isSelected
+                        ? 'bg-amber-500/20 border-amber-400 ring-2 ring-amber-400/50 scale-105'
+                        : 'bg-slate-950/70 border-slate-800 hover:border-slate-600 hover:bg-slate-900/80'
+                    }`}
+                    title={`${av.name} (${av.series})`}
+                  >
+                    <div className="relative">
                       <img
                         src={av.url}
                         alt={av.name}
-                        className="w-11 h-11 rounded-full bg-slate-800 object-cover"
+                        className="w-12 h-12 rounded-full bg-slate-800 object-cover shadow-xs"
+                        loading="lazy"
                       />
-                      <span className="text-[10px] font-bold text-slate-200 truncate w-full text-center">
-                        {av.name}
-                      </span>
+                      {isSelected && (
+                        <div className="absolute -top-1 -right-1 bg-amber-400 text-slate-950 rounded-full p-0.5 shadow">
+                          <Check className="w-2.5 h-2.5 stroke-[3]" />
+                        </div>
+                      )}
                     </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-                {CLASSIC_AVATARS.map((av, idx) => (
-                  <img
-                    key={idx}
-                    src={av}
-                    onClick={() => setSelectedAvatar(av)}
-                    className={`w-12 h-12 rounded-full cursor-pointer object-cover border-2 transition-all shrink-0 ${
-                      selectedAvatar === av ? 'border-amber-400 scale-105' : 'border-slate-700 hover:border-slate-500'
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
+                    <span className="text-[10px] font-bold text-slate-200 truncate w-full text-center">
+                      {av.name}
+                    </span>
+                    <span className="text-[8px] text-slate-500 truncate w-full text-center -mt-0.5">
+                      {av.series}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
 
             <div className="flex justify-end gap-2 pt-1 border-t border-slate-800">
               <button
