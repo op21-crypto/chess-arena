@@ -1190,24 +1190,9 @@ export function FriendRoomModal({
           safeStorage.setItem('chess_arena_sent_requests_v3_detailed', JSON.stringify(filtered));
           return filtered;
         });
-      }, 3500);
-    }
-  };
-
-    // If target is a bot or community friend, simulate acceptance after a short delay!
-    if (userToSend?.isBot || (userToSend?.id && (userToSend.id.startsWith('f_') || userToSend.id.startsWith('sug_') || userToSend.id.startsWith('anime_')))) {
-      setTimeout(() => {
-        setFriends(prev => {
-          const list = Array.isArray(prev) ? prev : [];
-          if (list.some(f => f?.username && typeof f.username === 'string' && f.username.toLowerCase() === targetUsername.toLowerCase())) return list;
-          const updated = [userToSend, ...list];
-          safeStorage.setItem('chess_arena_friends_v3', JSON.stringify(updated));
-          return updated;
-        });
-        setSentRequests(prev => (Array.isArray(prev) ? prev : []).filter(u => u !== targetUsername));
         sound.playVictory();
         triggerHaptic('success');
-      }, 3000);
+      }, 3500);
     }
   };
 
@@ -2081,6 +2066,59 @@ export function FriendRoomModal({
                         <AlertCircle className="w-4 h-4 shrink-0 text-amber-500" />
                       )}
                       <span>{requestStatus.text}</span>
+                    </div>
+                  )}
+
+                  {/* Pending Friend Requests Sent Section directly under Search Friend button */}
+                  {pendingSentRequests && pendingSentRequests.length > 0 && (
+                    <div className={`p-3 rounded-2xl border space-y-2 animate-fade-in ${theme.card}`}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-black uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-amber-500" />
+                          <span>Pending Friend Requests ({pendingSentRequests.length})</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPendingSentRequests([]);
+                            safeStorage.removeItem('chess_arena_sent_requests_v3_detailed');
+                          }}
+                          className={`text-[10px] ${theme.textMuted} hover:text-rose-400 cursor-pointer`}
+                        >
+                          Clear
+                        </button>
+                      </div>
+                      <div className="space-y-1.5">
+                        {pendingSentRequests.map(req => (
+                          <div
+                            key={req.username}
+                            className={`flex items-center justify-between p-2 rounded-xl border text-xs ${theme.innerBox}`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <img
+                                src={req.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${req.username}`}
+                                alt={req.username}
+                                className="w-7 h-7 rounded-full object-cover border border-amber-500/40 shrink-0"
+                              />
+                              <div className="truncate">
+                                <div className="flex items-center gap-1">
+                                  <span className="font-bold text-xs truncate">@{req.username}</span>
+                                  <span>{COUNTRY_FLAGS[req.country] || '🌐'}</span>
+                                  <span className={`text-[9px] font-mono font-bold px-1 py-0.2 rounded border ${theme.badge}`}>
+                                    {req.elo || 1200}
+                                  </span>
+                                </div>
+                                <span className="text-[10px] text-amber-500 font-semibold block">
+                                  • Friend Request Pending 📩
+                                </span>
+                              </div>
+                            </div>
+                            <span className="text-[10px] text-amber-400 font-bold px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 shrink-0">
+                              Pending ⏳
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 

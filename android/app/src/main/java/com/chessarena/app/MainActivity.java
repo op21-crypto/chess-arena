@@ -1,6 +1,9 @@
 package com.chessarena.app;
 
 import android.Manifest;
+import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -26,6 +29,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.app.ActivityCompat;
@@ -37,6 +41,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
     private static final String APP_URL = "https://chess-arena-three-indol.vercel.app";
     private static final int PERMISSION_REQUEST_CODE = 1001;
+    private static final int RC_CHOOSE_GOOGLE_ACCOUNT = 2002;
 
     private WebView webView;
     private View splashOverlay;
@@ -249,6 +254,41 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         @JavascriptInterface
         public void onAppReady() {
             runOnUiThread(MainActivity.this::hideSplashScreen);
+        }
+
+        @JavascriptInterface
+        public boolean openGoogleAccountPicker() {
+            try {
+                Intent intent;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    intent = AccountManager.newChooseAccountIntent(
+                            null,
+                            null,
+                            new String[]{"com.google"},
+                            null,
+                            null,
+                            null,
+                            null
+                    );
+                } else {
+                    intent = AccountManager.newChooseAccountIntent(
+                            null,
+                            null,
+                            new String[]{"com.google"},
+                            false,
+                            null,
+                            null,
+                            null,
+                            null
+                    );
+                }
+                startActivityForResult(intent, RC_CHOOSE_GOOGLE_ACCOUNT);
+                return true;
+            } catch (ActivityNotFoundException e) {
+                return false;
+            } catch (Exception e) {
+                return false;
+            }
         }
     }
 
@@ -466,6 +506,27 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                 if (pendingPermissionRequest != null) {
                     pendingPermissionRequest.deny();
                     pendingPermissionRequest = null;
+                }
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == RC_CHOOSE_GOOGLE_ACCOUNT) {
+            if (resultCode == RESULT_OK && data != null) {
+                String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+                if (accountName != null && !accountName.trim().isEmpty()) {
+                    final String safeEmail = accountName.trim().replace("'", "\\'");
+                    runOnUiThread(() -> {
+                        if (webView != null) {
+                            webView.evaluateJavascript(
+                                    "window.__onNativeGoogleAccountSelected && window.__onNativeGoogleAccountSelected('" + safeEmail + "');",
+                                    null
+                            );
+                        }
+                    });
                 }
             }
         }

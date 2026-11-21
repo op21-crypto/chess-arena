@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Sparkles, X, Mail, ArrowLeft, Eye, EyeOff, Lock, Key, ShieldCheck, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Sparkles, X, Mail, ArrowLeft, Eye, EyeOff, Lock, Key, ShieldCheck, Check, UserCheck } from 'lucide-react';
 import { safeStorage } from '../utils/storage.js';
 import { signInWithFirebaseGoogle } from '../utils/firebase.js';
 
@@ -52,6 +52,37 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, isLight = false }) {
   const [adminPin, setAdminPin] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [savedEmails, setSavedEmails] = useState(() => {
+    try {
+      const stored = safeStorage.getItem('chess_arena_saved_emails');
+      if (stored) return JSON.parse(stored);
+    } catch {}
+    return ['op21plus@gmail.com'];
+  });
+
+  // Listen for native Android Google Account picker selection
+  useEffect(() => {
+    window.__onNativeGoogleAccountSelected = (selectedEmail) => {
+      if (selectedEmail && typeof selectedEmail === 'string') {
+        const cleanEmail = selectedEmail.trim().toLowerCase();
+        setGoogleEmail(cleanEmail);
+        setMode('google_input');
+        // Save to recent list
+        try {
+          const stored = safeStorage.getItem('chess_arena_saved_emails');
+          const list = stored ? JSON.parse(stored) : [];
+          if (!list.includes(cleanEmail)) {
+            const updated = [cleanEmail, ...list].slice(0, 5);
+            safeStorage.setItem('chess_arena_saved_emails', JSON.stringify(updated));
+            setSavedEmails(updated);
+          }
+        } catch {}
+      }
+    };
+    return () => {
+      delete window.__onNativeGoogleAccountSelected;
+    };
+  }, []);
 
   if (!isOpen) return null;
 
@@ -132,6 +163,20 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, isLight = false }) {
   // Google Sign-In with automatic fallback to direct Gmail verification
   const handleGoogleSignInClick = async () => {
     setError('');
+
+    // Check if running inside Android APK bridge with native account chooser
+    if (window.AndroidBridge && typeof window.AndroidBridge.openGoogleAccountPicker === 'function') {
+      try {
+        const launched = window.AndroidBridge.openGoogleAccountPicker();
+        if (launched) {
+          // Native Google Account system dialog is presented to user
+          return;
+        }
+      } catch (bridgeErr) {
+        console.warn('Native account picker trigger error:', bridgeErr);
+      }
+    }
+
     setLoading(true);
 
     try {
