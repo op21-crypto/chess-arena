@@ -13,6 +13,15 @@ import { triggerHaptic } from '../utils/device.js';
 // Realistic wooden and stone themes
 const OFFLINE_THEMES = [
   {
+    id: "amoled",
+    name: "AMOLED Black",
+    light: "#1e293b",
+    dark: "#000000",
+    border: "#f59e0b",
+    previewLight: "#1e293b",
+    previewDark: "#000000"
+  },
+  {
     id: 'wood_walnut',
     name: 'Classic Walnut',
     light: '#ecdab9',
@@ -73,7 +82,7 @@ export function OfflineBoardView({ onBack, isLight = false }) {
 
   // Offline Settings State
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
-  const [themeId, setThemeId] = useState('wood_walnut');
+  const [themeId, setThemeId] = useState('amoled');
   const [viewMode, setViewMode] = useState('face-to-face'); // 'face-to-face' | 'auto-flip' | '2d'
   const [playAs, setPlayAs] = useState('by_turns'); // 'white' | 'black' | 'by_turns'
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -402,9 +411,11 @@ export function OfflineBoardView({ onBack, isLight = false }) {
       style={
         isLight
           ? {
-              backgroundColor: '#f8fafc',
+              backgroundColor: '#fdfbf7',
               backgroundImage: `
-                radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 1) 0%, rgba(241, 245, 249, 1) 50%, rgba(226, 232, 240, 1) 100%)
+                radial-gradient(ellipse 90% 60% at 50% -10%, rgba(254, 243, 199, 0.45) 0%, transparent 70%),
+                radial-gradient(ellipse 70% 50% at 100% 30%, rgba(238, 242, 255, 0.5) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 0% 75%, rgba(236, 253, 245, 0.45) 0%, transparent 60%)
               `
             }
           : {

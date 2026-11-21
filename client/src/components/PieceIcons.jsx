@@ -127,6 +127,14 @@ export const PIECE_THEMES = {
 };
 
 export const BOARD_THEMES = {
+  amoled: {
+    name: "AMOLED Pure Black",
+    light: "#1e293b",
+    dark: "#000000",
+    border: "#f59e0b",
+    highlight: "rgba(245, 158, 11, 0.55)",
+    check: "rgba(239, 68, 68, 0.85)"
+  },
   cappuccino: {
     name: 'Cappuccino',
     light: '#e6d3b3',

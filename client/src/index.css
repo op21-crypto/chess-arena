@@ -24,6 +24,16 @@
 }
 
 /* Luxury ambient background & glow utilities */
+
+/* Light / Day mode elegant, soothing background & card styling */
+.light-bg {
+  background-color: #f8fafc;
+  background-image: 
+    radial-gradient(ellipse 90% 60% at 50% -10%, rgba(254, 243, 199, 0.45) 0%, transparent 70%),
+    radial-gradient(ellipse 70% 50% at 100% 30%, rgba(238, 242, 255, 0.5) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 0% 75%, rgba(236, 253, 245, 0.45) 0%, transparent 60%);
+}
+
 .luxury-bg {
   background-color: #070a12;
   background-image: 

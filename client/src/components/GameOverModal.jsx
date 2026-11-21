@@ -134,8 +134,8 @@ export function GameOverModal({
   const oppCountry = opp?.country || 'BR';
   const myFlag = COUNTRY_FLAGS[myCountry] || '🇮🇳';
   const oppFlag = COUNTRY_FLAGS[oppCountry] || '🇧🇷';
-  const myAvatar = me?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(myUsername)}`;
-  const oppAvatar = opp?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(oppUsername)}`;
+  const myAvatar = me?.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(myUsername)}`;
+  const oppAvatar = opp?.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(oppUsername)}`;
 
   const myEloDiff = isWhite ? whiteEloChange : blackEloChange;
   const totalMoves = moveHistory?.length ? Math.ceil(moveHistory.length / 2) : 0;

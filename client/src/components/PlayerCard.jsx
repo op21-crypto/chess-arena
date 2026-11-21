@@ -72,7 +72,7 @@ export function PlayerCard({
       <div className="flex items-center gap-2.5 md:gap-3 min-w-0">
         <div className="relative flex-shrink-0">
           <img
-            src={player.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${player.username}`}
+            src={player.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(player.username)}&radius=50`}
             alt={player.username}
             className={`w-10 h-10 md:w-11 md:h-11 rounded-full object-cover border-2 ${
               voiceState?.isSpeaking

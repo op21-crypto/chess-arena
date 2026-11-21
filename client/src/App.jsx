@@ -49,7 +49,7 @@ const DEFAULT_SETTINGS = {
   vibrations: true,
   voiceCommentary: false,
   voiceCommentaryOnlyOpponent: true,
-  boardTheme: 'cappuccino',
+  boardTheme: 'amoled',
   pieceTheme: 'alexander',
   showLegalMoves: true,
   highlightLastMove: true,
@@ -106,7 +106,12 @@ export default function App() {
       const saved = safeStorage.getItem('chess_arena_settings');
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Ensure default theme adapts to phone system mode by default
+        // Ensure default theme adapts to phone system mode by default & default board is amoled
+        const amoledMigrated = safeStorage.getItem('chess_arena_amoled_board_default_v1');
+        if (!amoledMigrated) {
+          safeStorage.setItem('chess_arena_amoled_board_default_v1', 'true');
+          parsed.boardTheme = 'amoled';
+        }
         const themeMigrated = safeStorage.getItem('chess_arena_system_theme_default_v1');
         if (!themeMigrated) {
           safeStorage.setItem('chess_arena_system_theme_default_v1', 'true');
@@ -172,7 +177,7 @@ export default function App() {
       role: 'guest',
       ratings: { bullet: 1200, blitz: 1200, rapid: 1200, classical: 1200 },
       country: 'UN',
-      avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=Guest_${guestNum}`
+      avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=Guest_${guestNum}&radius=50`
     };
     setCurrentUser(guest);
     safeStorage.setItem('token', `mock_guest_token_${Date.now()}`);
@@ -1136,7 +1141,7 @@ export default function App() {
 
   return (
     <div className={`min-h-screen flex flex-col font-sans selection:bg-amber-500 selection:text-black transition-colors ${
-      isLight ? 'bg-[#f4f7fb] text-slate-900' : isOled ? 'bg-black text-slate-100' : 'luxury-bg text-slate-100'
+      isLight ? 'light-bg text-slate-900' : isOled ? 'bg-black text-slate-100' : 'luxury-bg text-slate-100'
     }`}>
       {/* Top Navbar (Hidden in full-screen offline pass & play mode) */}
       {activeTab !== 'offline' && (

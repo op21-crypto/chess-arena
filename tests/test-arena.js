@@ -3,6 +3,7 @@ import { ChessGameSession } from '../server/engine/chessEngine.js';
 import { aiEngine } from '../server/engine/aiEngine.js';
 import { tournamentManager } from '../server/tournaments/tournamentManager.js';
 import { CHESS_PUZZLES, CHESS_LESSONS } from '../server/puzzles/puzzleData.js';
+import { getRandomAnimeOpponent, ANIME_AI_ROSTER } from '../client/src/data/animeOpponents.js';
 
 async function runTests() {
   console.log('🏁 STARTING CHESS ARENA COMPREHENSIVE VERIFICATION SUITE\n');

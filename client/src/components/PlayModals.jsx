@@ -627,7 +627,7 @@ export function FriendRoomModal({
           <div className="flex-1 overflow-y-auto space-y-3 pr-1">
             {/* Top Toolbar in Friend Arena */}
             <div className="flex items-center justify-between px-1">
-              <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+              <span className={`text-xs font-black uppercase tracking-wider ${isLight ? 'text-slate-800' : 'text-slate-300'}`}>
                 Arena Circle ({friends.length})
               </span>
               <button
@@ -635,7 +635,11 @@ export function FriendRoomModal({
                   setActiveTab('add');
                   triggerHaptic('move');
                 }}
-                className="flex items-center gap-1.5 px-3 py-1 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-bold text-xs rounded-xl transition-all"
+                className={`flex items-center gap-1.5 px-3 py-1 font-bold text-xs rounded-xl transition-all border ${
+                  isLight
+                    ? 'bg-amber-500 hover:bg-amber-600 text-slate-950 border-amber-400 shadow-xs'
+                    : 'bg-amber-500/20 hover:bg-amber-500/30 border-amber-500/40 text-amber-300'
+                }`}
               >
                 <UserPlus className="w-3.5 h-3.5" />
                 <span>+ Make Friend</span>
@@ -644,10 +648,14 @@ export function FriendRoomModal({
 
             {/* Guest Notice */}
             {isGuest && (
-              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-between gap-3 text-xs">
-                <div className="text-amber-200">
-                  <span className="font-bold block">Guest Mode Active</span>
-                  <span className="text-[11px] text-amber-300/80">Sign in to save your friends list & receive match invites anytime.</span>
+              <div className={`p-3.5 rounded-2xl flex items-center justify-between gap-3 text-xs border ${
+                isLight
+                  ? 'bg-amber-50 border-amber-300 text-slate-900 shadow-xs'
+                  : 'bg-amber-500/10 border-amber-500/30 text-amber-200'
+              }`}>
+                <div>
+                  <span className={`font-black block text-xs ${isLight ? 'text-amber-950' : 'text-amber-200'}`}>Guest Mode Active</span>
+                  <span className={`text-[11px] font-medium ${isLight ? 'text-amber-900' : 'text-amber-300/80'}`}>Sign in to save your friends list & receive match invites anytime.</span>
                 </div>
                 {onOpenAuth && (
                   <button
@@ -655,7 +663,7 @@ export function FriendRoomModal({
                       onClose();
                       onOpenAuth();
                     }}
-                    className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shrink-0"
+                    className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shrink-0 shadow-xs cursor-pointer"
                   >
                     Sign In
                   </button>
@@ -670,13 +678,17 @@ export function FriendRoomModal({
                 <span>Loading your Friend Arena...</span>
               </div>
             ) : friends.length === 0 ? (
-              <div className="py-10 text-center space-y-3 bg-slate-950/40 border border-slate-800/80 rounded-2xl p-4">
-                <div className="w-12 h-12 rounded-2xl bg-slate-800 text-slate-400 flex items-center justify-center mx-auto">
+              <div className={`py-10 text-center space-y-3 border rounded-2xl p-4 ${
+                isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/40 border-slate-800/80'
+              }`}>
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto ${
+                  isLight ? 'bg-slate-200 text-slate-700' : 'bg-slate-800 text-slate-400'
+                }`}>
                   <Users className="w-6 h-6" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-white">No Friends Added Yet</h4>
-                  <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
+                  <h4 className={`text-sm font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>No Friends Added Yet</h4>
+                  <p className={`text-xs mt-1 max-w-xs mx-auto font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                     Use the Make Friend option to send a request by username and invite opponents to battle!
                   </p>
                 </div>
@@ -685,7 +697,7 @@ export function FriendRoomModal({
                     setActiveTab('add');
                     triggerHaptic('move');
                   }}
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl transition-all shadow-md inline-flex items-center gap-1.5"
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl transition-all shadow-md inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <UserPlus className="w-4 h-4" />
                   <span>Make Friend Option</span>
@@ -810,12 +822,14 @@ export function FriendRoomModal({
 
             {/* Pending Requests Section */}
             <div className="space-y-2">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+              <span className={`text-[11px] font-black uppercase tracking-wider block ${isLight ? 'text-slate-700' : 'text-slate-400'}`}>
                 Incoming Friend Requests ({pending.length})
               </span>
 
               {pending.length === 0 ? (
-                <div className="py-4 text-center text-slate-500 text-xs italic bg-slate-950/30 rounded-xl border border-slate-800/50">
+                <div className={`py-4 text-center text-xs italic rounded-xl border ${
+                  isLight ? 'bg-slate-100/80 border-slate-200 text-slate-500 font-medium' : 'bg-slate-950/30 border-slate-800/50 text-slate-500'
+                }`}>
                   No incoming friend requests right now.
                 </div>
               ) : (
@@ -823,19 +837,21 @@ export function FriendRoomModal({
                   {pending.map((req) => (
                     <div
                       key={req.requestId}
-                      className="flex items-center justify-between p-2.5 bg-slate-950/80 border border-amber-500/30 rounded-xl text-xs"
+                      className={`flex items-center justify-between p-2.5 rounded-xl text-xs border ${
+                        isLight ? "bg-white border-slate-200 text-slate-900 shadow-2xs" : "bg-slate-950/80 border-amber-500/30 text-white"
+                      }`}
                     >
                       <div className="flex items-center gap-2.5">
                         <img
                           src={req.user?.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${req.user?.username}`}
                           alt={req.user?.username}
-                          className="w-7 h-7 rounded-full border border-amber-500/40 bg-slate-900"
+                          className={`w-7 h-7 rounded-full border ${isLight ? "border-amber-400 bg-slate-100" : "border-amber-500/40 bg-slate-900"}`}
                         />
                         <div>
-                          <span className="font-bold text-white block">
+                          <span className={`font-bold block ${isLight ? "text-slate-900" : "text-white"}`}>
                             {req.user?.username}
                           </span>
-                          <span className="text-[10px] text-amber-400">
+                          <span className={`text-[10px] font-bold ${isLight ? "text-amber-700" : "text-amber-400"}`}>
                             Wants to be friends
                           </span>
                         </div>
@@ -844,7 +860,7 @@ export function FriendRoomModal({
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => handleRespond(req.user?.id, true)}
-                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-xs"
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-xs cursor-pointer"
                           title="Accept Friend Request"
                         >
                           <Check className="w-3 h-3" />
@@ -852,7 +868,9 @@ export function FriendRoomModal({
                         </button>
                         <button
                           onClick={() => handleRespond(req.user?.id, false)}
-                          className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400"
+                          className={`p-1 rounded-lg transition-colors cursor-pointer ${
+                            isLight ? "bg-slate-100 hover:bg-slate-200 text-slate-600" : "bg-slate-800 hover:bg-slate-700 text-slate-400"
+                          }`}
                           title="Decline"
                         >
                           <X className="w-3.5 h-3.5" />
@@ -877,11 +895,11 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame, isLight = false })
   if (!isOpen) return null;
 
   const AI_LEVELS = [
-    { level: 1, name: 'Beginner', elo: '800 ELO', icon: '🐣' },
-    { level: 2, name: 'Casual', elo: '1200 ELO', icon: '🛡️' },
-    { level: 3, name: 'Master', elo: '1600 ELO', icon: '⚔️' },
-    { level: 4, name: 'FIDE Master', elo: '2000 ELO', icon: '💎' },
-    { level: 5, name: 'Grandmaster', elo: '2500+ ELO', icon: '👑' }
+    { level: 1, name: 'Beginner Sensei', anime: 'Tanjiro & Deku', elo: '800 ELO', icon: '🐣' },
+    { level: 2, name: 'Casual Tactician', anime: 'Killua & Zoro', elo: '1200 ELO', icon: '🛡️' },
+    { level: 3, name: 'Master Strategist', anime: 'Itachi & Levi', elo: '1600 ELO', icon: '⚔️' },
+    { level: 4, name: 'FIDE Mastermind', anime: 'Lelouch & Light', elo: '2000 ELO', icon: '💎' },
+    { level: 5, name: 'Grandmaster Deity', anime: 'Gojo & Meruem', elo: '2500+ ELO', icon: '👑' }
   ];
 
   const TIME_OPTIONS = [
@@ -980,13 +998,22 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame, isLight = false })
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span className="text-base">{item.icon}</span>
-                    <span className={`text-xs sm:text-sm font-bold truncate ${
-                      isSelected
-                        ? isLight ? 'text-amber-950 font-black' : 'text-white font-black'
-                        : isLight ? 'text-slate-800' : 'text-white'
-                    }`}>
-                      {item.name}
-                    </span>
+                    <div className="min-w-0">
+                      <span className={`text-xs sm:text-sm font-bold block truncate ${
+                        isSelected
+                          ? isLight ? 'text-amber-950 font-black' : 'text-white font-black'
+                          : isLight ? 'text-slate-800' : 'text-white'
+                      }`}>
+                        {item.name}
+                      </span>
+                      <span className={`text-[10px] block truncate ${
+                        isSelected
+                          ? isLight ? 'text-amber-700 font-semibold' : 'text-amber-300 font-semibold'
+                          : isLight ? 'text-slate-500' : 'text-slate-400'
+                      }`}>
+                        {item.anime}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
