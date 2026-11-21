@@ -8,6 +8,7 @@ import {
 import { safeStorage } from '../utils/storage.js';
 import { triggerHaptic } from '../utils/device.js';
 import { sound } from '../utils/audio.js';
+import { removeFriendPermanently, blockFriendPermanently } from '../utils/socialAutomation.js';
 
 const COUNTRY_FLAGS = {
   US: '🇺🇸',
@@ -284,6 +285,40 @@ function generateBotReply(botId, botUsername, userText, detectedMinutes) {
     return `Bhai kya haal! Poora mood hai chess khelne ka. 5 minute ya 10 minute ka match lagate hain, bhej challenge! ♟️🔥`;
   }
 
+  // Nezuko Kamado
+  if (/nezuko/i.test(botUsername)) {
+    if (detectedMinutes) {
+      return `Mmh mmph! ${detectedMinutes} minutes sounds wonderful! Tanjiro says focus on center control! Click Challenge above! 🌸⚔️`;
+    }
+    if (/hi|hello|hey/i.test(lower)) {
+      return `Mmh mmph! Hello friend! 🌸 I am practicing chess tactics with my friends. Let's play a friendly game!`;
+    }
+    return `Mmh mmph! Let's play on the board! Send the challenge and I will do my best! 🌸♟️`;
+  }
+
+  // Yor Forger
+  if (/yor/i.test(botUsername)) {
+    if (detectedMinutes) {
+      return `A ${detectedMinutes}-minute match? Splendid! I must be careful not to crush the wooden pieces in my hands. Send the challenge! 🌹`;
+    }
+    return `Hello! Chess is such a peaceful art. Shall we test our tactical instincts in a 5m blitz? 🌹🗡️`;
+  }
+
+  // Anya Forger
+  if (/anya/i.test(botUsername)) {
+    return `Waku waku! Anya read your mind! 🥜 You want to play a game! Challenge Anya right now! ⭐`;
+  }
+
+  // Mikasa Ackerman
+  if (/mikasa/i.test(botUsername)) {
+    return `This world is cruel, but also very beautiful. I will defend the king at all costs. Send the match challenge! 🗡️`;
+  }
+
+  // Hinata Hyuga
+  if (/hinata/i.test(botUsername)) {
+    return `Hello! With my Byakugan, I will see every diagonal clearly! Let's do our best together! 🥋♟️`;
+  }
+
   // Cool Anime / Gamer friends
   if (detectedMinutes) {
     return `Challenge accepted for ${detectedMinutes} minutes! My blade is sharp and my knights are ready. Hit Challenge above and let's duel! ⚔️`;
@@ -369,10 +404,18 @@ export function FriendRoomModal({
   const [isCustomRoom, setIsCustomRoom] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Set default tab to 'room' on open
+  // Set default tab to 'friends' or initialTab on open and reload persistent friends
   useEffect(() => {
     if (isOpen) {
-      setActiveTab(initialTab || 'room');
+      try {
+        const saved = safeStorage.getItem('chess_arena_friends_v3');
+        if (saved) {
+          setFriends(JSON.parse(saved));
+        } else {
+          safeStorage.setItem('chess_arena_friends_v3', JSON.stringify(DEFAULT_FRIENDS));
+        }
+      } catch {}
+      setActiveTab(initialTab || 'friends');
       setSelectedFriend(null);
       setChattingFriend(null);
       setShowChatMenu(false);
@@ -416,12 +459,20 @@ export function FriendRoomModal({
     triggerHaptic('move');
     setChallengeFriendTarget(null);
 
-    const isBotFriend = friend.isBot || BOT_LEVEL_MAP[friend.id] || friend.id.startsWith('f_') || friend.id.startsWith('sug_');
+    const isBotFriend = friend.isBot || BOT_LEVEL_MAP[friend.id] || friend.id.startsWith('f_') || friend.id.startsWith('sug_') || friend.id.startsWith('anime_');
     if (isBotFriend && onStartAIGame) {
-      const level = BOT_LEVEL_MAP[friend.id] || 4;
+      const elo = Number(friend.elo) || 1600;
+      let level = BOT_LEVEL_MAP[friend.id];
+      if (!level) {
+        if (elo >= 2500) level = 5;
+        else if (elo >= 2000) level = 4;
+        else if (elo >= 1500) level = 3;
+        else if (elo >= 1000) level = 2;
+        else level = 1;
+      }
       sound.playMatchStart();
       onClose();
-      onStartAIGame(level, minutes, 'w');
+      onStartAIGame(level, minutes, 'random', friend);
       return;
     }
 
@@ -556,12 +607,27 @@ export function FriendRoomModal({
     sound.playMove();
     triggerHaptic('move');
 
+    // If logged in genuine user, send to server
+    const token = safeStorage.getItem('token');
+    if (token) {
+      fetch('/api/friends/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ targetUsername })
+      }).catch(() => {});
+    }
+
     // If target is a bot or community friend, simulate acceptance after a short delay!
-    if (userToSend.isBot || userToSend.id.startsWith('f_') || userToSend.id.startsWith('sug_')) {
+    if (userToSend.isBot || userToSend.id.startsWith('f_') || userToSend.id.startsWith('sug_') || userToSend.id.startsWith('anime_')) {
       setTimeout(() => {
         setFriends(prev => {
           if (prev.some(f => f.username.toLowerCase() === targetUsername.toLowerCase())) return prev;
-          return [userToSend, ...prev];
+          const updated = [userToSend, ...prev];
+          safeStorage.setItem('chess_arena_friends_v3', JSON.stringify(updated));
+          return updated;
         });
         setSentRequests(prev => prev.filter(u => u !== targetUsername));
         sound.playVictory();
@@ -578,7 +644,9 @@ export function FriendRoomModal({
       setRequestStatus({ type: 'info', text: `@${player.username} is already in your friends list!` });
       return;
     }
-    setFriends(prev => [player, ...prev]);
+    const updated = [player, ...friends];
+    setFriends(updated);
+    safeStorage.setItem('chess_arena_friends_v3', JSON.stringify(updated));
     setSuggestedOnlinePlayer(null);
     setSearchNotFound(false);
     setRequestStatus({
@@ -590,16 +658,31 @@ export function FriendRoomModal({
   };
 
   const handleRemoveFriend = (friendId) => {
-    setFriends(prev => prev.filter(f => f.id !== friendId));
+    removeFriendPermanently(friendId);
+    setFriends(prev => prev.filter(f => f.id !== friendId && f.username !== friendId));
     setSelectedFriend(null);
     if (chattingFriend?.id === friendId) setChattingFriend(null);
     setShowChatMenu(false);
     sound.playClick();
     triggerHaptic('move');
+
+    const token = safeStorage.getItem('token');
+    if (token) {
+      fetch('/api/friends/remove', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ friendId })
+      }).catch(() => {});
+    }
   };
 
   const handleBlockUser = (friend) => {
-    setFriends(prev => prev.filter(f => f.id !== friend.id));
+    const targetId = friend.id || friend.username;
+    blockFriendPermanently(targetId);
+    setFriends(prev => prev.filter(f => f.id !== friend.id && f.username !== friend.username));
     setSelectedFriend(null);
     if (chattingFriend?.id === friend.id) setChattingFriend(null);
     setShowChatMenu(false);
@@ -1267,6 +1350,38 @@ export function FriendRoomModal({
                               >
                                 <MessageCircle className="w-3.5 h-3.5" />
                                 <span>Direct Chat</span>
+                              </button>
+
+                              {/* Remove Friend */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveFriend(friend.id);
+                                }}
+                                className={`p-2 rounded-xl border text-xs font-bold transition-colors cursor-pointer active:scale-95 ${
+                                  isLight
+                                    ? 'bg-rose-50 hover:bg-rose-100 border-rose-200 text-rose-700'
+                                    : 'bg-rose-950/40 hover:bg-rose-900/40 border-rose-500/30 text-rose-400'
+                                }`}
+                                title="Remove Friend"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+
+                              {/* Block User */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleBlockUser(friend);
+                                }}
+                                className={`p-2 rounded-xl border text-xs font-bold transition-colors cursor-pointer active:scale-95 ${
+                                  isLight
+                                    ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-600'
+                                    : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-400'
+                                }`}
+                                title="Block Player"
+                              >
+                                <Ban className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           )}

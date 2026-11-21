@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
   Bell, Swords, UserPlus, Check, X, ShieldCheck,
-  Clock, Trash2, Smartphone, Sparkles, MessageCircle
+  Clock, Trash2, Smartphone, Sparkles, MessageCircle, CheckCircle2
 } from 'lucide-react';
 import { triggerHaptic } from '../utils/device.js';
 import { sound } from '../utils/audio.js';
+import { safeStorage } from '../utils/storage.js';
 
 export function NotificationsDropdown({
   isOpen,
@@ -17,30 +18,53 @@ export function NotificationsDropdown({
   onClearAll,
   isLight = false
 }) {
-  const [devicePermission, setDevicePermission] = useState(() => {
-    if (typeof window !== 'undefined' && 'Notification' in window) {
-      return Notification.permission;
+  const [alertsEnabled, setAlertsEnabled] = useState(() => {
+    const saved = safeStorage.getItem('chess_arena_mobile_alerts_enabled');
+    if (saved !== null) {
+      return saved === 'true';
     }
-    return 'default';
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      return Notification.permission === 'granted';
+    }
+    return true; // Default to active on first install/open
   });
 
-  const requestDeviceAlerts = async () => {
+  const [alertNotice, setAlertNotice] = useState(null);
+
+  const toggleAlerts = async () => {
+    sound.playClick();
+    triggerHaptic('move');
+
+    if (alertsEnabled) {
+      setAlertsEnabled(false);
+      safeStorage.setItem('chess_arena_mobile_alerts_enabled', 'false');
+      setAlertNotice('Alerts turned off');
+      setTimeout(() => setAlertNotice(null), 3000);
+      return;
+    }
+
+    // Turning ON
+    setAlertsEnabled(true);
+    safeStorage.setItem('chess_arena_mobile_alerts_enabled', 'true');
+    sound.playMove();
+    triggerHaptic('success');
+    setAlertNotice('✓ Mobile & In-App Alerts Activated!');
+    setTimeout(() => setAlertNotice(null), 3500);
+
+    // Also attempt native browser notification permission if available
     if (typeof window !== 'undefined' && 'Notification' in window) {
       try {
         const perm = await Notification.requestPermission();
-        setDevicePermission(perm);
         if (perm === 'granted') {
-          sound.playMove();
-          triggerHaptic('move');
           try {
-            new Notification('Chess Arena Notifications Active', {
-              body: 'You will receive game challenges and friend requests on this device!',
+            new Notification('Chess Arena Alerts Active', {
+              body: 'You will receive game challenges and friend requests!',
               icon: '/favicon.ico'
             });
           } catch {}
         }
       } catch (err) {
-        console.error('Error requesting notification permission:', err);
+        console.warn('Native notification request notice:', err);
       }
     }
   };
@@ -105,36 +129,47 @@ export function NotificationsDropdown({
         </div>
 
         {/* Device Mobile Push Alerts Banner */}
-        <div className={`p-2.5 rounded-2xl border text-xs flex items-center justify-between gap-2 ${
-          devicePermission === 'granted'
+        <div className={`p-2.5 rounded-2xl border text-xs flex items-center justify-between gap-2 transition-all ${
+          alertsEnabled
             ? isLight
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-              : 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300'
+              ? 'bg-emerald-50 border-emerald-300 text-emerald-900 shadow-xs'
+              : 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300 shadow-xs'
             : isLight
             ? 'bg-amber-50 border-amber-200 text-amber-900'
             : 'bg-slate-800/80 border-slate-700 text-slate-300'
         }`}>
           <div className="flex items-center gap-2 min-w-0">
-            <Smartphone className="w-4 h-4 shrink-0 text-amber-500" />
+            <Smartphone className={`w-4 h-4 shrink-0 ${alertsEnabled ? 'text-emerald-500' : 'text-amber-500'}`} />
             <div className="truncate">
-              <span className="font-bold block truncate">
-                {devicePermission === 'granted' ? 'Mobile Alerts Active' : 'Enable Mobile Alerts'}
+              <span className="font-bold block truncate flex items-center gap-1.5">
+                <span>{alertsEnabled ? 'Mobile Alerts Active' : 'Enable Mobile Alerts'}</span>
+                {alertsEnabled && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 inline" />}
               </span>
-              <span className="text-[10px] opacity-80 block truncate">
-                {devicePermission === 'granted' ? 'You will be alerted when friends challenge you' : 'Get notified for invites & turns'}
+              <span className={`text-[10px] block truncate ${alertsEnabled ? 'opacity-90 font-medium' : 'opacity-80'}`}>
+                {alertsEnabled ? 'Invites, challenges & turns active' : 'Get notified for invites & turns'}
               </span>
             </div>
           </div>
 
-          {devicePermission !== 'granted' && (
-            <button
-              onClick={requestDeviceAlerts}
-              className="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-[11px] rounded-lg shrink-0 shadow-xs cursor-pointer active:scale-95"
-            >
-              Turn On
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={toggleAlerts}
+            className={`px-3 py-1 font-black text-[11px] rounded-lg shrink-0 shadow-xs cursor-pointer active:scale-95 transition-all ${
+              alertsEnabled
+                ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 ring-1 ring-emerald-400/50'
+                : 'bg-amber-500 hover:bg-amber-400 text-slate-950 ring-1 ring-amber-400/50'
+            }`}
+            title={alertsEnabled ? 'Click to disable alerts' : 'Click to enable alerts'}
+          >
+            {alertsEnabled ? 'Active ✓' : 'Turn On'}
+          </button>
         </div>
+
+        {alertNotice && (
+          <div className="py-1 px-2.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[11px] font-bold text-center animate-fade-in">
+            {alertNotice}
+          </div>
+        )}
 
         {/* Notifications Feed */}
         <div className="space-y-2 max-h-[340px] overflow-y-auto pr-1">

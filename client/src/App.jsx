@@ -42,6 +42,12 @@ import { calculateUserRanking } from './data/leaderboardData.js';
 import { calculateEloDelta, getFormatFromTimeControl } from './utils/elo.js';
 import { getStreakInfo } from './utils/streak.js';
 import { getRandomAnimeAvatar, FAMOUS_AVATARS } from './data/avatarData.js';
+import {
+  processAppOpenNotifications,
+  generateRandomChallenge,
+  getInitialNotifications,
+  addFriendPermanently
+} from './utils/socialAutomation.js';
 
 const DEFAULT_SETTINGS = {
   appTheme: 'system', // Defaults dynamically to device / phone system mode
@@ -247,31 +253,7 @@ export default function App() {
       const saved = safeStorage.getItem('chess_arena_notifications_v2');
       if (saved) return JSON.parse(saved);
     } catch {}
-    return [
-      {
-        id: 'notif_hikaru',
-        type: 'challenge',
-        fromUser: {
-          id: 'f_hikaru',
-          username: 'Hikaru_N',
-          avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=HikaruNakamura'
-        },
-        message: 'Challenged you to a 3-minute Blitz game! ⚔️',
-        time: 'Just now',
-        config: { timeControl: { baseMinutes: 3, incrementSeconds: 0 }, colorPreference: 'random' }
-      },
-      {
-        id: 'notif_elena',
-        type: 'friend_request',
-        fromUser: {
-          id: 'sug_elena',
-          username: 'Elena_Tactics',
-          avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=ElenaChess'
-        },
-        message: 'Sent you a friend request to connect & play! 👥',
-        time: '5m ago'
-      }
-    ];
+    return getInitialNotifications();
   });
 
   useEffect(() => {
@@ -280,17 +262,61 @@ export default function App() {
     } catch {}
   }, [notifications]);
 
+  // App open notifications engine: delivers initial notifications on 1st open,
+  // and adds new challenge + 2-3 daily friend requests every 3-4 opens
+  useEffect(() => {
+    setNotifications(prev => processAppOpenNotifications(prev));
+  }, []);
+
+  // Periodic random challenge scheduler: triggers a challenge every 3 to 10 minutes randomly
+  useEffect(() => {
+    let timerId = null;
+
+    const scheduleNextChallenge = () => {
+      // Delay randomized between 3 and 10 minutes (180,000 ms to 600,000 ms)
+      const delayMs = Math.floor((3 + Math.random() * 7) * 60 * 1000);
+      timerId = setTimeout(() => {
+        setNotifications(prev => {
+          const newChallenge = generateRandomChallenge(prev);
+          setIncomingChallenge({
+            ...newChallenge,
+            isAutomated: true
+          });
+          sound.playCheck();
+          triggerHaptic('capture');
+          return [newChallenge, ...prev];
+        });
+        scheduleNextChallenge();
+      }, delayMs);
+    };
+
+    scheduleNextChallenge();
+
+    return () => {
+      if (timerId) clearTimeout(timerId);
+    };
+  }, []);
+
   const handleAcceptNotificationChallenge = (notif) => {
     setShowNotifications(false);
     setNotifications(prev => prev.filter(n => n.id !== notif.id));
     sound.playMatchStart();
     triggerHaptic('move');
-    if (notif.fromUser?.id === 'f_hikaru' || notif.fromUser?.id?.startsWith('f_') || notif.fromUser?.id?.startsWith('sug_')) {
-      const level = notif.fromUser?.username === 'Hikaru_N' ? 5 : 3;
-      handleStartAIGame(level, notif.config?.timeControl?.baseMinutes || 3, 'w');
-    } else {
-      handleCreateFriendRoom(notif.config || { timeControl: { baseMinutes: 5, incrementSeconds: 0 }, colorPreference: 'random' });
-    }
+
+    const challenger = notif.fromUser || notif.from || {};
+    const baseMinutes = notif.config?.timeControl?.baseMinutes || 5;
+
+    // Appropriate level based on challenger's elo
+    const elo = Number(challenger.elo) || 1600;
+    let level = 2;
+    if (elo >= 2500) level = 5;
+    else if (elo >= 2000) level = 4;
+    else if (elo >= 1500) level = 3;
+    else if (elo >= 1000) level = 2;
+    else level = 1;
+
+    // Start game directly with this exact challenger!
+    handleStartAIGame(level, baseMinutes, 'random', challenger);
   };
 
   const handleDeclineNotificationChallenge = (id) => {
@@ -302,21 +328,20 @@ export default function App() {
     setNotifications(prev => prev.filter(n => n.id !== notif.id));
     sound.playMove();
     triggerHaptic('move');
-    try {
-      const cur = JSON.parse(safeStorage.getItem('chess_arena_friends_v3') || '[]');
-      if (!cur.some(f => f.username === notif.fromUser?.username)) {
-        cur.unshift({
-          id: notif.fromUser?.id || `f_${Date.now()}`,
-          username: notif.fromUser?.username,
-          avatar: notif.fromUser?.avatar,
-          country: 'UN',
-          elo: 1845,
-          isOnline: true,
-          statusText: 'Online • Mutual Friend'
-        });
-        safeStorage.setItem('chess_arena_friends_v3', JSON.stringify(cur));
-      }
-    } catch {}
+    if (notif.fromUser) {
+      addFriendPermanently(notif.fromUser);
+    }
+    const token = safeStorage.getItem('token');
+    if (token && notif.fromUser?.id && !notif.fromUser?.id?.startsWith('anime_') && !notif.fromUser?.id?.startsWith('f_') && !notif.fromUser?.id?.startsWith('sug_')) {
+      fetch('/api/friends/respond', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ fromUserId: notif.fromUser.id, accept: true })
+      }).catch(() => {});
+    }
   };
 
   const handleDeclineNotificationFriendRequest = (id) => {
@@ -611,11 +636,35 @@ export default function App() {
       setIncomingChallenge(data);
       sound.playCheck();
       triggerHaptic('capture');
+      setNotifications(prev => [
+        {
+          id: data.challengeId || `chal_${Date.now()}`,
+          type: 'challenge',
+          fromUser: {
+            id: data.from?.id,
+            username: data.from?.username,
+            avatar: data.from?.avatar,
+            elo: data.from?.rating || data.from?.elo || 1200,
+            country: data.from?.country || 'UN',
+            title: data.from?.title || 'Challenger'
+          },
+          message: `Challenged you to a ${data.config?.timeControl?.baseMinutes || 5}-minute match! ⚔️`,
+          time: 'Just now',
+          config: data.config
+        },
+        ...prev
+      ]);
     });
 
-    socket.on('challenge_accepted', () => {
+    socket.on('challenge_accepted', (data) => {
       setShowFriendRoomModal(false);
       setIncomingChallenge(null);
+      if (data?.gameId) {
+        socket.emit('join_game', { gameId: data.gameId });
+        setPlayerColor(data.side || 'b');
+        setActiveTab('game');
+        sound.playMatchStart();
+      }
     });
 
     // Move synchronization
@@ -869,23 +918,41 @@ export default function App() {
     setActiveTab('game');
   };
 
-  // Handle AI Practice Matches
-  const handleStartAIGame = (param1, param2) => {
+  // Handle AI Practice Matches & Direct Notification Challenges
+  const handleStartAIGame = (param1, param2, param3, param4) => {
     let level = 2;
     let timeMinutes = 10;
+    let preferredColor = null;
+    let customOpponent = null;
 
     if (typeof param1 === 'object' && param1 !== null) {
       level = Number(param1.level) || 2;
       timeMinutes = param1.timeMinutes !== undefined ? Number(param1.timeMinutes) : 10;
-    } else if (param1 !== undefined) {
-      level = Number(param1) || 2;
+      preferredColor = param1.preferredColor || param1.color || null;
+      customOpponent = param1.challenger || param1.customOpponent || null;
+    } else {
+      if (param1 !== undefined) level = Number(param1) || 2;
+      if (param2 !== undefined) timeMinutes = Number(param2);
+      if (param3 !== undefined) preferredColor = param3;
+      if (param4 !== undefined) customOpponent = param4;
     }
 
-    // Color is strictly randomly allocated 50/50: White or Black
-    const color = Math.random() < 0.5 ? 'w' : 'b';
+    // Color: if preferredColor is 'w' or 'b', use it; otherwise 50/50 random
+    const color = (preferredColor === 'w' || preferredColor === 'b')
+      ? preferredColor
+      : (Math.random() < 0.5 ? 'w' : 'b');
 
-    // Select a randomized cool anime opponent for this AI match
-    const animeBot = getRandomAnimeOpponent(level);
+    // Use custom opponent if provided; otherwise get randomized anime opponent
+    const animeBot = customOpponent ? {
+      username: customOpponent.username,
+      elo: Number(customOpponent.elo) || (700 + level * 200),
+      avatar: customOpponent.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${customOpponent.username}`,
+      title: customOpponent.title || 'Competitor',
+      country: customOpponent.country || 'JP',
+      anime: customOpponent.anime || null,
+      quote: customOpponent.bio || customOpponent.quote || 'Let\'s play a great chess game!'
+    } : getRandomAnimeOpponent(level);
+
     setCurrentAIOpponent(animeBot);
     setInGameNotice(null);
 
@@ -2498,7 +2565,7 @@ export default function App() {
           </div>
           <div className="flex-1 min-w-0">
             <span className="text-xs font-black text-white block truncate">
-              {incomingChallenge.from?.username}
+              {incomingChallenge.from?.username || incomingChallenge.fromUser?.username || 'Challenger'}
             </span>
             <span className="text-[11px] text-amber-300">
               Challenged you to a {incomingChallenge.config?.timeControl?.baseMinutes || 5}m match!
@@ -2507,20 +2574,30 @@ export default function App() {
           <div className="flex items-center gap-1.5 shrink-0">
             <button
               onClick={() => {
-                socketRef.current?.emit('accept_challenge', {
-                  challengeId: incomingChallenge.challengeId,
-                  fromUserId: incomingChallenge.from?.id,
-                  config: incomingChallenge.config
-                });
+                if (incomingChallenge.challengeId && !incomingChallenge.isAutomated && socketRef.current) {
+                  socketRef.current.emit('accept_challenge', {
+                    challengeId: incomingChallenge.challengeId,
+                    fromUserId: incomingChallenge.from?.id,
+                    config: incomingChallenge.config
+                  });
+                } else {
+                  handleAcceptNotificationChallenge(incomingChallenge);
+                }
                 setIncomingChallenge(null);
               }}
-              className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl shadow-md"
+              className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl shadow-md cursor-pointer active:scale-95"
             >
               Accept
             </button>
             <button
-              onClick={() => setIncomingChallenge(null)}
-              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl"
+              onClick={() => {
+                if (incomingChallenge.id) {
+                  handleDeclineNotificationChallenge(incomingChallenge.id);
+                }
+                setIncomingChallenge(null);
+                sound.playClick();
+              }}
+              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl cursor-pointer active:scale-95"
             >
               <X className="w-4 h-4" />
             </button>
