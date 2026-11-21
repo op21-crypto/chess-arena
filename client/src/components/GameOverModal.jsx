@@ -50,7 +50,8 @@ export function GameOverModal({
   onRematch,
   onAnalyze,
   onNewGame,
-  onClose
+  onClose,
+  isLight = false
 }) {
   const [copiedPgn, setCopiedPgn] = useState(false);
 
@@ -148,7 +149,11 @@ export function GameOverModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fade-in">
-      <div className="bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border border-slate-700/80 rounded-3xl p-5 sm:p-6 max-w-md w-full space-y-4 sm:space-y-5 shadow-2xl relative text-center backdrop-blur-xl my-auto">
+      <div className={`border rounded-3xl p-5 sm:p-6 max-w-md w-full space-y-4 sm:space-y-5 shadow-2xl relative text-center backdrop-blur-xl my-auto transition-colors ${
+        isLight
+          ? 'bg-white border-slate-200 text-slate-900'
+          : 'bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border-slate-700/80 text-white'
+      }`}>
         {/* Ambient Top Glow */}
         <div className={`absolute top-0 inset-x-0 h-32 rounded-t-3xl blur-2xl pointer-events-none ${
           isWinner ? 'bg-amber-500/15' : isDefeat ? 'bg-rose-500/10' : 'bg-slate-500/10'

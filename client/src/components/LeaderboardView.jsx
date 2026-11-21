@@ -30,7 +30,8 @@ const FORMAT_CONFIG = [
   { id: 'classical', label: 'Classic', icon: Clock }
 ];
 
-export function LeaderboardView({ currentUser, onBack }) {
+export function LeaderboardView({ currentUser, onBack, isLight = false, isOled = false }) {
+  const isLightMode = isLight || (!isOled && typeof document !== 'undefined' && !document.documentElement.classList.contains('dark'));
   const [selectedCountry, setSelectedCountry] = useState('world');
   const [viewFilter, setViewFilter] = useState('leaders'); // 'leaders' | 'my_rank'
   const [format, setFormat] = useState('rapid'); // 'bullet' | 'blitz' | 'rapid' | 'classical'
@@ -147,7 +148,11 @@ export function LeaderboardView({ currentUser, onBack }) {
       </div>
 
       {/* Time Controls Segmented Control: Bullet, Blitz, Rapid, Classical */}
-      <div className="grid grid-cols-4 gap-1.5 p-1.5 bg-slate-900/90 rounded-2xl border border-slate-800 shadow-md">
+      <div className={`grid grid-cols-4 gap-1.5 p-1.5 rounded-2xl border transition-all ${
+        isLightMode
+          ? 'bg-white border-slate-200/90 shadow-sm'
+          : 'bg-slate-900/90 border-slate-800 shadow-md'
+      }`}>
         {FORMAT_CONFIG.map((fmt) => {
           const Icon = fmt.icon;
           const isActive = format === fmt.id;
@@ -162,6 +167,8 @@ export function LeaderboardView({ currentUser, onBack }) {
               className={`py-2 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 ${
                 isActive
                   ? 'bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 text-slate-950 font-black shadow-md shadow-amber-500/30'
+                  : isLightMode
+                  ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
               }`}
             >
@@ -187,6 +194,8 @@ export function LeaderboardView({ currentUser, onBack }) {
               className={`py-1.5 px-3 rounded-xl text-xs font-bold whitespace-nowrap flex items-center gap-1.5 shrink-0 transition-all cursor-pointer active:scale-95 ${
                 isSelected
                   ? 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/25 border border-amber-400'
+                  : isLightMode
+                  ? 'bg-white text-slate-700 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 shadow-xs'
                   : 'bg-slate-900/90 text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-800'
               }`}
             >
@@ -198,7 +207,11 @@ export function LeaderboardView({ currentUser, onBack }) {
       </div>
 
       {/* 2-Way Tab Switch: Top Leaders vs My Ranking */}
-      <div className="grid grid-cols-2 gap-1.5 p-1.5 bg-slate-900/90 rounded-2xl border border-slate-800 shadow-md">
+      <div className={`grid grid-cols-2 gap-1.5 p-1.5 rounded-2xl border transition-all ${
+        isLightMode
+          ? 'bg-white border-slate-200/90 shadow-sm'
+          : 'bg-slate-900/90 border-slate-800 shadow-md'
+      }`}>
         <button
           onClick={() => {
             sound.playClick();
@@ -208,6 +221,8 @@ export function LeaderboardView({ currentUser, onBack }) {
           className={`py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 ${
             viewFilter === 'leaders'
               ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-md shadow-amber-500/30'
+              : isLightMode
+              ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
           }`}
         >
@@ -223,6 +238,8 @@ export function LeaderboardView({ currentUser, onBack }) {
           className={`py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 ${
             viewFilter === 'my_rank'
               ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-md shadow-amber-500/30'
+              : isLightMode
+              ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
           }`}
         >
@@ -232,45 +249,63 @@ export function LeaderboardView({ currentUser, onBack }) {
       </div>
 
       {/* Android Hero Card: Current User Rank Card */}
-      <div className="p-4 bg-gradient-to-br from-amber-500/10 via-slate-900 to-slate-950 border border-amber-500/25 dark:border-slate-800 rounded-3xl shadow-md space-y-3">
+      <div className={`p-4 border rounded-3xl shadow-md space-y-3 transition-all ${
+        isLightMode
+          ? 'bg-white border-amber-300/80 shadow-slate-200/50 text-slate-900'
+          : 'bg-gradient-to-br from-amber-500/10 via-slate-900 to-slate-950 border-amber-500/25 dark:border-slate-800 text-white'
+      }`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <img
               src={currentUser?.avatar || 'https://api.dicebear.com/7.x/adventurer/svg?seed=You'}
               alt="You"
-              className="w-10 h-10 rounded-full border border-amber-500/40 bg-slate-800 object-cover"
+              className={`w-10 h-10 rounded-full border object-cover ${
+                isLightMode ? 'border-amber-400 bg-amber-50' : 'border-amber-500/40 bg-slate-800'
+              }`}
             />
             <div>
-              <div className="text-xs font-black text-white flex items-center gap-1">
+              <div className={`text-xs font-black flex items-center gap-1 ${
+                isLightMode ? 'text-slate-900' : 'text-white'
+              }`}>
                 <span>{currentUser?.username || 'You'}</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-400 font-mono">
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                  isLightMode ? 'bg-amber-100 text-amber-800 font-bold border border-amber-300' : 'bg-amber-500/20 text-amber-400'
+                }`}>
                   YOU
                 </span>
               </div>
-              <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+              <div className={`text-[11px] font-mono mt-0.5 ${
+                isLightMode ? 'text-slate-500' : 'text-slate-400'
+              }`}>
                 {activeCountryName} • {format.toUpperCase()}
               </div>
             </div>
           </div>
 
           <div className="text-right">
-            <span className="text-[10px] uppercase font-bold text-slate-500 block">Rating</span>
-            <span className="text-xl font-black text-amber-400 font-mono">{userElo}</span>
+            <span className={`text-[10px] uppercase font-bold block ${isLightMode ? 'text-slate-500' : 'text-slate-500'}`}>Rating</span>
+            <span className={`text-xl font-black font-mono ${isLightMode ? 'text-amber-700' : 'text-amber-400'}`}>{userElo}</span>
           </div>
         </div>
 
         {/* Rank & Percentile row */}
-        <div className="flex items-center justify-between pt-1 border-t border-slate-800/80 text-xs font-semibold">
-          <div className="text-slate-300">
+        <div className={`flex items-center justify-between pt-1 border-t text-xs font-semibold ${
+          isLightMode ? 'border-slate-200' : 'border-slate-800/80'
+        }`}>
+          <div className={isLightMode ? 'text-slate-700' : 'text-slate-300'}>
             <span>Rank: </span>
-            <span className="text-white font-black font-mono">
+            <span className={`font-black font-mono ${isLightMode ? 'text-slate-900' : 'text-white'}`}>
               #{isWorld ? userRank.toLocaleString() : countryRank.toLocaleString()}
             </span>
-            <span className="text-[10px] text-slate-500 font-normal ml-1">
+            <span className={`text-[10px] font-normal ml-1 ${isLightMode ? 'text-slate-500' : 'text-slate-500'}`}>
               of {totalPlayers.toLocaleString()}
             </span>
           </div>
-          <div className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-bold text-[10px] border border-emerald-500/30">
+          <div className={`px-2 py-0.5 rounded-full font-bold text-[10px] border ${
+            isLightMode
+              ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+              : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+          }`}>
             Top {100 - percentile}% ({percentile}% beat)
           </div>
         </div>

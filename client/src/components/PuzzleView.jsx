@@ -165,7 +165,8 @@ function MiniBoard({ fen, flipped = false }) {
   );
 }
 
-export function PuzzleView({ currentUser, onUpdateRating }) {
+export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOled = false }) {
+  const isLightMode = isLight || (!isOled && typeof document !== 'undefined' && !document.documentElement.classList.contains('dark'));
   // Navigation View State: 'hub' | 'themes' | 'openings' | 'streak' | 'storm' | 'trainer'
   const [viewState, setViewState] = useState('hub');
   const [activeThemeTitle, setActiveThemeTitle] = useState('Chess tactics trainer');
@@ -1559,9 +1560,15 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
   const dailyPuzzle = getDailyPuzzle();
 
   return (
-    <div className="max-w-md mx-auto w-full px-3.5 py-4 min-h-screen text-slate-100 pb-24 space-y-4 animate-fade-in">
+    <div className={`max-w-md mx-auto w-full px-3.5 py-4 min-h-screen pb-24 space-y-4 animate-fade-in transition-colors ${
+      isLightMode ? 'text-slate-900' : 'text-slate-100'
+    }`}>
       {/* 1. Sleek Compact Header Card */}
-      <div className="p-3.5 rounded-2xl bg-gradient-to-r from-slate-900/95 via-slate-900/90 to-slate-950/95 border border-amber-500/30 shadow-lg flex flex-col gap-3">
+      <div className={`p-3.5 rounded-2xl border flex flex-col gap-3 transition-colors ${
+        isLightMode
+          ? 'bg-white border-slate-200/90 shadow-sm text-slate-900'
+          : 'bg-gradient-to-r from-slate-900/95 via-slate-900/90 to-slate-950/95 border-amber-500/30 shadow-lg text-white'
+      }`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center font-black shadow-md shadow-amber-500/20 shrink-0">
@@ -1569,14 +1576,18 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base font-black text-white tracking-tight">
+                <h1 className={`text-base font-black tracking-tight ${isLightMode ? 'text-slate-900' : 'text-white'}`}>
                   Tactics & Puzzles
                 </h1>
-                <span className="px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[10px] font-black uppercase tracking-wider">
+                <span className={`px-2 py-0.5 rounded-full border text-[10px] font-black uppercase tracking-wider ${
+                  isLightMode
+                    ? 'bg-amber-100 text-amber-800 border-amber-300'
+                    : 'bg-amber-500/15 border-amber-500/30 text-amber-400'
+                }`}>
                   FIDE Rated
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-medium">
+              <p className={`text-[11px] font-medium ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
                 Sharpen calculation with daily challenges & speed rush
               </p>
             </div>
@@ -1584,34 +1595,48 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
         </div>
 
         {/* 3 Status Capsules */}
-        <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-800/80">
-          <div className="px-2 py-1.5 rounded-xl bg-slate-950/90 border border-amber-500/30 text-center shadow-xs">
-            <span className="text-[9px] uppercase tracking-wider text-slate-400 block font-bold">Rating</span>
-            <span className="text-xs font-black font-mono text-amber-400">{puzzleRating}</span>
+        <div className={`grid grid-cols-3 gap-2 pt-1 border-t ${isLightMode ? 'border-slate-200' : 'border-slate-800/80'}`}>
+          <div className={`px-2 py-1.5 rounded-xl border text-center shadow-xs ${
+            isLightMode ? 'bg-slate-50 border-amber-300/80' : 'bg-slate-950/90 border-amber-500/30'
+          }`}>
+            <span className={`text-[9px] uppercase tracking-wider block font-bold ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>Rating</span>
+            <span className={`text-xs font-black font-mono ${isLightMode ? 'text-amber-700' : 'text-amber-400'}`}>{puzzleRating}</span>
           </div>
 
-          <div className="px-2 py-1.5 rounded-xl bg-slate-950/90 border border-orange-500/30 text-center shadow-xs">
-            <span className="text-[9px] uppercase tracking-wider text-slate-400 block font-bold">Best Streak</span>
-            <span className="text-xs font-black font-mono text-orange-400">{streakHighScore || 0}</span>
+          <div className={`px-2 py-1.5 rounded-xl border text-center shadow-xs ${
+            isLightMode ? 'bg-slate-50 border-orange-300/80' : 'bg-slate-950/90 border-orange-500/30'
+          }`}>
+            <span className={`text-[9px] uppercase tracking-wider block font-bold ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>Best Streak</span>
+            <span className={`text-xs font-black font-mono ${isLightMode ? 'text-orange-600' : 'text-orange-400'}`}>{streakHighScore || 0}</span>
           </div>
 
-          <div className="px-2 py-1.5 rounded-xl bg-slate-950/90 border border-emerald-500/30 text-center shadow-xs">
-            <span className="text-[9px] uppercase tracking-wider text-slate-400 block font-bold">Solved</span>
-            <span className="text-xs font-black font-mono text-emerald-400">{solvedPuzzles?.size || 0}</span>
+          <div className={`px-2 py-1.5 rounded-xl border text-center shadow-xs ${
+            isLightMode ? 'bg-slate-50 border-emerald-300/80' : 'bg-slate-950/90 border-emerald-500/30'
+          }`}>
+            <span className={`text-[9px] uppercase tracking-wider block font-bold ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>Solved</span>
+            <span className={`text-xs font-black font-mono ${isLightMode ? 'text-emerald-700' : 'text-emerald-400'}`}>{solvedPuzzles?.size || 0}</span>
           </div>
         </div>
       </div>
 
       {/* 2. Featured: Daily Tactical Challenge (Hero Card) */}
-      <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/15 via-slate-900/95 to-slate-950 border border-amber-500/40 shadow-xl shadow-amber-950/20 flex flex-col gap-3 relative overflow-hidden group">
+      <div className={`p-4 rounded-2xl border flex flex-col gap-3 relative overflow-hidden group transition-all ${
+        isLightMode
+          ? 'bg-gradient-to-br from-amber-50/90 via-white to-amber-50/40 border-amber-300/80 shadow-md text-slate-900'
+          : 'bg-gradient-to-br from-amber-500/15 via-slate-900/95 to-slate-950 border-amber-500/40 shadow-xl shadow-amber-950/20 text-white'
+      }`}>
         <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
 
         <div className="flex items-center justify-between relative z-10">
-          <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
-            <Crown className="w-3 h-3 text-amber-400" />
+          <span className={`px-2.5 py-0.5 rounded-full border text-[10px] font-black uppercase tracking-wider flex items-center gap-1 ${
+            isLightMode
+              ? 'bg-amber-100 text-amber-800 border-amber-300'
+              : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+          }`}>
+            <Crown className="w-3 h-3 text-amber-500" />
             <span>Daily Tactical Challenge</span>
           </span>
-          <span className="text-[10px] font-mono text-amber-400/90 font-bold">
+          <span className={`text-[10px] font-mono font-bold ${isLightMode ? 'text-amber-800' : 'text-amber-400/90'}`}>
             {dailyPuzzle.rating || 1750} Elo
           </span>
         </div>
@@ -1619,22 +1644,28 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
         <div className="flex items-center gap-3.5 relative z-10">
           {/* Mini Board Preview */}
           <div className="relative shrink-0">
-            <div className="w-16 h-16 rounded-xl overflow-hidden border border-amber-400/50 shadow-md">
+            <div className={`w-16 h-16 rounded-xl overflow-hidden border shadow-md ${isLightMode ? 'border-amber-300' : 'border-amber-400/50'}`}>
               <MiniBoard fen={dailyPuzzle.fen} flipped={dailyPuzzle.turn === 'b'} />
             </div>
-            <span className="absolute -bottom-1.5 inset-x-0 mx-auto text-center px-1.5 py-0.2 rounded-full bg-slate-950 text-amber-400 border border-amber-400/60 font-mono text-[8px] font-black uppercase shadow w-fit">
+            <span className={`absolute -bottom-1.5 inset-x-0 mx-auto text-center px-1.5 py-0.2 rounded-full border font-mono text-[8px] font-black uppercase shadow w-fit ${
+              isLightMode
+                ? 'bg-white text-amber-900 border-amber-400'
+                : 'bg-slate-950 text-amber-400 border-amber-400/60'
+            }`}>
               {dailyPuzzle.turn === 'b' ? '⚫ Black' : '⚪ White'}
             </span>
           </div>
 
           <div className="min-w-0">
-            <h3 className="text-sm font-black text-white group-hover:text-amber-200 transition-colors">
+            <h3 className={`text-sm font-black transition-colors ${
+              isLightMode ? 'text-slate-900 group-hover:text-amber-700' : 'text-white group-hover:text-amber-200'
+            }`}>
               Puzzle of the Day
             </h3>
-            <p className="text-xs text-slate-400 mt-0.5 font-medium">
+            <p className={`text-xs mt-0.5 font-medium ${isLightMode ? 'text-slate-600' : 'text-slate-400'}`}>
               Curated official FIDE endgame & tactical motif
             </p>
-            <div className="flex items-center gap-1.5 mt-1 text-[10px] text-emerald-400 font-bold">
+            <div className={`flex items-center gap-1.5 mt-1 text-[10px] font-bold ${isLightMode ? 'text-emerald-700' : 'text-emerald-400'}`}>
               <Sparkles className="w-3 h-3" />
               <span>+15 Rating Points on Solve</span>
             </div>
@@ -1661,11 +1692,11 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
       {/* 3. Core Tactical Modes (3 Sleek Action Cards, Stacked Vertically, Unified with PlayView) */}
       <div className="space-y-2.5">
         <div className="flex items-center justify-between px-1">
-          <span className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-            <Zap className="w-3.5 h-3.5 text-amber-400" />
+          <span className={`text-xs font-black uppercase tracking-wider flex items-center gap-1.5 ${isLightMode ? 'text-slate-600' : 'text-slate-400'}`}>
+            <Zap className="w-3.5 h-3.5 text-amber-500" />
             <span>Tactical Game Modes</span>
           </span>
-          <span className="text-[10px] text-slate-500 font-mono">3 Modes</span>
+          <span className={`text-[10px] font-mono ${isLightMode ? 'text-slate-400' : 'text-slate-500'}`}>3 Modes</span>
         </div>
 
         {/* Mode 1: Puzzle Streak */}
@@ -1675,33 +1706,47 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
             triggerHaptic('move');
             startStreakMode();
           }}
-          className="w-full text-left p-3.5 rounded-2xl bg-gradient-to-r from-orange-950/60 via-slate-900/90 to-slate-950/90 hover:from-orange-900/60 hover:to-slate-900 border border-orange-500/30 hover:border-orange-400/60 shadow-lg shadow-orange-950/20 transition-all duration-200 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden"
+          className={`w-full text-left p-3.5 rounded-2xl border transition-all duration-200 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
+            isLightMode
+              ? 'bg-gradient-to-r from-orange-50/90 via-white to-white border-orange-200 hover:border-orange-400 shadow-sm text-slate-900'
+              : 'bg-gradient-to-r from-orange-950/60 via-slate-900/90 to-slate-950/90 hover:from-orange-900/60 hover:to-slate-900 border-orange-500/30 hover:border-orange-400/60 shadow-lg shadow-orange-950/20 text-white'
+          }`}
         >
           <div className="absolute top-0 right-0 w-28 h-28 bg-orange-500/10 rounded-full blur-2xl pointer-events-none" />
           <div className="flex items-center justify-between gap-3 relative z-10">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-11 h-11 rounded-2xl bg-orange-500/15 border border-orange-500/40 flex items-center justify-center text-orange-400 shadow-md group-hover:scale-105 group-hover:bg-orange-500/25 transition-transform shrink-0">
-                <Flame className="w-5 h-5 fill-orange-400" />
+              <div className={`w-11 h-11 rounded-2xl border flex items-center justify-center shadow-md group-hover:scale-105 transition-transform shrink-0 ${
+                isLightMode ? 'bg-orange-100 border-orange-300 text-orange-700' : 'bg-orange-500/15 border-orange-500/40 text-orange-400 group-hover:bg-orange-500/25'
+              }`}>
+                <Flame className="w-5 h-5 fill-current" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-black text-white group-hover:text-orange-200 transition-colors truncate">
+                  <span className={`text-sm font-black truncate transition-colors ${
+                    isLightMode ? 'text-slate-900 group-hover:text-orange-700' : 'text-white group-hover:text-orange-200'
+                  }`}>
                     Puzzle Streak
                   </span>
-                  <span className="px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300 border border-orange-500/30 text-[10px] font-bold uppercase tracking-wider shrink-0">
+                  <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider shrink-0 ${
+                    isLightMode
+                      ? 'bg-orange-100 text-orange-800 border-orange-300'
+                      : 'bg-orange-500/20 text-orange-300 border-orange-500/30'
+                  }`}>
                     🔥 1 Life
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5 font-medium truncate">
+                <p className={`text-xs mt-0.5 font-medium truncate ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
                   Escalating difficulty • One mistake ends run
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <span className="text-[10px] font-mono text-orange-400 font-bold hidden sm:inline">
+              <span className={`text-[10px] font-mono font-bold hidden sm:inline ${isLightMode ? 'text-orange-700' : 'text-orange-400'}`}>
                 Best: {streakHighScore || 0}
               </span>
-              <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-orange-400 group-hover:translate-x-0.5 transition-transform" />
+              <ChevronRight className={`w-5 h-5 transition-transform group-hover:translate-x-0.5 ${
+                isLightMode ? 'text-slate-400 group-hover:text-orange-600' : 'text-slate-500 group-hover:text-orange-400'
+              }`} />
             </div>
           </div>
         </button>
@@ -1713,33 +1758,47 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
             triggerHaptic('move');
             startStormMode();
           }}
-          className="w-full text-left p-3.5 rounded-2xl bg-gradient-to-r from-sky-950/60 via-slate-900/90 to-slate-950/90 hover:from-sky-900/60 hover:to-slate-900 border border-sky-500/30 hover:border-sky-400/60 shadow-lg shadow-sky-950/20 transition-all duration-200 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden"
+          className={`w-full text-left p-3.5 rounded-2xl border transition-all duration-200 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
+            isLightMode
+              ? 'bg-gradient-to-r from-sky-50/90 via-white to-white border-sky-200 hover:border-sky-400 shadow-sm text-slate-900'
+              : 'bg-gradient-to-r from-sky-950/60 via-slate-900/90 to-slate-950/90 hover:from-sky-900/60 hover:to-slate-900 border-sky-500/30 hover:border-sky-400/60 shadow-lg shadow-sky-950/20 text-white'
+          }`}
         >
           <div className="absolute top-0 right-0 w-28 h-28 bg-sky-500/10 rounded-full blur-2xl pointer-events-none" />
           <div className="flex items-center justify-between gap-3 relative z-10">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-11 h-11 rounded-2xl bg-sky-500/15 border border-sky-500/40 flex items-center justify-center text-sky-400 shadow-md group-hover:scale-105 group-hover:bg-sky-500/25 transition-transform shrink-0">
-                <Zap className="w-5 h-5 fill-sky-400" />
+              <div className={`w-11 h-11 rounded-2xl border flex items-center justify-center shadow-md group-hover:scale-105 transition-transform shrink-0 ${
+                isLightMode ? 'bg-sky-100 border-sky-300 text-sky-700' : 'bg-sky-500/15 border-sky-500/40 text-sky-400 group-hover:bg-sky-500/25'
+              }`}>
+                <Zap className="w-5 h-5 fill-current" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-black text-white group-hover:text-sky-200 transition-colors truncate">
+                  <span className={`text-sm font-black truncate transition-colors ${
+                    isLightMode ? 'text-slate-900 group-hover:text-sky-700' : 'text-white group-hover:text-sky-200'
+                  }`}>
                     Puzzle Storm
                   </span>
-                  <span className="px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 text-[10px] font-bold uppercase tracking-wider shrink-0">
+                  <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider shrink-0 ${
+                    isLightMode
+                      ? 'bg-sky-100 text-sky-800 border-sky-300'
+                      : 'bg-sky-500/20 text-sky-300 border-sky-500/30'
+                  }`}>
                     ⚡ 3:00 Rush
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5 font-medium truncate">
+                <p className={`text-xs mt-0.5 font-medium truncate ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
                   3-minute blitz rush against ticking clock
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <span className="text-[10px] font-mono text-sky-400 font-bold hidden sm:inline">
+              <span className={`text-[10px] font-mono font-bold hidden sm:inline ${isLightMode ? 'text-sky-700' : 'text-sky-400'}`}>
                 Best: {stormHighScore || 0}
               </span>
-              <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-sky-400 group-hover:translate-x-0.5 transition-transform" />
+              <ChevronRight className={`w-5 h-5 transition-transform group-hover:translate-x-0.5 ${
+                isLightMode ? 'text-slate-400 group-hover:text-sky-600' : 'text-slate-500 group-hover:text-sky-400'
+              }`} />
             </div>
           </div>
         </button>
@@ -1751,30 +1810,44 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
             triggerHaptic('move');
             setViewState('themes');
           }}
-          className="w-full text-left p-3.5 rounded-2xl bg-gradient-to-r from-purple-950/60 via-slate-900/90 to-slate-950/90 hover:from-purple-900/60 hover:to-slate-900 border border-purple-500/30 hover:border-purple-400/60 shadow-lg shadow-purple-950/20 transition-all duration-200 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden"
+          className={`w-full text-left p-3.5 rounded-2xl border transition-all duration-200 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
+            isLightMode
+              ? 'bg-gradient-to-r from-purple-50/90 via-white to-white border-purple-200 hover:border-purple-400 shadow-sm text-slate-900'
+              : 'bg-gradient-to-r from-purple-950/60 via-slate-900/90 to-slate-950/90 hover:from-purple-900/60 hover:to-slate-900 border-purple-500/30 hover:border-purple-400/60 shadow-lg shadow-purple-950/20 text-white'
+          }`}
         >
           <div className="absolute top-0 right-0 w-28 h-28 bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
           <div className="flex items-center justify-between gap-3 relative z-10">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-11 h-11 rounded-2xl bg-purple-500/15 border border-purple-500/40 flex items-center justify-center text-purple-400 shadow-md group-hover:scale-105 group-hover:bg-purple-500/25 transition-transform shrink-0">
+              <div className={`w-11 h-11 rounded-2xl border flex items-center justify-center shadow-md group-hover:scale-105 transition-transform shrink-0 ${
+                isLightMode ? 'bg-purple-100 border-purple-300 text-purple-700' : 'bg-purple-500/15 border-purple-500/40 text-purple-400 group-hover:bg-purple-500/25'
+              }`}>
                 <BookOpen className="w-5 h-5" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-black text-white group-hover:text-purple-200 transition-colors truncate">
+                  <span className={`text-sm font-black truncate transition-colors ${
+                    isLightMode ? 'text-slate-900 group-hover:text-purple-700' : 'text-white group-hover:text-purple-200'
+                  }`}>
                     Themes & Openings
                   </span>
-                  <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px] font-bold uppercase tracking-wider shrink-0">
+                  <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider shrink-0 ${
+                    isLightMode
+                      ? 'bg-purple-100 text-purple-800 border-purple-300'
+                      : 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                  }`}>
                     📚 60+ Motifs
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5 font-medium truncate">
+                <p className={`text-xs mt-0.5 font-medium truncate ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
                   Pins, forks, skewers, checkmates & traps
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-purple-400 group-hover:translate-x-0.5 transition-transform" />
+              <ChevronRight className={`w-5 h-5 transition-transform group-hover:translate-x-0.5 ${
+                isLightMode ? 'text-slate-400 group-hover:text-purple-600' : 'text-slate-500 group-hover:text-purple-400'
+              }`} />
             </div>
           </div>
         </button>
@@ -1783,8 +1856,8 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
       {/* 4. Popular Tactical Motifs (Quick Drill Chips) */}
       <div className="space-y-2.5 pt-1">
         <div className="flex items-center justify-between px-1">
-          <span className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-            <Trophy className="w-3.5 h-3.5 text-amber-400" />
+          <span className={`text-xs font-black uppercase tracking-wider flex items-center gap-1.5 ${isLightMode ? 'text-slate-600' : 'text-slate-400'}`}>
+            <Trophy className="w-3.5 h-3.5 text-amber-500" />
             <span>Popular Tactical Motifs</span>
           </span>
           <button
@@ -1793,7 +1866,9 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
               triggerHaptic('move');
               setViewState('themes');
             }}
-            className="text-[11px] text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 hover:underline cursor-pointer"
+            className={`text-[11px] font-bold flex items-center gap-1 hover:underline cursor-pointer ${
+              isLightMode ? 'text-amber-700 hover:text-amber-900' : 'text-amber-400 hover:text-amber-300'
+            }`}
           >
             <span>View All 60+</span>
             <ArrowRight className="w-3 h-3" />
@@ -1802,12 +1877,12 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
 
         <div className="grid grid-cols-2 gap-2">
           {[
-            { name: "Anastasia's mate", theme: "Anastasia's mate", tag: "Mate", icon: "👑", border: "border-rose-500/30 hover:border-rose-400" },
-            { name: "Attraction", theme: "Attraction", tag: "Sacrifice", icon: "💎", border: "border-amber-500/30 hover:border-amber-400" },
-            { name: "Advanced pawn", theme: "Advanced pawn", tag: "Promotion", icon: "👸", border: "border-emerald-500/30 hover:border-emerald-400" },
-            { name: "Discovered attack", theme: "Discovered attack", tag: "Battery", icon: "⚡", border: "border-sky-500/30 hover:border-sky-400" },
-            { name: "Rook endgame", theme: "Rook endgame", tag: "Endgame", icon: "🏰", border: "border-indigo-500/30 hover:border-indigo-400" },
-            { name: "Middlegame", theme: "Middlegame", tag: "Strategy", icon: "🧠", border: "border-purple-500/30 hover:border-purple-400" }
+            { name: "Anastasia's mate", theme: "Anastasia's mate", tag: "Mate", icon: "👑", border: "border-rose-400/40 hover:border-rose-500" },
+            { name: "Attraction", theme: "Attraction", tag: "Sacrifice", icon: "💎", border: "border-amber-400/40 hover:border-amber-500" },
+            { name: "Advanced pawn", theme: "Advanced pawn", tag: "Promotion", icon: "👸", border: "border-emerald-400/40 hover:border-emerald-500" },
+            { name: "Discovered attack", theme: "Discovered attack", tag: "Battery", icon: "⚡", border: "border-sky-400/40 hover:border-sky-500" },
+            { name: "Rook endgame", theme: "Rook endgame", tag: "Endgame", icon: "🏰", border: "border-indigo-400/40 hover:border-indigo-500" },
+            { name: "Middlegame", theme: "Middlegame", tag: "Strategy", icon: "🧠", border: "border-purple-400/40 hover:border-purple-500" }
           ].map(feat => (
             <button
               key={feat.name}
@@ -1817,18 +1892,26 @@ export function PuzzleView({ currentUser, onUpdateRating }) {
                 const subset = getPuzzlesByTheme(feat.theme);
                 startTrainerWithTheme(feat.name, subset);
               }}
-              className={`p-2.5 rounded-xl bg-slate-900/90 border ${feat.border} hover:bg-slate-850 transition-all cursor-pointer group flex items-center justify-between text-left active:scale-[0.98]`}
+              className={`p-2.5 rounded-xl border transition-all cursor-pointer group flex items-center justify-between text-left active:scale-[0.98] ${
+                isLightMode
+                  ? `bg-white ${feat.border} hover:bg-slate-50 shadow-xs text-slate-900`
+                  : `bg-slate-900/90 ${feat.border} hover:bg-slate-850 text-white`
+              }`}
             >
               <div className="min-w-0 pr-1">
-                <div className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
+                <div className={`text-[10px] font-medium flex items-center gap-1 ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
                   <span>{feat.icon}</span>
                   <span className="truncate">{feat.tag}</span>
                 </div>
-                <h4 className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors truncate">
+                <h4 className={`text-xs font-bold transition-colors truncate ${
+                  isLightMode ? 'text-slate-900 group-hover:text-amber-700' : 'text-white group-hover:text-amber-300'
+                }`}>
                   {feat.name}
                 </h4>
               </div>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+              <ChevronRight className={`w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 shrink-0 ${
+                isLightMode ? 'text-slate-400 group-hover:text-amber-600' : 'text-slate-500 group-hover:text-amber-400'
+              }`} />
             </button>
           ))}
         </div>

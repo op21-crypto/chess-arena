@@ -13,11 +13,14 @@ export function SettingsModal({
   onClose,
   settings,
   onUpdateSettings,
-  isEmbedded = false
+  isEmbedded = false,
+  isLight = false
 }) {
   const [activeSubModal, setActiveSubModal] = useState(null); // 'board_picker' | 'piece_picker' | 'color_picker' | 'music_library' | null
   const [selectedMusicCategory, setSelectedMusicCategory] = useState('all');
   const [musicIsPlaying, setMusicIsPlaying] = useState(musicEngine.isPlaying);
+
+  const isLightMode = isLight || (settings?.appTheme === 'light' || settings?.appTheme === 'alabaster' || (!settings?.appTheme && typeof document !== 'undefined' && !document.documentElement.classList.contains('dark')));
 
   if (!isOpen && !isEmbedded) return null;
 
@@ -82,15 +85,18 @@ export function SettingsModal({
 
   const renderSubModal = (title, subtitle, content) => (
     <div className={isEmbedded ? "fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-fade-in" : "absolute inset-0 z-30 bg-slate-950/95 p-4 flex flex-col animate-fade-in"}>
-      <div className={isEmbedded ? "bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full max-h-[85vh] p-4 flex flex-col shadow-2xl overflow-hidden relative" : "flex flex-col h-full w-full overflow-hidden"}>
-        <div className="flex items-center justify-between pb-3 border-b border-slate-800 shrink-0">
+      <div className={isEmbedded
+        ? `${isLightMode ? 'bg-white border-slate-200 text-slate-900' : 'bg-slate-900 border-slate-700 text-white'} border rounded-3xl max-w-lg w-full max-h-[85vh] p-4 flex flex-col shadow-2xl overflow-hidden relative`
+        : `flex flex-col h-full w-full overflow-hidden ${isLightMode ? 'bg-white text-slate-900' : 'text-white'}`
+      }>
+        <div className={`flex items-center justify-between pb-3 border-b shrink-0 ${isLightMode ? 'border-slate-200' : 'border-slate-800'}`}>
           <div>
-            <h4 className="text-sm font-bold text-white">{title}</h4>
-            {subtitle && <p className="text-[11px] text-slate-400">{subtitle}</p>}
+            <h4 className={`text-sm font-bold ${isLightMode ? 'text-slate-900' : 'text-white'}`}>{title}</h4>
+            {subtitle && <p className={`text-[11px] ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>{subtitle}</p>}
           </div>
           <button
             onClick={() => setActiveSubModal(null)}
-            className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className={`p-1.5 rounded-full transition-colors ${isLightMode ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
           >
             <X className="w-4 h-4" />
           </button>
@@ -105,19 +111,26 @@ export function SettingsModal({
     : TRACK_LIST.filter(t => t.category === selectedMusicCategory);
 
   const modalContent = (
-    <div className={`${isEmbedded ? 'w-full bg-slate-900 border border-slate-800 rounded-3xl' : 'bg-slate-900 border-2 border-slate-700/80 rounded-3xl max-w-lg w-full max-h-[92vh]'} flex flex-col shadow-2xl overflow-hidden relative`}>
+    <div className={`${isEmbedded
+      ? isLightMode
+        ? 'w-full bg-white border border-slate-200 rounded-3xl text-slate-900 shadow-sm'
+        : 'w-full bg-slate-900 border border-slate-800 rounded-3xl text-white'
+      : isLightMode
+        ? 'bg-white border-2 border-slate-200 rounded-3xl max-w-lg w-full max-h-[92vh] text-slate-900'
+        : 'bg-slate-900 border-2 border-slate-700/80 rounded-3xl max-w-lg w-full max-h-[92vh] text-white'
+    } flex flex-col shadow-2xl overflow-hidden relative`}>
       {/* Header */}
       {!isEmbedded && (
-        <div className="flex items-center justify-between px-6 py-4 bg-slate-950/80 border-b border-slate-800">
+        <div className={`flex items-center justify-between px-6 py-4 border-b ${isLightMode ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/80 border-slate-800'}`}>
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${isLightMode ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'}`}>
               <Settings className="w-4 h-4" />
             </div>
-            <h2 className="text-lg font-extrabold text-white tracking-tight">Arena Settings</h2>
+            <h2 className={`text-lg font-extrabold tracking-tight ${isLightMode ? 'text-slate-900' : 'text-white'}`}>Arena Settings</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className={`p-1.5 rounded-full transition-colors ${isLightMode ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
           >
             <X className="w-5 h-5" />
           </button>
@@ -128,27 +141,31 @@ export function SettingsModal({
       <div className={`flex-1 ${isEmbedded ? 'p-4 sm:p-6' : 'overflow-y-auto p-5'} space-y-6`}>
           {/* ================= SECTION 1: THEME & COLOR COMBINATION ================= */}
           <div className="space-y-3">
-            <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+            <h3 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${isLightMode ? 'text-amber-700' : 'text-amber-400'}`}>
               <Palette className="w-3.5 h-3.5" />
               <span>Color Themes & Visuals</span>
             </h3>
 
-            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-4 space-y-4">
+            <div className={`border rounded-2xl p-4 space-y-4 ${isLightMode ? 'bg-slate-50/70 border-slate-200' : 'bg-slate-950/70 border-slate-800/80'}`}>
               {/* App UI Theme Picker */}
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-bold text-slate-200">App Theme Style</span>
-                  <p className="text-[11px] text-slate-400">Light luxury or dark esports aesthetic</p>
+                  <span className={`text-xs font-bold ${isLightMode ? 'text-slate-900' : 'text-slate-200'}`}>App Theme Style</span>
+                  <p className={`text-[11px] ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>Light luxury or dark esports aesthetic</p>
                 </div>
                 <select
-                  value={settings.appTheme || 'dark'}
+                  value={settings.appTheme || 'system'}
                   onChange={(e) => onUpdateSettings({ ...settings, appTheme: e.target.value })}
-                  className="bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold text-amber-400 focus:outline-none"
+                  className={`rounded-xl px-3 py-1.5 text-xs font-bold focus:outline-none border ${
+                    isLightMode
+                      ? 'bg-white border-slate-300 text-slate-800'
+                      : 'bg-slate-900 border-slate-700 text-amber-400'
+                  }`}
                 >
+                  <option value="system">⚙️ Auto System (Device Sync)</option>
                   <option value="light">☀️ Day (White / Light Mode)</option>
                   <option value="dark">🌙 Night (Dark Luxury Slate)</option>
                   <option value="black">🖤 OLED Black (Pure Pitch Black)</option>
-                  <option value="system">⚙️ Auto System (Device Sync)</option>
                   <option value="alabaster">Alabaster Luxury</option>
                   <option value="emerald">Emerald Royale</option>
                   <option value="obsidian">Obsidian Gold</option>
@@ -161,14 +178,18 @@ export function SettingsModal({
                 {/* 1. Board Theme */}
                 <button
                   onClick={() => setActiveSubModal('board_picker')}
-                  className="flex flex-col items-center justify-center p-2.5 bg-slate-900 border border-slate-800 hover:border-amber-500/50 rounded-xl transition-all text-center group"
+                  className={`flex flex-col items-center justify-center p-2.5 rounded-xl border transition-all text-center group cursor-pointer ${
+                    isLightMode
+                      ? 'bg-white border-slate-200 hover:border-amber-400 hover:bg-slate-50'
+                      : 'bg-slate-900 border-slate-800 hover:border-amber-500/50'
+                  }`}
                 >
-                  <span className="text-[10px] text-slate-400 font-semibold mb-1">Board</span>
-                  <div className="flex w-6 h-6 rounded overflow-hidden border border-slate-700 mb-1">
+                  <span className={`text-[10px] font-semibold mb-1 ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>Board</span>
+                  <div className={`flex w-6 h-6 rounded overflow-hidden border mb-1 ${isLightMode ? 'border-slate-300' : 'border-slate-700'}`}>
                     <span className="w-3 h-full" style={{ backgroundColor: currentBoard.light }} />
                     <span className="w-3 h-full" style={{ backgroundColor: currentBoard.dark }} />
                   </div>
-                  <span className="text-[11px] font-bold text-white truncate max-w-full group-hover:text-amber-400">
+                  <span className={`text-[11px] font-bold truncate max-w-full group-hover:text-amber-500 ${isLightMode ? 'text-slate-900' : 'text-white'}`}>
                     {currentBoard.name.split(' ')[0]}
                   </span>
                 </button>
@@ -176,11 +197,15 @@ export function SettingsModal({
                 {/* 2. Pieces Carving Style */}
                 <button
                   onClick={() => setActiveSubModal('piece_picker')}
-                  className="flex flex-col items-center justify-center p-2.5 bg-slate-900 border border-slate-800 hover:border-amber-500/50 rounded-xl transition-all text-center group"
+                  className={`flex flex-col items-center justify-center p-2.5 rounded-xl border transition-all text-center group cursor-pointer ${
+                    isLightMode
+                      ? 'bg-white border-slate-200 hover:border-amber-400 hover:bg-slate-50'
+                      : 'bg-slate-900 border-slate-800 hover:border-amber-500/50'
+                  }`}
                 >
-                  <span className="text-[10px] text-slate-400 font-semibold mb-1">Piece Design</span>
+                  <span className={`text-[10px] font-semibold mb-1 ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>Piece Design</span>
                   <span className="text-xl leading-none mb-1">♔</span>
-                  <span className="text-[11px] font-bold text-white truncate max-w-full group-hover:text-amber-400">
+                  <span className={`text-[11px] font-bold truncate max-w-full group-hover:text-amber-500 ${isLightMode ? 'text-slate-900' : 'text-white'}`}>
                     {currentPiece.name}
                   </span>
                 </button>
@@ -188,22 +213,28 @@ export function SettingsModal({
                 {/* 3. Pieces Color Palette */}
                 <button
                   onClick={() => setActiveSubModal('color_picker')}
-                  className="flex flex-col items-center justify-center p-2.5 bg-slate-900 border border-slate-800 hover:border-amber-500/50 rounded-xl transition-all text-center group"
+                  className={`flex flex-col items-center justify-center p-2.5 rounded-xl border transition-all text-center group cursor-pointer ${
+                    isLightMode
+                      ? 'bg-white border-slate-200 hover:border-amber-400 hover:bg-slate-50'
+                      : 'bg-slate-900 border-slate-800 hover:border-amber-500/50'
+                  }`}
                 >
-                  <span className="text-[10px] text-slate-400 font-semibold mb-1">Piece Color</span>
+                  <span className={`text-[10px] font-semibold mb-1 ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>Piece Color</span>
                   <div className="flex items-center gap-1 mb-1">
-                    <span className="w-3 h-3 rounded-full border border-slate-600" style={{ backgroundColor: currentPalette.white }} />
-                    <span className="w-3 h-3 rounded-full border border-slate-600" style={{ backgroundColor: currentPalette.black }} />
+                    <span className="w-3 h-3 rounded-full border border-slate-400" style={{ backgroundColor: currentPalette.white }} />
+                    <span className="w-3 h-3 rounded-full border border-slate-400" style={{ backgroundColor: currentPalette.black }} />
                   </div>
-                  <span className="text-[11px] font-bold text-white truncate max-w-full group-hover:text-amber-400">
+                  <span className={`text-[11px] font-bold truncate max-w-full group-hover:text-amber-500 ${isLightMode ? 'text-slate-900' : 'text-white'}`}>
                     {currentPalette.name.split(' ')[0]}
                   </span>
                 </button>
               </div>
 
               {/* Real Interactive Live Preview */}
-              <div className="flex flex-col items-center justify-center p-3 bg-slate-900/60 rounded-2xl border border-slate-800/80">
-                <span className="text-[11px] font-semibold text-slate-400 mb-2">Live Board Preview</span>
+              <div className={`flex flex-col items-center justify-center p-3 rounded-2xl border ${
+                isLightMode ? 'bg-white border-slate-200' : 'bg-slate-900/60 border-slate-800/80'
+              }`}>
+                <span className={`text-[11px] font-semibold mb-2 ${isLightMode ? 'text-slate-600' : 'text-slate-400'}`}>Live Board Preview</span>
                 <div
                   className="w-44 h-44 rounded-xl overflow-hidden border-2 shadow-2xl grid grid-cols-4 grid-rows-4"
                   style={{ borderColor: currentBoard.border }}
@@ -242,29 +273,34 @@ export function SettingsModal({
           {/* ================= SECTION 2: SOOTHING MUSIC & SOUNDS (36+ Tracks) ================= */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+              <h3 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${isLightMode ? 'text-amber-700' : 'text-amber-400'}`}>
                 <Music className="w-3.5 h-3.5" />
                 <span>Soothing Music & Audio (36 Tracks)</span>
               </h3>
               <button
                 onClick={() => setActiveSubModal('music_library')}
-                className="text-xs font-bold text-indigo-400 hover:text-indigo-300 underline"
+                className={`text-xs font-bold underline cursor-pointer ${isLightMode ? 'text-indigo-600 hover:text-indigo-800' : 'text-indigo-400 hover:text-indigo-300'}`}
               >
                 Browse All (36) →
               </button>
             </div>
 
-            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl divide-y divide-slate-800/60 overflow-hidden">
+            <div className={`border rounded-2xl divide-y overflow-hidden ${
+              isLightMode
+                ? 'bg-slate-50/70 border-slate-200 divide-slate-200'
+                : 'bg-slate-950/70 border-slate-800/80 divide-slate-800/60'
+            }`}>
               {/* Music Master Toggle */}
               <div className="flex items-center justify-between p-3.5">
                 <div className="flex items-center gap-2.5">
-                  <Music className="w-4 h-4 text-indigo-400" />
+                  <Music className="w-4 h-4 text-indigo-500" />
                   <div>
-                    <span className="text-xs font-bold text-slate-200">Background Music</span>
-                    <p className="text-[11px] text-slate-400">Soothing, organic ambient chill soundtrack</p>
+                    <span className={`text-xs font-bold ${isLightMode ? 'text-slate-900' : 'text-slate-200'}`}>Background Music</span>
+                    <p className={`text-[11px] ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>Soothing, organic ambient chill soundtrack</p>
                   </div>
                 </div>
                 <ToggleSwitch
+                  isLight={isLightMode}
                   checked={settings.musicEnabled}
                   onChange={() => handleToggle('musicEnabled')}
                 />
@@ -272,10 +308,14 @@ export function SettingsModal({
 
               {/* Quick Track Switcher Carousel */}
               <div className="p-3.5 space-y-3">
-                <div className="p-2.5 bg-slate-900/90 border border-slate-800 rounded-xl flex items-center justify-between gap-2">
+                <div className={`p-2.5 border rounded-xl flex items-center justify-between gap-2 ${
+                  isLightMode ? 'bg-white border-slate-200' : 'bg-slate-900/90 border-slate-800'
+                }`}>
                   <button
                     onClick={() => handleChangeTrack(-1)}
-                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
+                    className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                      isLightMode ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+                    }`}
                     title="Previous track"
                   >
                     <ChevronLeft className="w-4 h-4" />
@@ -283,21 +323,25 @@ export function SettingsModal({
 
                   <div className="flex-1 text-center min-w-0">
                     <div className="flex items-center justify-center gap-1.5">
-                      <span className="text-xs font-bold text-white truncate">
+                      <span className={`text-xs font-bold truncate ${isLightMode ? 'text-slate-900' : 'text-white'}`}>
                         {currentTrack.name}
                       </span>
-                      <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-bold">
+                      <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded font-bold ${
+                        isLightMode ? 'bg-indigo-100 text-indigo-700' : 'bg-indigo-500/20 text-indigo-300'
+                      }`}>
                         {settings.musicTrackIndex + 1}/{TRACK_LIST.length}
                       </span>
                     </div>
-                    <span className="text-[10px] text-slate-400 block truncate">
+                    <span className={`text-[10px] block truncate ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
                       {currentTrack.mood}
                     </span>
                   </div>
 
                   <button
                     onClick={() => handleChangeTrack(1)}
-                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
+                    className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                      isLightMode ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+                    }`}
                     title="Next track"
                   >
                     <ChevronRight className="w-4 h-4" />
@@ -305,8 +349,12 @@ export function SettingsModal({
 
                   <button
                     onClick={handleToggleMusicPlayback}
-                    className={`p-2 rounded-xl text-slate-950 font-bold transition-all ${
-                      musicIsPlaying ? 'bg-amber-400 hover:bg-amber-300' : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
+                    className={`p-2 rounded-xl font-bold transition-all cursor-pointer ${
+                      musicIsPlaying
+                        ? 'bg-amber-400 hover:bg-amber-300 text-slate-950'
+                        : isLightMode
+                        ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
                     }`}
                     title={musicIsPlaying ? 'Pause Music' : 'Play Music'}
                   >
@@ -316,7 +364,7 @@ export function SettingsModal({
 
                 {/* Music Volume Slider */}
                 <div className="flex items-center gap-3 pt-1">
-                  <VolumeX className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                  <VolumeX className={`w-3.5 h-3.5 shrink-0 ${isLightMode ? 'text-slate-400' : 'text-slate-500'}`} />
                   <input
                     type="range"
                     min="0"
@@ -324,35 +372,38 @@ export function SettingsModal({
                     step="0.05"
                     value={settings.musicVolume}
                     onChange={handleVolumeChange}
-                    className="flex-1 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                    className={`flex-1 h-1.5 rounded-lg appearance-none cursor-pointer accent-amber-500 ${isLightMode ? 'bg-slate-200' : 'bg-slate-800'}`}
                   />
-                  <Volume2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <span className="text-[11px] font-mono text-slate-400 w-8 text-right">
+                  <Volume2 className={`w-3.5 h-3.5 shrink-0 ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                  <span className={`text-[11px] font-mono w-8 text-right ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
                     {Math.round(settings.musicVolume * 100)}%
                   </span>
                 </div>
               </div>
 
               {/* Music Scopes: Game, Puzzles, Lessons */}
-              <div className="flex items-center justify-between p-3.5 pl-9 bg-slate-950/40">
-                <span className="text-xs font-medium text-slate-300">Play music during games</span>
+              <div className={`flex items-center justify-between p-3.5 pl-9 ${isLightMode ? 'bg-slate-100/50' : 'bg-slate-950/40'}`}>
+                <span className={`text-xs font-medium ${isLightMode ? 'text-slate-700' : 'text-slate-300'}`}>Play music during games</span>
                 <ToggleSwitch
+                  isLight={isLightMode}
                   checked={settings.musicDuringGame}
                   onChange={() => handleToggle('musicDuringGame')}
                 />
               </div>
 
-              <div className="flex items-center justify-between p-3.5 pl-9 bg-slate-950/40">
-                <span className="text-xs font-medium text-slate-300">Play music during puzzles</span>
+              <div className={`flex items-center justify-between p-3.5 pl-9 ${isLightMode ? 'bg-slate-100/50' : 'bg-slate-950/40'}`}>
+                <span className={`text-xs font-medium ${isLightMode ? 'text-slate-700' : 'text-slate-300'}`}>Play music during puzzles</span>
                 <ToggleSwitch
+                  isLight={isLightMode}
                   checked={settings.musicDuringPuzzles}
                   onChange={() => handleToggle('musicDuringPuzzles')}
                 />
               </div>
 
-              <div className="flex items-center justify-between p-3.5 pl-9 bg-slate-950/40">
-                <span className="text-xs font-medium text-slate-300">Play music during lessons</span>
+              <div className={`flex items-center justify-between p-3.5 pl-9 ${isLightMode ? 'bg-slate-100/50' : 'bg-slate-950/40'}`}>
+                <span className={`text-xs font-medium ${isLightMode ? 'text-slate-700' : 'text-slate-300'}`}>Play music during lessons</span>
                 <ToggleSwitch
+                  isLight={isLightMode}
                   checked={settings.musicDuringLessons}
                   onChange={() => handleToggle('musicDuringLessons')}
                 />
@@ -361,13 +412,14 @@ export function SettingsModal({
               {/* Sound Effects Toggle */}
               <div className="flex items-center justify-between p-3.5">
                 <div className="flex items-center gap-2.5">
-                  <Volume2 className="w-4 h-4 text-slate-400" />
+                  <Volume2 className={`w-4 h-4 ${isLightMode ? 'text-slate-600' : 'text-slate-400'}`} />
                   <div>
-                    <span className="text-xs font-bold text-slate-200">Sound Effects</span>
-                    <p className="text-[11px] text-slate-400">Board moves, captures, checks and victories</p>
+                    <span className={`text-xs font-bold ${isLightMode ? 'text-slate-900' : 'text-slate-200'}`}>Sound Effects</span>
+                    <p className={`text-[11px] ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>Board moves, captures, checks and victories</p>
                   </div>
                 </div>
                 <ToggleSwitch
+                  isLight={isLightMode}
                   checked={settings.soundEnabled}
                   onChange={() => handleToggle('soundEnabled')}
                 />
@@ -376,13 +428,14 @@ export function SettingsModal({
               {/* Vibrations & Haptics */}
               <div className="flex items-center justify-between p-3.5">
                 <div className="flex items-center gap-2.5">
-                  <Smartphone className="w-4 h-4 text-slate-400" />
+                  <Smartphone className={`w-4 h-4 ${isLightMode ? 'text-slate-600' : 'text-slate-400'}`} />
                   <div>
-                    <span className="text-xs font-bold text-slate-200">Vibrations</span>
-                    <p className="text-[11px] text-slate-400">Tactile haptic feedback on touch devices</p>
+                    <span className={`text-xs font-bold ${isLightMode ? 'text-slate-900' : 'text-slate-200'}`}>Vibrations</span>
+                    <p className={`text-[11px] ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>Tactile haptic feedback on touch devices</p>
                   </div>
                 </div>
                 <ToggleSwitch
+                  isLight={isLightMode}
                   checked={settings.vibrations}
                   onChange={() => handleToggle('vibrations')}
                 />
@@ -392,13 +445,14 @@ export function SettingsModal({
               <div className="p-3.5 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <Mic className="w-4 h-4 text-emerald-400" />
+                    <Mic className="w-4 h-4 text-emerald-500" />
                     <div>
-                      <span className="text-xs font-bold text-slate-200">Voice Commentary</span>
-                      <p className="text-[11px] text-slate-400">Speaks moves and checks aloud</p>
+                      <span className={`text-xs font-bold ${isLightMode ? 'text-slate-900' : 'text-slate-200'}`}>Voice Commentary</span>
+                      <p className={`text-[11px] ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>Speaks moves and checks aloud</p>
                     </div>
                   </div>
                   <ToggleSwitch
+                    isLight={isLightMode}
                     checked={settings.voiceCommentary}
                     onChange={() => handleToggle('voiceCommentary')}
                   />
@@ -406,8 +460,9 @@ export function SettingsModal({
 
                 {settings.voiceCommentary && (
                   <div className="flex items-center justify-between pl-6 pt-1">
-                    <span className="text-xs text-slate-400 font-medium">↳ Only opponent's moves</span>
+                    <span className={`text-xs font-medium ${isLightMode ? 'text-slate-600' : 'text-slate-400'}`}>↳ Only opponent's moves</span>
                     <ToggleSwitch
+                      isLight={isLightMode}
                       checked={settings.voiceCommentaryOnlyOpponent}
                       onChange={() => handleToggle('voiceCommentaryOnlyOpponent')}
                     />
@@ -419,55 +474,65 @@ export function SettingsModal({
 
           {/* ================= SECTION 3: GAME OPTIONS ================= */}
           <div className="space-y-3">
-            <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+            <h3 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${isLightMode ? 'text-amber-700' : 'text-amber-400'}`}>
               <Eye className="w-3.5 h-3.5" />
               <span>Game Options</span>
             </h3>
 
-            <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl divide-y divide-slate-800/60 overflow-hidden">
+            <div className={`border rounded-2xl divide-y overflow-hidden ${
+              isLightMode
+                ? 'bg-slate-50/70 border-slate-200 divide-slate-200'
+                : 'bg-slate-950/70 border-slate-800/80 divide-slate-800/60'
+            }`}>
               <div className="flex items-center justify-between p-3.5">
-                <span className="text-xs font-bold text-slate-200">Show legal moves</span>
+                <span className={`text-xs font-bold ${isLightMode ? 'text-slate-900' : 'text-slate-200'}`}>Show legal moves</span>
                 <ToggleSwitch
+                  isLight={isLightMode}
                   checked={settings.showLegalMoves}
                   onChange={() => handleToggle('showLegalMoves')}
                 />
               </div>
 
               <div className="flex items-center justify-between p-3.5">
-                <span className="text-xs font-bold text-slate-200">Highlight last move</span>
+                <span className={`text-xs font-bold ${isLightMode ? 'text-slate-900' : 'text-slate-200'}`}>Highlight last move</span>
                 <ToggleSwitch
+                  isLight={isLightMode}
                   checked={settings.highlightLastMove}
                   onChange={() => handleToggle('highlightLastMove')}
                 />
               </div>
 
               <div className="flex items-center justify-between p-3.5">
-                <span className="text-xs font-bold text-slate-200">Show coordinates</span>
+                <span className={`text-xs font-bold ${isLightMode ? 'text-slate-900' : 'text-slate-200'}`}>Show coordinates</span>
                 <ToggleSwitch
+                  isLight={isLightMode}
                   checked={settings.showCoordinates}
                   onChange={() => handleToggle('showCoordinates')}
                 />
               </div>
 
               <div className="flex items-center justify-between p-3.5">
-                <span className="text-xs font-bold text-slate-200">King in check indicator</span>
+                <span className={`text-xs font-bold ${isLightMode ? 'text-slate-900' : 'text-slate-200'}`}>King in check indicator</span>
                 <ToggleSwitch
+                  isLight={isLightMode}
                   checked={settings.kingInCheckIndicator}
                   onChange={() => handleToggle('kingInCheckIndicator')}
                 />
               </div>
 
               <div className="flex items-center justify-between p-3.5">
-                <span className="text-xs font-bold text-slate-200">Show openings names</span>
+                <span className={`text-xs font-bold ${isLightMode ? 'text-slate-900' : 'text-slate-200'}`}>Show openings names</span>
                 <ToggleSwitch
+                  isLight={isLightMode}
                   checked={settings.showOpenings}
                   onChange={() => handleToggle('showOpenings')}
                 />
               </div>
 
               <div className="flex items-center justify-between p-3.5">
-                <span className="text-xs font-bold text-slate-200">Allow chat during game</span>
+                <span className={`text-xs font-bold ${isLightMode ? 'text-slate-900' : 'text-slate-200'}`}>Allow chat during game</span>
                 <ToggleSwitch
+                  isLight={isLightMode}
                   checked={settings.allowChat}
                   onChange={() => handleToggle('allowChat')}
                 />
@@ -475,10 +540,11 @@ export function SettingsModal({
 
               <div className="flex items-center justify-between p-3.5">
                 <div>
-                  <span className="text-xs font-bold text-slate-200">Always promote to queen</span>
-                  <p className="text-[10px] text-slate-500">Fast tactical play without modal</p>
+                  <span className={`text-xs font-bold ${isLightMode ? 'text-slate-900' : 'text-slate-200'}`}>Always promote to queen</span>
+                  <p className={`text-[10px] ${isLightMode ? 'text-slate-500' : 'text-slate-500'}`}>Fast tactical play without modal</p>
                 </div>
                 <ToggleSwitch
+                  isLight={isLightMode}
                   checked={settings.alwaysPromoteToQueen}
                   onChange={() => handleToggle('alwaysPromoteToQueen')}
                 />
@@ -486,10 +552,11 @@ export function SettingsModal({
 
               <div className="flex items-center justify-between p-3.5">
                 <div>
-                  <span className="text-xs font-bold text-slate-200">Enable premoves</span>
-                  <p className="text-[10px] text-slate-500">Queue next response while opponent thinks</p>
+                  <span className={`text-xs font-bold ${isLightMode ? 'text-slate-900' : 'text-slate-200'}`}>Enable premoves</span>
+                  <p className={`text-[10px] ${isLightMode ? 'text-slate-500' : 'text-slate-500'}`}>Queue next response while opponent thinks</p>
                 </div>
                 <ToggleSwitch
+                  isLight={isLightMode}
                   checked={settings.enablePremoves}
                   onChange={() => handleToggle('enablePremoves')}
                 />
@@ -500,10 +567,10 @@ export function SettingsModal({
 
         {/* Footer */}
         {!isEmbedded && (
-          <div className="p-4 bg-slate-950/80 border-t border-slate-800 flex justify-end">
+          <div className={`p-4 border-t flex justify-end ${isLightMode ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/80 border-slate-800'}`}>
             <button
               onClick={onClose}
-              className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-lg shadow-amber-500/10 transition-all active:scale-95"
+              className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-lg shadow-amber-500/10 transition-all active:scale-95 cursor-pointer"
             >
               Done
             </button>
@@ -519,9 +586,11 @@ export function SettingsModal({
             <div className="flex gap-1.5 py-3 overflow-x-auto no-scrollbar shrink-0">
               <button
                 onClick={() => setSelectedMusicCategory('all')}
-                className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                   selectedMusicCategory === 'all'
                     ? 'bg-amber-500 text-slate-950'
+                    : isLightMode
+                    ? 'bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200'
                     : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
                 }`}
               >
@@ -531,9 +600,11 @@ export function SettingsModal({
                 <button
                   key={catKey}
                   onClick={() => setSelectedMusicCategory(catKey)}
-                  className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                  className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                     selectedMusicCategory === catKey
                       ? 'bg-amber-500 text-slate-950'
+                      : isLightMode
+                      ? 'bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200'
                       : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
                   }`}
                 >
@@ -552,30 +623,36 @@ export function SettingsModal({
                     onClick={() => handleSelectTrack(tr.id)}
                     className={`p-3 rounded-2xl border cursor-pointer transition-all flex items-center justify-between gap-3 ${
                       isCurrent
-                        ? 'bg-amber-500/15 border-amber-500/60 shadow-md'
+                        ? isLightMode
+                          ? 'bg-amber-50 border-amber-300 shadow-sm'
+                          : 'bg-amber-500/15 border-amber-500/60 shadow-md'
+                        : isLightMode
+                        ? 'bg-slate-50 border-slate-200 hover:border-slate-300'
                         : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
                     }`}
                   >
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-white truncate">{tr.name}</span>
+                        <span className={`text-xs font-bold truncate ${isLightMode ? 'text-slate-900' : 'text-white'}`}>{tr.name}</span>
                         {isCurrent && (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 font-bold font-mono">
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold font-mono ${
+                            isLightMode ? 'bg-amber-100 text-amber-800' : 'bg-amber-500/20 text-amber-300'
+                          }`}>
                             Playing
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-slate-400 truncate mt-0.5">{tr.mood}</p>
+                      <p className={`text-[11px] truncate mt-0.5 ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>{tr.mood}</p>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[10px] font-mono text-slate-500 uppercase">
+                      <span className={`text-[10px] font-mono uppercase ${isLightMode ? 'text-slate-500' : 'text-slate-500'}`}>
                         {tr.category}
                       </span>
                       {isCurrent && musicIsPlaying ? (
-                        <Pause className="w-4 h-4 text-amber-400" />
+                        <Pause className={`w-4 h-4 ${isLightMode ? 'text-amber-600' : 'text-amber-400'}`} />
                       ) : (
-                        <Play className="w-4 h-4 text-slate-400" />
+                        <Play className={`w-4 h-4 ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`} />
                       )}
                     </div>
                   </div>
@@ -601,14 +678,18 @@ export function SettingsModal({
                     onUpdateSettings({ ...settings, boardTheme: key });
                     setActiveSubModal(null);
                   }}
-                  className={`w-full flex items-center justify-between p-3 rounded-2xl border transition-all ${
+                  className={`w-full flex items-center justify-between p-3 rounded-2xl border transition-all cursor-pointer ${
                     isSelected
-                      ? 'bg-amber-500/15 border-amber-500/60 shadow-md'
+                      ? isLightMode
+                        ? 'bg-amber-50 border-amber-300 shadow-sm'
+                        : 'bg-amber-500/15 border-amber-500/60 shadow-md'
+                      : isLightMode
+                      ? 'bg-slate-50 border-slate-200 hover:border-slate-300'
                       : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-14 h-9 rounded-lg overflow-hidden border border-slate-700/80 grid grid-cols-4 grid-rows-2 shrink-0">
+                    <div className={`w-14 h-9 rounded-lg overflow-hidden border grid grid-cols-4 grid-rows-2 shrink-0 ${isLightMode ? 'border-slate-300' : 'border-slate-700/80'}`}>
                       {[0, 1, 0, 1, 1, 0, 1, 0].map((val, idx) => (
                         <div
                           key={idx}
@@ -617,11 +698,11 @@ export function SettingsModal({
                       ))}
                     </div>
                     <div className="text-left">
-                      <span className="text-xs font-bold text-white block capitalize">{b.name}</span>
-                      {b.isLight && <span className="text-[10px] text-amber-400 font-medium">Light Luxury Theme</span>}
+                      <span className={`text-xs font-bold block capitalize ${isLightMode ? 'text-slate-900' : 'text-white'}`}>{b.name}</span>
+                      {b.isLight && <span className={`text-[10px] font-medium ${isLightMode ? 'text-amber-700' : 'text-amber-400'}`}>Light Luxury Theme</span>}
                     </div>
                   </div>
-                  {isSelected && <Check className="w-4 h-4 text-amber-400" />}
+                  {isSelected && <Check className={`w-4 h-4 ${isLightMode ? 'text-amber-600' : 'text-amber-400'}`} />}
                 </button>
               );
             })}
@@ -640,7 +721,9 @@ export function SettingsModal({
                 <div key={key} className="space-y-1.5">
                   {/* Theme Title Centered Above Box (Matching Image 1) */}
                   <div className={`text-xs sm:text-sm font-bold text-center transition-colors ${
-                    isSelected ? 'text-amber-400 font-extrabold' : 'text-slate-300'
+                    isSelected
+                      ? isLightMode ? 'text-amber-700 font-extrabold' : 'text-amber-400 font-extrabold'
+                      : isLightMode ? 'text-slate-700' : 'text-slate-300'
                   }`}>
                     {p.name}
                   </div>
@@ -654,7 +737,11 @@ export function SettingsModal({
                     }}
                     className={`w-full p-2.5 sm:p-3 rounded-2xl border transition-all flex items-center justify-around cursor-pointer active:scale-98 ${
                       isSelected
-                        ? 'bg-amber-500/10 border-2 border-amber-400 shadow-lg shadow-amber-500/10 ring-2 ring-amber-400/20'
+                        ? isLightMode
+                          ? 'bg-amber-50 border-2 border-amber-400 shadow-md ring-2 ring-amber-300/40'
+                          : 'bg-amber-500/10 border-2 border-amber-400 shadow-lg shadow-amber-500/10 ring-2 ring-amber-400/20'
+                        : isLightMode
+                        ? 'bg-slate-50 border-slate-200 hover:border-slate-300 hover:bg-white'
                         : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 hover:bg-slate-900'
                     }`}
                   >
@@ -692,23 +779,27 @@ export function SettingsModal({
                     onUpdateSettings({ ...settings, pieceColorPalette: palKey });
                     setActiveSubModal(null);
                   }}
-                  className={`w-full p-3.5 rounded-2xl border transition-all text-left flex items-center justify-between ${
+                  className={`w-full p-3.5 rounded-2xl border transition-all text-left flex items-center justify-between cursor-pointer ${
                     isSelected
-                      ? 'bg-amber-500/15 border-amber-500/60 shadow-md'
+                      ? isLightMode
+                        ? 'bg-amber-50 border-amber-300 shadow-sm'
+                        : 'bg-amber-500/15 border-amber-500/60 shadow-md'
+                      : isLightMode
+                      ? 'bg-slate-50 border-slate-200 hover:border-slate-300'
                       : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1.5 p-1 bg-slate-950 rounded-xl border border-slate-800">
-                      <span className="w-5 h-5 rounded-full border border-slate-600" style={{ backgroundColor: pal.white }} />
-                      <span className="w-5 h-5 rounded-full border border-slate-600" style={{ backgroundColor: pal.black }} />
+                    <div className={`flex items-center gap-1.5 p-1 rounded-xl border ${isLightMode ? 'bg-white border-slate-200' : 'bg-slate-950 border-slate-800'}`}>
+                      <span className="w-5 h-5 rounded-full border border-slate-400" style={{ backgroundColor: pal.white }} />
+                      <span className="w-5 h-5 rounded-full border border-slate-400" style={{ backgroundColor: pal.black }} />
                     </div>
                     <div>
-                      <span className="text-xs font-bold text-white block">{pal.name}</span>
-                      <span className="text-[10px] text-slate-400">White & Black color finish</span>
+                      <span className={`text-xs font-bold block ${isLightMode ? 'text-slate-900' : 'text-white'}`}>{pal.name}</span>
+                      <span className={`text-[10px] ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>White & Black color finish</span>
                     </div>
                   </div>
-                  {isSelected && <Check className="w-4 h-4 text-amber-400" />}
+                  {isSelected && <Check className={`w-4 h-4 ${isLightMode ? 'text-amber-600' : 'text-amber-400'}`} />}
                 </button>
               );
             })}
@@ -728,7 +819,7 @@ export function SettingsModal({
   );
 }
 
-function ToggleSwitch({ checked, onChange }) {
+function ToggleSwitch({ checked, onChange, isLight = false }) {
   return (
     <button
       type="button"
@@ -736,7 +827,7 @@ function ToggleSwitch({ checked, onChange }) {
       aria-checked={checked}
       onClick={onChange}
       className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-        checked ? 'bg-amber-500' : 'bg-slate-800'
+        checked ? 'bg-amber-500' : (isLight ? 'bg-slate-300' : 'bg-slate-800')
       }`}
     >
       <span

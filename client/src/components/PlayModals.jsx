@@ -19,7 +19,7 @@ const TIME_PRESETS = [
   { id: '30m', name: '30 min', format: 'classical', baseMinutes: 30, incrementSeconds: 0, icon: '🏛️' }
 ];
 
-export function MatchmakingModal({ isOpen, onClose, onStartMatchmaking, isSearching, onCancelMatchmaking, initialPreset }) {
+export function MatchmakingModal({ isOpen, onClose, onStartMatchmaking, isSearching, onCancelMatchmaking, initialPreset, isLight = false }) {
   const [selectedPreset, setSelectedPreset] = useState(() => initialPreset || TIME_PRESETS[2]); // Default 3 min Blitz
 
   useEffect(() => {
@@ -33,39 +33,53 @@ export function MatchmakingModal({ isOpen, onClose, onStartMatchmaking, isSearch
 
   return (
     <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fade-in">
-      <div className="bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border border-slate-700/80 rounded-3xl p-5 max-w-sm sm:max-w-md w-full space-y-4 shadow-2xl relative text-slate-100">
+      <div className={`border rounded-3xl p-5 max-w-sm sm:max-w-md w-full space-y-4 shadow-2xl relative transition-colors ${
+        isLight
+          ? 'bg-white border-slate-200 text-slate-900'
+          : 'bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border-slate-700/80 text-slate-100'
+      }`}>
         <button
           onClick={() => {
             sound.playClick();
             onClose();
           }}
-          className="absolute top-4 right-4 p-1.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-400 hover:text-white transition-colors"
+          className={`absolute top-4 right-4 p-1.5 rounded-xl border transition-colors cursor-pointer ${
+            isLight
+              ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+              : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+          }`}
         >
           <X className="w-4 h-4" />
         </button>
 
         <div className="space-y-1">
-          <h3 className="text-lg font-black text-white flex items-center gap-2">
-            <Swords className="w-5 h-5 text-amber-400" />
+          <h3 className={`text-lg font-black flex items-center gap-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+            <Swords className="w-5 h-5 text-amber-500" />
             <span>Play Online</span>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase tracking-wider">
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${
+              isLight
+                ? 'bg-amber-100 text-amber-800 border-amber-300'
+                : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+            }`}>
               Rated Matchmaking
             </span>
           </h3>
-          <p className="text-xs text-slate-400">Choose your time control to find a rated opponent worldwide</p>
+          <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Choose your time control to find a rated opponent worldwide</p>
         </div>
 
         {isSearching ? (
           <div className="py-8 flex flex-col items-center justify-center space-y-4">
             <div className="relative w-20 h-20 flex items-center justify-center">
               <span className="absolute inset-0 rounded-full border-4 border-amber-500/30 animate-ping" />
-              <span className="w-16 h-16 rounded-full bg-amber-500/10 border-2 border-amber-500 flex items-center justify-center text-2xl">
+              <span className={`w-16 h-16 rounded-full border-2 flex items-center justify-center text-2xl ${
+                isLight ? 'bg-amber-50 border-amber-400' : 'bg-amber-500/10 border-amber-500'
+              }`}>
                 ♟️
               </span>
             </div>
             <div className="text-center space-y-1">
-              <span className="text-sm font-bold text-white block">Finding Opponent...</span>
-              <span className="text-xs text-amber-400 font-mono font-bold">
+              <span className={`text-sm font-bold block ${isLight ? 'text-slate-900' : 'text-white'}`}>Finding Opponent...</span>
+              <span className="text-xs text-amber-500 font-mono font-bold">
                 {selectedPreset.name} • {selectedPreset.format.toUpperCase()}
               </span>
             </div>
@@ -75,7 +89,11 @@ export function MatchmakingModal({ isOpen, onClose, onStartMatchmaking, isSearch
                 triggerHaptic('move');
                 onCancelMatchmaking();
               }}
-              className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-xl transition-colors cursor-pointer"
+              className={`px-6 py-2 font-semibold text-xs rounded-xl transition-colors cursor-pointer ${
+                isLight
+                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+              }`}
             >
               Cancel Queue
             </button>
@@ -96,12 +114,14 @@ export function MatchmakingModal({ isOpen, onClose, onStartMatchmaking, isSearch
                     className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1 transition-all cursor-pointer active:scale-95 ${
                       isSelected
                         ? 'bg-amber-500 text-slate-950 border-amber-400 font-bold shadow-lg shadow-amber-500/25 ring-2 ring-amber-400/40'
+                        : isLight
+                        ? 'bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700'
                         : 'bg-slate-950/70 border-slate-800 hover:border-slate-700 text-slate-300'
                     }`}
                   >
                     <span className="text-lg">{p.icon}</span>
                     <span className="text-xs font-mono font-bold">{p.name}</span>
-                    <span className={`text-[9px] uppercase font-semibold ${isSelected ? 'text-slate-900' : 'text-slate-500'}`}>
+                    <span className={`text-[9px] uppercase font-semibold ${isSelected ? 'text-slate-900' : (isLight ? 'text-slate-500' : 'text-slate-500')}`}>
                       {p.format}
                     </span>
                   </button>
@@ -137,7 +157,8 @@ export function FriendRoomModal({
   onEnterRoom,
   onChallengeFriend,
   onOpenAuth,
-  initialTab = 'room'
+  initialTab = 'room',
+  isLight = false
 }) {
   const [activeTab, setActiveTab] = useState(initialTab); // 'room' | 'friends' | 'add'
   const [friends, setFriends] = useState([]);
@@ -342,11 +363,19 @@ export function FriendRoomModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fade-in">
-      <div className="bg-slate-900 border border-slate-700/80 rounded-3xl p-5 sm:p-6 max-w-lg w-full space-y-4 shadow-2xl relative max-h-[90vh] flex flex-col overflow-hidden">
+      <div className={`border rounded-3xl p-5 sm:p-6 max-w-lg w-full space-y-4 shadow-2xl relative max-h-[90vh] flex flex-col overflow-hidden transition-colors ${
+        isLight
+          ? 'bg-white border-slate-200 text-slate-900'
+          : 'bg-slate-900 border-slate-700/80 text-white'
+      }`}>
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors z-10"
+          className={`absolute top-4 right-4 p-1.5 rounded-full transition-colors z-10 cursor-pointer ${
+            isLight
+              ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800'
+          }`}
         >
           <X className="w-5 h-5" />
         </button>
@@ -354,29 +383,33 @@ export function FriendRoomModal({
         {/* Modal Header */}
         <div className="space-y-1 pr-8">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
+              isLight ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+            }`}>
               <Users className="w-4 h-4" />
             </div>
-            <h3 className="text-lg sm:text-xl font-black text-white">
+            <h3 className={`text-lg sm:text-xl font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>
               Play With Friends
             </h3>
           </div>
-          <p className="text-xs text-slate-400">
+          <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
             Create private match rooms, manage your Friend Arena, or make new friends
           </p>
         </div>
 
         {/* Navigation Tabs: Room | Friend Arena | Make Friend */}
-        <div className="flex bg-slate-950 p-1 rounded-2xl border border-slate-800 shrink-0">
+        <div className={`flex p-1 rounded-2xl border shrink-0 ${
+          isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-950 border-slate-800'
+        }`}>
           <button
             onClick={() => {
               setActiveTab('room');
               triggerHaptic('move');
             }}
-            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === 'room'
                 ? 'bg-amber-500 text-slate-950 shadow-md font-black'
-                : 'text-slate-400 hover:text-white'
+                : isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'
             }`}
           >
             <span>🎮 Custom Room</span>
@@ -387,17 +420,19 @@ export function FriendRoomModal({
               setActiveTab('friends');
               triggerHaptic('move');
             }}
-            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === 'friends'
                 ? 'bg-amber-500 text-slate-950 shadow-md font-black'
-                : 'text-slate-400 hover:text-white'
+                : isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'
             }`}
           >
             <Users className="w-3.5 h-3.5" />
             <span>Friend Arena</span>
             {friends.length > 0 && (
               <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-bold ${
-                activeTab === 'friends' ? 'bg-slate-950 text-amber-400' : 'bg-slate-800 text-slate-300'
+                activeTab === 'friends'
+                  ? 'bg-slate-950 text-amber-400'
+                  : isLight ? 'bg-slate-200 text-slate-700' : 'bg-slate-800 text-slate-300'
               }`}>
                 {friends.length}
               </span>
@@ -409,10 +444,10 @@ export function FriendRoomModal({
               setActiveTab('add');
               triggerHaptic('move');
             }}
-            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === 'add'
                 ? 'bg-amber-500 text-slate-950 shadow-md font-black'
-                : 'text-slate-400 hover:text-white'
+                : isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'
             }`}
           >
             <UserPlus className="w-3.5 h-3.5" />
@@ -814,7 +849,7 @@ export function FriendRoomModal({
   );
 }
 
-export function PlayAIModal({ isOpen, onClose, onStartAIGame }) {
+export function PlayAIModal({ isOpen, onClose, onStartAIGame, isLight = false }) {
   const [selectedLevel, setSelectedLevel] = useState(2);
   const [selectedTime, setSelectedTime] = useState(10); // minutes (0 = unlimited)
 
@@ -849,21 +884,29 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fade-in">
-      <div className="bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border border-slate-700/80 rounded-3xl p-4 sm:p-5 max-w-sm sm:max-w-md w-full shadow-2xl relative text-slate-100 space-y-3.5">
+      <div className={`border rounded-3xl p-4 sm:p-5 max-w-sm sm:max-w-md w-full shadow-2xl relative space-y-3.5 transition-colors ${
+        isLight
+          ? 'bg-white border-slate-200 text-slate-900'
+          : 'bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border-slate-700/80 text-slate-100'
+      }`}>
         {/* Subtle background glow */}
         <div className="absolute -top-10 -right-10 w-36 h-36 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Top Header */}
-        <div className="flex items-center justify-between pb-2.5 border-b border-slate-800">
+        <div className={`flex items-center justify-between pb-2.5 border-b ${isLight ? 'border-slate-200' : 'border-slate-800'}`}>
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
-              <Bot className="w-4.5 h-4.5 text-amber-400" />
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${
+              isLight ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-amber-500/15 border-amber-500/30 text-amber-400'
+            }`}>
+              <Bot className="w-4.5 h-4.5" />
             </div>
             <div>
-              <h3 className="text-sm sm:text-base font-black text-white tracking-tight flex items-center gap-1.5">
+              <h3 className={`text-sm sm:text-base font-black tracking-tight flex items-center gap-1.5 ${
+                isLight ? 'text-slate-900' : 'text-white'
+              }`}>
                 Play Stockfish AI
               </h3>
-              <p className="text-[10px] text-slate-400">Choose difficulty & start playing</p>
+              <p className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Choose difficulty & start playing</p>
             </div>
           </div>
 
@@ -872,7 +915,11 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame }) {
               sound.playClick();
               onClose();
             }}
-            className="p-1.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className={`p-1.5 rounded-xl border transition-colors cursor-pointer ${
+              isLight
+                ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+                : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
+            }`}
           >
             <X className="w-4 h-4" />
           </button>
@@ -881,10 +928,10 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame }) {
         {/* 5 Difficulty Tiers (Clean: Name + Elo) */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between px-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            <span className={`text-[10px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
               Select Difficulty
             </span>
-            <span className="text-[10px] font-mono text-amber-400 font-bold">
+            <span className={`text-[10px] font-mono font-bold ${isLight ? 'text-amber-700' : 'text-amber-400'}`}>
               {currentLevelObj.name} • {currentLevelObj.elo}
             </span>
           </div>
@@ -902,13 +949,21 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame }) {
                   }}
                   className={`px-3 py-2.5 rounded-xl border flex items-center justify-between transition-all cursor-pointer select-none active:scale-[0.99] ${
                     isSelected
-                      ? 'bg-amber-500/15 border-amber-500/60 shadow-md ring-1 ring-amber-400/30'
+                      ? isLight
+                        ? 'bg-amber-50 border-amber-400 shadow-sm ring-1 ring-amber-300'
+                        : 'bg-amber-500/15 border-amber-500/60 shadow-md ring-1 ring-amber-400/30'
+                      : isLight
+                      ? 'bg-slate-50 border-slate-200 hover:border-slate-300 hover:bg-slate-100'
                       : 'bg-slate-950/70 border-slate-800/90 hover:border-slate-700 hover:bg-slate-900/60'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span className="text-base">{item.icon}</span>
-                    <span className="text-xs sm:text-sm font-bold text-white truncate">
+                    <span className={`text-xs sm:text-sm font-bold truncate ${
+                      isSelected
+                        ? isLight ? 'text-amber-950 font-black' : 'text-white font-black'
+                        : isLight ? 'text-slate-800' : 'text-white'
+                    }`}>
                       {item.name}
                     </span>
                   </div>
@@ -916,7 +971,11 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame }) {
                   <div className="flex items-center gap-2 shrink-0">
                     <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border ${
                       isSelected
-                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                        ? isLight
+                          ? 'bg-amber-100 text-amber-800 border-amber-300'
+                          : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                        : isLight
+                        ? 'bg-white text-slate-600 border-slate-200'
                         : 'bg-slate-900 text-slate-400 border-slate-800'
                     }`}>
                       {item.elo}
@@ -924,6 +983,8 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame }) {
                     <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-all ${
                       isSelected
                         ? 'bg-amber-400 text-slate-950 shadow-sm'
+                        : isLight
+                        ? 'border border-slate-300 bg-white'
                         : 'border border-slate-700 bg-slate-950'
                     }`}>
                       {isSelected ? <Check className="w-2.5 h-2.5 stroke-[3]" /> : null}
@@ -938,10 +999,10 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame }) {
         {/* Time Control Selection */}
         <div className="space-y-1">
           <div className="flex items-center justify-between px-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            <span className={`text-[10px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
               Time Control
             </span>
-            <span className="text-[10px] font-mono text-slate-400">
+            <span className={`text-[10px] font-mono ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
               {selectedTime === 0 ? 'No clock' : `${selectedTime} min`}
             </span>
           </div>
@@ -960,14 +1021,18 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame }) {
                   }}
                   className={`py-1.5 px-1 rounded-xl border text-center transition-all cursor-pointer active:scale-95 ${
                     isSelected
-                      ? 'bg-sky-500/20 border-sky-400 text-sky-300 ring-1 ring-sky-400/40 shadow-sm'
+                      ? isLight
+                        ? 'bg-sky-50 border-sky-400 text-sky-800 ring-1 ring-sky-300 shadow-sm'
+                        : 'bg-sky-500/20 border-sky-400 text-sky-300 ring-1 ring-sky-400/40 shadow-sm'
+                      : isLight
+                      ? 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-100'
                       : 'bg-slate-950/70 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
                   }`}
                 >
                   <span className="text-[11px] font-bold block truncate leading-tight">
                     {t.label}
                   </span>
-                  <span className="text-[9px] text-slate-500 block truncate">
+                  <span className={`text-[9px] block truncate ${isLight ? 'text-slate-500' : 'text-slate-500'}`}>
                     {t.sub}
                   </span>
                 </button>

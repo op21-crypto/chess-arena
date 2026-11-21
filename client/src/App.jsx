@@ -2014,6 +2014,7 @@ export default function App() {
       {/* End of Game Celebration & Result Modal */}
       <GameOverModal
         isOpen={showGameOverModal}
+        isLight={isLight}
         status={gameSession?.status}
         winner={gameSession?.winner}
         winReason={gameSession?.winReason}
