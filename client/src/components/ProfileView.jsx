@@ -275,8 +275,8 @@ export function ProfileView({
               <img
                 src={selectedAvatar || user?.avatar || getRandomAnimeAvatar()}
                 alt={user?.username || 'Player'}
-                className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 sm:border-3 border-amber-500 shadow-lg ${
-                  isLightMode ? 'bg-amber-100' : 'bg-slate-900'
+                className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 sm:border-3 shadow-md ${
+                  isLightMode ? 'bg-slate-100 border-slate-200' : 'bg-slate-900 border-slate-750'
                 }`}
                 onError={(e) => {
                   e.currentTarget.src = FAMOUS_AVATARS[0].url;
@@ -289,29 +289,27 @@ export function ProfileView({
                   triggerHaptic('move');
                   setIsEditingAvatar(!isEditingAvatar);
                 }}
-                className={`absolute bottom-0 right-0 p-2 rounded-full bg-amber-500 border-2 font-bold hover:scale-110 active:scale-95 transition-transform shadow-md cursor-pointer ${
-                  isLightMode ? 'border-white text-slate-950' : 'border-slate-900 text-slate-950'
-                }`}
+                className="absolute bottom-0 right-0 p-1.5 rounded-full bg-amber-500 text-slate-950 border-2 border-white dark:border-slate-900 font-bold hover:scale-110 active:scale-95 transition-transform shadow-sm cursor-pointer"
                 title="Change Avatar (32 Anime & Classic GM avatars)"
               >
-                <Edit2 className="w-3.5 h-3.5" />
+                <Edit2 className="w-3 h-3" />
               </button>
             </div>
 
             <div className="space-y-2 flex-1">
               <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
                 <h1 className={`text-xl sm:text-2xl font-black tracking-tight ${
-                  isLightMode ? 'text-slate-950' : 'text-white'
+                  isLightMode ? 'text-slate-900' : 'text-white'
                 }`}>
                   {user?.username || 'Guest Player'}
                 </h1>
                 {user?.role === 'admin' && (
                   <span className={`px-2.5 py-0.5 rounded-full border text-[11px] font-bold ${
                     isLightMode
-                      ? 'bg-purple-100 text-purple-900 border-purple-300'
-                      : 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                      ? 'bg-amber-500/10 text-amber-900 border-amber-300'
+                      : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
                   }`}>
-                    🛡️ Arena Admin
+                    🛡️ Admin
                   </span>
                 )}
                 {/* Prestige Rank Tier Pill */}
@@ -331,19 +329,19 @@ export function ProfileView({
                     triggerHaptic('move');
                     setIsCountryPickerOpen(true);
                   }}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95 ${
                     isLightMode
-                      ? 'bg-amber-50 hover:bg-amber-100/90 border-amber-300 text-slate-900'
-                      : 'bg-slate-800 hover:bg-slate-750 border-slate-750 text-slate-100 hover:border-amber-500/50'
+                      ? 'bg-slate-100/80 hover:bg-slate-200/80 border-slate-200 text-slate-800'
+                      : 'bg-slate-800 hover:bg-slate-750 border-slate-700 text-slate-200 hover:border-amber-500/40'
                   }`}
                   title="Choose your country & flag from all 195+ world countries"
                 >
                   <span className="text-sm leading-none">{currentCountry.flag}</span>
                   <span className="font-extrabold">{user?.countryName || currentCountry.name}</span>
-                  <Edit2 className="w-3 h-3 text-amber-500 ml-0.5" />
+                  <Edit2 className="w-3 h-3 text-slate-400 dark:text-slate-500 ml-0.5" />
                 </button>
 
-                {/* Genuine Daily Streak Trigger (Starts at 1) */}
+                {/* Genuine Daily Streak Trigger */}
                 <button
                   type="button"
                   onClick={() => {
@@ -351,14 +349,14 @@ export function ProfileView({
                     triggerHaptic('move');
                     if (onOpenStreak) onOpenStreak();
                   }}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95 ${
                     isLightMode
-                      ? 'bg-orange-50 hover:bg-orange-100 border-orange-200 text-orange-800'
-                      : 'bg-orange-500/20 hover:bg-orange-500/30 border-orange-500/40 text-orange-400'
+                      ? 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-800'
+                      : 'bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/30 text-amber-300'
                   }`}
-                  title="View Daily Login Streak Rewards (Starts at Day 1)"
+                  title="View Daily Login Streak Rewards"
                 >
-                  <Flame className="w-3.5 h-3.5 fill-orange-500 animate-pulse text-orange-500" />
+                  <Flame className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
                   <span>{streakInfo.streak} Day Streak</span>
                 </button>
               </div>
@@ -368,15 +366,15 @@ export function ProfileView({
                 {hasSelectedInitialElo ? (
                   <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold shadow-2xs ${
                     isLightMode
-                      ? 'bg-amber-50 border-amber-300 text-amber-950'
-                      : 'bg-amber-500/15 border-amber-500/40 text-amber-300'
+                      ? 'bg-slate-100 border-slate-200 text-slate-900'
+                      : 'bg-slate-800 border-slate-700 text-slate-100'
                   }`}>
                     <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
                     <span className="font-mono font-black text-sm">{userElo}</span>
                     <span>Elo</span>
-                    <span className="text-[10px] opacity-75 flex items-center gap-0.5 ml-1 border-l pl-1.5 border-amber-500/30">
-                      <Lock className="w-2.5 h-2.5 text-amber-500" />
-                      <span>Permanent Rating</span>
+                    <span className="text-[10px] opacity-75 flex items-center gap-0.5 ml-1 border-l pl-1.5 border-slate-300 dark:border-slate-700">
+                      <Lock className="w-2.5 h-2.5 text-slate-400" />
+                      <span>Permanent</span>
                     </span>
                   </div>
                 ) : (
@@ -388,11 +386,11 @@ export function ProfileView({
                         triggerHaptic('move');
                         setIsEloModalOpen(true);
                       }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 active:scale-95 cursor-pointer animate-pulse"
-                      title="Select your starting Elo rating tier (800, 1200, 1600, 2000, 2500)"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-sm active:scale-95 cursor-pointer"
+                      title="Select your starting Elo rating tier"
                     >
                       <Sparkles className="w-3.5 h-3.5 text-slate-950" />
-                      <span>Choose Elo Level</span>
+                      <span>Choose Elo</span>
                     </button>
                     <div className="flex items-center gap-1">
                       {[800, 1200, 1600, 2000, 2500].map(tierElo => (
@@ -402,8 +400,8 @@ export function ProfileView({
                           onClick={() => handleSelectInitialElo(tierElo)}
                           className={`px-2 py-0.5 rounded-lg text-[10px] font-black border transition-all hover:scale-105 active:scale-95 cursor-pointer ${
                             isLightMode
-                              ? 'bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900'
-                              : 'bg-slate-800 hover:bg-amber-500/20 border-slate-700 hover:border-amber-500/40 text-amber-400'
+                              ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
+                              : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300'
                           }`}
                           title={`Permanently lock starting Elo at ${tierElo}`}
                         >
@@ -416,36 +414,13 @@ export function ProfileView({
 
                 <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${
                   isLightMode
-                    ? 'text-emerald-900 bg-emerald-50 border-emerald-300'
+                    ? 'text-emerald-800 bg-emerald-500/10 border-emerald-500/20'
                     : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
                 }`}>
-                  {totalMatches === 0 ? 'Live Rating Enabled' : `Better than ${percentile}% of players`}
+                  {totalMatches === 0 ? 'Live Rating Enabled' : `Top ${(100 - percentile).toFixed(1)}%`}
                 </span>
               </div>
             </div>
-          </div>
-
-          {/* Quick Right Actions (Admin Hub trigger if admin, NO Sign Out button in box!) */}
-          <div className="flex items-center gap-2 self-center sm:self-start">
-            {(user?.email?.toLowerCase().trim() === 'op21plus@gmail.com' || user?.role === 'admin') && onOpenAdmin && (
-              <button
-                type="button"
-                onClick={() => {
-                  sound.playClick();
-                  triggerHaptic('move');
-                  onOpenAdmin();
-                }}
-                className={`px-3.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer ${
-                  isLightMode
-                    ? 'bg-purple-100 border-purple-300 text-purple-900 hover:bg-purple-200 shadow-xs'
-                    : 'bg-purple-500/20 border-purple-500/40 text-purple-300 hover:text-white'
-                }`}
-                title="Admin Command Center"
-              >
-                <Shield className="w-3.5 h-3.5 text-purple-500" />
-                <span className="hidden sm:inline">Admin Hub</span>
-              </button>
-            )}
           </div>
         </div>
 
@@ -913,21 +888,21 @@ export function ProfileView({
 
       {/* ================= MASTER ADMIN COMMAND CENTER (EXCLUSIVE TO op21plus@gmail.com) ================= */}
       {(user?.email?.toLowerCase().trim() === 'op21plus@gmail.com' || user?.role === 'admin') && onOpenAdmin && (
-        <div className={`border rounded-2xl p-4 shadow-xl transition-all relative overflow-hidden ${
+        <div className={`border rounded-2xl p-4 shadow-sm transition-all relative overflow-hidden ${
           isLightMode
-            ? 'bg-gradient-to-r from-amber-50 via-purple-50 to-amber-50 border-amber-300 shadow-amber-200/50 text-slate-900'
-            : 'bg-gradient-to-r from-purple-950/80 via-slate-900 to-amber-950/60 border-amber-500/40 shadow-purple-950/50 text-white'
+            ? 'bg-white border-slate-200 text-slate-900 shadow-slate-900/5'
+            : 'bg-slate-900 border-slate-800 text-white'
         }`}>
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 shadow-md shadow-amber-500/30 shrink-0">
-                <Crown className="w-5 h-5 text-slate-950 stroke-[2.5]" />
+              <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black shadow-sm shrink-0">
+                <Crown className="w-5 h-5 stroke-[2.5]" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-black tracking-tight flex items-center gap-1.5">
+                  <h3 className="text-sm font-extrabold tracking-tight flex items-center gap-1.5">
                     <span>Admin Master Control Suite</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-500 text-slate-950">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30">
                       op21plus
                     </span>
                   </h3>
@@ -945,7 +920,7 @@ export function ProfileView({
                 triggerHaptic('move');
                 onOpenAdmin();
               }}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/25 flex items-center gap-1.5 active:scale-95 transition-transform cursor-pointer shrink-0"
+              className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-sm flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer shrink-0"
             >
               <span>Open Admin Center</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -954,173 +929,69 @@ export function ProfileView({
         </div>
       )}
 
-      {/* ================= DAY & NIGHT THEME SWITCH (SLIDING TOGGLE) ================= */}
-      <div className={`border rounded-2xl p-3 shadow-md transition-colors ${
+      {/* ================= THEME & APPEARANCE (CLEAN SEGMENTED CONTROL) ================= */}
+      <div className={`border rounded-2xl p-3.5 shadow-sm transition-colors ${
         isLightMode
-          ? 'bg-white border-slate-200/90 shadow-slate-200/40 text-slate-900'
-          : 'bg-slate-900/90 border-slate-800 text-white'
+          ? 'bg-white border-slate-200 text-slate-900'
+          : 'bg-slate-900 border-slate-800 text-white'
       }`}>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-              isLightMode
-                ? 'bg-amber-100 text-amber-600 border border-amber-300'
-                : 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/40'
+        <div className="flex items-center justify-between gap-3 mb-2.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+              isLightMode ? 'bg-amber-500/10 text-amber-600' : 'bg-amber-500/15 text-amber-400'
             }`}>
-              {isLightMode ? (
-                <Sun className="w-4 h-4 text-amber-600" />
-              ) : (
-                <Moon className="w-4 h-4 text-indigo-300" />
-              )}
+              {isLightMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className={`text-xs font-black ${isLightMode ? 'text-slate-900' : 'text-white'}`}>
-                  {isLightMode
-                    ? 'Day Mode (Light)'
-                    : (settings?.appTheme || 'system') === 'black'
-                    ? 'OLED Black'
-                    : (settings?.appTheme || 'system') === 'system'
-                    ? 'Auto System'
-                    : 'Night Mode (Dark)'}
-                </span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono font-bold uppercase border ${
-                  isLightMode
-                    ? 'bg-amber-100 border-amber-300 text-amber-800'
-                    : 'bg-slate-800 border-slate-700 text-slate-300'
-                }`}>
-                  {settings?.appTheme || 'system'}
-                </span>
-              </div>
-              <p className={`text-[10px] font-medium truncate ${isLightMode ? 'text-slate-600' : 'text-slate-400'}`}>
-                Slide switch for Day ☀️ & Night 🌙
-              </p>
+            <div>
+              <span className="text-xs font-bold block">Theme & Appearance</span>
+              <span className={`text-[10px] ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                Comfortable viewing in Day or Night
+              </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              role="switch"
-              aria-checked={!isLightMode}
-              onClick={() => {
-                const nextTheme = isLightMode ? 'dark' : 'light';
-                sound.playClick();
-                triggerHaptic('move');
-                if (onUpdateSettings) {
-                  onUpdateSettings({ ...settings, appTheme: nextTheme });
-                }
-              }}
-              className={`relative inline-flex h-8 w-16 shrink-0 cursor-pointer rounded-full border-2 transition-colors duration-300 ease-in-out focus:outline-none select-none ${
-                isLightMode
-                  ? 'bg-amber-100 border-amber-400'
-                  : 'bg-indigo-600/30 border-indigo-500/60'
-              }`}
-              title="Slide switch for Day & Night"
-            >
-              <span className="absolute inset-y-0 left-1.5 flex items-center text-[10px] pointer-events-none select-none">
-                ☀️
-              </span>
-              <span className="absolute inset-y-0 right-1.5 flex items-center text-[10px] pointer-events-none select-none">
-                🌙
-              </span>
-
-              <span
-                className={`pointer-events-none inline-block h-6.5 w-6.5 transform rounded-full shadow-md ring-0 transition duration-300 ease-in-out flex items-center justify-center my-auto ${
-                  isLightMode
-                    ? 'translate-x-0.5 bg-amber-400 text-slate-950 shadow-amber-400/40'
-                    : 'translate-x-8.5 bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-indigo-500/40'
-                }`}
-              >
-                {isLightMode ? (
-                  <Sun className="w-3.5 h-3.5 stroke-[2.5]" />
-                ) : (
-                  <Moon className="w-3.5 h-3.5 stroke-[2.5]" />
-                )}
-              </span>
-            </button>
-          </div>
+          <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold uppercase border ${
+            isLightMode ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-slate-800 text-slate-300 border-slate-700'
+          }`}>
+            {settings?.appTheme || 'system'}
+          </span>
         </div>
 
-        {/* Compact Chip Row for OLED Black & Device Auto Sync */}
-        <div className={`flex items-center justify-end gap-1.5 mt-2 pt-2 border-t ${
-          isLightMode ? 'border-slate-200' : 'border-slate-800/80'
+        {/* Modern 4-Segmented Control */}
+        <div className={`p-1 rounded-xl border grid grid-cols-4 gap-1 ${
+          isLightMode ? 'bg-slate-100/80 border-slate-200' : 'bg-slate-950/80 border-slate-800'
         }`}>
-          <span className={`text-[10px] font-semibold mr-auto ${
-            isLightMode ? 'text-slate-600' : 'text-slate-400'
-          }`}>Presets:</span>
-          <button
-            type="button"
-            onClick={() => {
-              sound.playClick();
-              triggerHaptic('move');
-              if (onUpdateSettings) onUpdateSettings({ ...settings, appTheme: 'light' });
-            }}
-            className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
-              (settings?.appTheme || 'system') === 'light'
-                ? isLightMode
-                  ? 'bg-amber-100 text-amber-900 border border-amber-400 font-extrabold'
-                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-extrabold'
-                : isLightMode
-                ? 'text-slate-700 hover:text-slate-950 hover:bg-slate-100 border border-transparent'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent'
-            }`}
-          >
-            ☀️ Day
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              sound.playClick();
-              triggerHaptic('move');
-              if (onUpdateSettings) onUpdateSettings({ ...settings, appTheme: 'dark' });
-            }}
-            className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
-              (settings?.appTheme || 'system') === 'dark'
-                ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/40 font-extrabold'
-                : isLightMode
-                ? 'text-slate-700 hover:text-slate-950 hover:bg-slate-100 border border-transparent'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent'
-            }`}
-          >
-            🌙 Night
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              sound.playClick();
-              triggerHaptic('move');
-              if (onUpdateSettings) onUpdateSettings({ ...settings, appTheme: 'black' });
-            }}
-            className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
-              (settings?.appTheme || 'system') === 'black'
-                ? 'bg-zinc-700 text-white border border-zinc-500 font-extrabold'
-                : isLightMode
-                ? 'text-slate-700 hover:text-slate-950 hover:bg-slate-100 border border-transparent'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent'
-            }`}
-          >
-            🌑 OLED
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              sound.playClick();
-              triggerHaptic('move');
-              if (onUpdateSettings) onUpdateSettings({ ...settings, appTheme: 'system' });
-            }}
-            className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
-              (settings?.appTheme || 'system') === 'system'
-                ? isLightMode
-                  ? 'bg-teal-100 text-teal-900 border border-teal-300 font-extrabold'
-                  : 'bg-teal-500/20 text-teal-300 border border-teal-500/40 font-extrabold'
-                : isLightMode
-                ? 'text-slate-700 hover:text-slate-950 hover:bg-slate-100 border border-transparent'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent'
-            }`}
-          >
-            ⚙️ Auto
-          </button>
+          {[
+            { id: 'light', label: 'Day', icon: '☀️' },
+            { id: 'dark', label: 'Night', icon: '🌙' },
+            { id: 'black', label: 'OLED', icon: '🖤' },
+            { id: 'system', label: 'Auto', icon: '📱' }
+          ].map(themeOpt => {
+            const isCur = (settings?.appTheme || 'system') === themeOpt.id;
+            return (
+              <button
+                key={themeOpt.id}
+                type="button"
+                onClick={() => {
+                  sound.playClick();
+                  triggerHaptic('move');
+                  if (onUpdateSettings) onUpdateSettings({ ...settings, appTheme: themeOpt.id });
+                }}
+                className={`py-1.5 px-1 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95 ${
+                  isCur
+                    ? isLightMode
+                      ? 'bg-white text-slate-950 font-black shadow-xs border border-slate-200/80'
+                      : 'bg-slate-800 text-white font-black shadow-xs border border-slate-700'
+                    : isLightMode
+                    ? 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-900/60'
+                }`}
+              >
+                <span className="text-xs">{themeOpt.icon}</span>
+                <span className="text-[11px]">{themeOpt.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
