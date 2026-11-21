@@ -10,6 +10,7 @@ export function ChessLogo({
   showSubtitle = true,
   isLight = false,
   useClashIcon = true,
+  customTitle = 'CHESS',
   className = ''
 }) {
   const iconSizes = {
@@ -173,7 +174,7 @@ export function ChessLogo({
               fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
             }}
           >
-            CHESS
+            {customTitle || 'CHESS'}
           </span>
 
           {/* Micro Grandmaster Sparkle */}

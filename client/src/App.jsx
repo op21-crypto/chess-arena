@@ -570,6 +570,7 @@ export default function App() {
       .then(data => {
         if (data?.config) {
           setGlobalConfig(data.config);
+          safeStorage.setItem('chess_arena_global_config', JSON.stringify(data.config));
           // If user hasn't explicitly set preferences, seed with global admin defaults
           const saved = safeStorage.getItem('chess_arena_settings');
           if (!saved) {
@@ -612,6 +613,16 @@ export default function App() {
       console.log('Connected to Chess Arena Gateway:', socket.id);
       if (currentUser) {
         socket.emit('authenticate', currentUser);
+      }
+    });
+
+    // Real-Time Global App Config Sync from Admin
+    socket.on('app_config_updated', (updatedConfig) => {
+      if (updatedConfig) {
+        setGlobalConfig(updatedConfig);
+        try {
+          safeStorage.setItem('chess_arena_global_config', JSON.stringify(updatedConfig));
+        } catch {}
       }
     });
 
@@ -1631,7 +1642,7 @@ export default function App() {
             className="cursor-pointer group flex items-center"
             title="CHESS - Home"
           >
-            <ChessLogo size="md" isLight={isLight} showSubtitle={true} />
+            <ChessLogo size="md" isLight={isLight} showSubtitle={true} customTitle={globalConfig?.brandTitle} />
           </div>
 
           {/* Navigation Links (Visible on desktop/wide tablet) */}
@@ -1639,8 +1650,14 @@ export default function App() {
             isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-900/80 border-slate-800'
           }`}>
             {[
-              ...PRIMARY_NAV_TABS,
-              ...(currentUser?.role === 'admin' ? [{ id: 'admin', label: 'Admin', icon: Sparkles }] : [])
+              ...PRIMARY_NAV_TABS.filter(tab => {
+                if (tab.id === 'play' || tab.id === 'home') return isButtonVisible('navPlay');
+                if (tab.id === 'lessons') return isButtonVisible('navLearn');
+                if (tab.id === 'puzzles') return isButtonVisible('navPuzzle');
+                if (tab.id === 'profile') return isButtonVisible('navProfile');
+                return true;
+              }),
+              ...(currentUser?.role === 'admin' || currentUser?.email?.toLowerCase().trim() === 'op21plus@gmail.com' ? [{ id: 'admin', label: 'Admin', icon: Sparkles }] : [])
             ].map(tab => {
               const Icon = tab.icon;
               const active = isTabActive(tab.id);
@@ -1667,60 +1684,58 @@ export default function App() {
             })}
           </nav>
 
-          {/* Right Header Tools - Exactly 5 ordered options as requested:
-              1st: Music control (on/off)
-              2nd: Day / Night mode toggle
-              3rd: Friends option 👥
-              4th: Notifications
-              5th: Top-right corner profile pic
-          */}
+          {/* Right Header Tools */}
           <div className="flex items-center gap-1.5 sm:gap-2">
             {/* 1st Option: Ambient Music Toggle ON/OFF */}
-            <button
-              onClick={() => {
-                const nextVal = !settings.musicEnabled;
-                handleUpdateSettings({ ...settings, musicEnabled: nextVal });
-                if (nextVal) {
-                  musicEngine.start();
-                } else {
-                  musicEngine.stop();
-                }
-              }}
-              className={`p-2 rounded-xl border transition-all active:scale-95 cursor-pointer ${
-                settings.musicEnabled
-                  ? 'bg-amber-500/20 text-amber-500 border-amber-500/50 shadow-md shadow-amber-500/10 animate-pulse'
-                  : isLight
-                  ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900'
-                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
-              }`}
-              title={settings.musicEnabled ? `Music ON: ${musicEngine.getCurrentTrack().name}` : 'Music OFF (Muted)'}
-              aria-label="Toggle Background Music"
-            >
-              <Music className="w-4 h-4" />
-            </button>
+            {isButtonVisible('headerMusic') && (
+              <button
+                onClick={() => {
+                  const nextVal = !settings.musicEnabled;
+                  handleUpdateSettings({ ...settings, musicEnabled: nextVal });
+                  if (nextVal) {
+                    musicEngine.start();
+                  } else {
+                    musicEngine.stop();
+                  }
+                }}
+                className={`p-2 rounded-xl border transition-all active:scale-95 cursor-pointer ${
+                  settings.musicEnabled
+                    ? 'bg-amber-500/20 text-amber-500 border-amber-500/50 shadow-md shadow-amber-500/10 animate-pulse'
+                    : isLight
+                    ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900'
+                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+                }`}
+                title={settings.musicEnabled ? `Music ON: ${musicEngine.getCurrentTrack().name}` : 'Music OFF (Muted)'}
+                aria-label="Toggle Background Music"
+              >
+                <Music className="w-4 h-4" />
+              </button>
+            )}
 
             {/* 2nd Option: Day / Night Theme One-Click Toggle */}
-            <button
-              onClick={() => {
-                sound.playClick();
-                triggerHaptic('move');
-                const nextTheme = isLight ? 'dark' : 'light';
-                handleUpdateSettings({ ...settings, appTheme: nextTheme });
-              }}
-              className={`p-2 rounded-xl border transition-all active:scale-95 cursor-pointer ${
-                isLight
-                  ? 'bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-800 shadow-sm'
-                  : 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-amber-400 hover:text-amber-300 shadow-md'
-              }`}
-              title={isLight ? 'Switch to Night Mode (Dark)' : 'Switch to Day Mode (Light)'}
-              aria-label="Toggle Day / Night Mode"
-            >
-              {isLight ? (
-                <Moon className="w-4 h-4 text-indigo-600 transition-transform hover:-rotate-12" />
-              ) : (
-                <Sun className="w-4 h-4 text-amber-400 transition-transform hover:rotate-45" />
-              )}
-            </button>
+            {isButtonVisible('headerTheme') && (
+              <button
+                onClick={() => {
+                  sound.playClick();
+                  triggerHaptic('move');
+                  const nextTheme = isLight ? 'dark' : 'light';
+                  handleUpdateSettings({ ...settings, appTheme: nextTheme });
+                }}
+                className={`p-2 rounded-xl border transition-all active:scale-95 cursor-pointer ${
+                  isLight
+                    ? 'bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-800 shadow-sm'
+                    : 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-amber-400 hover:text-amber-300 shadow-md'
+                }`}
+                title={isLight ? 'Switch to Night Mode (Dark)' : 'Switch to Day Mode (Light)'}
+                aria-label="Toggle Day / Night Mode"
+              >
+                {isLight ? (
+                  <Moon className="w-4 h-4 text-indigo-600 transition-transform hover:-rotate-12" />
+                ) : (
+                  <Sun className="w-4 h-4 text-amber-400 transition-transform hover:rotate-45" />
+                )}
+              </button>
+            )}
 
             {/* 3rd Option: Friends Option 👥 (Opens Play with Friends Arena) */}
             <button
@@ -1744,29 +1759,48 @@ export default function App() {
             </button>
 
             {/* 4th Option: Notifications Bell */}
-            <button
-              onClick={() => {
-                sound.playClick();
-                triggerHaptic('move');
-                setShowNotifications(prev => !prev);
-              }}
-              className={`p-2 rounded-xl border transition-all relative cursor-pointer active:scale-95 ${
-                showNotifications
-                  ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/20'
-                  : isLight
-                  ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-amber-600'
-                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-amber-400'
-              }`}
-              title="Notifications & Game Challenges"
-              aria-label="Notifications"
-            >
-              <Bell className="w-4 h-4" />
-              {notifications.length > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center animate-pulse shadow-sm">
-                  {notifications.length}
-                </span>
-              )}
-            </button>
+            {isButtonVisible('headerNotifications') && (
+              <button
+                onClick={() => {
+                  sound.playClick();
+                  triggerHaptic('move');
+                  setShowNotifications(prev => !prev);
+                }}
+                className={`p-2 rounded-xl border transition-all relative cursor-pointer active:scale-95 ${
+                  showNotifications
+                    ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/20'
+                    : isLight
+                    ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-amber-600'
+                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-amber-400'
+                }`}
+                title="Notifications & Game Challenges"
+                aria-label="Notifications"
+              >
+                <Bell className="w-4 h-4" />
+                {notifications.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center animate-pulse shadow-sm">
+                    {notifications.length}
+                  </span>
+                )}
+              </button>
+            )}
+
+            {/* Custom Header Buttons configured by Admin */}
+            {Array.isArray(globalConfig?.customButtons) && globalConfig.customButtons.filter(b => b.enabled !== false && b.location === 'header').map(btn => (
+              <button
+                key={btn.id}
+                onClick={() => {
+                  sound.playClick();
+                  if (btn.url) window.open(btn.url, '_blank', 'noopener,noreferrer');
+                }}
+                className={`p-2 rounded-xl border transition-all active:scale-95 cursor-pointer text-xs font-bold ${
+                  isLight ? 'bg-slate-100 border-slate-200 text-slate-700' : 'bg-slate-900 border-slate-800 text-amber-300'
+                }`}
+                title={btn.label}
+              >
+                <span>{btn.icon || '⭐'}</span>
+              </button>
+            ))}
 
             {/* 5th Option: Top-Right Corner Profile Pic (Random Anime Avatar / Selected Avatar) */}
             <button
@@ -1819,29 +1853,31 @@ export default function App() {
           return (
             <div className="max-w-6xl w-full mx-auto px-3.5 sm:px-6 py-4 md:py-8 space-y-6 flex-1 flex flex-col justify-center relative">
               {/* Live Arena Telemetry Status Strip */}
-              <div className={`flex items-center justify-between flex-wrap gap-2 px-4 py-2.5 rounded-2xl border shadow-lg text-xs backdrop-blur-md transition-colors ${
-                isLight
-                  ? 'bg-white/95 border-slate-200 text-slate-900 shadow-slate-200/50'
-                  : 'bg-slate-900/80 border-slate-800/80 text-white shadow-slate-950/50'
-              }`}>
-                <div className="flex items-center gap-2">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                  </span>
-                  <span className={`font-extrabold font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>18,450</span>
-                  <span className={isLight ? 'text-slate-500 font-medium' : 'text-slate-400 font-medium'}>Players Online</span>
+              {isButtonVisible('homeTelemetryBanner') && (
+                <div className={`flex items-center justify-between flex-wrap gap-2 px-4 py-2.5 rounded-2xl border shadow-lg text-xs backdrop-blur-md transition-colors ${
+                  isLight
+                    ? 'bg-white/95 border-slate-200 text-slate-900 shadow-slate-200/50'
+                    : 'bg-slate-900/80 border-slate-800/80 text-white shadow-slate-950/50'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                    </span>
+                    <span className={`font-extrabold font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>18,450</span>
+                    <span className={isLight ? 'text-slate-500 font-medium' : 'text-slate-400 font-medium'}>Players Online</span>
+                  </div>
+                  <div className={`hidden sm:flex items-center gap-2 font-medium ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                    <span className="text-amber-500 font-bold font-mono">⚔️ 4,280</span>
+                    <span>Active Battles</span>
+                  </div>
+                  <div className={`flex items-center gap-1.5 font-medium ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                    <Zap className="w-3.5 h-3.5 text-amber-500" />
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono">1.1s</span>
+                    <span>Avg Pairing</span>
+                  </div>
                 </div>
-                <div className={`hidden sm:flex items-center gap-2 font-medium ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                  <span className="text-amber-500 font-bold font-mono">⚔️ 4,280</span>
-                  <span>Active Battles</span>
-                </div>
-                <div className={`flex items-center gap-1.5 font-medium ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                  <Zap className="w-3.5 h-3.5 text-amber-500" />
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono">1.1s</span>
-                  <span>Avg Pairing</span>
-                </div>
-              </div>
+              )}
 
               {/* Grandmaster Arena Game Modes Hub */}
               <div className={`relative rounded-3xl p-4 sm:p-7 md:p-8 border shadow-2xl overflow-hidden backdrop-blur-xl transition-colors ${

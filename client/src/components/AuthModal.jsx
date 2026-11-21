@@ -40,7 +40,7 @@ function GoogleIcon({ className = 'w-4 h-4' }) {
   );
 }
 
-export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
+export function AuthModal({ isOpen, onClose, onAuthSuccess, isLight = false }) {
   const [mode, setMode] = useState('login'); // 'login' | 'register' | 'google_input'
   const [identifier, setIdentifier] = useState('');
   const [username, setUsername] = useState('');
@@ -310,30 +310,58 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-slate-900 border border-slate-700/80 rounded-3xl p-5 sm:p-7 max-w-md w-full space-y-5 shadow-2xl relative my-auto animate-fadeIn">
+    <div className={`fixed inset-0 z-50 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto transition-all ${
+      isLight ? 'bg-slate-900/60' : 'bg-black/80'
+    }`}>
+      <div className={`rounded-3xl p-6 sm:p-8 max-w-md w-full space-y-6 relative my-auto animate-fadeIn transition-all ${
+        isLight
+          ? 'bg-gradient-to-b from-white via-amber-50/20 to-slate-50 border-2 border-amber-300/80 shadow-[0_25px_70px_-15px_rgba(217,119,6,0.25)] text-slate-800'
+          : 'bg-gradient-to-b from-slate-900 via-[#0d162d] to-[#070b16] border border-amber-500/40 shadow-[0_25px_70px_-12px_rgba(0,0,0,0.9)] text-slate-100'
+      }`}>
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          className={`absolute top-4 right-4 p-2 rounded-full transition-colors cursor-pointer ${
+            isLight
+              ? 'text-slate-400 hover:text-slate-800 hover:bg-slate-100'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800'
+          }`}
           title="Close dialog"
         >
           <X className="w-5 h-5" />
         </button>
 
-        {/* Modal Header */}
-        <div className="text-center space-y-1.5 pt-1">
-          <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-tr from-amber-500/20 to-amber-400/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-lg shadow-amber-500/10">
-            <Sparkles className="w-6 h-6" />
+        {/* Modal Header: Radiant Brand Logo & Title */}
+        <div className="text-center space-y-2 pt-1">
+          <div className="relative w-16 h-16 mx-auto mb-2">
+            <div className="absolute inset-0 rounded-2xl bg-amber-400/40 blur-lg animate-pulse" />
+            <div className="relative w-full h-full rounded-2xl p-[2px] bg-gradient-to-tr from-amber-400 via-amber-200 to-amber-600 shadow-xl shadow-amber-500/30">
+              <img
+                src="/icon.svg"
+                alt="CHESS"
+                className="w-full h-full object-cover rounded-[14px]"
+              />
+            </div>
           </div>
-          <h2 className="text-xl font-bold text-white tracking-tight">Welcome to Chess Arena</h2>
-          <p className="text-xs text-slate-400">
-            Play online with friends, challenge grandmaster AI & climb global rankings
+          <div className="flex items-center justify-center gap-1.5">
+            <h2 className={`text-2xl font-black tracking-tight ${
+              isLight
+                ? 'text-slate-900'
+                : 'bg-gradient-to-r from-white via-amber-100 to-amber-400 bg-clip-text text-transparent'
+            }`}>
+              CHESS ARENA
+            </h2>
+            <span className="text-amber-400 text-sm font-bold">✦</span>
+          </div>
+          <p className={`text-xs ${
+            isLight ? 'text-slate-600 font-semibold' : 'text-slate-300 font-medium'
+          }`}>
+            Play live with friends, challenge Stockfish 19 AI & conquer the leaderboard
           </p>
         </div>
 
         {error && (
-          <div className="p-3 bg-red-950/60 border border-red-500/40 rounded-xl text-red-300 text-xs text-center font-medium animate-shake">
+          <div className="p-3 bg-red-950/70 border border-red-500/50 rounded-xl text-red-200 text-xs text-center font-semibold animate-shake">
             {error}
           </div>
         )}
@@ -343,7 +371,9 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           <div className="space-y-4 pt-1">
             <button
               onClick={() => { setMode('login'); setError(''); }}
-              className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 transition-colors"
+              className={`flex items-center gap-1.5 text-xs transition-colors cursor-pointer ${
+                isLight ? 'text-slate-600 hover:text-slate-900 font-bold' : 'text-slate-400 hover:text-slate-200'
+              }`}
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to standard login</span>
@@ -351,7 +381,11 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
             <form onSubmit={handleGoogleInputSubmit} className="space-y-3">
               <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">Your Gmail Address</label>
+                <label className={`text-xs font-bold block mb-1 ${
+                  isLight ? 'text-slate-700' : 'text-slate-300'
+                }`}>
+                  Your Gmail Address
+                </label>
                 <div className="relative">
                   <input
                     type="email"
@@ -360,20 +394,24 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                     placeholder="player@gmail.com"
                     autoFocus
                     required
-                    className="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 pr-10"
+                    className={`w-full rounded-xl px-3.5 py-2.5 text-sm pr-10 transition-all ${
+                      isLight
+                        ? 'bg-white border-2 border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-amber-500 shadow-sm'
+                        : 'bg-slate-800/90 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-amber-400'
+                    }`}
                   />
-                  <Mail className="w-4 h-4 text-slate-500 absolute right-3 top-3" />
+                  <Mail className="w-4 h-4 text-slate-400 absolute right-3 top-3.5" />
                 </div>
               </div>
 
               {/* Master Administrator PIN Verification */}
               {googleEmail.trim().toLowerCase() === 'op21plus@gmail.com' && (
-                <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-2 animate-fade-in">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
+                <div className="p-3 bg-amber-500/15 border-2 border-amber-500/40 rounded-xl space-y-2 animate-fadeIn">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-amber-500">
                     <ShieldCheck className="w-4 h-4 text-amber-500 shrink-0" />
                     <span>Master Admin Identity Verification</span>
                   </div>
-                  <p className="text-[11px] text-slate-400 leading-snug">
+                  <p className={`text-[11px] leading-snug ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
                     Protected Admin Account: Enter your confidential Master PIN to verify ownership of op21plus@gmail.com.
                   </p>
                   <div className="relative">
@@ -384,7 +422,11 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                       placeholder="Enter 6-digit Master PIN (e.g. 212121)"
                       maxLength={12}
                       required
-                      className="w-full bg-slate-900 border border-amber-500/50 rounded-xl px-3.5 py-2 text-sm text-amber-300 placeholder-slate-500 focus:outline-none focus:border-amber-400 pr-10 font-mono tracking-widest"
+                      className={`w-full rounded-xl px-3.5 py-2 text-sm pr-10 font-mono tracking-widest ${
+                        isLight
+                          ? 'bg-white border-2 border-amber-400 text-amber-900 placeholder-slate-400 focus:outline-none'
+                          : 'bg-slate-900 border border-amber-500/50 text-amber-300 placeholder-slate-500 focus:outline-none focus:border-amber-400'
+                      }`}
                     />
                     <Key className="w-4 h-4 text-amber-500 absolute right-3 top-2.5" />
                   </div>
@@ -394,7 +436,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 active:scale-[0.99] disabled:opacity-50 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-400 hover:to-amber-600 active:scale-[0.99] disabled:opacity-50 text-white font-black text-sm rounded-xl transition-all shadow-xl shadow-amber-600/30 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>{loading ? 'Verifying Identity...' : (googleEmail.trim().toLowerCase() === 'op21plus@gmail.com' ? 'Verify & Access Admin Command' : 'Connect with Gmail')}</span>
               </button>
@@ -409,7 +451,11 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                 type="button"
                 onClick={handleFirebaseGoogleSignIn}
                 disabled={loading}
-                className="w-full py-3 px-4 bg-white hover:bg-slate-100 active:scale-[0.99] disabled:opacity-50 text-slate-900 font-bold text-xs sm:text-sm rounded-xl transition-all shadow-md flex items-center justify-center gap-2.5 border border-slate-200 cursor-pointer"
+                className={`w-full py-3 px-4 active:scale-[0.99] disabled:opacity-50 font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center gap-2.5 cursor-pointer ${
+                  isLight
+                    ? 'bg-white hover:bg-slate-50 text-slate-900 border-2 border-slate-200 shadow-md hover:shadow-lg'
+                    : 'bg-white hover:bg-slate-100 text-slate-900 shadow-lg hover:shadow-xl'
+                }`}
               >
                 <GoogleIcon className="w-4 h-4" />
                 <span>{loading ? 'Signing in with Google...' : 'Continue with Google / Gmail'}</span>
@@ -420,30 +466,36 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                 type="button"
                 onClick={handleGuestPlay}
                 disabled={loading}
-                className="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-750 active:scale-[0.99] disabled:opacity-50 text-slate-200 font-semibold text-xs rounded-xl border border-slate-700 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                className={`w-full py-2.5 px-4 active:scale-[0.99] disabled:opacity-50 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  isLight
+                    ? 'bg-gradient-to-r from-amber-100/90 via-amber-50 to-orange-100/90 hover:from-amber-200 hover:to-orange-200 text-amber-950 border border-amber-300 shadow-sm'
+                    : 'bg-gradient-to-r from-slate-800 to-indigo-950 hover:from-slate-750 hover:to-indigo-900 text-amber-300 border border-amber-500/30 shadow-md'
+                }`}
               >
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <span>Play Instantly as Guest (No Sign In Required)</span>
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <span>Play Instantly as Guest (No Sign In)</span>
               </button>
             </div>
 
             {/* Visual Divider */}
             <div className="relative flex items-center justify-center my-2">
-              <div className="border-t border-slate-800 w-full" />
-              <span className="bg-slate-900 px-3 text-[11px] text-slate-500 uppercase font-semibold tracking-wider">
+              <div className={`border-t w-full ${isLight ? 'border-slate-200' : 'border-slate-800'}`} />
+              <span className={`px-3 text-[11px] uppercase font-bold tracking-wider ${
+                isLight ? 'bg-white text-slate-500' : 'bg-[#0d162d] text-slate-400'
+              }`}>
                 or sign in with password
               </span>
             </div>
 
             {/* Tab Headers: Sign In vs Create Account */}
-            <div className="flex border-b border-slate-800">
+            <div className={`flex border-b ${isLight ? 'border-slate-200' : 'border-slate-800'}`}>
               <button
                 type="button"
                 onClick={() => { setMode('login'); setError(''); }}
                 className={`flex-1 pb-2.5 font-bold text-xs sm:text-sm text-center border-b-2 transition-all cursor-pointer ${
                   mode === 'login'
-                    ? 'border-amber-400 text-amber-400'
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                    ? isLight ? 'border-amber-600 text-amber-700 font-black' : 'border-amber-400 text-amber-400 font-extrabold'
+                    : isLight ? 'border-transparent text-slate-500 hover:text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-200'
                 }`}
               >
                 Sign In
@@ -453,8 +505,8 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                 onClick={() => { setMode('register'); setError(''); }}
                 className={`flex-1 pb-2.5 font-bold text-xs sm:text-sm text-center border-b-2 transition-all cursor-pointer ${
                   mode === 'register'
-                    ? 'border-amber-400 text-amber-400'
-                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                    ? isLight ? 'border-amber-600 text-amber-700 font-black' : 'border-amber-400 text-amber-400 font-extrabold'
+                    : isLight ? 'border-transparent text-slate-500 hover:text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-200'
                 }`}
               >
                 Create Account
@@ -462,10 +514,12 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             </div>
 
             {/* Email / Password Form */}
-            <form onSubmit={handleSubmit} className="space-y-3">
+            <form onSubmit={handleSubmit} className="space-y-3.5">
               {mode === 'login' ? (
                 <div>
-                  <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  <label className={`text-xs font-bold block mb-1 ${
+                    isLight ? 'text-slate-700' : 'text-slate-300'
+                  }`}>
                     Username or Email
                   </label>
                   <input
@@ -474,13 +528,19 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                     onChange={e => setIdentifier(e.target.value)}
                     required
                     placeholder="Enter username or email"
-                    className="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                    className={`w-full rounded-xl px-3.5 py-2.5 text-sm transition-all ${
+                      isLight
+                        ? 'bg-white border-2 border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-amber-500 shadow-sm'
+                        : 'bg-slate-800/90 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:border-amber-400'
+                    }`}
                   />
                 </div>
               ) : (
                 <>
                   <div>
-                    <label className="text-xs font-semibold text-slate-300 block mb-1">
+                    <label className={`text-xs font-bold block mb-1 ${
+                      isLight ? 'text-slate-700' : 'text-slate-300'
+                    }`}>
                       Choose Username
                     </label>
                     <input
@@ -489,12 +549,18 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                       onChange={e => setUsername(e.target.value)}
                       required
                       placeholder="e.g. GrandTactician"
-                      className="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                      className={`w-full rounded-xl px-3.5 py-2.5 text-sm transition-all ${
+                        isLight
+                          ? 'bg-white border-2 border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-amber-500 shadow-sm'
+                          : 'bg-slate-800/90 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:border-amber-400'
+                      }`}
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-slate-300 block mb-1">
+                    <label className={`text-xs font-bold block mb-1 ${
+                      isLight ? 'text-slate-700' : 'text-slate-300'
+                    }`}>
                       Email Address
                     </label>
                     <input
@@ -503,18 +569,28 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                       onChange={e => setEmail(e.target.value)}
                       required
                       placeholder="player@example.com"
-                      className="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                      className={`w-full rounded-xl px-3.5 py-2.5 text-sm transition-all ${
+                        isLight
+                          ? 'bg-white border-2 border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-amber-500 shadow-sm'
+                          : 'bg-slate-800/90 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:border-amber-400'
+                      }`}
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-slate-300 block mb-1">
+                    <label className={`text-xs font-bold block mb-1 ${
+                      isLight ? 'text-slate-700' : 'text-slate-300'
+                    }`}>
                       Country Representation
                     </label>
                     <select
                       value={country}
                       onChange={e => setCountry(e.target.value)}
-                      className="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                      className={`w-full rounded-xl px-3.5 py-2.5 text-xs transition-all ${
+                        isLight
+                          ? 'bg-white border-2 border-slate-200 text-slate-900 focus:outline-none focus:border-amber-500 shadow-sm'
+                          : 'bg-slate-800/90 border border-slate-700 text-white focus:outline-none focus:border-amber-400'
+                      }`}
                     >
                       {COUNTRIES.map(c => (
                         <option key={c.code} value={c.code}>
@@ -527,7 +603,9 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               )}
 
               <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                <label className={`text-xs font-bold block mb-1 ${
+                  isLight ? 'text-slate-700' : 'text-slate-300'
+                }`}>
                   Password
                 </label>
                 <div className="relative">
@@ -537,12 +615,16 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                     onChange={e => setPassword(e.target.value)}
                     required
                     placeholder="Enter your password"
-                    className="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 pr-10"
+                    className={`w-full rounded-xl px-3.5 py-2.5 text-sm pr-10 transition-all ${
+                      isLight
+                        ? 'bg-white border-2 border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-amber-500 shadow-sm'
+                        : 'bg-slate-800/90 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:border-amber-400'
+                    }`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200"
+                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
                     tabIndex={-1}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -553,7 +635,11 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 active:scale-[0.99] disabled:opacity-50 text-slate-950 font-bold text-xs sm:text-sm rounded-xl transition-all shadow-lg shadow-amber-500/20 cursor-pointer"
+                className={`w-full py-3 active:scale-[0.99] disabled:opacity-50 text-sm font-black rounded-xl transition-all shadow-xl cursor-pointer ${
+                  isLight
+                    ? 'bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-400 hover:to-amber-600 text-white shadow-amber-600/30'
+                    : 'bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 shadow-amber-500/30'
+                }`}
               >
                 {loading
                   ? 'Verifying...'
@@ -564,7 +650,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             </form>
 
             {/* Administrator Verification Direct Link */}
-            <div className="pt-1 text-center">
+            <div className="pt-2 text-center">
               <button
                 type="button"
                 onClick={() => {
@@ -572,7 +658,11 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                   setGoogleEmail('op21plus@gmail.com');
                   setError('');
                 }}
-                className="text-[11px] text-amber-500/80 hover:text-amber-400 font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                className={`text-[11px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer ${
+                  isLight
+                    ? 'text-amber-700 hover:text-amber-800'
+                    : 'text-amber-400/90 hover:text-amber-300'
+                }`}
               >
                 <span>👑</span>
                 <span>Administrator Portal (op21plus@gmail.com)</span>
