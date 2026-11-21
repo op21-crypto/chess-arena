@@ -36,6 +36,7 @@ import { getRandomAnimeOpponent, ANIME_AI_ROSTER } from './data/animeOpponents.j
 import { sound } from './utils/audio.js';
 import { musicEngine } from './utils/music.js';
 import { triggerHaptic, speakMove } from './utils/device.js';
+import { tts } from './utils/universalTTS.js';
 import { getOpeningName } from './utils/openings.js';
 import { safeStorage } from './utils/storage.js';
 import { getLocalAIMove, getAIMoveAsync, getCapturedPieces } from './utils/aiEngine.js';
@@ -556,11 +557,9 @@ export default function App() {
 
   // Cancel any lingering speech synthesis whenever navigating between tabs
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      try {
-        window.speechSynthesis.cancel();
-      } catch (e) {}
-    }
+    try {
+      tts.stop();
+    } catch (e) {}
   }, [activeTab]);
 
   useEffect(() => {

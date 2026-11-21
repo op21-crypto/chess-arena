@@ -22,6 +22,8 @@ export function triggerHaptic(type = 'move') {
   } catch (e) {}
 }
 
+import { tts } from './universalTTS.js';
+
 const PIECE_NAMES = {
   N: 'Knight',
   B: 'Bishop',
@@ -31,10 +33,7 @@ const PIECE_NAMES = {
 };
 
 export function speakMove(san, piece = 'p') {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
   try {
-    window.speechSynthesis.cancel(); // Stop prior sentence
-
     let text = san;
     if (san === 'O-O') {
       text = 'Castles kingside';
@@ -50,10 +49,6 @@ export function speakMove(san, piece = 'p') {
       }
     }
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1.05;
-    utterance.pitch = 1.0;
-    utterance.volume = 0.8;
-    window.speechSynthesis.speak(utterance);
+    tts.speak(text, { rate: 1.05, pitch: 1.0 });
   } catch (e) {}
 }

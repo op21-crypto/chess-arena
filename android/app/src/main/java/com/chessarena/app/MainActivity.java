@@ -7,9 +7,12 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -21,13 +24,17 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-public class MainActivity extends AppCompatActivity {
+import java.util.Locale;
+
+public class MainActivity extends AppCompatActivity implements TextToSpeech.OnInitListener {
 
     private static final String APP_URL = "https://chess-arena-three-indol.vercel.app";
     private static final int PERMISSION_REQUEST_CODE = 1001;
 
     private WebView webView;
     private PermissionRequest pendingPermissionRequest;
+    private TextToSpeech textToSpeech;
+    private boolean isTtsInitialized = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +47,9 @@ public class MainActivity extends AppCompatActivity {
         window.setStatusBarColor(Color.parseColor("#0c1b3d"));
         window.setNavigationBarColor(Color.parseColor("#0c1b3d"));
 
+        // Initialize Native Android Text-To-Speech engine
+        initTextToSpeech();
+
         webView = new WebView(this);
         setContentView(webView);
 
@@ -50,6 +60,107 @@ public class MainActivity extends AppCompatActivity {
             webView.restoreState(savedInstanceState);
         } else {
             webView.loadUrl(APP_URL);
+        }
+    }
+
+    private void initTextToSpeech() {
+        try {
+            textToSpeech = new TextToSpeech(this, this);
+        } catch (Exception e) {
+            isTtsInitialized = false;
+        }
+    }
+
+    @Override
+    public void onInit(int status) {
+        if (status == TextToSpeech.SUCCESS && textToSpeech != null) {
+            try {
+                int langResult = textToSpeech.setLanguage(Locale.US);
+                if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    textToSpeech.setLanguage(Locale.getDefault());
+                }
+                textToSpeech.setSpeechRate(1.0f);
+                textToSpeech.setPitch(1.05f);
+
+                textToSpeech.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                    @Override
+                    public void onStart(String utteranceId) {
+                        runOnUiThread(() -> {
+                            if (webView != null) {
+                                webView.evaluateJavascript(
+                                    "window.__nativeTtsOnStart && window.__nativeTtsOnStart('" + utteranceId + "');",
+                                    null
+                                );
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onDone(String utteranceId) {
+                        runOnUiThread(() -> {
+                            if (webView != null) {
+                                webView.evaluateJavascript(
+                                    "window.__nativeTtsOnDone && window.__nativeTtsOnDone('" + utteranceId + "');",
+                                    null
+                                );
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onError(String utteranceId) {
+                        runOnUiThread(() -> {
+                            if (webView != null) {
+                                webView.evaluateJavascript(
+                                    "window.__nativeTtsOnError && window.__nativeTtsOnError('" + utteranceId + "');",
+                                    null
+                                );
+                            }
+                        });
+                    }
+                });
+
+                isTtsInitialized = true;
+            } catch (Exception e) {
+                isTtsInitialized = false;
+            }
+        }
+    }
+
+    // JavaScript Bridge interface exposed to WebView as window.AndroidTTS
+    public class AndroidTTSBridge {
+        @JavascriptInterface
+        public boolean isAvailable() {
+            return isTtsInitialized && textToSpeech != null;
+        }
+
+        @JavascriptInterface
+        public void speak(String text) {
+            speakWithRate(text, 1.0f, 1.05f);
+        }
+
+        @JavascriptInterface
+        public void speakWithRate(String text, float rate, float pitch) {
+            if (text == null || text.trim().isEmpty()) return;
+            if (textToSpeech != null && isTtsInitialized) {
+                try {
+                    textToSpeech.setSpeechRate(rate > 0 ? rate : 1.0f);
+                    textToSpeech.setPitch(pitch > 0 ? pitch : 1.05f);
+                    String utteranceId = "sensei_" + System.currentTimeMillis();
+                    textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+                } catch (Exception e) {
+                    // Fail silently or ignore
+                }
+            }
+        }
+
+        @JavascriptInterface
+        public void stop() {
+            if (textToSpeech != null) {
+                try {
+                    textToSpeech.stop();
+                } catch (Exception ignored) {}
+            }
         }
     }
 
@@ -66,6 +177,9 @@ public class MainActivity extends AppCompatActivity {
         settings.setUseWideViewPort(true);
         settings.setSupportZoom(false);
         settings.setBuiltInZoomControls(false);
+
+        // Expose Native Android Text-To-Speech bridge to JavaScript
+        webView.addJavascriptInterface(new AndroidTTSBridge(), "AndroidTTS");
 
         // Improve performance
         webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
@@ -161,5 +275,16 @@ public class MainActivity extends AppCompatActivity {
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         webView.saveState(outState);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (textToSpeech != null) {
+            try {
+                textToSpeech.stop();
+                textToSpeech.shutdown();
+            } catch (Exception ignored) {}
+        }
+        super.onDestroy();
     }
 }

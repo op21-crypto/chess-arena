@@ -28,6 +28,7 @@ import {
   Compass
 } from 'lucide-react';
 import { ALL_LESSONS, LESSON_CATEGORIES, getPracticeDrills } from '../data/lessonsData.js';
+import { tts } from '../utils/universalTTS.js';
 import { sound } from '../utils/audio.js';
 import { musicEngine } from '../utils/music.js';
 import { safeStorage } from '../utils/storage.js';
@@ -130,18 +131,10 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
 
   // Pre-load voices on component mount
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.getVoices();
-      window.speechSynthesis.onvoiceschanged = () => {
-        window.speechSynthesis.getVoices();
-      };
-    }
     return () => {
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        try {
-          window.speechSynthesis.cancel();
-        } catch (e) {}
-      }
+      try {
+        tts.stop();
+      } catch (e) {}
     };
   }, []);
 
@@ -155,39 +148,17 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
     safeStorage.setItem('chess_completed_lessons', JSON.stringify([...completedLessons]));
   }, [completedLessons]);
 
-  // Robust Text-To-Speech Narrator for Anime Mentor
+  // Universal Text-To-Speech Narrator for Anime Mentor (Web & APK WebView)
   const speakText = (text) => {
-    if (!text || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-    if (!voiceEnabled) return;
+    if (!text || !voiceEnabled) return;
 
     try {
-      window.speechSynthesis.cancel();
-
-      setTimeout(() => {
-        try {
-          const cleanText = text.replace(/[*#_~`]/g, '').trim();
-          const utterance = new SpeechSynthesisUtterance(cleanText);
-          utterance.lang = 'en-US';
-          utterance.rate = 1.0;
-          utterance.pitch = 1.05;
-
-          const voices = window.speechSynthesis.getVoices();
-          if (voices && voices.length > 0) {
-            const naturalVoice = voices.find(v => (v.lang.startsWith('en') || v.lang.includes('US')) && v.name.includes('Google'))
-              || voices.find(v => v.lang.startsWith('en'))
-              || voices[0];
-            if (naturalVoice) utterance.voice = naturalVoice;
-          }
-
-          utterance.onstart = () => setIsSpeaking(true);
-          utterance.onend = () => setIsSpeaking(false);
-          utterance.onerror = () => setIsSpeaking(false);
-
-          window.speechSynthesis.speak(utterance);
-        } catch (err) {
-          setIsSpeaking(false);
-        }
-      }, 50);
+      tts.speak(text, {
+        rate: 1.0,
+        pitch: 1.05,
+        onStart: () => setIsSpeaking(true),
+        onEnd: () => setIsSpeaking(false)
+      });
     } catch (e) {
       setIsSpeaking(false);
     }
@@ -195,39 +166,19 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
 
   // Explicit user-triggered voice speaking
   const speakExplicitly = (text) => {
-    if (!text || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    if (!text) return;
     try {
-      window.speechSynthesis.cancel();
       if (!voiceEnabled) {
         setVoiceEnabled(true);
         safeStorage.setItem('chess_lesson_voice', 'true');
       }
 
-      setTimeout(() => {
-        try {
-          const cleanText = text.replace(/[*#_~`]/g, '').trim();
-          const utterance = new SpeechSynthesisUtterance(cleanText);
-          utterance.lang = 'en-US';
-          utterance.rate = 1.0;
-          utterance.pitch = 1.05;
-
-          const voices = window.speechSynthesis.getVoices();
-          if (voices && voices.length > 0) {
-            const naturalVoice = voices.find(v => (v.lang.startsWith('en') || v.lang.includes('US')) && v.name.includes('Google'))
-              || voices.find(v => v.lang.startsWith('en'))
-              || voices[0];
-            if (naturalVoice) utterance.voice = naturalVoice;
-          }
-
-          utterance.onstart = () => setIsSpeaking(true);
-          utterance.onend = () => setIsSpeaking(false);
-          utterance.onerror = () => setIsSpeaking(false);
-
-          window.speechSynthesis.speak(utterance);
-        } catch (err) {
-          setIsSpeaking(false);
-        }
-      }, 50);
+      tts.speak(text, {
+        rate: 1.0,
+        pitch: 1.05,
+        onStart: () => setIsSpeaking(true),
+        onEnd: () => setIsSpeaking(false)
+      });
     } catch (e) {
       setIsSpeaking(false);
     }
@@ -257,9 +208,7 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
         speakText(textToSpeak);
       }
     } else {
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
+      tts.stop();
       setIsSpeaking(false);
     }
   };
@@ -285,9 +234,7 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
     sound.playClick();
     triggerHaptic('move');
     if (isSpeaking) {
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
+      tts.stop();
       setIsSpeaking(false);
     } else {
       const textToSpeak = activeMode === 'lesson'
@@ -298,8 +245,8 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
   };
 
   const handleNextStep = () => {
-    if (typeof window !== 'undefined' && window.speechSynthesis && window.speechSynthesis.speaking) {
-      window.speechSynthesis.cancel();
+    if (isSpeaking) {
+      tts.stop();
       setIsSpeaking(false);
     }
 
@@ -319,8 +266,8 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
   };
 
   const handlePrevStep = () => {
-    if (typeof window !== 'undefined' && window.speechSynthesis && window.speechSynthesis.speaking) {
-      window.speechSynthesis.cancel();
+    if (isSpeaking) {
+      tts.stop();
       setIsSpeaking(false);
     }
 
@@ -410,10 +357,8 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
   const handleSelectLesson = (lessonNum, startImmediately = true) => {
     const idx = lessons.findIndex(l => l.num === lessonNum);
     if (idx !== -1) {
-      if (typeof window !== 'undefined' && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-        setIsSpeaking(false);
-      }
+      tts.stop();
+      setIsSpeaking(false);
       setSelectedLessonIdx(idx);
       setCurrentStepIdx(0);
       setPracticeStepIdx(0);
@@ -492,9 +437,7 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
               onClick={() => {
                 sound.playClick();
                 triggerHaptic('move');
-                if (typeof window !== 'undefined' && window.speechSynthesis) {
-                  window.speechSynthesis.cancel();
-                }
+                tts.stop();
                 if (onBack) onBack();
               }}
               className={`p-2 rounded-xl border transition-colors shadow-xs active:scale-95 cursor-pointer ${
@@ -1051,9 +994,7 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
             onClick={() => {
               sound.playClick();
               triggerHaptic('move');
-              if (typeof window !== 'undefined' && window.speechSynthesis) {
-                window.speechSynthesis.cancel();
-              }
+              tts.stop();
               setIsSpeaking(false);
               setIsLessonStarted(false);
             }}
