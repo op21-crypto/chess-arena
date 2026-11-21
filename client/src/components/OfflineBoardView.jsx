@@ -13,6 +13,60 @@ import { triggerHaptic } from '../utils/device.js';
 // Realistic wooden and stone themes
 const OFFLINE_THEMES = [
   {
+    id: "gold",
+    name: "Royal Gold",
+    light: "#fbf5df",
+    dark: "#c89a3c",
+    border: "#8f681a",
+    previewLight: "#fbf5df",
+    previewDark: "#c89a3c"
+  },
+  {
+    id: "emerald",
+    name: "Emerald Royale",
+    light: "#ebecd0",
+    dark: "#4e7c4f",
+    border: "#274e28",
+    previewLight: "#ebecd0",
+    previewDark: "#4e7c4f"
+  },
+  {
+    id: "table_wood",
+    name: "Golden Oak",
+    light: "#f5e4c3",
+    dark: "#8b5a2b",
+    border: "#5c3818",
+    previewLight: "#f5e4c3",
+    previewDark: "#8b5a2b"
+  },
+  {
+    id: "greenwich",
+    name: "Emerald Club",
+    light: "#ebecd0",
+    dark: "#5a7a3e",
+    border: "#384f25",
+    previewLight: "#ebecd0",
+    previewDark: "#5a7a3e"
+  },
+  {
+    id: "wood_walnut",
+    name: "Classic Walnut",
+    light: "#ecdab9",
+    dark: "#583617",
+    border: "#3c220d",
+    previewLight: "#ecdab9",
+    previewDark: "#583617"
+  },
+  {
+    id: "alabaster",
+    name: "Ivory Royale",
+    light: "#fbfaf8",
+    dark: "#d6c6b2",
+    border: "#a38f75",
+    previewLight: "#fbfaf8",
+    previewDark: "#d6c6b2"
+  },
+  {
     id: "amoled",
     name: "AMOLED Black",
     light: "#1e293b",
@@ -22,49 +76,13 @@ const OFFLINE_THEMES = [
     previewDark: "#000000"
   },
   {
-    id: 'wood_walnut',
-    name: 'Classic Walnut',
-    light: '#ecdab9',
-    dark: '#583617',
-    border: '#3c220d',
-    previewLight: '#ecdab9',
-    previewDark: '#583617'
-  },
-  {
-    id: 'table_wood',
-    name: 'Golden Oak',
-    light: '#f5e4c3',
-    dark: '#8b5a2b',
-    border: '#5c3818',
-    previewLight: '#f5e4c3',
-    previewDark: '#8b5a2b'
-  },
-  {
-    id: 'greenwich',
-    name: 'Emerald Club',
-    light: '#ebecd0',
-    dark: '#5a7a3e',
-    border: '#384f25',
-    previewLight: '#ebecd0',
-    previewDark: '#5a7a3e'
-  },
-  {
-    id: 'dark_marble',
-    name: 'Dark Slate',
-    light: '#94a3b8',
-    dark: '#263345',
-    border: '#111827',
-    previewLight: '#94a3b8',
-    previewDark: '#263345'
-  },
-  {
-    id: 'alabaster',
-    name: 'Ivory Royale',
-    light: '#fbfaf8',
-    dark: '#d6c6b2',
-    border: '#a38f75',
-    previewLight: '#fbfaf8',
-    previewDark: '#d6c6b2'
+    id: "dark_marble",
+    name: "Dark Slate",
+    light: "#94a3b8",
+    dark: "#263345",
+    border: "#111827",
+    previewLight: "#94a3b8",
+    previewDark: "#263345"
   }
 ];
 
@@ -80,7 +98,7 @@ export function OfflineBoardView({ onBack, isLight = false }) {
   const [showRestartConfirm, setShowRestartConfirm] = useState(false);
   const [showGameOverModal, setShowGameOverModal] = useState(false);
 
-  // Offline Settings State
+  // Offline Settings State: Default to AMOLED as requested
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
   const [themeId, setThemeId] = useState('amoled');
   const [viewMode, setViewMode] = useState('face-to-face'); // 'face-to-face' | 'auto-flip' | '2d'

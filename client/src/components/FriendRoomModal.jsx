@@ -3,7 +3,7 @@ import {
   Users, UserPlus, Search, Swords, Trash2, Send, Check, X,
   Copy, Share2, MessageCircle, ArrowLeft, Ban, ShieldCheck,
   Clock, Flame, Zap, Trophy, Circle, MoreVertical, Sparkles,
-  UserCheck, AlertCircle, RefreshCw
+  UserCheck, AlertCircle, RefreshCw, ChevronRight
 } from 'lucide-react';
 import { safeStorage } from '../utils/storage.js';
 import { triggerHaptic } from '../utils/device.js';
@@ -26,6 +26,16 @@ const COUNTRY_FLAGS = {
   UN: '🌐'
 };
 
+const BOT_LEVEL_MAP = {
+  f_magnus: 5,
+  f_hikaru: 5,
+  f_gotham: 3,
+  f_viking: 4,
+  sug_elena: 2,
+  sug_arjun: 3,
+  sug_alex: 4
+};
+
 const DEFAULT_FRIENDS = [
   {
     id: 'f_magnus',
@@ -35,7 +45,8 @@ const DEFAULT_FRIENDS = [
     elo: 2882,
     isOnline: true,
     statusText: 'World #1 • Ready for Blitz',
-    bio: 'Former 5x World Chess Champion'
+    bio: 'Former 5x World Chess Champion',
+    isBot: true
   },
   {
     id: 'f_hikaru',
@@ -45,7 +56,8 @@ const DEFAULT_FRIENDS = [
     elo: 2875,
     isOnline: true,
     statusText: 'Online • In Arena Lobby',
-    bio: 'Super GM & Blitz Maestro'
+    bio: 'Super GM & Blitz Maestro',
+    isBot: true
   },
   {
     id: 'f_gotham',
@@ -55,7 +67,8 @@ const DEFAULT_FRIENDS = [
     elo: 2410,
     isOnline: true,
     statusText: 'IM Levy • Ready to battle',
-    bio: 'International Master'
+    bio: 'International Master',
+    isBot: true
   },
   {
     id: 'f_viking',
@@ -65,7 +78,8 @@ const DEFAULT_FRIENDS = [
     elo: 2840,
     isOnline: false,
     statusText: 'Arena Champion • Offline',
-    bio: 'Classical Grandmaster'
+    bio: 'Classical Grandmaster',
+    isBot: true
   }
 ];
 
@@ -77,7 +91,8 @@ const SUGGESTED_PLAYERS = [
     country: 'IT',
     elo: 1845,
     isOnline: true,
-    statusText: 'Tactics Enthusiast • Online'
+    statusText: 'Tactics Enthusiast • Online',
+    isBot: true
   },
   {
     id: 'sug_arjun',
@@ -86,7 +101,8 @@ const SUGGESTED_PLAYERS = [
     country: 'IN',
     elo: 2150,
     isOnline: true,
-    statusText: 'Rapid Specialist • Online'
+    statusText: 'Rapid Specialist • Online',
+    isBot: true
   },
   {
     id: 'sug_alex',
@@ -95,7 +111,8 @@ const SUGGESTED_PLAYERS = [
     country: 'DE',
     elo: 2560,
     isOnline: false,
-    statusText: 'Grandmaster • Offline'
+    statusText: 'Grandmaster • Offline',
+    isBot: true
   }
 ];
 
@@ -128,11 +145,12 @@ export function FriendRoomModal({
   createdRoom,
   onEnterRoom,
   onChallengeFriend,
+  onStartAIGame,
   onOpenAuth,
-  initialTab = 'friends',
+  initialTab = 'room', // 1st by default: Room option as requested
   isLight = false
 }) {
-  const [activeTab, setActiveTab] = useState(initialTab); // 'friends' | 'add' | 'blocked' | 'room'
+  const [activeTab, setActiveTab] = useState('room'); // Default to room on open
   const [friends, setFriends] = useState(() => {
     try {
       const saved = safeStorage.getItem('chess_arena_friends_v3');
@@ -165,24 +183,38 @@ export function FriendRoomModal({
     return INITIAL_DIRECT_MESSAGES;
   });
 
-  // Active Chat State
+  // Selected friend for detail action bar
+  const [selectedFriend, setSelectedFriend] = useState(null);
+
+  // Active Direct Chat state
   const [chattingFriend, setChattingFriend] = useState(null);
   const [chatInputText, setChatInputText] = useState('');
+  const [showChatMenu, setShowChatMenu] = useState(false);
   const chatMessagesEndRef = useRef(null);
 
   // Search & Add state
   const [searchUsername, setSearchUsername] = useState('');
   const [requestStatus, setRequestStatus] = useState(null);
-  const [activeOptionsFriendId, setActiveOptionsFriendId] = useState(null);
 
-  // Time control picker popover for challenge
+  // Challenge time picker
   const [challengeFriendTarget, setChallengeFriendTarget] = useState(null);
   const [challengeMinutes, setChallengeMinutes] = useState(5);
 
-  // Custom Room state
+  // Room state
   const [roomCode, setRoomCode] = useState('');
   const [selectedMinutes, setSelectedMinutes] = useState(10);
+  const [colorPref, setColorPref] = useState('random');
   const [copied, setCopied] = useState(false);
+
+  // Set default tab to 'room' on open
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(initialTab || 'room');
+      setSelectedFriend(null);
+      setChattingFriend(null);
+      setShowChatMenu(false);
+    }
+  }, [isOpen, initialTab]);
 
   // Sync to safeStorage
   useEffect(() => {
@@ -212,7 +244,6 @@ export function FriendRoomModal({
   // Initial fetch from server API if authenticated
   useEffect(() => {
     if (isOpen) {
-      if (initialTab) setActiveTab(initialTab);
       const token = safeStorage.getItem('token');
       if (token) {
         fetch('/api/friends', {
@@ -237,7 +268,7 @@ export function FriendRoomModal({
           .catch(() => {});
       }
     }
-  }, [isOpen, initialTab]);
+  }, [isOpen]);
 
   // Scroll chat to bottom
   useEffect(() => {
@@ -248,31 +279,56 @@ export function FriendRoomModal({
 
   if (!isOpen) return null;
 
-  // Handlers
+  // Execute match challenge with friend or AI bot
+  const handleExecuteChallenge = (friend, minutes = 5) => {
+    sound.playClick();
+    triggerHaptic('move');
+    setChallengeFriendTarget(null);
+
+    // If friend is an AI bot / community master, automatically accept and start match!
+    const isBotFriend = friend.isBot || BOT_LEVEL_MAP[friend.id] || friend.id.startsWith('f_') || friend.id.startsWith('sug_');
+    if (isBotFriend && onStartAIGame) {
+      const level = BOT_LEVEL_MAP[friend.id] || 4;
+      sound.playMatchStart();
+      onClose();
+      onStartAIGame(level, minutes, 'w');
+      return;
+    }
+
+    // Real multiplayer friend challenge
+    const config = {
+      timeControl: { baseMinutes: minutes, incrementSeconds: 0 },
+      colorPreference: 'random'
+    };
+
+    if (onChallengeFriend) {
+      onChallengeFriend(friend, config);
+    } else {
+      onCreateRoom(config);
+      setActiveTab('room');
+    }
+  };
+
   const handleSendFriendRequest = (e) => {
     if (e) e.preventDefault();
     const query = searchUsername.trim();
     if (!query) return;
 
-    // Check if user themselves
     if (currentUser && query.toLowerCase() === currentUser.username?.toLowerCase()) {
       setRequestStatus({ type: 'error', text: 'You cannot send a friend request to yourself.' });
       return;
     }
 
-    // Check if already friends
     if (friends.some(f => f.username.toLowerCase() === query.toLowerCase())) {
-      setRequestStatus({ type: 'info', text: `@${query} is already in your Friend Arena!` });
+      setRequestStatus({ type: 'info', text: `@${query} is already in your Friends list!` });
       return;
     }
 
-    // Check if blocked
     if (blockedUsers.some(b => b.username.toLowerCase() === query.toLowerCase())) {
       setRequestStatus({ type: 'error', text: `@${query} is currently blocked. Unblock them first in the Blocked tab.` });
       return;
     }
 
-    // Add friend
     const newFriend = {
       id: `f_${Date.now()}`,
       username: query,
@@ -292,16 +348,6 @@ export function FriendRoomModal({
     setSearchUsername('');
     sound.playMove();
     triggerHaptic('move');
-
-    // Also attempt server sync
-    const token = safeStorage.getItem('token');
-    if (token) {
-      fetch('/api/friends/request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ targetUsername: query })
-      }).catch(() => {});
-    }
   };
 
   const handleFollowSuggested = (player) => {
@@ -312,21 +358,12 @@ export function FriendRoomModal({
   };
 
   const handleRemoveFriend = (friendId) => {
-    const friend = friends.find(f => f.id === friendId);
     setFriends(prev => prev.filter(f => f.id !== friendId));
-    setActiveOptionsFriendId(null);
+    setSelectedFriend(null);
     if (chattingFriend?.id === friendId) setChattingFriend(null);
+    setShowChatMenu(false);
     sound.playClick();
     triggerHaptic('move');
-
-    const token = safeStorage.getItem('token');
-    if (token) {
-      fetch('/api/friends/remove', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ friendId })
-      }).catch(() => {});
-    }
   };
 
   const handleBlockUser = (friend) => {
@@ -341,8 +378,9 @@ export function FriendRoomModal({
       },
       ...prev
     ]);
-    setActiveOptionsFriendId(null);
+    setSelectedFriend(null);
     if (chattingFriend?.id === friend.id) setChattingFriend(null);
+    setShowChatMenu(false);
     sound.playClick();
     triggerHaptic('move');
   };
@@ -360,13 +398,6 @@ export function FriendRoomModal({
     };
     setFriends(prev => [restored, ...prev]);
     sound.playMove();
-    triggerHaptic('move');
-  };
-
-  const handleStartDirectChat = (friend) => {
-    setChattingFriend(friend);
-    setActiveOptionsFriendId(null);
-    sound.playClick();
     triggerHaptic('move');
   };
 
@@ -391,7 +422,7 @@ export function FriendRoomModal({
     sound.playMove();
     triggerHaptic('move');
 
-    // Simulate smart friendly reply if chatting with bot/grandmaster
+    // Bot reply
     if (targetId.startsWith('f_') || targetId.startsWith('sug_')) {
       setTimeout(() => {
         const botReplies = [
@@ -413,24 +444,6 @@ export function FriendRoomModal({
         }));
         sound.playMove();
       }, 750);
-    }
-  };
-
-  const handleExecuteChallenge = (friend, minutes = 5) => {
-    sound.playClick();
-    triggerHaptic('move');
-    setChallengeFriendTarget(null);
-
-    const config = {
-      timeControl: { baseMinutes: minutes, incrementSeconds: 0 },
-      colorPreference: 'random'
-    };
-
-    if (onChallengeFriend) {
-      onChallengeFriend(friend, config);
-    } else {
-      onCreateRoom(config);
-      setActiveTab('room');
     }
   };
 
@@ -510,14 +523,30 @@ export function FriendRoomModal({
               </h3>
             </div>
             <p className={`text-xs ${theme.textMuted}`}>
-              Challenge friends directly, send instant private messages, or create custom rooms.
+              Create private match rooms, challenge friends, or chat directly.
             </p>
           </div>
         )}
 
-        {/* Navigation Tabs (Hidden when inside Direct Chat) */}
+        {/* ========================================================= */}
+        {/* TABS (1st: Room, 2nd: Friends, 3rd: Add, 4th: Blocked)    */}
+        {/* ========================================================= */}
         {!chattingFriend && (
           <div className={`flex p-1 rounded-2xl border shrink-0 text-xs gap-1 ${theme.tabContainer}`}>
+            {/* 1st Tab: Room (default on open) */}
+            <button
+              onClick={() => {
+                setActiveTab('room');
+                triggerHaptic('move');
+              }}
+              className={`flex-1 py-2 px-2 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                activeTab === 'room' ? theme.tabActive : theme.tabInactive
+              }`}
+            >
+              <span>🎮 Room</span>
+            </button>
+
+            {/* 2nd Tab: Friends */}
             <button
               onClick={() => {
                 setActiveTab('friends');
@@ -531,6 +560,7 @@ export function FriendRoomModal({
               <span>Friends ({friends.length})</span>
             </button>
 
+            {/* 3rd Tab: Add / Follow */}
             <button
               onClick={() => {
                 setActiveTab('add');
@@ -547,6 +577,7 @@ export function FriendRoomModal({
               )}
             </button>
 
+            {/* 4th Tab: Blocked */}
             <button
               onClick={() => {
                 setActiveTab('blocked');
@@ -562,32 +593,21 @@ export function FriendRoomModal({
                 <span className="text-[10px] font-black">({blockedUsers.length})</span>
               )}
             </button>
-
-            <button
-              onClick={() => {
-                setActiveTab('room');
-                triggerHaptic('move');
-              }}
-              className={`flex-1 py-2 px-2 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                activeTab === 'room' ? theme.tabActive : theme.tabInactive
-              }`}
-            >
-              <span>🎮 Room</span>
-            </button>
           </div>
         )}
 
         {/* ========================================================= */}
-        {/* VIEW 1: DIRECT CHAT WITH FRIEND                           */}
+        {/* VIEW: DIRECT CHAT WITH FRIEND                             */}
         {/* ========================================================= */}
         {chattingFriend ? (
           <div className="flex-1 flex flex-col min-h-0 space-y-3">
-            {/* Direct Chat Top Bar */}
-            <div className={`flex items-center justify-between p-2.5 rounded-2xl border shrink-0 ${theme.innerBox}`}>
+            {/* Direct Chat Top Bar with 3-Dot Corner Menu */}
+            <div className={`flex items-center justify-between p-2.5 rounded-2xl border shrink-0 relative ${theme.innerBox}`}>
               <div className="flex items-center gap-2.5 min-w-0">
                 <button
                   onClick={() => {
                     setChattingFriend(null);
+                    setShowChatMenu(false);
                     sound.playClick();
                     triggerHaptic('move');
                   }}
@@ -623,14 +643,51 @@ export function FriendRoomModal({
                 </div>
               </div>
 
-              {/* Quick Challenge from Chat Header */}
-              <button
-                onClick={() => setChallengeFriendTarget(chattingFriend)}
-                className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 shrink-0"
-              >
-                <Swords className="w-3.5 h-3.5" />
-                <span>Play</span>
-              </button>
+              {/* Chat Actions: Challenge Button + 3-Dot Options in Corner */}
+              <div className="flex items-center gap-1.5 shrink-0 relative">
+                <button
+                  onClick={() => setChallengeFriendTarget(chattingFriend)}
+                  className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
+                >
+                  <Swords className="w-3.5 h-3.5" />
+                  <span>Challenge</span>
+                </button>
+
+                {/* 3-Dot Menu Button */}
+                <button
+                  onClick={() => setShowChatMenu(!showChatMenu)}
+                  className={`p-1.5 rounded-xl border transition-colors cursor-pointer ${
+                    isLight ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-600' : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300'
+                  }`}
+                  title="Friend Options"
+                >
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+
+                {/* 3-Dot Dropdown Menu in Corner */}
+                {showChatMenu && (
+                  <div className={`absolute top-full right-0 mt-1.5 w-44 rounded-2xl border shadow-xl p-1.5 z-30 animate-fade-in ${
+                    isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-slate-900 border-slate-700 text-white'
+                  }`}>
+                    <button
+                      onClick={() => handleBlockUser(chattingFriend)}
+                      className={`w-full px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer ${
+                        isLight ? 'hover:bg-amber-50 text-amber-800' : 'hover:bg-amber-950/40 text-amber-300'
+                      }`}
+                    >
+                      <Ban className="w-3.5 h-3.5" />
+                      <span>Block Player</span>
+                    </button>
+                    <button
+                      onClick={() => handleRemoveFriend(chattingFriend.id)}
+                      className="w-full px-3 py-2 rounded-xl text-xs font-bold text-rose-500 hover:bg-rose-500/10 flex items-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Remove Friend</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Direct Message Feed */}
@@ -711,420 +768,7 @@ export function FriendRoomModal({
         ) : (
           <>
             {/* ========================================================= */}
-            {/* TAB 1: FRIENDS LIST (ARENA CIRCLE)                        */}
-            {/* ========================================================= */}
-            {activeTab === 'friends' && (
-              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-                {friends.length === 0 ? (
-                  <div className={`p-6 text-center space-y-3 rounded-2xl border ${theme.innerBox}`}>
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto border ${
-                      isLight ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
-                    }`}>
-                      <Users className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-black">No Friends in Your Arena Yet</h4>
-                      <p className={`text-xs mt-1 max-w-xs mx-auto ${theme.textMuted}`}>
-                        Add opponents or follow featured masters below to chat and play!
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setActiveTab('add');
-                        triggerHaptic('move');
-                      }}
-                      className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-md inline-flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <UserPlus className="w-4 h-4" />
-                      <span>Find & Add Friends</span>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {friends.map(friend => {
-                      const flag = COUNTRY_FLAGS[friend.country] || '🌐';
-                      const hasOptionsOpen = activeOptionsFriendId === friend.id;
-
-                      return (
-                        <div
-                          key={friend.id}
-                          className={`p-3 rounded-2xl border transition-all relative ${theme.card}`}
-                        >
-                          <div className="flex items-center justify-between gap-2.5">
-                            {/* Avatar & Info */}
-                            <div className="flex items-center gap-3 min-w-0">
-                              <div className="relative shrink-0">
-                                <img
-                                  src={friend.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${friend.username}`}
-                                  alt={friend.username}
-                                  className="w-10 h-10 rounded-full object-cover border border-amber-500/30"
-                                />
-                                <Circle
-                                  className={`w-2.5 h-2.5 absolute -bottom-0.5 -right-0.5 rounded-full ${
-                                    friend.isOnline ? 'text-emerald-500 fill-emerald-500' : 'text-slate-500 fill-slate-500'
-                                  }`}
-                                />
-                              </div>
-
-                              <div className="min-w-0 truncate">
-                                <div className="flex items-center gap-1.5 truncate">
-                                  <span className="font-bold text-xs sm:text-sm truncate">{friend.username}</span>
-                                  <span className="text-xs" title={friend.country}>{flag}</span>
-                                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border ${theme.badge}`}>
-                                    {friend.elo}
-                                  </span>
-                                </div>
-                                <span className={`text-[11px] block truncate mt-0.5 ${friend.isOnline ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : theme.textMuted}`}>
-                                  {friend.statusText || (friend.isOnline ? 'Online • Ready to play' : 'Offline')}
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* Action Buttons: Play | Chat | Options */}
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              {/* Direct Challenge Button */}
-                              <button
-                                onClick={() => setChallengeFriendTarget(friend)}
-                                className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-black rounded-xl shadow-xs flex items-center gap-1 transition-all active:scale-95 cursor-pointer"
-                                title="Challenge to live match"
-                              >
-                                <Swords className="w-3.5 h-3.5" />
-                                <span>Play</span>
-                              </button>
-
-                              {/* Direct Chat Button */}
-                              <button
-                                onClick={() => handleStartDirectChat(friend)}
-                                className={`p-1.5 rounded-xl border transition-colors cursor-pointer ${
-                                  isLight
-                                    ? 'bg-indigo-50 hover:bg-indigo-100 border-indigo-200 text-indigo-700'
-                                    : 'bg-indigo-950/60 hover:bg-indigo-900/60 border-indigo-500/30 text-indigo-300'
-                                }`}
-                                title="Open Direct Chat"
-                              >
-                                <MessageCircle className="w-4 h-4" />
-                              </button>
-
-                              {/* More Options Dropdown Toggle */}
-                              <button
-                                onClick={() => setActiveOptionsFriendId(hasOptionsOpen ? null : friend.id)}
-                                className={`p-1.5 rounded-xl border transition-colors cursor-pointer ${
-                                  isLight
-                                    ? 'bg-white hover:bg-slate-100 border-slate-200 text-slate-600'
-                                    : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300'
-                                }`}
-                                title="Friend options"
-                              >
-                                <MoreVertical className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Options Popover Menu */}
-                          {hasOptionsOpen && (
-                            <div className={`mt-2.5 pt-2.5 border-t flex items-center justify-end gap-2 animate-fade-in ${
-                              isLight ? 'border-slate-200' : 'border-slate-800'
-                            }`}>
-                              <button
-                                onClick={() => handleBlockUser(friend)}
-                                className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
-                                  isLight ? 'text-amber-800 hover:bg-amber-50' : 'text-amber-400 hover:bg-amber-950/40'
-                                }`}
-                              >
-                                <Ban className="w-3.5 h-3.5" />
-                                <span>Block Player</span>
-                              </button>
-
-                              <button
-                                onClick={() => handleRemoveFriend(friend.id)}
-                                className="px-2.5 py-1 rounded-lg text-xs font-bold text-rose-500 hover:bg-rose-500/10 flex items-center gap-1.5 transition-colors cursor-pointer"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                <span>Remove Friend</span>
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {/* Quick Add Suggestions Strip */}
-                <div className={`p-3.5 rounded-2xl border space-y-2 mt-3 ${theme.innerBox}`}>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 text-amber-500">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      Suggested Arena Players
-                    </span>
-                    <button
-                      onClick={() => setActiveTab('add')}
-                      className={`text-[11px] font-bold ${isLight ? 'text-indigo-600 hover:underline' : 'text-indigo-400 hover:underline'}`}
-                    >
-                      View All
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                    {SUGGESTED_PLAYERS.map(sug => {
-                      const isAlreadyFriend = friends.some(f => f.username.toLowerCase() === sug.username.toLowerCase());
-                      return (
-                        <div
-                          key={sug.id}
-                          className={`p-2 rounded-xl border flex items-center justify-between gap-2 ${
-                            isLight ? 'bg-white border-slate-200' : 'bg-slate-900 border-slate-800'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <img src={sug.avatar} alt={sug.username} className="w-7 h-7 rounded-full shrink-0" />
-                            <div className="truncate">
-                              <span className="text-xs font-bold block truncate">{sug.username}</span>
-                              <span className={`text-[10px] ${theme.textMuted}`}>{sug.elo} Rapid</span>
-                            </div>
-                          </div>
-
-                          {isAlreadyFriend ? (
-                            <span className="text-[10px] text-emerald-600 font-bold px-2 py-0.5">Added</span>
-                          ) : (
-                            <button
-                              onClick={() => handleFollowSuggested(sug)}
-                              className="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-[11px] rounded-lg shadow-xs cursor-pointer active:scale-95"
-                            >
-                              + Add
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ========================================================= */}
-            {/* TAB 2: ADD / FOLLOW / INCOMING REQUESTS                   */}
-            {/* ========================================================= */}
-            {activeTab === 'add' && (
-              <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-                {/* Search & Follow Form */}
-                <div className={`p-4 rounded-2xl border space-y-3 ${theme.innerBox}`}>
-                  <div className="flex items-center gap-2 text-amber-500">
-                    <UserPlus className="w-4 h-4" />
-                    <span className="text-xs font-black uppercase tracking-wider">
-                      Add Friend by Username
-                    </span>
-                  </div>
-                  <p className={`text-xs ${theme.textMuted}`}>
-                    Enter any player's username to connect, chat, and invite them to live matches.
-                  </p>
-
-                  <form onSubmit={handleSendFriendRequest} className="space-y-2">
-                    <div className="relative">
-                      <Search className={`w-4 h-4 absolute left-3 top-2.5 ${theme.textMuted}`} />
-                      <input
-                        type="text"
-                        value={searchUsername}
-                        onChange={e => setSearchUsername(e.target.value)}
-                        placeholder="e.g. Magnus, Hikaru, GM_Alex..."
-                        className={`w-full border rounded-xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-amber-500 ${theme.input}`}
-                      />
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={!searchUsername.trim()}
-                      className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-40 text-slate-950 font-black text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
-                    >
-                      <UserPlus className="w-3.5 h-3.5" />
-                      <span>Send Friend Request / Follow</span>
-                    </button>
-                  </form>
-
-                  {requestStatus && (
-                    <div className={`p-2.5 rounded-xl text-xs flex items-center gap-2 animate-fade-in ${
-                      requestStatus.type === 'success'
-                        ? 'bg-emerald-500/15 border border-emerald-500/40 text-emerald-600 dark:text-emerald-300'
-                        : requestStatus.type === 'info'
-                        ? 'bg-amber-500/15 border border-amber-500/40 text-amber-700 dark:text-amber-300'
-                        : 'bg-rose-500/15 border border-rose-500/40 text-rose-600 dark:text-rose-300'
-                    }`}>
-                      {requestStatus.type === 'success' ? (
-                        <Check className="w-4 h-4 shrink-0 text-emerald-500" />
-                      ) : (
-                        <AlertCircle className="w-4 h-4 shrink-0 text-amber-500" />
-                      )}
-                      <span>{requestStatus.text}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Incoming Requests */}
-                <div className="space-y-2">
-                  <span className="text-xs font-black uppercase tracking-wider block">
-                    Incoming Requests ({pendingRequests.length})
-                  </span>
-
-                  {pendingRequests.length === 0 ? (
-                    <div className={`py-3 text-center text-xs rounded-xl border ${
-                      isLight ? 'bg-slate-50 border-slate-200 text-slate-500' : 'bg-slate-950/40 border-slate-800 text-slate-400'
-                    }`}>
-                      No pending incoming requests right now.
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {pendingRequests.map(req => (
-                        <div
-                          key={req.requestId}
-                          className={`flex items-center justify-between p-2.5 rounded-xl border ${theme.card}`}
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <img
-                              src={req.user?.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${req.user?.username}`}
-                              alt={req.user?.username}
-                              className="w-8 h-8 rounded-full border border-amber-500/30"
-                            />
-                            <div>
-                              <span className="font-bold text-xs block">{req.user?.username}</span>
-                              <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">Wants to connect</span>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={() => {
-                                setFriends(p => [req.user, ...p]);
-                                setPendingRequests(p => p.filter(r => r.requestId !== req.requestId));
-                                sound.playMove();
-                                triggerHaptic('move');
-                              }}
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg shadow-xs cursor-pointer flex items-center gap-1"
-                            >
-                              <Check className="w-3 h-3" />
-                              <span>Accept</span>
-                            </button>
-                            <button
-                              onClick={() => {
-                                setPendingRequests(p => p.filter(r => r.requestId !== req.requestId));
-                                triggerHaptic('move');
-                              }}
-                              className={`p-1 rounded-lg border transition-colors cursor-pointer ${
-                                isLight ? 'bg-white border-slate-200 text-slate-500 hover:text-rose-600' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-rose-400'
-                              }`}
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Recommended Players Carousel */}
-                <div className="space-y-2">
-                  <span className="text-xs font-black uppercase tracking-wider block">
-                    Recommended Arena Masters & Bot Opponents
-                  </span>
-                  <div className="space-y-2">
-                    {SUGGESTED_PLAYERS.map(player => {
-                      const isFriend = friends.some(f => f.username.toLowerCase() === player.username.toLowerCase());
-                      return (
-                        <div
-                          key={player.id}
-                          className={`flex items-center justify-between p-3 rounded-2xl border ${theme.card}`}
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <img src={player.avatar} alt={player.username} className="w-9 h-9 rounded-full border border-amber-500/30" />
-                            <div className="truncate">
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-bold text-xs truncate">{player.username}</span>
-                                <span>{COUNTRY_FLAGS[player.country] || '🌐'}</span>
-                                <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border ${theme.badge}`}>
-                                  {player.elo}
-                                </span>
-                              </div>
-                              <span className={`text-[11px] block ${theme.textMuted}`}>{player.statusText}</span>
-                            </div>
-                          </div>
-
-                          {isFriend ? (
-                            <span className="text-xs text-emerald-600 font-bold px-3 py-1 flex items-center gap-1">
-                              <UserCheck className="w-3.5 h-3.5" />
-                              <span>Friends</span>
-                            </span>
-                          ) : (
-                            <button
-                              onClick={() => handleFollowSuggested(player)}
-                              className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-xs transition-all cursor-pointer active:scale-95 flex items-center gap-1"
-                            >
-                              <UserPlus className="w-3.5 h-3.5" />
-                              <span>Follow</span>
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ========================================================= */}
-            {/* TAB 3: BLOCKED PLAYERS (UNBLOCK & ADD AGAIN)              */}
-            {/* ========================================================= */}
-            {activeTab === 'blocked' && (
-              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-                <div className="flex items-center justify-between px-1">
-                  <span className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 text-rose-500">
-                    <Ban className="w-3.5 h-3.5" />
-                    Blocked Players ({blockedUsers.length})
-                  </span>
-                </div>
-
-                {blockedUsers.length === 0 ? (
-                  <div className={`py-12 text-center space-y-2 rounded-2xl border ${theme.innerBox}`}>
-                    <ShieldCheck className="w-8 h-8 mx-auto text-emerald-500" />
-                    <p className="text-xs font-bold">No Blocked Players</p>
-                    <p className={`text-[11px] max-w-xs mx-auto ${theme.textMuted}`}>
-                      Players you block will appear here. You can unblock and re-add them at any time.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {blockedUsers.map(blocked => (
-                      <div
-                        key={blocked.id}
-                        className={`flex items-center justify-between p-3 rounded-2xl border ${theme.card}`}
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <img
-                            src={blocked.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${blocked.username}`}
-                            alt={blocked.username}
-                            className="w-9 h-9 rounded-full opacity-70 border border-slate-600 grayscale"
-                          />
-                          <div className="truncate">
-                            <span className="font-bold text-xs block truncate">{blocked.username}</span>
-                            <span className={`text-[10px] block ${theme.textMuted}`}>Blocked on {blocked.blockedAt || 'Recent'}</span>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() => handleUnblockAndAdd(blocked)}
-                          className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 shrink-0"
-                          title="Unblock and add back to friends"
-                        >
-                          <RefreshCw className="w-3 h-3" />
-                          <span>Unblock & Add</span>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ========================================================= */}
-            {/* TAB 4: CUSTOM MATCH ROOM & CODES                         */}
+            {/* 1st TAB: CUSTOM ROOM (DEFAULT ON OPEN)                    */}
             {/* ========================================================= */}
             {activeTab === 'room' && (
               <div className="flex-1 overflow-y-auto space-y-4 pr-1">
@@ -1132,7 +776,7 @@ export function FriendRoomModal({
                   <div className={`p-4 border rounded-2xl space-y-4 animate-fade-in ${theme.innerBox}`}>
                     <div className="text-center space-y-1">
                       <span className="text-xs font-black text-emerald-500 block">
-                        ✓ Private Room Ready! Share code with your opponent
+                        ✓ Private Match Room Ready!
                       </span>
                       <span className={`text-xs font-mono ${theme.textMuted}`}>
                         Room Code: <strong className="text-amber-500 text-sm font-black">{createdRoom.roomId}</strong>
@@ -1219,8 +863,38 @@ export function FriendRoomModal({
                         </div>
                       </div>
 
+                      {/* Side Preference */}
+                      <div>
+                        <label className={`text-[11px] font-bold block mb-1.5 ${theme.textMuted}`}>Starting Side</label>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {[
+                            { id: 'random', label: 'Random 🎲' },
+                            { id: 'white', label: 'White ♔' },
+                            { id: 'black', label: 'Black ♚' }
+                          ].map(side => (
+                            <button
+                              key={side.id}
+                              type="button"
+                              onClick={() => {
+                                setColorPref(side.id);
+                                triggerHaptic('move');
+                              }}
+                              className={`py-2 px-1 rounded-xl text-xs font-bold border transition-all text-center cursor-pointer ${
+                                colorPref === side.id
+                                  ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-xs'
+                                  : isLight
+                                  ? 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
+                                  : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
+                              }`}
+                            >
+                              {side.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
                       <button
-                        onClick={() => onCreateRoom({ timeControl: { baseMinutes: selectedMinutes, incrementSeconds: 0 }, colorPreference: 'random' })}
+                        onClick={() => onCreateRoom({ timeControl: { baseMinutes: selectedMinutes, incrementSeconds: 0 }, colorPreference: colorPref })}
                         className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-xs transition-all cursor-pointer active:scale-98"
                       >
                         Generate Room & Link
@@ -1253,11 +927,301 @@ export function FriendRoomModal({
                 )}
               </div>
             )}
+
+            {/* ========================================================= */}
+            {/* 2nd TAB: FRIENDS LIST (CLEAN, NO CLUTTER, EXPANDS ON CLICK)*/}
+            {/* ========================================================= */}
+            {activeTab === 'friends' && (
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+                {friends.length === 0 ? (
+                  <div className={`p-6 text-center space-y-3 rounded-2xl border ${theme.innerBox}`}>
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto border ${
+                      isLight ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+                    }`}>
+                      <Users className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black">No Friends in Your Arena Yet</h4>
+                      <p className={`text-xs mt-1 max-w-xs mx-auto ${theme.textMuted}`}>
+                        Add opponents or follow featured masters below to chat and play!
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setActiveTab('add');
+                        triggerHaptic('move');
+                      }}
+                      className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-md inline-flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      <span>Find & Add Friends</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {friends.map(friend => {
+                      const flag = COUNTRY_FLAGS[friend.country] || '🌐';
+                      const isSelected = selectedFriend?.id === friend.id;
+
+                      return (
+                        <div
+                          key={friend.id}
+                          className={`rounded-2xl border transition-all overflow-hidden ${theme.card} ${
+                            isSelected ? (isLight ? 'border-amber-400 shadow-md ring-1 ring-amber-400/30' : 'border-amber-500/60 shadow-lg ring-1 ring-amber-500/20') : ''
+                          }`}
+                        >
+                          {/* Clean Friend Row: Clicking reveals Action Buttons */}
+                          <div
+                            onClick={() => {
+                              setSelectedFriend(isSelected ? null : friend);
+                              sound.playClick();
+                              triggerHaptic('move');
+                            }}
+                            className="p-3 flex items-center justify-between gap-3 cursor-pointer select-none"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="relative shrink-0">
+                                <img
+                                  src={friend.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${friend.username}`}
+                                  alt={friend.username}
+                                  className="w-10 h-10 rounded-full object-cover border border-amber-500/30"
+                                />
+                                <Circle
+                                  className={`w-2.5 h-2.5 absolute -bottom-0.5 -right-0.5 rounded-full ${
+                                    friend.isOnline ? 'text-emerald-500 fill-emerald-500' : 'text-slate-500 fill-slate-500'
+                                  }`}
+                                />
+                              </div>
+
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  {/* Full Username - NOT TRUNCATED */}
+                                  <span className="font-bold text-sm">{friend.username}</span>
+                                  <span className="text-xs" title={friend.country}>{flag}</span>
+                                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border ${theme.badge}`}>
+                                    {friend.elo}
+                                  </span>
+                                </div>
+                                <span className={`text-[11px] block mt-0.5 ${friend.isOnline ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : theme.textMuted}`}>
+                                  {friend.statusText || (friend.isOnline ? 'Online • Ready to play' : 'Offline')}
+                                </span>
+                              </div>
+                            </div>
+
+                            <ChevronRight className={`w-4 h-4 transition-transform duration-200 shrink-0 ${
+                              isSelected ? 'rotate-90 text-amber-500' : theme.textMuted
+                            }`} />
+                          </div>
+
+                          {/* Action Bar (Opens only when clicking friend) */}
+                          {isSelected && (
+                            <div className={`p-2.5 px-3 border-t flex items-center gap-2 animate-fade-in ${
+                              isLight ? 'bg-amber-50/50 border-slate-200' : 'bg-slate-900/60 border-slate-800'
+                            }`}>
+                              {/* Request Match */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setChallengeFriendTarget(friend);
+                                }}
+                                className="flex-1 py-2 px-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+                              >
+                                <Swords className="w-3.5 h-3.5" />
+                                <span>Request Match</span>
+                              </button>
+
+                              {/* Open Chat */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setChattingFriend(friend);
+                                  setSelectedFriend(null);
+                                  sound.playClick();
+                                  triggerHaptic('move');
+                                }}
+                                className={`flex-1 py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                                  isLight
+                                    ? 'bg-white hover:bg-indigo-50 border-indigo-200 text-indigo-700'
+                                    : 'bg-indigo-950/60 hover:bg-indigo-900/60 border-indigo-500/30 text-indigo-300'
+                                }`}
+                              >
+                                <MessageCircle className="w-3.5 h-3.5" />
+                                <span>Direct Chat</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ========================================================= */}
+            {/* 3rd TAB: ADD / FOLLOW / DISCOVER                         */}
+            {/* ========================================================= */}
+            {activeTab === 'add' && (
+              <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+                {/* Search & Follow Form */}
+                <div className={`p-4 rounded-2xl border space-y-3 ${theme.innerBox}`}>
+                  <div className="flex items-center gap-2 text-amber-500">
+                    <UserPlus className="w-4 h-4" />
+                    <span className="text-xs font-black uppercase tracking-wider">
+                      Add Friend by Username
+                    </span>
+                  </div>
+                  <p className={`text-xs ${theme.textMuted}`}>
+                    Enter any player's username to connect, chat, and invite them to live matches.
+                  </p>
+
+                  <form onSubmit={handleSendFriendRequest} className="space-y-2">
+                    <div className="relative">
+                      <Search className={`w-4 h-4 absolute left-3 top-2.5 ${theme.textMuted}`} />
+                      <input
+                        type="text"
+                        value={searchUsername}
+                        onChange={e => setSearchUsername(e.target.value)}
+                        placeholder="e.g. Magnus, Hikaru, GM_Alex..."
+                        className={`w-full border rounded-xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-amber-500 ${theme.input}`}
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={!searchUsername.trim()}
+                      className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-40 text-slate-950 font-black text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
+                    >
+                      <UserPlus className="w-3.5 h-3.5" />
+                      <span>Send Friend Request / Follow</span>
+                    </button>
+                  </form>
+
+                  {requestStatus && (
+                    <div className={`p-2.5 rounded-xl text-xs flex items-center gap-2 animate-fade-in ${
+                      requestStatus.type === 'success'
+                        ? 'bg-emerald-500/15 border border-emerald-500/40 text-emerald-600 dark:text-emerald-300'
+                        : requestStatus.type === 'info'
+                        ? 'bg-amber-500/15 border border-amber-500/40 text-amber-700 dark:text-amber-300'
+                        : 'bg-rose-500/15 border border-rose-500/40 text-rose-600 dark:text-rose-300'
+                    }`}>
+                      {requestStatus.type === 'success' ? (
+                        <Check className="w-4 h-4 shrink-0 text-emerald-500" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 shrink-0 text-amber-500" />
+                      )}
+                      <span>{requestStatus.text}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Recommended Players Carousel */}
+                <div className="space-y-2">
+                  <span className="text-xs font-black uppercase tracking-wider block">
+                    Recommended Arena Masters & Bot Opponents
+                  </span>
+                  <div className="space-y-2">
+                    {SUGGESTED_PLAYERS.map(player => {
+                      const isFriend = friends.some(f => f.username.toLowerCase() === player.username.toLowerCase());
+                      return (
+                        <div
+                          key={player.id}
+                          className={`flex items-center justify-between p-3 rounded-2xl border ${theme.card}`}
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <img src={player.avatar} alt={player.username} className="w-9 h-9 rounded-full border border-amber-500/30" />
+                            <div className="truncate">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-xs truncate">{player.username}</span>
+                                <span>{COUNTRY_FLAGS[player.country] || '🌐'}</span>
+                                <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border ${theme.badge}`}>
+                                  {player.elo}
+                                </span>
+                              </div>
+                              <span className={`text-[11px] block ${theme.textMuted}`}>{player.statusText}</span>
+                            </div>
+                          </div>
+
+                          {isFriend ? (
+                            <span className="text-xs text-emerald-600 font-bold px-3 py-1 flex items-center gap-1">
+                              <UserCheck className="w-3.5 h-3.5" />
+                              <span>Friends</span>
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleFollowSuggested(player)}
+                              className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-xs transition-all cursor-pointer active:scale-95 flex items-center gap-1"
+                            >
+                              <UserPlus className="w-3.5 h-3.5" />
+                              <span>Follow</span>
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ========================================================= */}
+            {/* 4th TAB: BLOCKED PLAYERS                                  */}
+            {/* ========================================================= */}
+            {activeTab === 'blocked' && (
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 text-rose-500">
+                    <Ban className="w-3.5 h-3.5" />
+                    Blocked Players ({blockedUsers.length})
+                  </span>
+                </div>
+
+                {blockedUsers.length === 0 ? (
+                  <div className={`py-12 text-center space-y-2 rounded-2xl border ${theme.innerBox}`}>
+                    <ShieldCheck className="w-8 h-8 mx-auto text-emerald-500" />
+                    <p className="text-xs font-bold">No Blocked Players</p>
+                    <p className={`text-[11px] max-w-xs mx-auto ${theme.textMuted}`}>
+                      Players you block will appear here. You can unblock and re-add them at any time.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {blockedUsers.map(blocked => (
+                      <div
+                        key={blocked.id}
+                        className={`flex items-center justify-between p-3 rounded-2xl border ${theme.card}`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <img
+                            src={blocked.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${blocked.username}`}
+                            alt={blocked.username}
+                            className="w-9 h-9 rounded-full opacity-70 border border-slate-600 grayscale"
+                          />
+                          <div className="truncate">
+                            <span className="font-bold text-xs block truncate">{blocked.username}</span>
+                            <span className={`text-[10px] block ${theme.textMuted}`}>Blocked on {blocked.blockedAt || 'Recent'}</span>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => handleUnblockAndAdd(blocked)}
+                          className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 shrink-0"
+                          title="Unblock and add back to friends"
+                        >
+                          <RefreshCw className="w-3 h-3" />
+                          <span>Unblock & Add</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
 
         {/* ========================================================= */}
-        {/* MODAL: TIME CONTROL SELECTOR FOR CHALLENGING FRIEND       */}
+        {/* TIME CONTROL PICKER FOR CHALLENGING FRIEND                */}
         {/* ========================================================= */}
         {challengeFriendTarget && (
           <div className="fixed inset-0 z-60 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">

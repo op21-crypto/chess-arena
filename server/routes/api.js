@@ -319,7 +319,8 @@ router.post('/rooms/create', (req, res) => {
     elo: 1200
   };
 
-  const isWhite = colorPreference === 'white' || (colorPreference === 'random' && Math.random() > 0.5);
+  // Strictly random 50/50 color allocation for private rooms
+  const isWhite = Math.random() > 0.5;
 
   const room = {
     id,

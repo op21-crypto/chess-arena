@@ -280,10 +280,12 @@ export function setupSocketHandler(io) {
       const timeControl = config.timeControl || { baseMinutes: 10, incrementSeconds: 0 };
       const format = config.format || (timeControl.baseMinutes <= 2 ? 'bullet' : (timeControl.baseMinutes <= 5 ? 'blitz' : 'rapid'));
       
+      // Strictly random 50/50 color allocation for private rooms
+      const isWhite = Math.random() < 0.5;
       const session = new ChessGameSession({
         id: roomId,
-        whitePlayer: config.colorPreference === 'black' ? null : currentUser,
-        blackPlayer: config.colorPreference === 'black' ? currentUser : null,
+        whitePlayer: isWhite ? currentUser : null,
+        blackPlayer: isWhite ? null : currentUser,
         timeControl,
         isRated: config.isRated !== false,
         format

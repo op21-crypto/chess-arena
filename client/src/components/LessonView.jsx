@@ -47,6 +47,7 @@ export function LessonView({ onBack, isLight, isOled }) {
   const isLightMode = isLight !== undefined
     ? isLight
     : (typeof window !== 'undefined' && window.matchMedia && !window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const [boardTheme] = useState('amoled');
   const [lessons] = useState(ALL_LESSONS);
   const [selectedLessonIdx, setSelectedLessonIdx] = useState(() => {
     const saved = safeStorage.getItem('chess_current_lesson_idx');
@@ -1263,7 +1264,7 @@ export function LessonView({ onBack, isLight, isOled }) {
               playerColor="w"
               disabled={activeMode === 'lesson'}
               onSquareClick={activeMode === 'practice' ? handlePracticeSquareClick : undefined}
-              boardTheme="emerald"
+              boardTheme={boardTheme}
               highlightSquares={activeMode === 'lesson' ? (currentStep?.highlightSquares || []) : (currentPractice?.highlightSquares || [])}
               successSquares={successSquares}
               errorSquares={errorSquares}

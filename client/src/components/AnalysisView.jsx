@@ -8,7 +8,7 @@ export function AnalysisView({ game, onClose }) {
   const [analysisData, setAnalysisData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [boardTheme, setBoardTheme] = useState('emerald');
+  const [boardTheme, setBoardTheme] = useState('amoled');
 
   const moves = game?.moveHistory || [];
 

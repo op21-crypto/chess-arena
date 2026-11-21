@@ -109,11 +109,12 @@ export default function App() {
       const saved = safeStorage.getItem('chess_arena_settings');
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Ensure default theme adapts to phone system mode by default & default board is amoled
-        const amoledMigrated = safeStorage.getItem('chess_arena_amoled_board_default_v1');
-        if (!amoledMigrated) {
-          safeStorage.setItem('chess_arena_amoled_board_default_v1', 'true');
-          parsed.boardTheme = 'amoled';
+        // Ensure default board theme is randomly selected between Gold and Emerald
+        const goldEmeraldMigrated = safeStorage.getItem('chess_arena_gold_emerald_default_v1');
+        if (!goldEmeraldMigrated) {
+          safeStorage.setItem('chess_arena_gold_emerald_default_v1', 'true');
+          const randomTheme = Math.random() < 0.5 ? 'gold' : 'emerald';
+          parsed.boardTheme = randomTheme;
         }
         const themeMigrated = safeStorage.getItem('chess_arena_system_theme_default_v1');
         if (!themeMigrated) {
@@ -326,7 +327,7 @@ export default function App() {
             setSettings(prev => ({
               ...prev,
               appTheme: data.config.defaultTheme || 'system',
-              boardTheme: data.config.defaultBoardTheme || 'cappuccino',
+              boardTheme: data.config.defaultBoardTheme || (Math.random() < 0.5 ? 'gold' : 'emerald'),
               pieceTheme: data.config.defaultPieceTheme || 'alexander',
               pieceColorPalette: data.config.defaultPieceColorPalette || 'classic',
               musicEnabled: data.config.defaultMusicEnabled !== undefined ? data.config.defaultMusicEnabled : true,
@@ -588,8 +589,9 @@ export default function App() {
   const handleCreateFriendRoom = async (config) => {
     const activeUser = getOrCreateUser();
     const roomId = `arena_${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-    const isWhite = config.colorPreference === 'white' || (config.colorPreference === 'random' && Math.random() > 0.5);
-    const baseMinutes = config.timeControl?.baseMinutes || 10;
+    // Strictly random 50/50 color allocation for private rooms
+    const isWhite = Math.random() > 0.5;
+    const baseMinutes = config?.timeControl?.baseMinutes || 10;
 
     const initialGame = {
       id: roomId,
@@ -665,19 +667,17 @@ export default function App() {
   // Handle AI Practice Matches
   const handleStartAIGame = (param1, param2) => {
     let level = 2;
-    let color = 'w';
     let timeMinutes = 10;
 
     if (typeof param1 === 'object' && param1 !== null) {
       level = Number(param1.level) || 2;
-      const rawColor = param1.color;
-      color = rawColor === 'random' ? (Math.random() < 0.5 ? 'w' : 'b') : (rawColor === 'b' ? 'b' : 'w');
       timeMinutes = param1.timeMinutes !== undefined ? Number(param1.timeMinutes) : 10;
-    } else {
+    } else if (param1 !== undefined) {
       level = Number(param1) || 2;
-      const rawColor = param2;
-      color = rawColor === 'random' ? (Math.random() < 0.5 ? 'w' : 'b') : (rawColor === 'b' ? 'b' : 'w');
     }
+
+    // Color is strictly randomly allocated 50/50: White or Black
+    const color = Math.random() < 0.5 ? 'w' : 'b';
 
     // Select a randomized cool anime opponent for this AI match
     const animeBot = getRandomAnimeOpponent(level);
@@ -696,7 +696,7 @@ export default function App() {
 
     setIsAIGame(true);
     setAiLevel(level);
-    setBoardFlipped(color === 'b');
+    setBoardFlipped(false); // Reset manual flip override: Chessboard auto-orients based on playerColor
     setAiThinking(false);
     setShowAIModal(false);
     setShowGameOverModal(false);
@@ -727,7 +727,7 @@ export default function App() {
     setGameSession(startingSession);
     setPlayerColor(color);
 
-    // If user chose black, AI makes first move as White
+    // White always plays the 1st move: if AI is White (user is Black), Stockfish plays 1st immediately
     if (color === 'b') {
       setTimeout(() => {
         triggerAIMove(startingSession.fen, startingSession, level);
@@ -1128,7 +1128,7 @@ export default function App() {
 
   const handleRequestRematch = () => {
     if (isAIGame) {
-      handleStartAIGame({ level: aiLevel, color: playerColor === 'w' ? 'b' : 'w' });
+      handleStartAIGame({ level: aiLevel });
     } else {
       socketRef.current?.emit('request_rematch', { gameId: gameSession.id });
     }

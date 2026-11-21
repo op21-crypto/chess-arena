@@ -126,7 +126,25 @@ export const PIECE_THEMES = {
   }
 };
 
+export const getRandomDefaultBoardTheme = () => (Math.random() < 0.5 ? 'gold' : 'emerald');
+
 export const BOARD_THEMES = {
+  gold: {
+    name: 'Gilded Royal Gold',
+    light: '#fbf5df',
+    dark: '#c89a3c',
+    border: '#8f681a',
+    highlight: 'rgba(234, 179, 8, 0.55)',
+    check: 'rgba(239, 68, 68, 0.85)'
+  },
+  emerald: {
+    name: 'Emerald Royale',
+    light: '#ebecd0',
+    dark: '#4e7c4f',
+    border: '#274e28',
+    highlight: 'rgba(250, 204, 21, 0.5)',
+    check: 'rgba(239, 68, 68, 0.85)'
+  },
   amoled: {
     name: "AMOLED Pure Black",
     light: "#1e293b",
@@ -216,14 +234,6 @@ export const BOARD_THEMES = {
     highlight: 'rgba(56, 189, 248, 0.45)',
     check: 'rgba(239, 68, 68, 0.75)',
     isLight: true
-  },
-  emerald: {
-    name: 'Emerald Royale',
-    light: '#ebecd0',
-    dark: '#4e7c4f',
-    border: '#2d4a2d',
-    highlight: 'rgba(250, 204, 21, 0.45)',
-    check: 'rgba(239, 68, 68, 0.75)'
   },
   obsidian: {
     name: 'Obsidian Gold',

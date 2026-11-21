@@ -179,7 +179,7 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame, isLight = false })
     triggerHaptic('impact');
     onStartAIGame({
       level: lvl,
-      color: 'w',
+      color: 'random',
       timeMinutes: selectedTime
     });
   };
