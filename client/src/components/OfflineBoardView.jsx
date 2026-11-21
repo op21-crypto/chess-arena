@@ -59,7 +59,7 @@ const OFFLINE_THEMES = [
   }
 ];
 
-export function OfflineBoardView({ onBack }) {
+export function OfflineBoardView({ onBack, isLight = false }) {
   // Game State
   const [chess, setChess] = useState(() => new Chess());
   const [fen, setFen] = useState(() => chess.fen());
@@ -398,32 +398,47 @@ export function OfflineBoardView({ onBack }) {
 
   return (
     <div
-      className="relative h-screen h-[100dvh] w-full flex flex-col justify-between overflow-hidden select-none"
-      style={{
-        backgroundColor: '#2b2724',
-        backgroundImage: `
-          repeating-linear-gradient(
-            180deg,
-            rgba(0, 0, 0, 0.45) 0px,
-            rgba(0, 0, 0, 0.45) 2px,
-            rgba(255, 255, 255, 0.05) 3px,
-            rgba(48, 43, 38, 0.95) 4px,
-            rgba(38, 33, 29, 0.95) 45px,
-            rgba(26, 23, 20, 0.95) 88px,
-            rgba(0, 0, 0, 0.6) 90px
-          )
-        `
-      }}
+      className="relative h-screen h-[100dvh] w-full flex flex-col justify-between overflow-hidden select-none transition-colors"
+      style={
+        isLight
+          ? {
+              backgroundColor: '#f8fafc',
+              backgroundImage: `
+                radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 1) 0%, rgba(241, 245, 249, 1) 50%, rgba(226, 232, 240, 1) 100%)
+              `
+            }
+          : {
+              backgroundColor: '#2b2724',
+              backgroundImage: `
+                repeating-linear-gradient(
+                  180deg,
+                  rgba(0, 0, 0, 0.45) 0px,
+                  rgba(0, 0, 0, 0.45) 2px,
+                  rgba(255, 255, 255, 0.05) 3px,
+                  rgba(48, 43, 38, 0.95) 4px,
+                  rgba(38, 33, 29, 0.95) 45px,
+                  rgba(26, 23, 20, 0.95) 88px,
+                  rgba(0, 0, 0, 0.6) 90px
+                )
+              `
+            }
+      }
     >
       {/* Promotion Dialog Overlay */}
       {promotionPending && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-slate-900 border-2 border-amber-500 rounded-3xl p-6 shadow-2xl flex flex-col items-center gap-4 max-w-xs w-full text-center">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+          <div className={`border-2 border-amber-500 rounded-3xl p-6 shadow-2xl flex flex-col items-center gap-4 max-w-xs w-full text-center ${
+            isLight ? 'bg-white text-slate-900 shadow-amber-500/10' : 'bg-slate-900 text-white'
+          }`}>
             <div>
-              <span className="text-xs font-black text-amber-400 uppercase tracking-widest block">
+              <span className={`text-xs font-black uppercase tracking-widest block ${
+                isLight ? 'text-amber-700' : 'text-amber-400'
+              }`}>
                 Pawn Promotion
               </span>
-              <p className="text-xs text-slate-300 mt-0.5 font-medium">
+              <p className={`text-xs mt-0.5 font-medium ${
+                isLight ? 'text-slate-600' : 'text-slate-300'
+              }`}>
                 Choose promotion piece for {promotionPending.color === 'w' ? 'White' : 'Black'}
               </p>
             </div>
@@ -438,13 +453,21 @@ export function OfflineBoardView({ onBack }) {
                 <button
                   key={type}
                   onClick={() => executeMove({ ...promotionPending, promotion: type })}
-                  className="p-2.5 bg-slate-800 hover:bg-amber-500/20 hover:border-amber-400 border border-slate-700 rounded-2xl flex flex-col items-center gap-1 transition-all hover:scale-105 active:scale-95 cursor-pointer group"
+                  className={`p-2.5 rounded-2xl flex flex-col items-center gap-1 transition-all hover:scale-105 active:scale-95 cursor-pointer group border ${
+                    isLight
+                      ? 'bg-slate-50 hover:bg-amber-50 hover:border-amber-400 border-slate-200 shadow-2xs'
+                      : 'bg-slate-800 hover:bg-amber-500/20 hover:border-amber-400 border-slate-700'
+                  }`}
                 >
                   <PieceIcon piece={type} color={promotionPending.color || turn} size={42} />
-                  <span className="text-[10px] font-bold text-white group-hover:text-amber-300">
+                  <span className={`text-[10px] font-bold ${
+                    isLight ? 'text-slate-800 group-hover:text-amber-700' : 'text-white group-hover:text-amber-300'
+                  }`}>
                     {name}
                   </span>
-                  <span className="text-[8px] font-mono font-bold text-amber-400/80">
+                  <span className={`text-[8px] font-mono font-bold ${
+                    isLight ? 'text-amber-700' : 'text-amber-400/80'
+                  }`}>
                     +{val}
                   </span>
                 </button>
@@ -453,7 +476,9 @@ export function OfflineBoardView({ onBack }) {
 
             <button
               onClick={() => setPromotionPending(null)}
-              className="text-xs text-slate-400 hover:text-white pt-1 transition-colors cursor-pointer"
+              className={`text-xs pt-1 transition-colors cursor-pointer ${
+                isLight ? 'text-slate-500 hover:text-slate-900 font-semibold' : 'text-slate-400 hover:text-white'
+              }`}
             >
               Cancel Move
             </button>
@@ -463,19 +488,27 @@ export function OfflineBoardView({ onBack }) {
 
       {/* Restart Game Confirmation Dialog */}
       {showRestartConfirm && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-slate-900 border border-slate-700 rounded-3xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl">
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto border border-amber-500/40">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className={`border rounded-3xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl ${
+            isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-slate-900 border-slate-700 text-white'
+          }`}>
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto border ${
+              isLight ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+            }`}>
               <RotateCw className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-lg font-black text-white">Restart Game?</h3>
-              <p className="text-xs text-slate-400 mt-1">This will clear the current board and start a new two-player offline match.</p>
+              <h3 className={`text-lg font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>Restart Game?</h3>
+              <p className={`text-xs mt-1 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                This will clear the current board and start a new two-player offline match.
+              </p>
             </div>
             <div className="flex gap-2.5 pt-2">
               <button
                 onClick={() => setShowRestartConfirm(false)}
-                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl cursor-pointer"
+                className={`flex-1 py-2.5 font-bold text-xs rounded-xl cursor-pointer transition-colors ${
+                  isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+                }`}
               >
                 Cancel
               </button>
@@ -492,8 +525,10 @@ export function OfflineBoardView({ onBack }) {
 
       {/* Game Over Celebration Dialog */}
       {showGameOverModal && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border-2 border-amber-500 rounded-3xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl relative overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+          <div className={`border-2 border-amber-500 rounded-3xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl relative overflow-hidden ${
+            isLight ? 'bg-white text-slate-900 shadow-amber-500/10' : 'bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-white'
+          }`}>
             {/* Ambient gold celebration glow */}
             <div className="absolute -top-16 -right-16 w-48 h-48 bg-amber-500/20 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
@@ -513,7 +548,7 @@ export function OfflineBoardView({ onBack }) {
                 </span>
               </div>
 
-              <h3 className="text-2xl font-black text-white tracking-tight">
+              <h3 className={`text-2xl font-black tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>
                 {chess.isCheckmate()
                   ? `Checkmate! ${turn === 'w' ? 'Black' : 'White'} Wins!`
                   : chess.isDraw()
@@ -530,18 +565,20 @@ export function OfflineBoardView({ onBack }) {
             </div>
 
             {/* Match Stats Pill */}
-            <div className="relative z-10 grid grid-cols-3 gap-2 py-2 px-3 rounded-2xl bg-slate-950/80 border border-slate-800 text-xs">
+            <div className={`relative z-10 grid grid-cols-3 gap-2 py-2 px-3 rounded-2xl border text-xs ${
+              isLight ? "bg-slate-50 border-slate-200" : "bg-slate-950/80 border-slate-800"
+            }`}>
               <div>
-                <span className="text-[10px] text-slate-400 uppercase font-bold block">Moves</span>
-                <span className="font-mono font-black text-white">{Math.floor(moveHistory.length / 2) + 1}</span>
+                <span className={`text-[10px] uppercase font-bold block ${isLight ? "text-slate-500" : "text-slate-400"}`}>Moves</span>
+                <span className={`font-mono font-black ${isLight ? "text-slate-900" : "text-white"}`}>{Math.floor(moveHistory.length / 2) + 1}</span>
               </div>
               <div>
-                <span className="text-[10px] text-slate-400 uppercase font-bold block">White Captures</span>
-                <span className="font-mono font-black text-amber-300">{capturedPieces.w.length}</span>
+                <span className={`text-[10px] uppercase font-bold block ${isLight ? "text-slate-500" : "text-slate-400"}`}>White Captures</span>
+                <span className="font-mono font-black text-amber-500">{capturedPieces.w.length}</span>
               </div>
               <div>
-                <span className="text-[10px] text-slate-400 uppercase font-bold block">Black Captures</span>
-                <span className="font-mono font-black text-white">{capturedPieces.b.length}</span>
+                <span className={`text-[10px] uppercase font-bold block ${isLight ? "text-slate-500" : "text-slate-400"}`}>Black Captures</span>
+                <span className={`font-mono font-black ${isLight ? "text-slate-900" : "text-white"}`}>{capturedPieces.b.length}</span>
               </div>
             </div>
 

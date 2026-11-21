@@ -33,7 +33,7 @@ import { musicEngine } from './utils/music.js';
 import { triggerHaptic, speakMove } from './utils/device.js';
 import { getOpeningName } from './utils/openings.js';
 import { safeStorage } from './utils/storage.js';
-import { getLocalAIMove } from './utils/aiEngine.js';
+import { getLocalAIMove, getAIMoveAsync, getCapturedPieces } from './utils/aiEngine.js';
 import { calculateUserRanking } from './data/leaderboardData.js';
 
 const DEFAULT_SETTINGS = {
@@ -328,6 +328,7 @@ export default function App() {
       setIsAIGame(false);
       setActiveTab('game');
       sound.playMatchStart();
+      window.scrollTo({ top: 0, behavior: 'instant' });
     });
 
     socket.on('room_created', (data) => {
@@ -343,6 +344,7 @@ export default function App() {
         setShowGameOverModal(false);
         setActiveTab('game');
         sound.playMatchStart();
+        window.scrollTo({ top: 0, behavior: 'instant' });
       }
     });
 
@@ -482,10 +484,12 @@ export default function App() {
           const opponentJoined = (!gameSession.blackPlayer && r.blackPlayer) || (!gameSession.whitePlayer && r.whitePlayer);
 
           if (movesDiffer || fenDiffers || statusDiffers || opponentJoined) {
+            const captured = getCapturedPieces(r.fen || prev.fen);
             setGameSession(prev => ({
               ...prev,
               ...r,
-              turn: new Chess(r.fen || prev.fen).turn()
+              turn: new Chess(r.fen || prev.fen).turn(),
+              capturedPieces: { white: captured.byWhite, black: captured.byBlack }
             }));
 
             if (movesDiffer) {
@@ -644,6 +648,7 @@ export default function App() {
     setShowGameOverModal(false);
     setActiveTab('game');
     sound.playMatchStart();
+    window.scrollTo({ top: 0, behavior: 'instant' });
 
     const initialTimeMs = timeMinutes === 0 ? 3600000 : timeMinutes * 60 * 1000;
 
@@ -725,25 +730,14 @@ export default function App() {
     try {
       let aiMove = null;
 
-      // 1. Try server endpoint with fast timeout (1200ms)
+      // 1. First try modern Web Worker Stockfish / Async engine with budget
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 1200);
-        const res = await fetch('/api/ai/move', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fen, level }),
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-        if (res.ok) {
-          aiMove = await res.json();
-        }
-      } catch (networkErr) {
-        // Fallback to client-side engine immediately
+        aiMove = await getAIMoveAsync(fen, level);
+      } catch (e) {
+        // Fallback to local synchronous engine
       }
 
-      // 2. Fallback to ultra-fast client-side AI engine if server is slow, offline, or returns error
+      // 2. Fallback to instant client-side AI engine
       if (!aiMove || !aiMove.from || !aiMove.to) {
         aiMove = getLocalAIMove(fen, level);
       }
@@ -762,7 +756,11 @@ export default function App() {
       });
 
       if (moveRes) {
-        sound.playMove();
+        if (moveRes.captured) {
+          sound.playCapture();
+        } else {
+          sound.playMove();
+        }
         if (settings.voiceCommentary) {
           speakMove(moveRes.san);
         }
@@ -806,6 +804,8 @@ export default function App() {
           }
         }
 
+        const captured = getCapturedPieces(chess.fen());
+
         setGameSession(prev => ({
           ...prev,
           fen: chess.fen(),
@@ -815,7 +815,8 @@ export default function App() {
           status: isOver ? status : 'active',
           winner: isOver ? winner : null,
           winReason: isOver ? winReason : null,
-          moveHistory: updatedMoves
+          moveHistory: updatedMoves,
+          capturedPieces: { white: captured.byWhite, black: captured.byBlack }
         }));
       }
     } catch (err) {
@@ -834,6 +835,11 @@ export default function App() {
       const chess = new Chess(gameSession.fen);
       const res = chess.move(moveObj);
       if (res) {
+        if (res.captured) {
+          sound.playCapture();
+        } else {
+          sound.playMove();
+        }
         if (settings.voiceCommentary && !settings.voiceCommentaryOnlyOpponent) {
           speakMove(res.san);
         }
@@ -877,6 +883,8 @@ export default function App() {
           }
         }
 
+        const captured = getCapturedPieces(chess.fen());
+
         const updatedSession = {
           ...gameSession,
           fen: chess.fen(),
@@ -886,7 +894,8 @@ export default function App() {
           status: isOver ? status : 'active',
           winner: isOver ? winner : null,
           winReason: isOver ? winReason : null,
-          moveHistory: updatedHistory
+          moveHistory: updatedHistory,
+          capturedPieces: { white: captured.byWhite, black: captured.byBlack }
         };
         setGameSession(updatedSession);
 
@@ -902,7 +911,11 @@ export default function App() {
         const chess = new Chess(gameSession.fen);
         const res = chess.move(moveObj);
         if (res) {
-          sound.playMove();
+          if (res.captured) {
+            sound.playCapture();
+          } else {
+            sound.playMove();
+          }
           if (settings.voiceCommentary && !settings.voiceCommentaryOnlyOpponent) {
             speakMove(res.san);
           }
@@ -944,6 +957,8 @@ export default function App() {
             else sound.playGameOver();
           }
 
+          const captured = getCapturedPieces(chess.fen());
+
           const updatedSession = {
             ...gameSession,
             fen: chess.fen(),
@@ -953,7 +968,8 @@ export default function App() {
             status: isOver ? status : 'active',
             winner: isOver ? winner : null,
             winReason: isOver ? winReason : null,
-            moveHistory: updatedHistory
+            moveHistory: updatedHistory,
+            capturedPieces: { white: captured.byWhite, black: captured.byBlack }
           };
           setGameSession(updatedSession);
 

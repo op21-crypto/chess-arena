@@ -33,11 +33,12 @@ export function GameChat({
   socket,
   gameId,
   isPlayer = false,
-  triggerVoiceCall = 0
+  triggerVoiceCall = 0,
+  isLight = false
 }) {
   const [inputText, setInputText] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
 
   // Voice Chat State
   const [voiceStatus, setVoiceStatus] = useState('idle'); // 'idle' | 'requesting' | 'invited' | 'connected'
@@ -55,9 +56,11 @@ export function GameChat({
   const analyser = useRef(null);
   const callTimerRef = useRef(null);
 
-  // Auto-scroll chat on new messages
+  // Auto-scroll ONLY inner chat container without moving the browser window
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
     if (messages.length > 0) {
       const last = messages[messages.length - 1];
       if (last.sender?.id !== currentUser?.id) {
@@ -294,23 +297,31 @@ export function GameChat({
   };
 
   return (
-    <div className="flex flex-col bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden h-72 md:h-80 shadow-lg">
+    <div className={`flex flex-col border rounded-2xl overflow-hidden h-72 md:h-80 shadow-md transition-colors ${
+      isLight ? 'bg-white/95 border-slate-200 text-slate-900' : 'bg-slate-900/90 border-slate-800 text-white'
+    }`}>
       {/* Unified Chat & Voice Header */}
-      <div className="flex items-center justify-between px-3.5 py-2.5 bg-slate-950/80 border-b border-slate-800 text-xs font-semibold">
+      <div className={`flex items-center justify-between px-3.5 py-2.5 border-b text-xs font-semibold ${
+        isLight ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-slate-950/80 border-slate-800 text-white'
+      }`}>
         {/* Left: Chat info */}
-        <div className="flex items-center gap-2 text-slate-300">
-          <MessageSquare className="w-4 h-4 text-amber-400" />
-          <span className="font-bold">Game Chat</span>
-          <span className="text-[10px] text-slate-500 font-mono">({messages.length})</span>
+        <div className="flex items-center gap-2">
+          <MessageSquare className={`w-4 h-4 ${isLight ? 'text-amber-600' : 'text-amber-400'}`} />
+          <span className={`font-bold ${isLight ? 'text-slate-900' : 'text-slate-200'}`}>Game Chat</span>
+          <span className={`text-[10px] font-mono ${isLight ? 'text-slate-500' : 'text-slate-500'}`}>({messages.length})</span>
         </div>
 
         {/* Right: Embedded Voice Call Controls */}
         <div className="flex items-center gap-2">
           {voiceStatus === 'connected' ? (
-            <div className="flex items-center gap-1.5 bg-emerald-950/70 border border-emerald-500/40 rounded-xl px-2 py-1">
+            <div className={`flex items-center gap-1.5 border rounded-xl px-2 py-1 ${
+              isLight ? 'bg-emerald-50 border-emerald-300' : 'bg-emerald-950/70 border-emerald-500/40'
+            }`}>
               {/* Speaking indicator and Call timer */}
-              <div className="flex items-center gap-1 text-[11px] font-mono font-bold text-emerald-400">
-                <span className={`w-2 h-2 rounded-full ${isSpeaking ? 'bg-emerald-400 animate-ping' : 'bg-emerald-500'}`} />
+              <div className={`flex items-center gap-1 text-[11px] font-mono font-bold ${
+                isLight ? 'text-emerald-800' : 'text-emerald-400'
+              }`}>
+                <span className={`w-2 h-2 rounded-full ${isSpeaking ? 'bg-emerald-500 animate-ping' : 'bg-emerald-500'}`} />
                 <span>{formatDuration(callDuration)}</span>
               </div>
 
@@ -319,8 +330,8 @@ export function GameChat({
                 onClick={toggleMute}
                 className={`p-1 rounded-md transition-colors ${
                   isMuted
-                    ? 'bg-rose-950 text-rose-400'
-                    : 'text-slate-300 hover:text-white'
+                    ? (isLight ? 'bg-rose-100 text-rose-700' : 'bg-rose-950 text-rose-400')
+                    : (isLight ? 'text-slate-600 hover:text-slate-950' : 'text-slate-300 hover:text-white')
                 }`}
                 title={isMuted ? 'Unmute microphone' : 'Mute microphone'}
               >
@@ -332,8 +343,8 @@ export function GameChat({
                 onClick={toggleDeafen}
                 className={`p-1 rounded-md transition-colors ${
                   isDeafened
-                    ? 'bg-rose-950 text-rose-400'
-                    : 'text-slate-300 hover:text-white'
+                    ? (isLight ? 'bg-rose-100 text-rose-700' : 'bg-rose-950 text-rose-400')
+                    : (isLight ? 'text-slate-600 hover:text-slate-950' : 'text-slate-300 hover:text-white')
                 }`}
                 title={isDeafened ? 'Undeafen audio' : 'Deafen audio'}
               >
@@ -343,18 +354,20 @@ export function GameChat({
               {/* End Call */}
               <button
                 onClick={cleanupVoice}
-                className="p-1 rounded-md bg-rose-600/80 hover:bg-rose-600 text-white transition-colors"
+                className="p-1 rounded-md bg-rose-600/90 hover:bg-rose-600 text-white transition-colors cursor-pointer"
                 title="End voice call"
               >
                 <PhoneOff className="w-3.5 h-3.5" />
               </button>
             </div>
           ) : voiceStatus === 'requesting' ? (
-            <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 rounded-xl px-2.5 py-1 text-[11px] font-bold text-amber-400 animate-pulse">
+            <div className={`flex items-center gap-2 border rounded-xl px-2.5 py-1 text-[11px] font-bold animate-pulse ${
+              isLight ? 'bg-amber-100 border-amber-300 text-amber-900' : 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+            }`}>
               <span>Calling...</span>
               <button
                 onClick={() => setVoiceStatus('idle')}
-                className="text-slate-400 hover:text-white"
+                className={`cursor-pointer ${isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'}`}
                 title="Cancel call"
               >
                 <X className="w-3.5 h-3.5" />
@@ -363,7 +376,11 @@ export function GameChat({
           ) : isPlayer ? (
             <button
               onClick={handleRequestVoice}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 hover:text-emerald-200 text-xs font-bold transition-all shadow-xs active:scale-95"
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer ${
+                isLight
+                  ? 'bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800'
+                  : 'bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 hover:text-emerald-200'
+              }`}
               title="Start Voice Call with opponent"
             >
               <PhoneCall className="w-3.5 h-3.5" />
@@ -375,16 +392,22 @@ export function GameChat({
 
       {/* Voice Error Notification */}
       {voiceError && (
-        <div className="px-3 py-1.5 bg-rose-950/80 border-b border-rose-500/40 text-[11px] text-rose-300 text-center font-medium">
+        <div className={`px-3 py-1.5 border-b text-[11px] text-center font-medium ${
+          isLight ? 'bg-rose-50 border-rose-200 text-rose-800' : 'bg-rose-950/80 border-rose-500/40 text-rose-300'
+        }`}>
           {voiceError}
         </div>
       )}
 
       {/* Incoming Call In-Chat Banner */}
       {voiceStatus === 'invited' && (
-        <div className="px-3 py-2 bg-gradient-to-r from-emerald-950/90 via-indigo-950/80 to-slate-950 border-b border-emerald-500/50 flex items-center justify-between animate-fade-in">
-          <div className="flex items-center gap-2 text-xs text-emerald-300 font-semibold">
-            <Radio className="w-4 h-4 text-emerald-400 animate-spin" />
+        <div className={`px-3 py-2 border-b flex items-center justify-between animate-fade-in ${
+          isLight
+            ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
+            : 'bg-gradient-to-r from-emerald-950/90 via-indigo-950/80 to-slate-950 border-emerald-500/50 text-emerald-300'
+        }`}>
+          <div className="flex items-center gap-2 text-xs font-semibold">
+            <Radio className="w-4 h-4 text-emerald-500 animate-spin" />
             <span>
               <strong>{inviter?.username || opponentUser?.username || 'Opponent'}</strong> is calling...
             </span>
@@ -392,13 +415,15 @@ export function GameChat({
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => handleRespondInvitation(true)}
-              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg transition-colors shadow-xs"
+              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg transition-colors shadow-xs cursor-pointer"
             >
               Accept
             </button>
             <button
               onClick={() => handleRespondInvitation(false)}
-              className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-lg transition-colors"
+              className={`px-2.5 py-1 font-bold text-xs rounded-lg transition-colors cursor-pointer ${
+                isLight ? 'bg-slate-200 hover:bg-slate-300 text-slate-800' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+              }`}
             >
               Decline
             </button>
@@ -407,9 +432,16 @@ export function GameChat({
       )}
 
       {/* Message List */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2 text-xs">
+      <div
+        ref={chatContainerRef}
+        className={`flex-1 overflow-y-auto p-3 space-y-2 text-xs ${
+          isLight ? 'bg-slate-50/50' : 'bg-transparent'
+        }`}
+      >
         {messages.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-slate-500 italic text-center px-4">
+          <div className={`h-full flex items-center justify-center italic text-center px-4 ${
+            isLight ? 'text-slate-500 font-medium' : 'text-slate-500'
+          }`}>
             Say hi to your opponent! Send a message or tap Voice Call.
           </div>
         ) : (
@@ -420,16 +452,20 @@ export function GameChat({
                 key={msg.id}
                 className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
               >
-                <div className="flex items-center gap-1 text-[10px] text-slate-400 mb-0.5 px-1">
-                  <span className="font-semibold text-slate-300">{msg.sender?.username}</span>
+                <div className={`flex items-center gap-1 text-[10px] mb-0.5 px-1 ${
+                  isLight ? 'text-slate-500 font-medium' : 'text-slate-400'
+                }`}>
+                  <span className={`font-semibold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
+                    {msg.sender?.username}
+                  </span>
                   <span>•</span>
                   <span>{msg.timestamp}</span>
                 </div>
                 <div
                   className={`px-3 py-1.5 rounded-2xl max-w-[85%] break-words ${
                     isMe
-                      ? 'bg-amber-600 text-white rounded-tr-xs'
-                      : 'bg-slate-800 text-slate-100 rounded-tl-xs border border-slate-700/60'
+                      ? (isLight ? 'bg-amber-500 text-slate-950 font-medium rounded-tr-xs shadow-xs' : 'bg-amber-600 text-white rounded-tr-xs')
+                      : (isLight ? 'bg-white text-slate-900 border border-slate-200 rounded-tl-xs shadow-xs font-normal' : 'bg-slate-800 text-slate-100 rounded-tl-xs border border-slate-700/60')
                   }`}
                 >
                   {msg.emoji ? (
@@ -442,16 +478,21 @@ export function GameChat({
             );
           })
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Quick canned phrases */}
-      <div className="flex items-center gap-1.5 px-2 py-1.5 overflow-x-auto bg-slate-950/40 border-t border-slate-800/80 no-scrollbar">
+      <div className={`flex items-center gap-1.5 px-2 py-1.5 overflow-x-auto border-t no-scrollbar ${
+        isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-950/40 border-slate-800/80'
+      }`}>
         {QUICK_MESSAGES.map((phrase, i) => (
           <button
             key={i}
             onClick={() => onSendMessage({ text: phrase })}
-            className="whitespace-nowrap px-2 py-0.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-amber-300 text-[11px] rounded-full border border-slate-700/50 transition-colors"
+            className={`whitespace-nowrap px-2.5 py-0.5 text-[11px] font-medium rounded-full border transition-colors cursor-pointer ${
+              isLight
+                ? 'bg-white hover:bg-slate-200 text-slate-800 border-slate-300 shadow-2xs'
+                : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-amber-300 border-slate-700/50'
+            }`}
           >
             {phrase}
           </button>
@@ -460,12 +501,14 @@ export function GameChat({
 
       {/* Emoji Picker Popup */}
       {showEmojiPicker && (
-        <div className="p-2 bg-slate-800 border-t border-slate-700 flex items-center justify-around">
+        <div className={`p-2 border-t flex items-center justify-around ${
+          isLight ? 'bg-white border-slate-200' : 'bg-slate-800 border-slate-700'
+        }`}>
           {EMOJIS.map((emoji) => (
             <button
               key={emoji}
               onClick={() => sendEmoji(emoji)}
-              className="text-lg hover:scale-125 transition-transform p-1"
+              className="text-lg hover:scale-125 transition-transform p-1 cursor-pointer"
             >
               {emoji}
             </button>
@@ -474,11 +517,17 @@ export function GameChat({
       )}
 
       {/* Text Input Form */}
-      <form onSubmit={handleSubmit} className="flex items-center gap-1.5 p-2 bg-slate-950/80 border-t border-slate-800">
+      <form onSubmit={handleSubmit} className={`flex items-center gap-1.5 p-2 border-t ${
+        isLight ? 'bg-white border-slate-200' : 'bg-slate-950/80 border-slate-800'
+      }`}>
         <button
           type="button"
           onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-slate-800 transition-colors"
+          className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+            isLight
+              ? 'text-slate-500 hover:text-amber-600 hover:bg-slate-100'
+              : 'text-slate-400 hover:text-amber-400 hover:bg-slate-800'
+          }`}
         >
           <Smile className="w-4 h-4" />
         </button>
@@ -487,12 +536,16 @@ export function GameChat({
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           placeholder="Type message..."
-          className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-amber-500/50"
+          className={`flex-1 rounded-xl px-3 py-1.5 text-xs focus:outline-hidden ${
+            isLight
+              ? 'bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-amber-500'
+              : 'bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:border-amber-500/50'
+          }`}
         />
         <button
           type="submit"
           disabled={!inputText.trim()}
-          className="p-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 disabled:opacity-40 transition-colors shadow-xs"
+          className="p-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 disabled:opacity-40 transition-colors shadow-xs cursor-pointer"
         >
           <Send className="w-3.5 h-3.5" />
         </button>
