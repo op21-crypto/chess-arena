@@ -2167,14 +2167,12 @@ export default function App() {
           setActiveTab('game');
           setShowFriendRoomModal(false);
         }}
-        onChallengeFriend={(friend) => {
-          handleCreateFriendRoom({
-            timeControl: { baseMinutes: 5, incrementSeconds: 0 },
-            colorPreference: 'random'
-          });
+        onChallengeFriend={(friend, customConfig) => {
+          const cfg = customConfig || { timeControl: { baseMinutes: 5, incrementSeconds: 0 }, colorPreference: 'random' };
+          handleCreateFriendRoom(cfg);
           socketRef.current?.emit('challenge_friend', {
             friendId: friend.id,
-            config: { timeControl: { baseMinutes: 5, incrementSeconds: 0 }, format: 'blitz' }
+            config: { timeControl: cfg.timeControl, format: cfg.timeControl?.baseMinutes <= 2 ? 'bullet' : (cfg.timeControl?.baseMinutes <= 5 ? 'blitz' : 'rapid') }
           });
         }}
         onOpenAuth={() => setShowAuthModal(true)}
