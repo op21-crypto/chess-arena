@@ -106,7 +106,7 @@ function getCapturedPieces(currentFen) {
 }
 
 
-export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOled = false }) {
+export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOled = false, boardTheme = 'greenwich', pieceTheme = 'alexander' }) {
   const isLightMode = isLight || (!isOled && typeof document !== 'undefined' && !document.documentElement.classList.contains('dark'));
   // Navigation View State: 'hub' | 'themes' | 'openings' | 'streak' | 'storm' | 'trainer'
   const [viewState, setViewState] = useState('hub');
@@ -511,9 +511,11 @@ export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOle
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  // Board theme resolution: always default randomly to Gold or Emerald
+  // Board theme resolution: use selected boardTheme prop, fallback to stored setting or Greenwich tournament
   const storedBoard = safeStorage.getItem('arena_board_theme');
-  const activeBoardTheme = (storedBoard && storedBoard !== 'amoled' && storedBoard !== 'greenwich') ? storedBoard : (Math.random() < 0.5 ? 'gold' : 'emerald');
+  const activeBoardTheme = (boardTheme && boardTheme !== 'amoled') 
+    ? boardTheme 
+    : ((storedBoard && storedBoard !== 'amoled') ? storedBoard : 'greenwich');
 
   // ================= VIEW 1: THEMES DIRECTORY =================
   if (viewState === 'themes') {
@@ -612,14 +614,14 @@ export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOle
         </div>
 
         {/* Accordion Categories */}
-        <div className={`space-y-3 pt-1`}>
+        <div className="space-y-3.5 pt-1">
           {filteredCategories.map(cat => {
             const isExpanded = expandedCategories[cat.id] ?? false;
             return (
               <div key={cat.id} className={`rounded-2xl border transition-all ${
                 isLightMode
-                  ? 'bg-slate-50/60 border-slate-200/80'
-                  : 'bg-slate-950/40 border-slate-800/80'
+                  ? 'bg-slate-50/70 border-slate-200/90 shadow-2xs'
+                  : 'bg-slate-950/60 border-slate-800/90 shadow-md'
               }`}>
                 <button
                   onClick={() => {
@@ -627,31 +629,44 @@ export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOle
                     triggerHaptic('move');
                     toggleCategory(cat.id);
                   }}
-                  className={`w-full flex items-center justify-between p-3.5 rounded-2xl transition-all cursor-pointer ${
-                    isLightMode ? 'hover:bg-slate-100 text-slate-900' : 'hover:bg-slate-900/80 text-white'
+                  className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all cursor-pointer ${
+                    isLightMode ? 'hover:bg-slate-100/80 text-slate-900' : 'hover:bg-slate-900/80 text-white'
                   }`}
                 >
-                  <span className={`text-sm sm:text-base font-black tracking-wide flex items-center gap-2 ${
-                    isLightMode ? 'text-slate-900' : 'text-slate-100'
+                  <div className="text-left min-w-0 pr-2">
+                    <div className="flex items-center gap-2.5">
+                      <span className={`text-base sm:text-lg font-black tracking-tight ${
+                        isLightMode ? 'text-slate-950' : 'text-white'
+                      }`}>
+                        {cat.name}
+                      </span>
+                      <span className={`text-xs font-mono font-bold px-2.5 py-0.5 rounded-full border ${
+                        isLightMode ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                      }`}>
+                        {cat.items.length} motifs
+                      </span>
+                    </div>
+                    {cat.description && (
+                      <p className={`text-xs font-medium mt-0.5 leading-snug ${
+                        isLightMode ? 'text-slate-600' : 'text-slate-400'
+                      }`}>
+                        {cat.description}
+                      </p>
+                    )}
+                  </div>
+                  <div className={`p-1.5 rounded-xl border shrink-0 transition-colors ${
+                    isLightMode ? 'bg-white border-slate-250 text-slate-700 shadow-2xs' : 'bg-slate-900 border-slate-750 text-slate-300'
                   }`}>
-                    <span>{cat.name}</span>
-                    <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-full border ${
-                      isLightMode ? 'bg-slate-100 border-slate-250 text-slate-600' : 'bg-slate-800 border-slate-700 text-slate-400'
-                    }`}>
-                      {cat.items.length}
-                    </span>
-                  </span>
-                  <div className={`p-1 rounded-lg ${isLightMode ? 'bg-white border border-slate-200' : 'bg-slate-800 border border-slate-700'}`}>
                     {isExpanded ? (
                       <ChevronDown className="w-4 h-4 text-amber-500" />
                     ) : (
-                      <ChevronRight className={`w-4 h-4 ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                      <ChevronRight className={`w-4 h-4 ${isLightMode ? 'text-slate-600' : 'text-slate-400'}`} />
                     )}
                   </div>
                 </button>
 
                 {isExpanded && (
-                  <div className="px-2.5 pb-2.5 space-y-2">
+                  <div className="px-3 pb-3.5 space-y-2.5 animate-fade-in">
                     {cat.items.map(item => (
                       <div
                         key={item.id}
@@ -661,41 +676,46 @@ export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOle
                           const subset = getPuzzlesByTheme(item.name);
                           startTrainerWithTheme(item.name, subset);
                         }}
-                        className={`flex items-center justify-between p-3.5 rounded-2xl cursor-pointer transition-all duration-150 group border active:scale-[0.99] shadow-xs ${
+                        className={`flex items-center justify-between p-4 rounded-2xl cursor-pointer transition-all duration-150 group border active:scale-[0.99] shadow-xs hover:shadow-md ${
                           isLightMode
-                            ? 'bg-white border-slate-200/90 hover:border-amber-400 hover:bg-amber-50/50 shadow-xs'
-                            : 'bg-slate-900/90 border-slate-800 hover:border-amber-500/50 hover:bg-slate-850'
+                            ? 'bg-white border-slate-200/90 hover:border-amber-400 hover:bg-amber-50/40 text-slate-900'
+                            : 'bg-slate-900/90 border-slate-800 hover:border-amber-500/50 hover:bg-slate-850 text-white'
                         }`}
                       >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                        <div className="flex items-center gap-3.5 min-w-0">
+                          <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-all font-bold text-lg shadow-2xs ${
                             isLightMode
-                              ? 'bg-amber-100/80 text-amber-800 group-hover:bg-amber-200'
-                              : 'bg-amber-500/15 text-amber-400 group-hover:bg-amber-500/25'
+                              ? 'bg-gradient-to-br from-amber-100 to-amber-200/70 border border-amber-300/80 text-amber-900 group-hover:scale-105'
+                              : 'bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/30 text-amber-400 group-hover:scale-105'
                           }`}>
-                            <BookOpen className="w-4 h-4" />
+                            <BookOpen className="w-5 h-5" />
                           </div>
-                          <div className="min-w-0">
-                            <div className={`text-sm sm:text-[15px] font-black truncate leading-snug ${
+                          <div className="min-w-0 pr-2">
+                            <div className={`text-base font-black truncate leading-snug tracking-tight transition-colors ${
                               isLightMode
-                                ? 'text-slate-900 group-hover:text-amber-800'
+                                ? 'text-slate-950 group-hover:text-amber-800'
                                 : 'text-white group-hover:text-amber-300'
                             }`}>
                               {item.name}
                             </div>
-                            <div className={`text-xs mt-0.5 leading-normal line-clamp-1 font-medium ${
-                              isLightMode ? 'text-slate-600' : 'text-slate-400'
+                            <div className={`text-xs sm:text-sm font-semibold mt-0.5 leading-relaxed line-clamp-2 ${
+                              isLightMode ? 'text-slate-700' : 'text-slate-300'
                             }`}>
                               {item.desc}
                             </div>
                           </div>
                         </div>
-                        <div className={`text-xs font-mono font-black ml-3 shrink-0 px-2.5 py-1 rounded-xl border ${
-                          isLightMode
-                            ? 'bg-amber-50 text-amber-800 border-amber-200/80'
-                            : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
-                        }`}>
-                          {item.count.toLocaleString()}
+                        <div className="flex items-center gap-2 shrink-0 ml-2">
+                          <div className={`text-xs sm:text-sm font-mono font-black px-3 py-1.5 rounded-xl border shadow-2xs ${
+                            isLightMode
+                              ? 'bg-amber-50 text-amber-900 border-amber-200/90'
+                              : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                          }`}>
+                            {item.count.toLocaleString()}
+                          </div>
+                          <ChevronRight className={`w-4 h-4 transition-transform group-hover:translate-x-1 ${
+                            isLightMode ? 'text-amber-700' : 'text-amber-400'
+                          }`} />
                         </div>
                       </div>
                     ))}
@@ -775,7 +795,7 @@ export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOle
         </div>
 
         {/* Openings List */}
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           {filteredOpenings.map(op => (
             <div
               key={op.id}
@@ -785,43 +805,57 @@ export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOle
                 const subset = getPuzzlesByOpening(op.name);
                 startTrainerWithTheme(op.name, subset);
               }}
-              className={`flex items-center justify-between p-3.5 sm:p-4 rounded-2xl cursor-pointer transition-all duration-150 group border active:scale-[0.99] shadow-xs hover:shadow-md ${
+              className={`flex items-center justify-between p-4 rounded-2xl cursor-pointer transition-all duration-150 group border active:scale-[0.99] shadow-xs hover:shadow-md ${
                 isLightMode
                   ? 'bg-white border-slate-200/90 hover:border-amber-400 hover:bg-amber-50/40 text-slate-900'
                   : 'bg-slate-900/90 border-slate-800 hover:border-amber-500/50 hover:bg-slate-850 text-white'
               }`}
             >
               <div className="flex items-center gap-3.5 min-w-0">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-base shrink-0 border shadow-xs ${
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-lg shrink-0 border shadow-2xs ${
                   isLightMode
-                    ? 'bg-gradient-to-br from-amber-100 to-amber-200/60 border-amber-300/80 text-amber-900 group-hover:scale-105 transition-transform'
-                    : 'bg-gradient-to-br from-amber-500/15 to-amber-600/10 border-amber-500/30 text-amber-400 group-hover:scale-105 transition-transform'
+                    ? 'bg-gradient-to-br from-amber-100 to-amber-200/70 border-amber-300/80 text-amber-900 group-hover:scale-105 transition-transform'
+                    : 'bg-gradient-to-br from-amber-500/20 to-amber-600/10 border-amber-500/30 text-amber-400 group-hover:scale-105 transition-transform'
                 }`}>
                   📖
                 </div>
-                <div className="min-w-0">
-                  <div className={`text-sm sm:text-base font-black truncate transition-colors leading-snug tracking-tight ${
-                    isLightMode
-                      ? 'text-slate-900 group-hover:text-amber-800'
-                      : 'text-white group-hover:text-amber-300'
-                  }`}>
-                    {op.name}
-                  </div>
-                  {op.code && (
-                    <div className="mt-1 flex items-center gap-1.5">
+                <div className="min-w-0 pr-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`text-base sm:text-lg font-black truncate transition-colors leading-snug tracking-tight ${
+                      isLightMode
+                        ? 'text-slate-950 group-hover:text-amber-800'
+                        : 'text-white group-hover:text-amber-300'
+                    }`}>
+                      {op.name}
+                    </span>
+                    {op.code && (
                       <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-md border ${
                         isLightMode
                           ? 'bg-slate-100 text-slate-700 border-slate-250'
-                          : 'bg-slate-950 text-slate-400 border-slate-800'
+                          : 'bg-slate-950 text-slate-300 border-slate-800'
                       }`}>
-                        ECO {op.code}
+                        {op.code}
                       </span>
+                    )}
+                  </div>
+                  {op.moves && (
+                    <div className={`text-xs font-mono font-bold mt-0.5 ${
+                      isLightMode ? 'text-amber-800' : 'text-amber-400/90'
+                    }`}>
+                      {op.moves}
+                    </div>
+                  )}
+                  {op.desc && (
+                    <div className={`text-xs sm:text-sm font-semibold mt-0.5 leading-relaxed line-clamp-2 ${
+                      isLightMode ? 'text-slate-700' : 'text-slate-300'
+                    }`}>
+                      {op.desc}
                     </div>
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2.5 shrink-0">
-                <span className={`text-xs font-mono font-black px-3 py-1.5 rounded-xl border shadow-2xs ${
+              <div className="flex items-center gap-2 shrink-0 ml-2">
+                <span className={`text-xs sm:text-sm font-mono font-black px-3 py-1.5 rounded-xl border shadow-2xs ${
                   isLightMode
                     ? 'bg-amber-50 text-amber-900 border-amber-200/90'
                     : 'bg-amber-500/15 text-amber-300 border-amber-500/30'

@@ -128,25 +128,25 @@ export const THEME_CATEGORIES = [
 ];
 
 export const PUZZLE_OPENINGS = [
-  { id: 'sicilian', name: 'Sicilian Defense', count: 207482, code: 'B20-B99' },
-  { id: 'french', name: 'French Defense', count: 88624, code: 'C00-C19' },
-  { id: 'queens-pawn', name: "Queen's Pawn Game", count: 80706, code: 'D00-D05' },
-  { id: 'italian', name: 'Italian Game', count: 76239, code: 'C50-C54' },
-  { id: 'caro-kann', name: 'Caro-Kann Defense', count: 74938, code: 'B10-B19' },
-  { id: 'scandinavian', name: 'Scandinavian Defense', count: 58696, code: 'B01' },
-  { id: 'queens-gambit-declined', name: "Queen's Gambit Declined", count: 50340, code: 'D30-D69' },
-  { id: 'english', name: 'English Opening', count: 42470, code: 'A10-A39' },
-  { id: 'ruy-lopez', name: 'Ruy Lopez', count: 40821, code: 'C60-C99' },
-  { id: 'philidor', name: 'Philidor Defense', count: 25554, code: 'C41' },
-  { id: 'kings-gambit-accepted', name: "King's Gambit Accepted", count: 20746, code: 'C33-C39' },
-  { id: 'four-knights', name: 'Four Knights Game', count: 20172, code: 'C47-C49' },
-  { id: 'zukertort', name: 'Zukertort Opening', count: 20162, code: 'A04-A09' },
-  { id: 'modern', name: 'Modern Defense', count: 19644, code: 'B06' },
-  { id: 'pirc', name: 'Pirc Defense', count: 19131, code: 'B07-B09' },
-  { id: 'vienna', name: 'Vienna Game', count: 18709, code: 'C25-C29' },
-  { id: 'bishops-opening', name: "Bishop's Opening", count: 18482, code: 'C23-C24' },
-  { id: 'slav', name: 'Slav Defense', count: 17854, code: 'D10-D19' },
-  { id: 'lemming', name: 'Lemming Defense', count: 2104, code: 'B00' }
+  { id: 'sicilian', name: 'Sicilian Defense', count: 207482, code: 'B20-B99', moves: '1. e4 c5', desc: 'Aggressive asymmetrical counterplay against 1.e4' },
+  { id: 'french', name: 'French Defense', count: 88624, code: 'C00-C19', moves: '1. e4 e6', desc: 'Rock-solid pawn structure and queenside breakthrough' },
+  { id: 'queens-pawn', name: "Queen's Pawn Game", count: 80706, code: 'D00-D05', moves: '1. d4 d5', desc: 'Classical center battle controlling d4 and e5' },
+  { id: 'italian', name: 'Italian Game', count: 76239, code: 'C50-C54', moves: '1. e4 e5 2. Nf3 Nc6 3. Bc4', desc: 'Tactical clash targeting the vulnerable f7 square' },
+  { id: 'caro-kann', name: 'Caro-Kann Defense', count: 74938, code: 'B10-B19', moves: '1. e4 c6', desc: 'Resilient pawn structure with free light-square bishop' },
+  { id: 'scandinavian', name: 'Scandinavian Defense', count: 58696, code: 'B01', moves: '1. e4 d5', desc: 'Direct center challenge on move 1' },
+  { id: 'queens-gambit-declined', name: "Queen's Gambit Declined", count: 50340, code: 'D30-D69', moves: '1. d4 d5 2. c4 e6', desc: 'World championship cornerstone of positional play' },
+  { id: 'english', name: 'English Opening', count: 42470, code: 'A10-A39', moves: '1. c4', desc: 'Dynamic flank strategy controlling the d5 outpost' },
+  { id: 'ruy-lopez', name: 'Ruy Lopez', count: 40821, code: 'C60-C99', moves: '1. e4 e5 2. Nf3 Nc6 3. Bb5', desc: 'The Spanish Game — deep strategic masterpiece' },
+  { id: 'philidor', name: 'Philidor Defense', count: 25554, code: 'C41', moves: '1. e4 e5 2. Nf3 d6', desc: 'Solid defensive structure guarding the center' },
+  { id: 'kings-gambit-accepted', name: "King's Gambit Accepted", count: 20746, code: 'C33-C39', moves: '1. e4 e5 2. f4 exf4', desc: 'Romantic attacking chess with rapid piece activity' },
+  { id: 'four-knights', name: 'Four Knights Game', count: 20172, code: 'C47-C49', moves: '1. e4 e5 2. Nf3 Nc6 3. Nc3 Nf6', desc: 'Harmonious opening focusing on piece development' },
+  { id: 'zukertort', name: 'Zukertort Opening', count: 20162, code: 'A04-A09', moves: '1. Nf3 d5', desc: 'Hypermodern flank system controlling the center' },
+  { id: 'modern', name: 'Modern Defense', count: 19644, code: 'B06', moves: '1. e4 g6', desc: 'Kingside fianchetto dynamic counterattacking setup' },
+  { id: 'pirc', name: 'Pirc Defense', count: 19131, code: 'B07-B09', moves: '1. e4 d6 2. d4 Nf6', desc: 'Flexible counterpunching system against white center' },
+  { id: 'vienna', name: 'Vienna Game', count: 18709, code: 'C25-C29', moves: '1. e4 e5 2. Nc3', desc: 'Aggressive opening preparing a powerful f2-f4 push' },
+  { id: 'bishops-opening', name: "Bishop's Opening", count: 18482, code: 'C23-C24', moves: '1. e4 e5 2. Bc4', desc: 'Rapid development targeting f7 before knight moves' },
+  { id: 'slav', name: 'Slav Defense', count: 17854, code: 'D10-D19', moves: '1. d4 d5 2. c4 c6', desc: 'Ultra-sturdy defense with active piece play' },
+  { id: 'lemming', name: 'Lemming Defense', count: 2104, code: 'B00', moves: '1. e4 Na6', desc: 'Surprise eccentric flank defense with trick potential' }
 ];
 
 export const ALL_PUZZLES = [
