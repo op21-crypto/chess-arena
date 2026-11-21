@@ -259,29 +259,15 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         @JavascriptInterface
         public boolean openGoogleAccountPicker() {
             try {
-                Intent intent;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    intent = AccountManager.newChooseAccountIntent(
-                            null,
-                            null,
-                            new String[]{"com.google"},
-                            null,
-                            null,
-                            null,
-                            null
-                    );
-                } else {
-                    intent = AccountManager.newChooseAccountIntent(
-                            null,
-                            null,
-                            new String[]{"com.google"},
-                            false,
-                            null,
-                            null,
-                            null,
-                            null
-                    );
-                }
+                Intent intent = AccountManager.newChooseAccountIntent(
+                        null,
+                        null,
+                        new String[]{"com.google"},
+                        null,
+                        null,
+                        null,
+                        null
+                );
                 startActivityForResult(intent, RC_CHOOSE_GOOGLE_ACCOUNT);
                 return true;
             } catch (ActivityNotFoundException e) {

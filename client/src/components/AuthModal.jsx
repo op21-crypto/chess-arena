@@ -55,9 +55,12 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, isLight = false }) {
   const [savedEmails, setSavedEmails] = useState(() => {
     try {
       const stored = safeStorage.getItem('chess_arena_saved_emails');
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        const list = JSON.parse(stored);
+        if (Array.isArray(list)) return list.filter(e => typeof e === 'string' && e.includes('@'));
+      }
     } catch {}
-    return ['op21plus@gmail.com'];
+    return [];
   });
 
   // Listen for native Android Google Account picker selection
@@ -238,7 +241,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, isLight = false }) {
       // In mobile WebViews or restricted browsers, popup auth displays an error
       // Seamlessly switch to instant Gmail entry
       setMode('google_input');
-      setError('Please enter your Google / Gmail address to sign in.');
+      setError('');
     } finally {
       setLoading(false);
     }
@@ -458,7 +461,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, isLight = false }) {
                 <label className={`text-xs font-black block mb-1.5 ${
                   isLight ? 'text-slate-900' : 'text-slate-200'
                 }`}>
-                  Your Google / Gmail Address
+                  Your Gmail Address
                 </label>
                 <div className="relative">
                   <input
@@ -556,7 +559,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, isLight = false }) {
                 disabled={loading}
                 className="w-full py-3 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-400 hover:to-amber-600 active:scale-[0.99] disabled:opacity-50 text-white font-black text-sm rounded-xl transition-all shadow-xl shadow-amber-600/30 flex items-center justify-center gap-2 cursor-pointer"
               >
-                <span>{loading ? 'Signing In...' : 'Sign In by Google'}</span>
+                <span>{loading ? 'Signing In...' : 'Sign In by Gmail'}</span>
               </button>
             </form>
           </div>
@@ -564,7 +567,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, isLight = false }) {
           <div className="space-y-4">
             {/* Quick Sign In Buttons */}
             <div className="space-y-2.5">
-              {/* Primary: Sign in by Google */}
+              {/* Primary: Sign in by Gmail */}
               <button
                 type="button"
                 onClick={handleGoogleSignInClick}
@@ -576,7 +579,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, isLight = false }) {
                 }`}
               >
                 <GoogleIcon className="w-4 h-4" />
-                <span>{loading ? 'Connecting...' : 'Sign in by Google'}</span>
+                <span>{loading ? 'Connecting...' : 'Sign in by Gmail'}</span>
               </button>
 
               {/* Secondary: Play as Guest */}
