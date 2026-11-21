@@ -163,6 +163,13 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         };
         statusHandler.postDelayed(statusRunnable, 1300);
 
+        if (splashOverlay != null) {
+            splashOverlay.setOnClickListener(v -> hideSplashScreen());
+        }
+
+        // Automatic smooth splash transition after 2.2 seconds
+        new Handler(Looper.getMainLooper()).postDelayed(this::hideSplashScreen, 2200);
+
         // Fallback safety: if loading takes longer than 7 seconds, offer tap to retry
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             if (!isAppLoaded) {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { Chessboard } from './Chessboard.jsx';
 import { MentorAvatar } from './MentorAvatar.jsx';
@@ -130,11 +130,15 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
 
   const currentPractice = practiceDrills[practiceStepIdx] || practiceDrills[0];
 
-  // Pre-load voices on component mount
+  // Single-Voice Guarantee: Track exactly which step was spoken to prevent redundant overlapping speech
+  const lastSpokenKeyRef = useRef('');
+
+  // Pre-load voices on component mount & cleanly silence on unmount
   useEffect(() => {
     return () => {
       try {
         tts.stop();
+        lastSpokenKeyRef.current = '';
       } catch (e) {}
     };
   }, []);
@@ -149,7 +153,7 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
     safeStorage.setItem('chess_completed_lessons', JSON.stringify([...completedLessons]));
   }, [completedLessons]);
 
-  // Universal Text-To-Speech Narrator for Anime Mentor (Web & APK WebView)
+  // Universal Text-To-Speech Narrator for Anime Mentor (Strict Single Voice)
   const speakText = (text) => {
     if (!text || !voiceEnabled) return;
 
@@ -165,7 +169,7 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
     }
   };
 
-  // Explicit user-triggered voice speaking
+  // Explicit user-triggered voice speaking (replays current step on demand)
   const speakExplicitly = (text) => {
     if (!text) return;
     try {
@@ -174,6 +178,7 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
         safeStorage.setItem('chess_lesson_voice', 'true');
       }
 
+      lastSpokenKeyRef.current = '';
       tts.speak(text, {
         rate: 1.0,
         pitch: 1.05,
@@ -185,21 +190,29 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
     }
   };
 
-  // Automatically speak when advancing steps in Lesson Guide mode
+  // Automatically speak when advancing steps in Lesson Guide mode (guaranteed exactly once per step)
   useEffect(() => {
     if (isLessonStarted && activeMode === 'lesson' && voiceEnabled && currentStep) {
       const textToSpeak = currentStep.speech || currentStep.content || currentLesson.title;
-      speakText(textToSpeak);
+      const stepKey = `lesson_${selectedLessonIdx}_${currentStepIdx}_${textToSpeak}`;
+      if (lastSpokenKeyRef.current !== stepKey) {
+        lastSpokenKeyRef.current = stepKey;
+        speakText(textToSpeak);
+      }
     }
-  }, [isLessonStarted, activeMode, currentStepIdx, selectedLessonIdx, voiceEnabled]);
+  }, [isLessonStarted, activeMode, currentStepIdx, selectedLessonIdx, voiceEnabled, currentStep]);
 
-  // Automatically speak when entering or advancing drills in Practice mode
+  // Automatically speak when entering or advancing drills in Practice mode (guaranteed exactly once per drill)
   useEffect(() => {
     if (isLessonStarted && activeMode === 'practice' && voiceEnabled && currentPractice) {
       const textToSpeak = currentPractice.prompt || "Your turn! Tap the correct square to solve the drill.";
-      speakText(textToSpeak);
+      const practiceKey = `practice_${selectedLessonIdx}_${practiceStepIdx}_${textToSpeak}`;
+      if (lastSpokenKeyRef.current !== practiceKey) {
+        lastSpokenKeyRef.current = practiceKey;
+        speakText(textToSpeak);
+      }
     }
-  }, [isLessonStarted, activeMode, practiceStepIdx, selectedLessonIdx, voiceEnabled]);
+  }, [isLessonStarted, activeMode, practiceStepIdx, selectedLessonIdx, voiceEnabled, currentPractice]);
 
   // Toggle Voice Narration ON/OFF
   const toggleVoice = () => {
@@ -211,6 +224,7 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
 
     if (nextVal) {
       if (isLessonStarted) {
+        lastSpokenKeyRef.current = '';
         const textToSpeak = activeMode === 'lesson'
           ? (currentStep?.speech || currentStep?.content || currentLesson.title)
           : (currentPractice?.prompt || 'Your turn!');
@@ -219,6 +233,7 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
     } else {
       tts.stop();
       setIsSpeaking(false);
+      lastSpokenKeyRef.current = '';
     }
   };
 
@@ -254,10 +269,9 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
   };
 
   const handleNextStep = () => {
-    if (isSpeaking) {
-      tts.stop();
-      setIsSpeaking(false);
-    }
+    tts.stop();
+    setIsSpeaking(false);
+    lastSpokenKeyRef.current = '';
 
     if (currentLesson && currentStepIdx < currentLesson.steps.length - 1) {
       setCurrentStepIdx(prev => prev + 1);
@@ -275,10 +289,9 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
   };
 
   const handlePrevStep = () => {
-    if (isSpeaking) {
-      tts.stop();
-      setIsSpeaking(false);
-    }
+    tts.stop();
+    setIsSpeaking(false);
+    lastSpokenKeyRef.current = '';
 
     if (currentStepIdx > 0) {
       setCurrentStepIdx(prev => prev - 1);
@@ -288,6 +301,9 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
   };
 
   const handleNextPractice = () => {
+    tts.stop();
+    setIsSpeaking(false);
+    lastSpokenKeyRef.current = '';
     setSuccessSquares([]);
     setErrorSquares([]);
     setPracticeFeedback(null);
@@ -305,6 +321,9 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
   };
 
   const handlePrevPractice = () => {
+    tts.stop();
+    setIsSpeaking(false);
+    lastSpokenKeyRef.current = '';
     setSuccessSquares([]);
     setErrorSquares([]);
     setPracticeFeedback(null);
@@ -330,7 +349,10 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
       setPracticeFeedback(`${praise.title} ${praise.text}`);
       sound.playLessonSuccess();
       triggerHaptic('move');
-      if (voiceEnabled) speakText(praise.title);
+      if (voiceEnabled) {
+        lastSpokenKeyRef.current = '';
+        speakText(praise.title);
+      }
 
       setTimeout(() => {
         if (practiceStepIdx < practiceDrills.length - 1) {
@@ -354,7 +376,10 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
       triggerHaptic('move');
       const hintMsg = currentPractice.hint ? `Not quite! ${currentPractice.hint}` : "Not quite, try again!";
       setPracticeFeedback(hintMsg);
-      if (voiceEnabled) speakText(hintMsg);
+      if (voiceEnabled) {
+        lastSpokenKeyRef.current = '';
+        speakText(hintMsg);
+      }
 
       setTimeout(() => {
         setErrorSquares([]);
@@ -368,6 +393,7 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
     if (idx !== -1) {
       tts.stop();
       setIsSpeaking(false);
+      lastSpokenKeyRef.current = '';
       setSelectedLessonIdx(idx);
       setCurrentStepIdx(0);
       setPracticeStepIdx(0);
@@ -447,6 +473,7 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
                 sound.playClick();
                 triggerHaptic('move');
                 tts.stop();
+                lastSpokenKeyRef.current = '';
                 if (onBack) onBack();
               }}
               className={`p-2 rounded-xl border transition-colors shadow-xs active:scale-95 cursor-pointer ${
@@ -965,6 +992,7 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
               triggerHaptic('move');
               tts.stop();
               setIsSpeaking(false);
+              lastSpokenKeyRef.current = '';
               setIsLessonStarted(false);
             }}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border transition-colors shadow-xs active:scale-95 cursor-pointer text-xs font-bold ${
@@ -1015,6 +1043,9 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
             onClick={() => {
               sound.playClick();
               triggerHaptic('move');
+              tts.stop();
+              setIsSpeaking(false);
+              lastSpokenKeyRef.current = '';
               setActiveMode('lesson');
               setSuccessSquares([]);
               setErrorSquares([]);
@@ -1036,6 +1067,9 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
             onClick={() => {
               sound.playClick();
               triggerHaptic('move');
+              tts.stop();
+              setIsSpeaking(false);
+              lastSpokenKeyRef.current = '';
               setActiveMode('practice');
               setSuccessSquares([]);
               setErrorSquares([]);
@@ -1192,7 +1226,14 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
               </button>
             ) : (
               <button
-                onClick={() => setIsLessonStarted(false)}
+                onClick={() => {
+                  sound.playClick();
+                  triggerHaptic('move');
+                  tts.stop();
+                  setIsSpeaking(false);
+                  lastSpokenKeyRef.current = '';
+                  setIsLessonStarted(false);
+                }}
                 className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 rounded-xl text-xs font-black shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
               >
                 Academy Hub &rarr;

@@ -1286,8 +1286,15 @@ export function FriendRoomModal({
     sound.playMove();
     triggerHaptic('move');
 
-    // Bot smart conversational response with authentic human typing delay (2.0s - 2.65s)
-    if (targetId.startsWith('f_') || targetId.startsWith('sug_') || targetId.startsWith('anime_') || chattingFriend.isBot) {
+    // Bot smart conversational response with authentic human typing delay (2.0s - 2.5s)
+    const isSimulatedFriend = targetId.startsWith('f_') ||
+      targetId.startsWith('sug_') ||
+      targetId.startsWith('anime_') ||
+      targetId.startsWith('notif_') ||
+      Boolean(chattingFriend.isBot) ||
+      !chattingFriend.isRegistered;
+
+    if (isSimulatedFriend) {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = null;
@@ -1295,7 +1302,7 @@ export function FriendRoomModal({
 
       setIsBotTyping(true);
       const currentHistory = [...(directMessages[targetId] || []), newMsg];
-      const typingDuration = 2000 + Math.floor(Math.random() * 650); // exactly 2.0s - 2.65s
+      const typingDuration = 2000 + Math.floor(Math.random() * 500); // 2.0s - 2.5s
 
       getSmartFriendReply({
         friend: chattingFriend,
@@ -1304,26 +1311,46 @@ export function FriendRoomModal({
         detectedMinutes: detected
       }).then((replyText) => {
         typingTimeoutRef.current = setTimeout(() => {
-          const replyMsg = {
-            id: `reply_${Date.now()}`,
-            sender: 'them',
-            text: replyText,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          };
-          setDirectMessages(p => ({
-            ...p,
-            [targetId]: [...(p[targetId] || []), replyMsg]
-          }));
-          setIsBotTyping(false);
-          sound.playMove();
-          triggerHaptic('move');
-          typingTimeoutRef.current = null;
+          try {
+            const replyMsg = {
+              id: `reply_${Date.now()}`,
+              sender: 'them',
+              text: replyText || 'Game on! Hit Challenge above and let\'s play! ♟️',
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+            setDirectMessages(p => ({
+              ...p,
+              [targetId]: [...(p[targetId] || []), replyMsg]
+            }));
+            sound.playMove();
+            triggerHaptic('move');
+          } catch (err) {
+            console.error('Chat render error:', err);
+          } finally {
+            setIsBotTyping(false);
+            typingTimeoutRef.current = null;
+          }
         }, typingDuration);
       }).catch((err) => {
         console.warn('Friend reply error:', err);
         typingTimeoutRef.current = setTimeout(() => {
-          setIsBotTyping(false);
-          typingTimeoutRef.current = null;
+          try {
+            const fallbackMsg = {
+              id: `reply_${Date.now()}`,
+              sender: 'them',
+              text: 'Ready when you are! Hit Challenge above and let\'s duel! ⚔️',
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+            setDirectMessages(p => ({
+              ...p,
+              [targetId]: [...(p[targetId] || []), fallbackMsg]
+            }));
+            sound.playMove();
+            triggerHaptic('move');
+          } finally {
+            setIsBotTyping(false);
+            typingTimeoutRef.current = null;
+          }
         }, typingDuration);
       });
     }

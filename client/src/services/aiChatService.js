@@ -8,6 +8,7 @@
 const usedRepliesByFriend = new Map();
 
 function markReplyUsed(friendId, reply) {
+  if (!reply || typeof reply !== 'string') return;
   if (!usedRepliesByFriend.has(friendId)) {
     usedRepliesByFriend.set(friendId, new Set());
   }
@@ -20,47 +21,28 @@ function markReplyUsed(friendId, reply) {
 }
 
 function hasReplyBeenUsed(friendId, reply) {
+  if (!reply || typeof reply !== 'string') return false;
   const set = usedRepliesByFriend.get(friendId);
   return set ? set.has(reply.toLowerCase().trim()) : false;
 }
 
 /**
  * Main AI Chat Reply Generator
- * High-speed, 100% resilient promise that resolves in <800ms so typing duration is strictly controlled.
+ * High-speed, 100% resilient promise that resolves immediately so typing duration is strictly 2.0s - 2.5s.
  */
 export async function getSmartFriendReply({ friend, message, history = [], detectedMinutes }) {
   const userText = (message || '').trim();
   const friendId = friend?.id || friend?.username || 'friend';
 
-  // 1. Quick attempt to local backend serverless API with strict 800ms timeout
+  // Instant local generation guarantees snappy human reply in 2-3s without third-party network stalls
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 800);
-
-    const res = await fetch('/api/chat/friend-reply', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ friend, message: userText, history, detectedMinutes }),
-      signal: controller.signal
-    });
-    clearTimeout(timeout);
-
-    if (res.ok) {
-      const data = await res.json();
-      if (data?.reply && typeof data.reply === 'string' && data.reply.trim().length > 3) {
-        const cleaned = data.reply.replace(/^["']|["']$/g, '').trim();
-        markReplyUsed(friendId, cleaned);
-        return cleaned;
-      }
-    }
+    const localReply = generateDiverseLocalReply({ friend, message: userText, detectedMinutes });
+    markReplyUsed(friendId, localReply);
+    return localReply;
   } catch (err) {
-    // Fast graceful fallback to local generative engine
+    console.warn('Local reply generator notice:', err);
+    return `Ready for battle! Hit Challenge above and let's play! ♟️`;
   }
-
-  // 2. High-Signal, Character-Rich Contextual Generative Engine (Instant, 0ms latency)
-  const localReply = generateDiverseLocalReply({ friend, message: userText, detectedMinutes });
-  markReplyUsed(friendId, localReply);
-  return localReply;
 }
 
 /**
@@ -101,7 +83,7 @@ export function generateDiverseLocalReply({ friend, message, detectedMinutes }) 
   let pool = [];
 
   // ================= 1. EXPLICIT TIME CONTROL / BLITZ REQUEST =================
-  if (detectedMinutes || /\b(3m|5m|10m|blitz|rapid|bullet)\b/i.test(lower)) {
+  if (detectedMinutes || /\b(3m|5m|10m|15m|30m|blitz|rapid|bullet|\d{1,2}\s*(?:m|min|mins|minute|minutes))\b/i.test(lower)) {
     if (isNezuko) {
       pool = [
         `Mmh mmph! ${minutes} minutes blitz?! Tanjiro taught me that speed is everything in battle! 🌸 Hit Challenge above and let's duel!`,
@@ -360,8 +342,11 @@ export function generateDiverseLocalReply({ friend, message, detectedMinutes }) 
   }
 
   // Filter out any reply already used for this friend
-  const unusedPool = pool.filter(r => !hasReplyBeenUsed(friendId, r));
-  const candidatePool = unusedPool.length > 0 ? unusedPool : pool;
+  const unusedPool = (pool || []).filter(r => r && typeof r === 'string' && !hasReplyBeenUsed(friendId, r));
+  const candidatePool = unusedPool.length > 0 ? unusedPool : ((pool && pool.length > 0) ? pool : [
+    `Let's play a ${minutes}m game! Hit the Challenge button above and let's battle! ♟️`
+  ]);
 
-  return candidatePool[Math.floor(Math.random() * candidatePool.length)];
+  const chosen = candidatePool[Math.floor(Math.random() * candidatePool.length)];
+  return chosen || `Ready to play! Click Challenge above and let's battle! ⚔️`;
 }

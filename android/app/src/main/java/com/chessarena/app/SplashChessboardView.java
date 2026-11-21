@@ -138,42 +138,42 @@ public class SplashChessboardView extends View {
         boardBorderPaint.setStyle(Paint.Style.FILL);
 
         lightSquarePaint.setStyle(Paint.Style.FILL);
-        lightSquarePaint.setColor(Color.parseColor("#dee5ed")); // High-contrast slate ice
+        lightSquarePaint.setColor(Color.parseColor("#F8FAFC")); // Crisp tournament porcelain ivory
 
         darkSquarePaint.setStyle(Paint.Style.FILL);
-        darkSquarePaint.setColor(Color.parseColor("#334e68")); // Tournament slate navy
+        darkSquarePaint.setColor(Color.parseColor("#475569")); // High-contrast clean tournament slate
 
         highlightPaint.setStyle(Paint.Style.FILL);
 
         goldAccentPaint.setStyle(Paint.Style.STROKE);
-        goldAccentPaint.setColor(Color.parseColor("#f59e0b"));
-        goldAccentPaint.setStrokeWidth(3f);
+        goldAccentPaint.setColor(Color.parseColor("#F59E0B"));
+        goldAccentPaint.setStrokeWidth(3.5f);
 
         whitePieceFillPaint.setStyle(Paint.Style.FILL);
-        whitePieceFillPaint.setColor(Color.parseColor("#fffdfa")); // Pure ivory
+        whitePieceFillPaint.setColor(Color.parseColor("#FFFFFF")); // Pure brilliant luminous ivory
 
         whitePieceStrokePaint.setStyle(Paint.Style.STROKE);
-        whitePieceStrokePaint.setColor(Color.parseColor("#854d0e")); // Warm gilded gold contour
-        whitePieceStrokePaint.setStrokeWidth(2.2f);
+        whitePieceStrokePaint.setColor(Color.parseColor("#D97706")); // Warm royal amber-gold contour
+        whitePieceStrokePaint.setStrokeWidth(2.5f);
         whitePieceStrokePaint.setStrokeCap(Paint.Cap.ROUND);
         whitePieceStrokePaint.setStrokeJoin(Paint.Join.ROUND);
 
         blackPieceFillPaint.setStyle(Paint.Style.FILL);
-        blackPieceFillPaint.setColor(Color.parseColor("#182234")); // Deep obsidian slate
+        blackPieceFillPaint.setColor(Color.parseColor("#E0F2FE")); // High-contrast radiant celestial ice / light silver-blue
 
         blackPieceStrokePaint.setStyle(Paint.Style.STROKE);
-        blackPieceStrokePaint.setColor(Color.parseColor("#38bdf8")); // Luminous electric cyan contour
-        blackPieceStrokePaint.setStrokeWidth(2.2f);
+        blackPieceStrokePaint.setColor(Color.parseColor("#0284C7")); // Royal cyan-blue contour (no dark black blob)
+        blackPieceStrokePaint.setStrokeWidth(2.5f);
         blackPieceStrokePaint.setStrokeCap(Paint.Cap.ROUND);
         blackPieceStrokePaint.setStrokeJoin(Paint.Join.ROUND);
 
-        coordTextPaint.setColor(Color.parseColor("#64748b"));
+        coordTextPaint.setColor(Color.parseColor("#CBD5E1"));
         coordTextPaint.setTextSize(22f);
         coordTextPaint.setTypeface(Typeface.create(Typeface.MONOSPACE, Typeface.BOLD));
         coordTextPaint.setTextAlign(Paint.Align.CENTER);
 
         shadowPaint.setStyle(Paint.Style.FILL);
-        shadowPaint.setColor(Color.parseColor("#40000000"));
+        shadowPaint.setColor(Color.parseColor("#50000000"));
 
         // Setup smooth pulsing animation
         pulseAnimator = ValueAnimator.ofFloat(0.2f, 0.75f);

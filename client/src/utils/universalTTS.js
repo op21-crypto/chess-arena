@@ -1,13 +1,17 @@
 /**
- * Universal Text-To-Speech (TTS) Synthesizer
+ * Universal Text-To-Speech (TTS) Synthesizer - Single-Voice Guaranteed
  *
  * Supports:
  * 1. Android Native TTS Bridge (`window.AndroidTTS` injected by MainActivity WebView)
  * 2. Browser Web Speech API (`window.speechSynthesis`)
  * 3. High-Quality Web Audio TTS Fallback (Google TTS audio stream via HTML5 Audio)
  *
- * Guaranteed to produce clear voice narration in standard desktop/mobile browsers,
- * Android APK WebViews, and offline/restricted environments.
+ * STRICT SINGLE-VOICE ENFORCEMENT:
+ * - Monotonic speech session ID invalidates all pending callbacks & async operations.
+ * - Deduplication guard prevents rapid double-invocation from component re-renders.
+ * - Cancellation events (e.g. error === 'canceled') never trigger secondary fallbacks.
+ * - Prior audio elements, oscillators, and speech utterances are silenced and torn down
+ *   before any new voice initiates.
  */
 
 class UniversalTTS {
@@ -17,11 +21,16 @@ class UniversalTTS {
     this.onStartCallback = null;
     this.onEndCallback = null;
     this.isSpeaking = false;
+    this.activeEngine = null; // 'native' | 'webspeech' | 'audio' | 'melody' | null
+    this.currentSpeechId = 0;
+    this.lastSpokenText = '';
+    this.lastSpokenTime = 0;
 
     if (typeof window !== 'undefined') {
       // Register global callbacks for Native Android TTS bridge
       window.__nativeTtsOnStart = (id) => {
         this.isSpeaking = true;
+        this.activeEngine = 'native';
         if (typeof this.onStartCallback === 'function') {
           this.onStartCallback(id);
         }
@@ -29,6 +38,7 @@ class UniversalTTS {
 
       window.__nativeTtsOnDone = (id) => {
         this.isSpeaking = false;
+        this.activeEngine = null;
         if (typeof this.onEndCallback === 'function') {
           this.onEndCallback(id);
         }
@@ -36,6 +46,7 @@ class UniversalTTS {
 
       window.__nativeTtsOnError = (id) => {
         this.isSpeaking = false;
+        this.activeEngine = null;
         if (typeof this.onEndCallback === 'function') {
           this.onEndCallback(id);
         }
@@ -54,10 +65,13 @@ class UniversalTTS {
   }
 
   /**
-   * Stop any ongoing speech across all engines (Native, Web Speech, and Audio Stream)
+   * Stop any ongoing speech across ALL engines immediately and silence everything
    */
   stop() {
+    // Invalidate any pending asynchronous events or callbacks
+    this.currentSpeechId++;
     this.isSpeaking = false;
+    this.activeEngine = null;
 
     // 1. Native Android TTS
     if (typeof window !== 'undefined' && window.AndroidTTS && typeof window.AndroidTTS.stop === 'function') {
@@ -72,31 +86,53 @@ class UniversalTTS {
         window.speechSynthesis.cancel();
       } catch (_) {}
     }
+    this.currentUtterance = null;
 
     // 3. Audio stream fallback
     if (this.audioElement) {
       try {
         this.audioElement.pause();
         this.audioElement.currentTime = 0;
+        this.audioElement.src = '';
+        this.audioElement.onplay = null;
+        this.audioElement.onended = null;
+        this.audioElement.onerror = null;
         this.audioElement = null;
       } catch (_) {}
     }
 
     if (typeof this.onEndCallback === 'function') {
-      this.onEndCallback();
+      const endCb = this.onEndCallback;
+      this.onEndCallback = null;
+      this.onStartCallback = null;
+      try { endCb(); } catch (_) {}
+    } else {
+      this.onStartCallback = null;
+      this.onEndCallback = null;
     }
   }
 
   /**
-   * Speak a text string clearly with automatic tiered fallback
+   * Speak a text string clearly with strict single-voice exclusivity
    */
   speak(text, { onStart, onEnd, rate = 1.0, pitch = 1.05, lang = 'en' } = {}) {
     if (!text || typeof text !== 'string') return;
     const cleanText = text.replace(/[*#_~`]/g, '').trim();
     if (!cleanText) return;
 
+    // Deduplication guard: ignore redundant duplicate speech calls fired within 350ms
+    const now = Date.now();
+    if (cleanText === this.lastSpokenText && (now - this.lastSpokenTime < 350)) {
+      return;
+    }
+    this.lastSpokenText = cleanText;
+    this.lastSpokenTime = now;
+
+    // Immediately cancel and stop any prior voice or audio stream
     this.stop();
 
+    // Assign new monotonic speech ID for this invocation
+    const speechId = ++this.currentSpeechId;
     this.onStartCallback = onStart;
     this.onEndCallback = onEnd;
 
@@ -106,6 +142,7 @@ class UniversalTTS {
         const isAvail = typeof window.AndroidTTS.isAvailable === 'function' ? window.AndroidTTS.isAvailable() : true;
         if (isAvail) {
           this.isSpeaking = true;
+          this.activeEngine = 'native';
           if (typeof this.onStartCallback === 'function') this.onStartCallback();
           const nativeSuccess = window.AndroidTTS.speakWithRate(cleanText, rate, pitch);
           if (nativeSuccess !== false) {
@@ -113,13 +150,12 @@ class UniversalTTS {
           }
         }
       } catch (err) {
-        // Fall through to other engines
+        // Fall through to browser engines
       }
     }
 
-    // Engine 2: Browser Web Speech API with watchdog timeout
-    let webSpeechHandled = false;
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    // Engine 2: Browser Web Speech API
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window && typeof window.speechSynthesis.speak === 'function') {
       try {
         window.speechSynthesis.cancel();
         if (window.speechSynthesis.paused) {
@@ -141,60 +177,66 @@ class UniversalTTS {
           if (naturalVoice) utterance.voice = naturalVoice;
         }
 
-        let started = false;
         utterance.onstart = () => {
-          started = true;
+          if (this.currentSpeechId !== speechId) return;
           this.isSpeaking = true;
+          this.activeEngine = 'webspeech';
           if (typeof this.onStartCallback === 'function') this.onStartCallback();
         };
 
         utterance.onend = () => {
+          if (this.currentSpeechId !== speechId) return;
           this.isSpeaking = false;
+          this.activeEngine = null;
+          this.currentUtterance = null;
           if (typeof this.onEndCallback === 'function') this.onEndCallback();
         };
 
-        utterance.onerror = () => {
-          if (!started) {
-            this.fallbackAudioTTS(cleanText, lang);
+        utterance.onerror = (e) => {
+          if (this.currentSpeechId !== speechId) return;
+          // When speech is intentionally canceled or superseded, browser reports 'canceled' or 'interrupted'.
+          // CRITICAL: NEVER trigger fallback audio on intentional cancellation!
+          if (e && (e.error === 'canceled' || e.error === 'interrupted')) {
+            this.isSpeaking = false;
+            this.activeEngine = null;
+            this.currentUtterance = null;
+            return;
           }
+          // Only actual synthesis failure triggers fallback streaming audio
+          this.fallbackAudioTTS(cleanText, lang, speechId);
         };
 
         this.currentUtterance = utterance;
         window.speechSynthesis.speak(utterance);
-        webSpeechHandled = true;
-
-        // Watchdog: If Web Speech doesn't fire onstart within 400ms (common in Android WebView), fallback to Audio
-        setTimeout(() => {
-          if (!started && this.isSpeaking === false && this.currentUtterance === utterance) {
-            try {
-              window.speechSynthesis.cancel();
-            } catch (_) {}
-            this.fallbackAudioTTS(cleanText, lang);
-          }
-        }, 400);
-
         return;
       } catch (e) {
-        // Fall through to audio fallback
+        // Fall through to streaming audio fallback
       }
     }
 
-    // Engine 3: Streaming Audio Fallback (Guaranteed to work in any WebView with network)
-    if (!webSpeechHandled) {
-      this.fallbackAudioTTS(cleanText, lang);
-    }
+    // Engine 3: Streaming Audio Fallback (For environments without Web Speech API)
+    this.fallbackAudioTTS(cleanText, lang, speechId);
   }
 
   /**
-   * High-reliability audio stream fallback
-   * 1. Try server `/api/tts?text=...` (proxy with proper headers, no CORS issues)
-   * 2. Fallback to direct Google TTS URL
-   * 3. Fallback to Web Audio Voice Melody
+   * High-reliability audio stream fallback (Strict Single-Audio Element)
    */
-  fallbackAudioTTS(text, lang = 'en') {
+  fallbackAudioTTS(text, lang = 'en', speechId = this.currentSpeechId) {
+    if (this.currentSpeechId !== speechId) return;
+
     try {
-      this.isSpeaking = true;
-      if (typeof this.onStartCallback === 'function') this.onStartCallback();
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        try { window.speechSynthesis.cancel(); } catch (_) {}
+      }
+
+      if (this.audioElement) {
+        try {
+          this.audioElement.pause();
+          this.audioElement.currentTime = 0;
+          this.audioElement.src = '';
+          this.audioElement = null;
+        } catch (_) {}
+      }
 
       const sliceText = text.slice(0, 240);
       const encoded = encodeURIComponent(sliceText);
@@ -207,51 +249,88 @@ class UniversalTTS {
       const audio = new Audio(primaryUrl);
       this.audioElement = audio;
 
+      audio.onplay = () => {
+        if (this.currentSpeechId !== speechId) {
+          try { audio.pause(); audio.src = ''; } catch (_) {}
+          return;
+        }
+        this.isSpeaking = true;
+        this.activeEngine = 'audio';
+        if (typeof this.onStartCallback === 'function') this.onStartCallback();
+      };
+
       audio.onended = () => {
+        if (this.currentSpeechId !== speechId) return;
         this.isSpeaking = false;
+        this.activeEngine = null;
         this.audioElement = null;
         if (typeof this.onEndCallback === 'function') this.onEndCallback();
       };
 
       const trySecondary = () => {
+        if (this.currentSpeechId !== speechId) return;
         try {
           const fallbackAudio = new Audio(secondaryUrl);
           this.audioElement = fallbackAudio;
+
+          fallbackAudio.onplay = () => {
+            if (this.currentSpeechId !== speechId) {
+              try { fallbackAudio.pause(); fallbackAudio.src = ''; } catch (_) {}
+              return;
+            }
+            this.isSpeaking = true;
+            this.activeEngine = 'audio';
+            if (typeof this.onStartCallback === 'function') this.onStartCallback();
+          };
+
           fallbackAudio.onended = () => {
+            if (this.currentSpeechId !== speechId) return;
             this.isSpeaking = false;
+            this.activeEngine = null;
             this.audioElement = null;
             if (typeof this.onEndCallback === 'function') this.onEndCallback();
           };
+
           fallbackAudio.onerror = () => {
-            this.playAcousticVoiceMelody();
+            if (this.currentSpeechId !== speechId) return;
+            this.playAcousticVoiceMelody(speechId);
           };
+
           fallbackAudio.play().catch(() => {
-            this.playAcousticVoiceMelody();
+            if (this.currentSpeechId !== speechId) return;
+            this.playAcousticVoiceMelody(speechId);
           });
         } catch (_) {
-          this.playAcousticVoiceMelody();
+          this.playAcousticVoiceMelody(speechId);
         }
       };
 
       audio.onerror = trySecondary;
       audio.play().catch(trySecondary);
     } catch (_) {
-      this.playAcousticVoiceMelody();
+      this.playAcousticVoiceMelody(speechId);
     }
   }
 
   /**
    * Offline Melodic Sensei Voice Chatter (Web Audio API)
-   * Plays a pleasant, animated speech chatter sequence when all voice engines are unreachable.
    */
-  playAcousticVoiceMelody() {
+  playAcousticVoiceMelody(speechId = this.currentSpeechId) {
+    if (this.currentSpeechId !== speechId) return;
+
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtx) {
         this.isSpeaking = false;
+        this.activeEngine = null;
         if (typeof this.onEndCallback === 'function') this.onEndCallback();
         return;
       }
+
+      this.isSpeaking = true;
+      this.activeEngine = 'melody';
+      if (typeof this.onStartCallback === 'function') this.onStartCallback();
+
       const ctx = new AudioCtx();
       const now = ctx.currentTime;
       const notes = [440, 523.25, 659.25, 587.33, 523.25];
@@ -269,11 +348,14 @@ class UniversalTTS {
         osc.stop(t + 0.12);
       });
       setTimeout(() => {
+        if (this.currentSpeechId !== speechId) return;
         this.isSpeaking = false;
+        this.activeEngine = null;
         if (typeof this.onEndCallback === 'function') this.onEndCallback();
       }, notes.length * 80 + 120);
     } catch (_) {
       this.isSpeaking = false;
+      this.activeEngine = null;
       if (typeof this.onEndCallback === 'function') this.onEndCallback();
     }
   }
