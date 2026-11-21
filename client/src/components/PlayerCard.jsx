@@ -81,6 +81,9 @@ export function PlayerCard({
                     ? (isLight ? 'border-amber-400' : 'border-slate-300')
                     : (isLight ? 'border-slate-400' : 'border-slate-700'))
             }`}
+            onError={(e) => {
+              e.currentTarget.src = 'https://api.dicebear.com/7.x/adventurer/svg?seed=LuffyGear5&radius=50';
+            }}
           />
           {/* Side badge indicator */}
           <span className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border flex items-center justify-center text-[10px] font-bold ${

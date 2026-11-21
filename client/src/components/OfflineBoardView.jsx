@@ -98,9 +98,9 @@ export function OfflineBoardView({ onBack, isLight = false }) {
   const [showRestartConfirm, setShowRestartConfirm] = useState(false);
   const [showGameOverModal, setShowGameOverModal] = useState(false);
 
-  // Offline Settings State: Default to Greenwich tournament board
+  // Offline Settings State: Default randomly to Gold or Emerald
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
-  const [themeId, setThemeId] = useState(() => 'greenwich');
+  const [themeId, setThemeId] = useState(() => (Math.random() < 0.5 ? 'gold' : 'emerald'));
   const [viewMode, setViewMode] = useState('face-to-face'); // 'face-to-face' | 'auto-flip' | '2d'
   const [playAs, setPlayAs] = useState('by_turns'); // 'white' | 'black' | 'by_turns'
   const [soundEnabled, setSoundEnabled] = useState(true);

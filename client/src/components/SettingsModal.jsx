@@ -24,7 +24,7 @@ export function SettingsModal({
 
   if (!isOpen && !isEmbedded) return null;
 
-  const currentBoard = BOARD_THEMES[settings.boardTheme] || BOARD_THEMES.greenwich || BOARD_THEMES.cappuccino;
+  const currentBoard = BOARD_THEMES[settings.boardTheme] || BOARD_THEMES.gold || BOARD_THEMES.emerald;
   const currentPiece = PIECE_THEMES[settings.pieceTheme] || PIECE_THEMES.alexander;
   const currentPalette = PIECE_COLOR_PALETTES[settings.pieceColorPalette || 'classic'];
   const currentTrack = TRACK_LIST[settings.musicTrackIndex % TRACK_LIST.length];

@@ -41,6 +41,7 @@ import { getLocalAIMove, getAIMoveAsync, getCapturedPieces } from './utils/aiEng
 import { calculateUserRanking } from './data/leaderboardData.js';
 import { calculateEloDelta, getFormatFromTimeControl } from './utils/elo.js';
 import { getStreakInfo } from './utils/streak.js';
+import { getRandomAnimeAvatar, FAMOUS_AVATARS } from './data/avatarData.js';
 
 const DEFAULT_SETTINGS = {
   appTheme: 'system', // Defaults dynamically to device / phone system mode
@@ -55,7 +56,7 @@ const DEFAULT_SETTINGS = {
   vibrations: true,
   voiceCommentary: false,
   voiceCommentaryOnlyOpponent: true,
-  boardTheme: 'greenwich',
+  boardTheme: (typeof Math !== 'undefined' && Math.random() < 0.5) ? 'gold' : 'emerald',
   pieceTheme: 'alexander',
   showLegalMoves: true,
   highlightLastMove: true,
@@ -112,11 +113,11 @@ export default function App() {
       const saved = safeStorage.getItem('chess_arena_settings');
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Ensure default board theme is Greenwich tournament board (never black AMOLED)
-        const greenwichMigrated = safeStorage.getItem('chess_arena_greenwich_board_v1');
-        if (!greenwichMigrated || parsed.boardTheme === 'amoled') {
-          safeStorage.setItem('chess_arena_greenwich_board_v1', 'true');
-          parsed.boardTheme = 'greenwich';
+        // Ensure default board theme is randomly selected between Gold and Emerald
+        const goldEmeraldMigrated = safeStorage.getItem('chess_arena_gold_emerald_default_v2');
+        if (!goldEmeraldMigrated || parsed.boardTheme === 'amoled' || parsed.boardTheme === 'greenwich') {
+          safeStorage.setItem('chess_arena_gold_emerald_default_v2', 'true');
+          parsed.boardTheme = Math.random() < 0.5 ? 'gold' : 'emerald';
         }
         const themeMigrated = safeStorage.getItem('chess_arena_system_theme_default_v1');
         if (!themeMigrated) {
@@ -139,7 +140,7 @@ export default function App() {
         safeStorage.setItem('chess_arena_system_theme_default_v1', 'true');
       }
     } catch (e) {}
-    return { ...DEFAULT_SETTINGS, boardTheme: 'greenwich', appTheme: 'system', musicEnabled: true };
+    return { ...DEFAULT_SETTINGS, boardTheme: Math.random() < 0.5 ? 'gold' : 'emerald', appTheme: 'system', musicEnabled: true };
   });
 
   const handleUpdateSettings = (newSettings) => {
@@ -155,7 +156,16 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const saved = safeStorage.getItem('chess_arena_user');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed) {
+          if (!parsed.avatar || parsed.avatar.includes('seed=Guest_') || parsed.avatar.includes('seed=Player') || parsed.avatar.includes('bottts')) {
+            parsed.avatar = getRandomAnimeAvatar();
+            safeStorage.setItem('chess_arena_user', JSON.stringify(parsed));
+          }
+          return parsed;
+        }
+      }
     } catch (e) {}
     return null;
   });
@@ -187,6 +197,11 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && parsed.id) {
+          // If avatar is missing, blank, bottts, or old generic guest seed, give a nice random anime avatar
+          if (!parsed.avatar || parsed.avatar.includes('seed=Guest_') || parsed.avatar.includes('seed=Player') || parsed.avatar.includes('bottts')) {
+            parsed.avatar = getRandomAnimeAvatar();
+            safeStorage.setItem('chess_arena_user', JSON.stringify(parsed));
+          }
           setCurrentUser(parsed);
           return parsed;
         }
@@ -207,7 +222,7 @@ export default function App() {
       country: 'IN',
       countryName: 'India',
       countryFlag: '🇮🇳',
-      avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=Guest_${guestNum}&radius=50`
+      avatar: getRandomAnimeAvatar()
     };
     setCurrentUser(guest);
     safeStorage.setItem('chess_arena_user', JSON.stringify(guest));
@@ -219,6 +234,7 @@ export default function App() {
   const [showMatchmakingModal, setShowMatchmakingModal] = useState(false);
   const [isSearchingMatch, setIsSearchingMatch] = useState(false);
   const [showFriendRoomModal, setShowFriendRoomModal] = useState(false);
+  const [friendRoomTab, setFriendRoomTab] = useState('friends');
   const [createdRoomInfo, setCreatedRoomInfo] = useState(null);
   const [showAIModal, setShowAIModal] = useState(false);
   const [analysisGame, setAnalysisGame] = useState(null);
@@ -1481,9 +1497,15 @@ export default function App() {
             })}
           </nav>
 
-          {/* Right Header Tools */}
-          <div className="flex items-center gap-1.5 md:gap-2">
-            {/* Ambient Background Music Toggle */}
+          {/* Right Header Tools - Exactly 5 ordered options as requested:
+              1st: Music control (on/off)
+              2nd: Day / Night mode toggle
+              3rd: Friends option 👥
+              4th: Notifications
+              5th: Top-right corner profile pic
+          */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* 1st Option: Ambient Music Toggle ON/OFF */}
             <button
               onClick={() => {
                 const nextVal = !settings.musicEnabled;
@@ -1494,26 +1516,71 @@ export default function App() {
                   musicEngine.stop();
                 }
               }}
-              className={`p-2 rounded-xl border transition-all ${
+              className={`p-2 rounded-xl border transition-all active:scale-95 cursor-pointer ${
                 settings.musicEnabled
                   ? 'bg-amber-500/20 text-amber-500 border-amber-500/50 shadow-md shadow-amber-500/10 animate-pulse'
                   : isLight
                   ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900'
                   : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
               }`}
-              title={settings.musicEnabled ? `Playing: ${musicEngine.getCurrentTrack().name}` : 'Muted Background Music'}
+              title={settings.musicEnabled ? `Music ON: ${musicEngine.getCurrentTrack().name}` : 'Music OFF (Muted)'}
+              aria-label="Toggle Background Music"
             >
               <Music className="w-4 h-4" />
             </button>
 
-            {/* Notifications Bell Trigger (Replaces volume button) */}
+            {/* 2nd Option: Day / Night Theme One-Click Toggle */}
+            <button
+              onClick={() => {
+                sound.playClick();
+                triggerHaptic('move');
+                const nextTheme = isLight ? 'dark' : 'light';
+                handleUpdateSettings({ ...settings, appTheme: nextTheme });
+              }}
+              className={`p-2 rounded-xl border transition-all active:scale-95 cursor-pointer ${
+                isLight
+                  ? 'bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-800 shadow-sm'
+                  : 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-amber-400 hover:text-amber-300 shadow-md'
+              }`}
+              title={isLight ? 'Switch to Night Mode (Dark)' : 'Switch to Day Mode (Light)'}
+              aria-label="Toggle Day / Night Mode"
+            >
+              {isLight ? (
+                <Moon className="w-4 h-4 text-indigo-600 transition-transform hover:-rotate-12" />
+              ) : (
+                <Sun className="w-4 h-4 text-amber-400 transition-transform hover:rotate-45" />
+              )}
+            </button>
+
+            {/* 3rd Option: Friends Option 👥 (Opens Play with Friends Arena) */}
+            <button
+              onClick={() => {
+                sound.playClick();
+                triggerHaptic('move');
+                setFriendRoomTab('friends');
+                setShowFriendRoomModal(true);
+              }}
+              className={`p-2 rounded-xl border transition-all active:scale-95 cursor-pointer ${
+                showFriendRoomModal && friendRoomTab === 'friends'
+                  ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/20'
+                  : isLight
+                  ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-amber-600'
+                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-amber-400'
+              }`}
+              title="Friends Arena • View Friends, Search & Play"
+              aria-label="Friends Option"
+            >
+              <Users className="w-4 h-4" />
+            </button>
+
+            {/* 4th Option: Notifications Bell */}
             <button
               onClick={() => {
                 sound.playClick();
                 triggerHaptic('move');
                 setShowNotifications(prev => !prev);
               }}
-              className={`p-2 rounded-xl border transition-all relative cursor-pointer ${
+              className={`p-2 rounded-xl border transition-all relative cursor-pointer active:scale-95 ${
                 showNotifications
                   ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/20'
                   : isLight
@@ -1521,6 +1588,7 @@ export default function App() {
                   : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-amber-400'
               }`}
               title="Notifications & Game Challenges"
+              aria-label="Notifications"
             >
               <Bell className="w-4 h-4" />
               {notifications.length > 0 && (
@@ -1530,133 +1598,40 @@ export default function App() {
               )}
             </button>
 
-            {/* Global Settings Trigger */}
+            {/* 5th Option: Top-Right Corner Profile Pic (Random Anime Avatar / Selected Avatar) */}
             <button
               onClick={() => {
                 sound.playClick();
                 triggerHaptic('move');
-                setShowSettingsModal(true);
+                setActiveTab('profile');
               }}
-              className={`p-2 rounded-xl border transition-colors ${
-                showSettingsModal
-                  ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/20'
+              className={`relative p-0.5 rounded-full border-2 transition-all active:scale-95 cursor-pointer hover:scale-105 ${
+                activeTab === 'profile'
+                  ? 'border-amber-400 ring-2 ring-amber-400/40 shadow-lg shadow-amber-500/20'
                   : isLight
-                  ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-amber-600'
-                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-amber-400'
+                  ? 'border-amber-500 hover:border-amber-600 shadow-sm'
+                  : 'border-amber-400/80 hover:border-amber-400 shadow-amber-500/10'
               }`}
-              title="Application Settings"
+              title={`Profile: ${currentUser?.username || 'Player'}`}
+              aria-label="View Profile"
             >
-              <Settings className="w-4 h-4" />
+              <img
+                src={currentUser?.avatar || getRandomAnimeAvatar()}
+                alt={currentUser?.username || 'Player'}
+                className="w-8 h-8 rounded-full object-cover bg-amber-500/20 shadow-xs"
+                onError={(e) => {
+                  e.currentTarget.src = FAMOUS_AVATARS[0].url;
+                }}
+              />
+              {(currentUser?.role === 'admin' || currentUser?.email?.toLowerCase().trim() === 'op21plus@gmail.com') && (
+                <span
+                  className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-500 border border-slate-950 rounded-full flex items-center justify-center text-[8px] shadow-sm leading-none"
+                  title="Arena Admin"
+                >
+                  👑
+                </span>
+              )}
             </button>
-
-            {/* Sign In / Profile Header Controls */}
-            {currentUser ? (
-              <div className="flex items-center gap-1.5 md:gap-2">
-                {(currentUser.role === 'admin' || currentUser.email?.toLowerCase().trim() === 'op21plus@gmail.com') && (
-                  <button
-                    onClick={() => setActiveTab('admin')}
-                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold border transition-all ${
-                      activeTab === 'admin'
-                        ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/20'
-                        : 'bg-amber-500/15 border-amber-500/30 text-amber-300 hover:bg-amber-500/25'
-                    }`}
-                    title="Open Administrator Command Center"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                    <span className="hidden sm:inline">Admin</span>
-                  </button>
-                )}
-
-                {/* Day / Night Theme One-Click Toggle (Directly to the left of Profile Avatar) */}
-                <button
-                  onClick={() => {
-                    sound.playClick();
-                    triggerHaptic('move');
-                    const nextTheme = isLight ? 'dark' : 'light';
-                    handleUpdateSettings({ ...settings, appTheme: nextTheme });
-                  }}
-                  className={`p-2 rounded-xl border transition-all active:scale-95 cursor-pointer ${
-                    isLight
-                      ? 'bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-800 shadow-sm'
-                      : 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-amber-400 hover:text-amber-300 shadow-md'
-                  }`}
-                  title={isLight ? 'Switch to Night Mode (Dark)' : 'Switch to Day Mode (Light)'}
-                  aria-label="Toggle Day / Night Mode"
-                >
-                  {isLight ? (
-                    <Moon className="w-4 h-4 text-indigo-600 transition-transform hover:-rotate-12" />
-                  ) : (
-                    <Sun className="w-4 h-4 text-amber-400 transition-transform hover:rotate-45" />
-                  )}
-                </button>
-
-                {/* Profile Avatar Button (ONLY Avatar Pic - No username in top corner) */}
-                <button
-                  onClick={() => {
-                    sound.playClick();
-                    triggerHaptic('move');
-                    setActiveTab('profile');
-                  }}
-                  className={`relative p-0.5 rounded-full border-2 transition-all active:scale-95 cursor-pointer hover:scale-105 ${
-                    activeTab === 'profile'
-                      ? 'border-amber-400 ring-2 ring-amber-400/40 shadow-lg shadow-amber-500/20'
-                      : isLight
-                      ? 'border-amber-500 hover:border-amber-600 shadow-sm'
-                      : 'border-amber-400/80 hover:border-amber-400 shadow-amber-500/10'
-                  }`}
-                  title={`Profile: ${currentUser.username}`}
-                  aria-label="View Profile"
-                >
-                  <img
-                    src={currentUser.avatar}
-                    alt={currentUser.username}
-                    className="w-8 h-8 rounded-full object-cover bg-slate-950"
-                  />
-                  {(currentUser.role === 'admin' || currentUser.email?.toLowerCase().trim() === 'op21plus@gmail.com') && (
-                    <span
-                      className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-500 border border-slate-950 rounded-full flex items-center justify-center text-[8px] shadow-sm leading-none"
-                      title="Arena Admin"
-                    >
-                      👑
-                    </span>
-                  )}
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 md:gap-2">
-                {/* Day / Night Theme One-Click Toggle for Guests */}
-                <button
-                  onClick={() => {
-                    sound.playClick();
-                    triggerHaptic('move');
-                    const nextTheme = isLight ? 'dark' : 'light';
-                    handleUpdateSettings({ ...settings, appTheme: nextTheme });
-                  }}
-                  className={`p-2 rounded-xl border transition-all active:scale-95 cursor-pointer ${
-                    isLight
-                      ? 'bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-800 shadow-sm'
-                      : 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-amber-400 hover:text-amber-300 shadow-md'
-                  }`}
-                  title={isLight ? 'Switch to Night Mode (Dark)' : 'Switch to Day Mode (Light)'}
-                  aria-label="Toggle Day / Night Mode"
-                >
-                  {isLight ? (
-                    <Moon className="w-4 h-4 text-indigo-600 transition-transform hover:-rotate-12" />
-                  ) : (
-                    <Sun className="w-4 h-4 text-amber-400 transition-transform hover:rotate-45" />
-                  )}
-                </button>
-
-                <button
-                  onClick={() => setShowAuthModal(true)}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 transition-all active:scale-95 cursor-pointer"
-                  title="Sign In with Google / Gmail"
-                >
-                  <LogIn className="w-3.5 h-3.5" />
-                  <span>Sign In</span>
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </header>
@@ -2427,6 +2402,9 @@ export default function App() {
           if (user) {
             const isOp = user.email?.toLowerCase().trim() === 'op21plus@gmail.com';
             user.role = isOp ? 'admin' : (user.role === 'guest' ? 'guest' : 'user');
+            // Change avatar to another fresh random anime picture upon login
+            user.avatar = getRandomAnimeAvatar();
+            safeStorage.setItem('chess_arena_user', JSON.stringify(user));
           }
           setCurrentUser(user);
         }}
@@ -2474,7 +2452,7 @@ export default function App() {
       <FriendRoomModal
         isOpen={showFriendRoomModal}
         isLight={isLight}
-        initialTab="room"
+        initialTab={friendRoomTab}
         onClose={() => {
           setShowFriendRoomModal(false);
           setCreatedRoomInfo(null);

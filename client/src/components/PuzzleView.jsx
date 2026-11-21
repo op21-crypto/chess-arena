@@ -511,9 +511,9 @@ export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOle
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  // Board theme resolution: always default to Greenwich tournament board (sanitize any legacy 'amoled')
+  // Board theme resolution: always default randomly to Gold or Emerald
   const storedBoard = safeStorage.getItem('arena_board_theme');
-  const activeBoardTheme = (storedBoard && storedBoard !== 'amoled') ? storedBoard : 'greenwich';
+  const activeBoardTheme = (storedBoard && storedBoard !== 'amoled' && storedBoard !== 'greenwich') ? storedBoard : (Math.random() < 0.5 ? 'gold' : 'emerald');
 
   // ================= VIEW 1: THEMES DIRECTORY =================
   if (viewState === 'themes') {

@@ -10,7 +10,7 @@ export function Chessboard({
   onSquareClick,
   playerColor = 'w', // 'w' | 'b' | 'spectator'
   flipped = false,
-  boardTheme = 'greenwich',
+  boardTheme = 'gold',
   pieceTheme = 'alexander',
   colorPalette = 'classic',
   inCheck = false,
@@ -69,7 +69,7 @@ export function Chessboard({
     return pieces;
   }, [fen]);
 
-  const theme = BOARD_THEMES[boardTheme] || BOARD_THEMES.greenwich || BOARD_THEMES.emerald;
+  const theme = BOARD_THEMES[boardTheme] || BOARD_THEMES.gold || BOARD_THEMES.emerald;
 
   // Determine board orientation
   const isFlipped = playerColor === 'b' ? !flipped : flipped;
