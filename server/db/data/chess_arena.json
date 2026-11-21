@@ -4177,55 +4177,29 @@
       "country": "IN",
       "countryName": "India",
       "ratings": {
-        "bullet": 2520,
-        "blitz": 2550,
-        "rapid": 2580,
-        "classical": 2600,
-        "puzzle": 2700
+        "bullet": 1200,
+        "blitz": 1200,
+        "rapid": 1200,
+        "classical": 1200,
+        "puzzle": 1200
       },
-      "highestRating": 2600,
+      "highestRating": 1200,
       "stats": {
-        "played": 480,
-        "won": 370,
-        "lost": 65,
-        "drawn": 45,
-        "winStreak": 16,
-        "currentStreak": 6
+        "played": 0,
+        "won": 0,
+        "lost": 0,
+        "drawn": 0,
+        "winStreak": 0,
+        "currentStreak": 0
       },
       "ratingHistory": [
         {
-          "date": "2026-01-01",
-          "rating": 2400,
-          "format": "rapid"
-        },
-        {
-          "date": "2026-02-01",
-          "rating": 2480,
-          "format": "rapid"
-        },
-        {
-          "date": "2026-03-01",
-          "rating": 2530,
-          "format": "rapid"
-        },
-        {
-          "date": "2026-04-01",
-          "rating": 2580,
+          "date": "2026-11-21",
+          "rating": 1200,
           "format": "rapid"
         }
       ],
-      "achievements": [
-        "first_win",
-        "checkmate_pro",
-        "wins_10",
-        "games_100",
-        "streak_master",
-        "tactical_genius",
-        "blitz_master",
-        "rapid_master",
-        "king_badge",
-        "queen_badge"
-      ],
+      "achievements": [],
       "createdAt": "2026-01-01T00:00:00.000Z",
       "isOnline": false,
       "banned": false

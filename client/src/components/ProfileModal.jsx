@@ -31,10 +31,10 @@ export function ProfileModal({ user, isOpen, onClose, onUpdateUser, onNavigateTo
   }, [avatarCategory]);
 
   // Current ranking calculation
-  const userElo = user?.ratings?.rapid || user?.elo || 1078;
+  const userElo = user?.ratings?.rapid || user?.elo || 1200;
   const { rank: userRank, totalPlayers, percentile, countryRank } = useMemo(
-    () => calculateUserRanking(userElo),
-    [userElo]
+    () => calculateUserRanking(userElo, 1042040, user?.country || 'IN'),
+    [userElo, user?.country]
   );
 
   if (!isOpen || !user) return null;
@@ -279,10 +279,10 @@ export function ProfileModal({ user, isOpen, onClose, onUpdateUser, onNavigateTo
         {/* Ratings Breakdown Grid */}
         <div className="grid grid-cols-4 gap-2 text-center">
           {[
-            { label: 'Bullet', rating: user.ratings?.bullet || 1050 },
-            { label: 'Blitz', rating: user.ratings?.blitz || 1120 },
-            { label: 'Rapid', rating: user.ratings?.rapid || 1078 },
-            { label: 'Classical', rating: user.ratings?.classical || 1190 }
+            { label: 'Bullet', rating: user.ratings?.bullet || 1200 },
+            { label: 'Blitz', rating: user.ratings?.blitz || 1200 },
+            { label: 'Rapid', rating: user.ratings?.rapid || 1200 },
+            { label: 'Classical', rating: user.ratings?.classical || 1200 }
           ].map((item) => (
             <div key={item.label} className="p-2.5 bg-slate-950/60 border border-slate-800 rounded-xl">
               <span className="text-[11px] text-slate-500 uppercase font-semibold block">{item.label}</span>
@@ -295,15 +295,15 @@ export function ProfileModal({ user, isOpen, onClose, onUpdateUser, onNavigateTo
         <div className="grid grid-cols-3 gap-3 p-3.5 bg-slate-950/40 border border-slate-800 rounded-2xl text-center">
           <div>
             <span className="text-xs text-slate-400 block">Matches</span>
-            <span className="text-lg font-bold font-mono text-white">{user.stats?.played || 18}</span>
+            <span className="text-lg font-bold font-mono text-white">{user.stats?.played ?? 0}</span>
           </div>
           <div>
             <span className="text-xs text-slate-400 block">Win Rate</span>
-            <span className="text-lg font-bold font-mono text-emerald-400">{winRate || 68}%</span>
+            <span className="text-lg font-bold font-mono text-emerald-400">{winRate}%</span>
           </div>
           <div>
             <span className="text-xs text-slate-400 block">Best Streak</span>
-            <span className="text-lg font-bold font-mono text-orange-400">{user.stats?.winStreak || 5} 🔥</span>
+            <span className="text-lg font-bold font-mono text-orange-400">{user.stats?.winStreak ?? 0} 🔥</span>
           </div>
         </div>
 

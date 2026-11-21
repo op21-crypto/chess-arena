@@ -182,7 +182,6 @@ export function FriendRoomModal({
   // Custom Room state
   const [roomCode, setRoomCode] = useState('');
   const [selectedMinutes, setSelectedMinutes] = useState(10);
-  const [colorPref, setColorPref] = useState('random');
   const [copied, setCopied] = useState(false);
 
   // Sync to safeStorage
@@ -1220,38 +1219,8 @@ export function FriendRoomModal({
                         </div>
                       </div>
 
-                      {/* Side Preference */}
-                      <div>
-                        <label className={`text-[11px] font-bold block mb-1.5 ${theme.textMuted}`}>Starting Side</label>
-                        <div className="grid grid-cols-3 gap-1.5">
-                          {[
-                            { id: 'random', label: 'Random 🎲' },
-                            { id: 'white', label: 'White ♔' },
-                            { id: 'black', label: 'Black ♚' }
-                          ].map(side => (
-                            <button
-                              key={side.id}
-                              type="button"
-                              onClick={() => {
-                                setColorPref(side.id);
-                                triggerHaptic('move');
-                              }}
-                              className={`py-2 px-1 rounded-xl text-xs font-bold border transition-all text-center cursor-pointer ${
-                                colorPref === side.id
-                                  ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-xs'
-                                  : isLight
-                                  ? 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
-                                  : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
-                              }`}
-                            >
-                              {side.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
                       <button
-                        onClick={() => onCreateRoom({ timeControl: { baseMinutes: selectedMinutes, incrementSeconds: 0 }, colorPreference: colorPref })}
+                        onClick={() => onCreateRoom({ timeControl: { baseMinutes: selectedMinutes, incrementSeconds: 0 }, colorPreference: 'random' })}
                         className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-xs transition-all cursor-pointer active:scale-98"
                       >
                         Generate Room & Link

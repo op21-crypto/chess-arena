@@ -162,7 +162,9 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             avatar: googleUser.avatar,
             country: isOp ? 'IN' : 'US',
             countryName: isOp ? 'India' : 'United States',
-            ratings: { bullet: isOp ? 2520 : 1200, blitz: isOp ? 2550 : 1200, rapid: isOp ? 2580 : 1200, classical: isOp ? 2600 : 1200 }
+            ratings: { bullet: 1200, blitz: 1200, rapid: 1200, classical: 1200 },
+            stats: { played: 0, won: 0, lost: 0, drawn: 0, winStreak: 0, currentStreak: 0 },
+            achievements: []
           }
         };
       }
@@ -220,11 +222,13 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             role: isOp ? 'admin' : 'user',
             provider: 'google',
             ratings: {
-              bullet: isOp ? 2520 : 1200,
-              blitz: isOp ? 2550 : 1200,
-              rapid: isOp ? 2580 : 1200,
-              classical: isOp ? 2600 : 1200
+              bullet: 1200,
+              blitz: 1200,
+              rapid: 1200,
+              classical: 1200
             },
+            stats: { played: 0, won: 0, lost: 0, drawn: 0, winStreak: 0, currentStreak: 0 },
+            achievements: [],
             country: isOp ? 'IN' : 'US',
             countryName: isOp ? 'India' : 'United States',
             avatar: isOp

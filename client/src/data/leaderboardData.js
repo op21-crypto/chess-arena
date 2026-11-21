@@ -1024,15 +1024,11 @@ export function getLeaderboard(region = 'world', format = 'rapid') {
 
 // Exact Mathematical Calculation for User Ranking and Percentile
 // Guarantees rank and percentile are 100% consistent with each other and ELO
-// For ELO 1078 with 1,042,040 players:
-// percentile = 72.8%, rank = 282,985 of 1,042,040!
-export function calculateUserRanking(elo = 1078, totalPlayers = 1042040) {
-  const numericElo = Number(elo) || 1078;
+export function calculateUserRanking(elo = 1200, totalPlayers = 1042040, countryCode = 'IN') {
+  const numericElo = Number(elo) || 1200;
 
   // Calibrated Gaussian CDF model for online chess rating distribution
   // Mean mu = 920, Standard deviation sigma = 260
-  // For elo = 1078: z = (1078 - 920)/260 = 0.60769
-  // CDF(0.60769) = 0.72828 -> 72.8%!
   const z = (numericElo - 920) / 260;
   const t = 1.0 / (1.0 + 0.2316419 * Math.abs(z));
   const d = 0.3989423 * Math.exp(-z * z / 2.0);
@@ -1040,19 +1036,28 @@ export function calculateUserRanking(elo = 1078, totalPlayers = 1042040) {
   if (z < 0) p = 1.0 - p;
 
   // Clamp percentile safely
-  const clampedP = Math.max(0.001, Math.min(0.9999, p));
+  const clampedP = Math.max(0.0001, Math.min(0.9999, p));
   const percentile = (clampedP * 100).toFixed(1);
 
   // Exact mathematical relation: userRank = round(totalPlayers * (1 - p))
-  // For elo = 1078: round(1042040 * (1 - 0.72828)) = 283,138 ≈ 282,985
-  // If elo is exactly 1078, return 282,985 to perfectly match reference screenshot!
-  let rank = Math.max(1, Math.round(totalPlayers * (1 - clampedP)));
-  if (numericElo === 1078) {
-    rank = 282985;
-  }
+  const rank = Math.max(1, Math.round(totalPlayers * (1 - clampedP)));
 
-  // Country rank (approx 5% of global rank for India / top chess nations)
-  const countryRank = Math.max(1, Math.round(rank * 0.0506));
+  // Country factor based on country population/chess community
+  const countryFactors = {
+    IN: 0.052,
+    US: 0.088,
+    RU: 0.065,
+    DE: 0.035,
+    FR: 0.032,
+    ES: 0.030,
+    GB: 0.028,
+    CA: 0.022,
+    BR: 0.025,
+    JP: 0.015,
+    NO: 0.008
+  };
+  const factor = countryFactors[countryCode?.toUpperCase()] || 0.035;
+  const countryRank = Math.max(1, Math.round(rank * factor));
 
   return {
     rank,

@@ -105,65 +105,6 @@ function getCapturedPieces(currentFen) {
   };
 }
 
-// MiniBoard preview for Hub cards
-function MiniBoard({ fen, flipped = false }) {
-  const pieces = React.useMemo(() => {
-    const map = {};
-    if (!fen) return map;
-    const boardPart = fen.split(' ')[0];
-    const rows = boardPart.split('/');
-    const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-    for (let r = 0; r < 8; r++) {
-      const rank = 8 - r;
-      const row = rows[r] || '8';
-      let fIdx = 0;
-      for (const char of row) {
-        if (char >= '1' && char <= '8') {
-          fIdx += parseInt(char, 10);
-        } else {
-          const file = files[fIdx];
-          if (file) {
-            map[`${file}${rank}`] = {
-              type: char.toLowerCase(),
-              color: char === char.toUpperCase() ? 'w' : 'b'
-            };
-          }
-          fIdx++;
-        }
-      }
-    }
-    return map;
-  }, [fen]);
-
-  const ranks = flipped ? [1, 2, 3, 4, 5, 6, 7, 8] : [8, 7, 6, 5, 4, 3, 2, 1];
-  const files = flipped ? ['h', 'g', 'f', 'e', 'd', 'c', 'b', 'a'] : ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-
-  return (
-    <div className="w-20 h-20 sm:w-24 sm:h-24 grid grid-cols-8 grid-rows-8 rounded-lg overflow-hidden border border-slate-300 dark:border-slate-700 shadow-xs shrink-0">
-      {ranks.map((rank, rIdx) =>
-        files.map((file, fIdx) => {
-          const sq = `${file}${rank}`;
-          const isLight = (rIdx + fIdx) % 2 === 0;
-          const piece = pieces[sq];
-          return (
-            <div
-              key={sq}
-              className={`flex items-center justify-center ${
-                isLight ? 'bg-[#dee3e6]' : 'bg-[#8ca2be]'
-              }`}
-            >
-              {piece && (
-                <div className="w-full h-full flex items-center justify-center p-0.5">
-                  <PieceIcon piece={piece.type} color={piece.color} size={10} />
-                </div>
-              )}
-            </div>
-          );
-        })
-      )}
-    </div>
-  );
-}
 
 export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOled = false }) {
   const isLightMode = isLight || (!isOled && typeof document !== 'undefined' && !document.documentElement.classList.contains('dark'));
@@ -1892,59 +1833,40 @@ export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOle
         </div>
       </div>
 
-      {/* 2. Featured: Daily Tactical Challenge (Hero Card) */}
-      <div className={`p-4 rounded-2xl border flex flex-col gap-3 relative overflow-hidden group transition-all ${
+      {/* 2. Featured: Daily Tactical Challenge (Compact & Clean) */}
+      <div className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 relative overflow-hidden transition-all ${
         isLightMode
-          ? 'bg-gradient-to-br from-amber-50/90 via-white to-amber-50/40 border-amber-300/80 shadow-md text-slate-900'
-          : 'bg-gradient-to-br from-amber-500/15 via-slate-900/95 to-slate-950 border-amber-500/40 shadow-xl shadow-amber-950/20 text-white'
+          ? 'bg-gradient-to-r from-amber-50/90 via-white to-amber-50/40 border-amber-300/80 shadow-xs text-slate-900'
+          : 'bg-gradient-to-r from-amber-500/15 via-slate-900/90 to-slate-950 border-amber-500/30 shadow-md text-white'
       }`}>
-        <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
-
-        <div className="flex items-center justify-between relative z-10">
-          <span className={`px-2.5 py-0.5 rounded-full border text-[10px] font-black uppercase tracking-wider flex items-center gap-1 ${
-            isLightMode
-              ? 'bg-amber-100 text-amber-800 border-amber-300'
-              : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-          }`}>
-            <Crown className="w-3 h-3 text-amber-500" />
-            <span>Daily Tactical Challenge</span>
-          </span>
-          <span className={`text-[10px] font-mono font-bold ${isLightMode ? 'text-amber-800' : 'text-amber-400/90'}`}>
-            {dailyPuzzle.rating || 1750} Elo
-          </span>
-        </div>
-
-        <div className="flex items-center gap-3.5 relative z-10">
-          {/* Mini Board Preview */}
-          <div className="relative shrink-0">
-            <div className={`w-16 h-16 rounded-xl overflow-hidden border shadow-md ${isLightMode ? 'border-amber-300' : 'border-amber-400/50'}`}>
-              <MiniBoard fen={dailyPuzzle.fen} flipped={dailyPuzzle.turn === 'b'} />
-            </div>
-            <span className={`absolute -bottom-1.5 inset-x-0 mx-auto text-center px-1.5 py-0.2 rounded-full border font-mono text-[8px] font-black uppercase shadow w-fit ${
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className={`px-2 py-0.5 rounded-full border text-[9px] font-black uppercase tracking-wider flex items-center gap-1 ${
               isLightMode
-                ? 'bg-white text-amber-900 border-amber-400'
-                : 'bg-slate-950 text-amber-400 border-amber-400/60'
+                ? 'bg-amber-100 text-amber-800 border-amber-300'
+                : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
             }`}>
-              {dailyPuzzle.turn === 'b' ? '⚫ Black' : '⚪ White'}
+              <Crown className="w-2.5 h-2.5 text-amber-500" />
+              <span>Daily Challenge</span>
+            </span>
+            <span className={`text-[10px] font-mono font-bold ${isLightMode ? 'text-amber-800' : 'text-amber-400'}`}>
+              {dailyPuzzle.rating || 1490} Elo
             </span>
           </div>
 
-          <div className="min-w-0">
-            <h3 className={`text-sm font-black transition-colors ${
-              isLightMode ? 'text-slate-900 group-hover:text-amber-700' : 'text-white group-hover:text-amber-200'
-            }`}>
-              Puzzle of the Day
-            </h3>
-            <p className={`text-xs mt-0.5 font-medium ${isLightMode ? 'text-slate-600' : 'text-slate-400'}`}>
-              Curated official FIDE endgame & tactical motif
-            </p>
-            <div className={`flex items-center gap-1.5 mt-1 text-[10px] font-bold ${isLightMode ? 'text-emerald-700' : 'text-emerald-400'}`}>
-              <Sparkles className="w-3 h-3" />
-              <span>+15 Rating Points on Solve</span>
-            </div>
-          </div>
+          <h3 className={`text-sm font-black truncate leading-snug ${
+            isLightMode ? 'text-slate-900' : 'text-white'
+          }`}>
+            Puzzle of the Day
+          </h3>
+          <p className={`text-[11px] font-medium truncate mt-0.5 ${
+            isLightMode ? 'text-slate-500' : 'text-slate-400'
+          }`}>
+            {dailyPuzzle.turn === 'b' ? '⚫ Black to move' : '⚪ White to move'} • +15 Rating
+          </p>
         </div>
 
+        {/* Compact, sleek button */}
         <button
           onClick={() => {
             sound.playClick();
@@ -1955,10 +1877,10 @@ export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOle
             loadPuzzle(dailyPuzzle);
             setViewState('trainer');
           }}
-          className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/25 transition-all transform hover:-translate-y-0.5 active:scale-[0.985] flex items-center justify-center gap-2 cursor-pointer relative z-10"
+          className="shrink-0 py-2 px-3.5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black text-xs shadow-md shadow-amber-500/25 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
         >
-          <Swords className="w-4 h-4 fill-slate-950" />
-          <span>Solve Today's Puzzle</span>
+          <Swords className="w-3.5 h-3.5 fill-slate-950" />
+          <span>Solve</span>
         </button>
       </div>
 
@@ -2124,70 +2046,6 @@ export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOle
             </div>
           </div>
         </button>
-      </div>
-
-      {/* 4. Popular Tactical Motifs (Quick Drill Chips) */}
-      <div className="space-y-2.5 pt-1">
-        <div className="flex items-center justify-between px-1">
-          <span className={`text-xs font-black uppercase tracking-wider flex items-center gap-1.5 ${isLightMode ? 'text-slate-600' : 'text-slate-400'}`}>
-            <Trophy className="w-3.5 h-3.5 text-amber-500" />
-            <span>Popular Tactical Motifs</span>
-          </span>
-          <button
-            onClick={() => {
-              sound.playClick();
-              triggerHaptic('move');
-              setViewState('themes');
-            }}
-            className={`text-[11px] font-bold flex items-center gap-1 hover:underline cursor-pointer ${
-              isLightMode ? 'text-amber-700 hover:text-amber-900' : 'text-amber-400 hover:text-amber-300'
-            }`}
-          >
-            <span>View All 60+</span>
-            <ArrowRight className="w-3 h-3" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          {[
-            { name: "Anastasia's mate", theme: "Anastasia's mate", tag: "Mate", icon: "👑", border: "border-rose-400/40 hover:border-rose-500" },
-            { name: "Attraction", theme: "Attraction", tag: "Sacrifice", icon: "💎", border: "border-amber-400/40 hover:border-amber-500" },
-            { name: "Advanced pawn", theme: "Advanced pawn", tag: "Promotion", icon: "👸", border: "border-emerald-400/40 hover:border-emerald-500" },
-            { name: "Discovered attack", theme: "Discovered attack", tag: "Battery", icon: "⚡", border: "border-sky-400/40 hover:border-sky-500" },
-            { name: "Rook endgame", theme: "Rook endgame", tag: "Endgame", icon: "🏰", border: "border-indigo-400/40 hover:border-indigo-500" },
-            { name: "Middlegame", theme: "Middlegame", tag: "Strategy", icon: "🧠", border: "border-purple-400/40 hover:border-purple-500" }
-          ].map(feat => (
-            <button
-              key={feat.name}
-              onClick={() => {
-                sound.playClick();
-                triggerHaptic('move');
-                const subset = getPuzzlesByTheme(feat.theme);
-                startTrainerWithTheme(feat.name, subset);
-              }}
-              className={`p-2.5 rounded-xl border transition-all cursor-pointer group flex items-center justify-between text-left active:scale-[0.98] ${
-                isLightMode
-                  ? `bg-white ${feat.border} hover:bg-slate-50 shadow-xs text-slate-900`
-                  : `bg-slate-900/90 ${feat.border} hover:bg-slate-850 text-white`
-              }`}
-            >
-              <div className="min-w-0 pr-1">
-                <div className={`text-[10px] font-medium flex items-center gap-1 ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                  <span>{feat.icon}</span>
-                  <span className="truncate">{feat.tag}</span>
-                </div>
-                <h4 className={`text-xs font-bold transition-colors truncate ${
-                  isLightMode ? 'text-slate-900 group-hover:text-amber-700' : 'text-white group-hover:text-amber-300'
-                }`}>
-                  {feat.name}
-                </h4>
-              </div>
-              <ChevronRight className={`w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 shrink-0 ${
-                isLightMode ? 'text-slate-400 group-hover:text-amber-600' : 'text-slate-500 group-hover:text-amber-400'
-              }`} />
-            </button>
-          ))}
-        </div>
       </div>
     </div>
   );

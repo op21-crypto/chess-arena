@@ -82,30 +82,25 @@ function ensureAdminUser() {
       country: 'IN',
       countryName: 'India',
       ratings: {
-        bullet: 2520,
-        blitz: 2550,
-        rapid: 2580,
-        classical: 2600,
-        puzzle: 2700
+        bullet: 1200,
+        blitz: 1200,
+        rapid: 1200,
+        classical: 1200,
+        puzzle: 1200
       },
-      highestRating: 2600,
+      highestRating: 1200,
       stats: {
-        played: 480,
-        won: 370,
-        lost: 65,
-        drawn: 45,
-        winStreak: 16,
-        currentStreak: 6
+        played: 0,
+        won: 0,
+        lost: 0,
+        drawn: 0,
+        winStreak: 0,
+        currentStreak: 0
       },
       ratingHistory: [
-        { date: '2026-01-01', rating: 2400, format: 'rapid' },
-        { date: '2026-02-01', rating: 2480, format: 'rapid' },
-        { date: '2026-03-01', rating: 2530, format: 'rapid' },
-        { date: '2026-04-01', rating: 2580, format: 'rapid' }
+        { date: new Date().toISOString().split('T')[0], rating: 1200, format: 'rapid' }
       ],
-      achievements: [
-        'first_win', 'checkmate_pro', 'wins_10', 'games_100', 'streak_master', 'tactical_genius', 'blitz_master', 'rapid_master', 'king_badge', 'queen_badge'
-      ],
+      achievements: [],
       createdAt: '2026-01-01T00:00:00.000Z',
       isOnline: false,
       banned: false
@@ -316,29 +311,29 @@ export const Database = {
     const isOpAdmin = (userData.email && userData.email.toLowerCase().trim() === 'op21plus@gmail.com');
     db.users[userData.id] = {
       role: isOpAdmin ? 'admin' : (userData.role || 'user'),
-      country: isOpAdmin ? 'IN' : 'US',
-      countryName: isOpAdmin ? 'India' : 'United States',
-      avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${userData.username}`,
+      country: userData.country || (isOpAdmin ? 'IN' : 'US'),
+      countryName: userData.countryName || (isOpAdmin ? 'India' : 'United States'),
+      avatar: userData.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${userData.username}`,
       ratings: {
-        bullet: isOpAdmin ? 2520 : 1200,
-        blitz: isOpAdmin ? 2550 : 1200,
-        rapid: isOpAdmin ? 2580 : 1200,
-        classical: isOpAdmin ? 2600 : 1200,
-        puzzle: isOpAdmin ? 2700 : 1200
+        bullet: 1200,
+        blitz: 1200,
+        rapid: 1200,
+        classical: 1200,
+        puzzle: 1200
       },
-      highestRating: isOpAdmin ? 2600 : 1200,
+      highestRating: 1200,
       stats: {
-        played: isOpAdmin ? 480 : 0,
-        won: isOpAdmin ? 370 : 0,
-        lost: isOpAdmin ? 65 : 0,
-        drawn: isOpAdmin ? 45 : 0,
-        winStreak: isOpAdmin ? 16 : 0,
-        currentStreak: isOpAdmin ? 6 : 0
+        played: 0,
+        won: 0,
+        lost: 0,
+        drawn: 0,
+        winStreak: 0,
+        currentStreak: 0
       },
       ratingHistory: [
-        { date: new Date().toISOString().split('T')[0], rating: isOpAdmin ? 2580 : 1200, format: 'rapid' }
+        { date: new Date().toISOString().split('T')[0], rating: 1200, format: 'rapid' }
       ],
-      achievements: isOpAdmin ? ['first_win', 'checkmate_pro', 'wins_10', 'games_100', 'streak_master', 'tactical_genius', 'blitz_master', 'rapid_master', 'king_badge', 'queen_badge'] : [],
+      achievements: [],
       createdAt: new Date().toISOString(),
       isOnline: false,
       banned: false,

@@ -6,6 +6,7 @@ import {
   getLeaderboard,
   calculateUserRanking
 } from '../data/leaderboardData.js';
+import { COUNTRY_NAME_MAP, COUNTRY_FLAG_MAP } from '../data/countries.js';
 import { sound } from '../utils/audio.js';
 import { triggerHaptic } from '../utils/device.js';
 
@@ -53,14 +54,26 @@ export function LeaderboardView({ currentUser, onBack, isLight = false, isOled =
   }, [format, selectedCountry]);
 
   // Current user's ELO and accurate rank & percentile calculation
-  const userElo = currentUser?.ratings?.[format] || currentUser?.elo || 1078;
+  const userElo = currentUser?.ratings?.[format] || currentUser?.elo || 1200;
   const { rank: userRank, totalPlayers, percentile, countryRank } = useMemo(
-    () => calculateUserRanking(userElo),
-    [userElo]
+    () => calculateUserRanking(userElo, 1042040, currentUser?.country || 'IN'),
+    [userElo, currentUser?.country]
   );
 
-  const activeCountryName = COUNTRY_NAMES[selectedCountry] || 'Worldwide';
+  const activeCountryName = COUNTRY_NAME_MAP[selectedCountry] || COUNTRY_NAMES[selectedCountry] || 'Worldwide';
   const isWorld = selectedCountry === 'world';
+
+  const countryTabs = useMemo(() => {
+    const list = [...AVAILABLE_COUNTRIES];
+    if (currentUser?.country && currentUser.country !== 'UN' && !list.some(c => c.code.toUpperCase() === currentUser.country.toUpperCase())) {
+      list.push({
+        code: currentUser.country.toUpperCase(),
+        label: currentUser.countryName || currentUser.country,
+        flag: COUNTRY_FLAG_MAP[currentUser.country.toUpperCase()] || '🌐'
+      });
+    }
+    return list;
+  }, [currentUser?.country, currentUser?.countryName]);
 
   // Neighbor brackets for "Your ranking" view
   const userBrackets = useMemo(() => {
@@ -96,8 +109,8 @@ export function LeaderboardView({ currentUser, onBack, isLight = false, isOled =
         username: `${currentUsername} (You)`,
         country: currentCountry,
         rating: userElo,
-        wins: currentUser?.stats?.won || 14,
-        puzzles: 58,
+        wins: currentUser?.stats?.won ?? 0,
+        puzzles: currentUser?.ratings?.puzzle ? Math.max(0, Math.floor((currentUser.ratings.puzzle - 1200) / 10)) : 0,
         avatar: currentAvatar,
         tier: 'Intermediate',
         isCurrent: true
@@ -181,7 +194,7 @@ export function LeaderboardView({ currentUser, onBack, isLight = false, isOled =
 
       {/* Horizontal Scroll Region Chips */}
       <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-        {AVAILABLE_COUNTRIES.map((c) => {
+        {countryTabs.map((c) => {
           const isSelected = selectedCountry === c.code;
           return (
             <button

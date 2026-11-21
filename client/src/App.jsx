@@ -149,7 +149,13 @@ export default function App() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   // Authentication State
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = safeStorage.getItem('chess_arena_user');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return null;
+  });
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showStreakModal, setShowStreakModal] = useState(false);
@@ -173,16 +179,29 @@ export default function App() {
   // Resilient guest user initializer (ensures Firefox/mobile users are never blocked)
   const getOrCreateUser = () => {
     if (currentUser) return currentUser;
+    try {
+      const saved = safeStorage.getItem('chess_arena_user');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.id) {
+          setCurrentUser(parsed);
+          return parsed;
+        }
+      }
+    } catch (e) {}
     const guestNum = Math.floor(1000 + Math.random() * 9000);
     const guest = {
       id: `guest_${Date.now()}_${guestNum}`,
       username: `Guest_${guestNum}`,
       role: 'guest',
       ratings: { bullet: 1200, blitz: 1200, rapid: 1200, classical: 1200 },
-      country: 'UN',
+      country: 'IN',
+      countryName: 'India',
+      countryFlag: '🇮🇳',
       avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=Guest_${guestNum}&radius=50`
     };
     setCurrentUser(guest);
+    safeStorage.setItem('chess_arena_user', JSON.stringify(guest));
     safeStorage.setItem('token', `mock_guest_token_${Date.now()}`);
     return guest;
   };
@@ -2038,13 +2057,18 @@ export default function App() {
             isLight={isLight}
             isOled={isOled}
             user={currentUser}
-            onUpdateUser={user => setCurrentUser(user)}
+            onUpdateUser={user => {
+              setCurrentUser(user);
+              safeStorage.setItem('chess_arena_user', JSON.stringify(user));
+            }}
             settings={settings}
             onUpdateSettings={handleUpdateSettings}
             onOpenStreak={() => setShowStreakModal(true)}
             onOpenAdmin={() => setActiveTab('admin')}
+            onNavigateToLeaderboard={() => {}}
             onSignOut={() => {
               safeStorage.removeItem('token');
+              safeStorage.removeItem('chess_arena_user');
               setCurrentUser(null);
               setActiveTab('home');
             }}
