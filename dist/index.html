@@ -6,7 +6,7 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="shortcut icon" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#1e3a8a" />
+    <meta name="theme-color" content="#070b19" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -17,6 +17,32 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+      @keyframes chessPulse {
+        0%, 100% { transform: scale(1); opacity: 0.9; }
+        50% { transform: scale(1.03); opacity: 1; }
+      }
+      @keyframes goldSweep {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(200%); }
+      }
+      @keyframes squareGlow {
+        0%, 100% { background-color: rgba(245, 158, 11, 0.25); }
+        50% { background-color: rgba(245, 158, 11, 0.6); }
+      }
+      .pre-board-grid {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        grid-template-rows: repeat(8, 1fr);
+        width: 100%;
+        height: 100%;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .pre-sq-light { background-color: #dee5ed; }
+      .pre-sq-dark { background-color: #334e68; }
+      .pre-sq-hl { animation: squareGlow 1.5s ease-in-out infinite; }
+    </style>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -26,10 +52,130 @@
         });
       }
     </script>
-    <script type="module" crossorigin src="/assets/index-C2qexNnR.js"></script>
+    <script type="module" crossorigin src="/assets/index-CYzzMey8.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-C3nMFzWa.css">
   </head>
   <body class="bg-slate-950 text-slate-100 antialiased selection:bg-amber-500 selection:text-black">
-    <div id="root"></div>
+    <div id="root">
+      <!-- Instant pre-React loading splash (Replaced smoothly when React hydrates) -->
+      <div id="pre-splash" style="position:fixed;inset:0;background:#070b19;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;z-index:9999;font-family:'Plus Jakarta Sans',sans-serif;color:#f8fafc;-webkit-user-select:none;user-select:none;">
+        <div style="display:flex;flex-direction:column;align-items:center;max-width:320px;width:100%;">
+          
+          <!-- Header Brand -->
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+            <div style="width:44px;height:44px;border-radius:14px;padding:2px;background:linear-gradient(135deg,#fde68a,#f59e0b,#b45309);box-shadow:0 4px 16px rgba(245,158,11,0.25);display:flex;align-items:center;justify-content:center;">
+              <img src="/icon.svg" alt="CHESS" style="width:100%;height:100%;border-radius:12px;object-fit:cover;" />
+            </div>
+            <div>
+              <div style="font-size:20px;font-weight:800;letter-spacing:0.06em;color:#ffffff;line-height:1.2;">
+                CHESS <span style="color:#f59e0b;">ARENA</span>
+              </div>
+              <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;color:#f59e0b;text-transform:uppercase;">
+                Master the Board
+              </div>
+            </div>
+          </div>
+
+          <!-- Stylized Mini Tournament Chessboard -->
+          <div style="position:relative;width:240px;height:240px;border-radius:16px;padding:8px;background:linear-gradient(135deg,#0d1526,#1e293b);border:2px solid #f59e0b;box-shadow:0 12px 32px rgba(0,0,0,0.6), 0 0 24px rgba(245,158,11,0.15);margin-bottom:24px;animation:chessPulse 2.8s ease-in-out infinite;">
+            <div class="pre-board-grid">
+              <!-- Row 8 (Black) -->
+              <div class="pre-sq-light" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:16px;color:#182234;">♜</span></div>
+              <div class="pre-sq-dark"></div>
+              <div class="pre-sq-light" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:16px;color:#182234;">♝</span></div>
+              <div class="pre-sq-dark" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:16px;color:#182234;">♛</span></div>
+              <div class="pre-sq-light" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:16px;color:#182234;">♚</span></div>
+              <div class="pre-sq-dark"></div>
+              <div class="pre-sq-light"></div>
+              <div class="pre-sq-dark" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:16px;color:#182234;">♜</span></div>
+
+              <!-- Row 7 -->
+              <div class="pre-sq-dark" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:14px;color:#182234;">♟</span></div>
+              <div class="pre-sq-light" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:14px;color:#182234;">♟</span></div>
+              <div class="pre-sq-dark" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:14px;color:#182234;">♟</span></div>
+              <div class="pre-sq-light" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:14px;color:#182234;">♟</span></div>
+              <div class="pre-sq-dark"></div>
+              <div class="pre-sq-light" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:14px;color:#182234;">♟</span></div>
+              <div class="pre-sq-dark" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:14px;color:#182234;">♟</span></div>
+              <div class="pre-sq-light" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:14px;color:#182234;">♟</span></div>
+
+              <!-- Row 6 (Nc6) -->
+              <div class="pre-sq-light"></div>
+              <div class="pre-sq-dark"></div>
+              <div class="pre-sq-light" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:16px;color:#182234;">♞</span></div>
+              <div class="pre-sq-dark"></div>
+              <div class="pre-sq-light"></div>
+              <div class="pre-sq-dark"></div>
+              <div class="pre-sq-light"></div>
+              <div class="pre-sq-dark"></div>
+
+              <!-- Row 5 (Bc5, e5) -->
+              <div class="pre-sq-dark"></div>
+              <div class="pre-sq-light"></div>
+              <div class="pre-sq-dark" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:16px;color:#182234;">♝</span></div>
+              <div class="pre-sq-light"></div>
+              <div class="pre-sq-dark pre-sq-hl" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:14px;color:#182234;">♟</span></div>
+              <div class="pre-sq-light"></div>
+              <div class="pre-sq-dark"></div>
+              <div class="pre-sq-light"></div>
+
+              <!-- Row 4 (Bc4, e4) -->
+              <div class="pre-sq-light"></div>
+              <div class="pre-sq-dark"></div>
+              <div class="pre-sq-light" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:16px;color:#fffdfa;filter:drop-shadow(0 1px 2px #000);">♗</span></div>
+              <div class="pre-sq-dark"></div>
+              <div class="pre-sq-light pre-sq-hl" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:14px;color:#fffdfa;filter:drop-shadow(0 1px 2px #000);">♙</span></div>
+              <div class="pre-sq-dark"></div>
+              <div class="pre-sq-light"></div>
+              <div class="pre-sq-dark"></div>
+
+              <!-- Row 3 (Nf3) -->
+              <div class="pre-sq-dark"></div>
+              <div class="pre-sq-light"></div>
+              <div class="pre-sq-dark"></div>
+              <div class="pre-sq-light"></div>
+              <div class="pre-sq-dark"></div>
+              <div class="pre-sq-light" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:16px;color:#fffdfa;filter:drop-shadow(0 1px 2px #000);">♘</span></div>
+              <div class="pre-sq-dark"></div>
+              <div class="pre-sq-light"></div>
+
+              <!-- Row 2 (White) -->
+              <div class="pre-sq-light" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:14px;color:#fffdfa;filter:drop-shadow(0 1px 2px #000);">♙</span></div>
+              <div class="pre-sq-dark" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:14px;color:#fffdfa;filter:drop-shadow(0 1px 2px #000);">♙</span></div>
+              <div class="pre-sq-light" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:14px;color:#fffdfa;filter:drop-shadow(0 1px 2px #000);">♙</span></div>
+              <div class="pre-sq-dark" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:14px;color:#fffdfa;filter:drop-shadow(0 1px 2px #000);">♙</span></div>
+              <div class="pre-sq-light"></div>
+              <div class="pre-sq-dark" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:14px;color:#fffdfa;filter:drop-shadow(0 1px 2px #000);">♙</span></div>
+              <div class="pre-sq-light" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:14px;color:#fffdfa;filter:drop-shadow(0 1px 2px #000);">♙</span></div>
+              <div class="pre-sq-dark" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:14px;color:#fffdfa;filter:drop-shadow(0 1px 2px #000);">♙</span></div>
+
+              <!-- Row 1 (White) -->
+              <div class="pre-sq-dark" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:16px;color:#fffdfa;filter:drop-shadow(0 1px 2px #000);">♖</span></div>
+              <div class="pre-sq-light"></div>
+              <div class="pre-sq-dark" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:16px;color:#fffdfa;filter:drop-shadow(0 1px 2px #000);">♗</span></div>
+              <div class="pre-sq-light" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:16px;color:#fffdfa;filter:drop-shadow(0 1px 2px #000);">♕</span></div>
+              <div class="pre-sq-dark" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:16px;color:#fffdfa;filter:drop-shadow(0 1px 2px #000);">♔</span></div>
+              <div class="pre-sq-light"></div>
+              <div class="pre-sq-dark"></div>
+              <div class="pre-sq-light" style="display:flex;align-items:center;justify-content:center;"><span style="font-size:16px;color:#fffdfa;filter:drop-shadow(0 1px 2px #000);">♖</span></div>
+            </div>
+          </div>
+
+          <!-- Golden Progress Bar -->
+          <div style="width:160px;height:4px;border-radius:2px;background:#1e293b;overflow:hidden;position:relative;margin-bottom:12px;">
+            <div style="width:50%;height:100%;background:linear-gradient(90deg,transparent,#f59e0b,#fde68a,#f59e0b,transparent);animation:goldSweep 1.4s infinite linear;"></div>
+          </div>
+
+          <!-- Dynamic Status -->
+          <div style="font-size:13px;font-weight:700;color:#f1f5f9;margin-bottom:4px;text-align:center;">
+            ⚔️ Setting up tournament board...
+          </div>
+          <div style="font-size:11px;color:#94a3b8;text-align:center;font-style:italic;">
+            "Every pawn is a potential queen."
+          </div>
+
+        </div>
+      </div>
+    </div>
   </body>
 </html>

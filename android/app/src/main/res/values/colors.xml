@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary">#0c1b3d</color>
-    <color name="primary_dark">#060c1c</color>
+    <color name="primary">#070b19</color>
+    <color name="primary_dark">#040710</color>
     <color name="accent">#f59e0b</color>
-    <color name="background">#0a0f1d</color>
-    <color name="ic_launcher_background">#0c1b3d</color>
+    <color name="background">#070b19</color>
+    <color name="ic_launcher_background">#070b19</color>
+    <color name="splash_board_light">#dee5ed</color>
+    <color name="splash_board_dark">#334e68</color>
+    <color name="splash_board_border">#0f172a</color>
+    <color name="splash_gold">#f59e0b</color>
+    <color name="splash_gold_light">#fde68a</color>
+    <color name="splash_cyan">#38bdf8</color>
 </resources>

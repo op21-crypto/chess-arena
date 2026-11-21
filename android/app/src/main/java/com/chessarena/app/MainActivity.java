@@ -7,6 +7,8 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
@@ -17,12 +19,15 @@ import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -34,26 +39,59 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private static final int PERMISSION_REQUEST_CODE = 1001;
 
     private WebView webView;
+    private View splashOverlay;
+    private TextView splashStatusText;
+    private TextView splashQuoteText;
+    private AppCompatButton splashRetryButton;
+
     private PermissionRequest pendingPermissionRequest;
     private TextToSpeech textToSpeech;
     private boolean isTtsInitialized = false;
+    private boolean isAppLoaded = false;
+
+    private Handler statusHandler;
+    private Runnable statusRunnable;
+    private int statusIndex = 0;
+
+    private final String[] statusMessages = {
+        "⚔️ Setting up tournament board...",
+        "♟️ Preparing pieces and clock...",
+        "🧠 Initializing Stockfish engine...",
+        "👑 Entering the Arena..."
+    };
+
+    private final String[] quoteMessages = {
+        "\"Every pawn is a potential queen.\" — Proverb",
+        "\"Tactics is knowing what to do when there is something to do.\" — Tartakower",
+        "\"The move is there, but you must see it.\" — Tartakower",
+        "\"Play the opening like a book, the endgame like a machine.\" — Spielmann"
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Dark immersive status bar & navigation bar
+        // Dark luxury immersive status bar & navigation bar
         Window window = getWindow();
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.setStatusBarColor(Color.parseColor("#0c1b3d"));
-        window.setNavigationBarColor(Color.parseColor("#0c1b3d"));
+        window.setStatusBarColor(Color.parseColor("#070b19"));
+        window.setNavigationBarColor(Color.parseColor("#070b19"));
+
+        // Inflate layout containing WebView and native instant splash overlay
+        setContentView(R.layout.activity_main);
+
+        webView = findViewById(R.id.webView);
+        splashOverlay = findViewById(R.id.splashOverlay);
+        splashStatusText = findViewById(R.id.splashStatusText);
+        splashQuoteText = findViewById(R.id.splashQuoteText);
+        splashRetryButton = findViewById(R.id.splashRetryButton);
 
         // Initialize Native Android Text-To-Speech engine
         initTextToSpeech();
 
-        webView = new WebView(this);
-        setContentView(webView);
+        // Setup dynamic status rotator and retry trigger
+        initSplashController();
 
         configureWebView();
         checkAndRequestPermissions();
@@ -63,6 +101,73 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         } else {
             webView.loadUrl(APP_URL);
         }
+    }
+
+    private void initSplashController() {
+        if (splashRetryButton != null) {
+            splashRetryButton.setOnClickListener(v -> {
+                splashRetryButton.setVisibility(View.GONE);
+                if (splashStatusText != null) {
+                    splashStatusText.setText("Reconnecting to Arena...");
+                }
+                if (webView != null) {
+                    webView.reload();
+                }
+            });
+        }
+
+        // Cycle status messages smoothly every 1300ms
+        statusHandler = new Handler(Looper.getMainLooper());
+        statusRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (!isAppLoaded) {
+                    statusIndex = (statusIndex + 1) % statusMessages.length;
+                    if (splashStatusText != null) {
+                        splashStatusText.setText(statusMessages[statusIndex]);
+                    }
+                    if (splashQuoteText != null && statusIndex < quoteMessages.length) {
+                        splashQuoteText.setText(quoteMessages[statusIndex]);
+                    }
+                    if (statusHandler != null) {
+                        statusHandler.postDelayed(this, 1300);
+                    }
+                }
+            }
+        };
+        statusHandler.postDelayed(statusRunnable, 1300);
+
+        // Fallback safety: if loading takes longer than 7 seconds, offer tap to retry
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            if (!isAppLoaded) {
+                if (splashRetryButton != null) {
+                    splashRetryButton.setVisibility(View.VISIBLE);
+                }
+                if (splashStatusText != null) {
+                    splashStatusText.setText("Connecting taking longer than usual...");
+                }
+            }
+        }, 7500);
+    }
+
+    public void hideSplashScreen() {
+        if (isAppLoaded || splashOverlay == null) return;
+        isAppLoaded = true;
+
+        if (statusHandler != null && statusRunnable != null) {
+            statusHandler.removeCallbacks(statusRunnable);
+        }
+
+        // Silky 400ms alpha fade-out into the interactive board UI
+        splashOverlay.animate()
+            .alpha(0f)
+            .setDuration(420)
+            .withEndAction(() -> {
+                if (splashOverlay != null) {
+                    splashOverlay.setVisibility(View.GONE);
+                }
+            })
+            .start();
     }
 
     private void initTextToSpeech() {
@@ -139,11 +244,24 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
     }
 
+    // JavaScript Bridge interface exposed to WebView as window.AndroidBridge
+    public class AndroidBridge {
+        @JavascriptInterface
+        public void onAppReady() {
+            runOnUiThread(MainActivity.this::hideSplashScreen);
+        }
+    }
+
     // JavaScript Bridge interface exposed to WebView as window.AndroidTTS
     public class AndroidTTSBridge {
         @JavascriptInterface
         public boolean isAvailable() {
             return isTtsInitialized && textToSpeech != null;
+        }
+
+        @JavascriptInterface
+        public void onAppReady() {
+            runOnUiThread(MainActivity.this::hideSplashScreen);
         }
 
         @JavascriptInterface
@@ -194,6 +312,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(true);
+        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         settings.setMediaPlaybackRequiresUserGesture(false);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         settings.setAllowFileAccess(true);
@@ -212,14 +331,37 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         cookieManager.setAcceptCookie(true);
         cookieManager.setAcceptThirdPartyCookies(webView, true);
 
-        // Expose Native Android Text-To-Speech bridge to JavaScript
+        // Expose JavaScript bridges
+        webView.addJavascriptInterface(new AndroidBridge(), "AndroidBridge");
         webView.addJavascriptInterface(new AndroidTTSBridge(), "AndroidTTS");
 
-        // Improve performance
+        // Performance & background
         webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
-        webView.setBackgroundColor(Color.parseColor("#090d16"));
+        webView.setBackgroundColor(Color.parseColor("#070b19"));
 
         webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                // When web document finishes loading, dismiss splash screen smoothly after a brief settle delay
+                view.postDelayed(MainActivity.this::hideSplashScreen, 500);
+            }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                super.onReceivedError(view, request, error);
+                if (request.isForMainFrame()) {
+                    runOnUiThread(() -> {
+                        if (splashRetryButton != null) {
+                            splashRetryButton.setVisibility(View.VISIBLE);
+                        }
+                        if (splashStatusText != null) {
+                            splashStatusText.setText("Unable to connect. Tap retry below.");
+                        }
+                    });
+                }
+            }
+
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
@@ -346,6 +488,9 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
     @Override
     protected void onDestroy() {
+        if (statusHandler != null && statusRunnable != null) {
+            statusHandler.removeCallbacks(statusRunnable);
+        }
         if (textToSpeech != null) {
             try {
                 textToSpeech.stop();

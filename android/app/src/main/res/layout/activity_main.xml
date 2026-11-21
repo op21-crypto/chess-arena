@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rootContainer"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#070b19">
+
+    <!-- Primary App WebView -->
+    <WebView
+        android:id="@+id/webView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="visible" />
+
+    <!-- Native Splash Screen Overlay: renders immediately on cold start -->
+    <RelativeLayout
+        android:id="@+id/splashOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#070b19"
+        android:clickable="true"
+        android:focusable="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="28dp"
+            android:paddingBottom="28dp">
+
+            <!-- App Brand Header -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+
+                <!-- 3D Clash App Emblem -->
+                <ImageView
+                    android:id="@+id/splashLogo"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:src="@mipmap/ic_launcher"
+                    android:contentDescription="Chess Arena Logo"
+                    android:layout_marginEnd="12dp" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="CHESS ARENA"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF"
+                        android:letterSpacing="0.08" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="MASTER THE BOARD • ONLINE ARENA"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:textColor="#F59E0B"
+                        android:letterSpacing="0.12" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Interactive Native Tournament Chessboard View with Pieces -->
+            <com.chessarena.app.SplashChessboardView
+                android:id="@+id/splashChessboard"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="18dp" />
+
+            <!-- Progress & Status Info -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:layout_marginBottom="4dp">
+
+                <!-- Smooth Horizontal Indeterminate Progress Bar -->
+                <ProgressBar
+                    android:id="@+id/splashProgressBar"
+                    style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+                    android:indeterminate="true"
+                    android:layout_width="160dp"
+                    android:layout_height="4dp"
+                    android:indeterminateTint="#F59E0B"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- Dynamic Cycling Status Text -->
+                <TextView
+                    android:id="@+id/splashStatusText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Setting up the board..."
+                    android:textSize="14sp"
+                    android:textColor="#F1F5F9"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="4dp" />
+
+                <!-- Inspiring GM Quote -->
+                <TextView
+                    android:id="@+id/splashQuoteText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="&quot;Every pawn is a potential queen.&quot;"
+                    android:textSize="12sp"
+                    android:textColor="#94A3B8"
+                    android:gravity="center"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp" />
+
+                <!-- Offline / Slow connection retry button -->
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/splashRetryButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="38dp"
+                    android:text="Tap to Retry"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="#070B19"
+                    android:background="@drawable/splash_retry_button"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp"
+                    android:visibility="gone"
+                    android:layout_marginTop="12dp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+    </RelativeLayout>
+</FrameLayout>

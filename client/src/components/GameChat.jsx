@@ -14,6 +14,7 @@ import {
   PhoneForwarded
 } from 'lucide-react';
 import { sound } from '../utils/audio.js';
+import { firebaseRoomService } from '../services/firebaseRoomService.js';
 
 const QUICK_MESSAGES = [
   'Good luck! ♟️',
@@ -36,7 +37,8 @@ export function GameChat({
   triggerVoiceCall = 0,
   isLight = false,
   isOpponentTyping = false,
-  onTyping
+  onTyping,
+  roomData = null
 }) {
   const [inputText, setInputText] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -111,7 +113,12 @@ export function GameChat({
           await peerConnection.current.setRemoteDescription(new RTCSessionDescription(signal));
           const answer = await peerConnection.current.createAnswer();
           await peerConnection.current.setLocalDescription(answer);
-          socket.emit('webrtc_signal', { gameId, signal: answer });
+          if (socket) {
+            socket.emit('webrtc_signal', { gameId, signal: answer });
+          }
+          if (gameId) {
+            firebaseRoomService.sendRoomVoice(gameId, { action: 'signal', from: currentUser, signal: answer }).catch(() => {});
+          }
         } else if (signal.type === 'answer') {
           await peerConnection.current.setRemoteDescription(new RTCSessionDescription(signal));
         } else if (signal.candidate) {
@@ -147,6 +154,27 @@ export function GameChat({
       cleanupVoice();
     };
   }, [socket, gameId]);
+
+  // Handle roomData voice updates from Firestore / REST
+  useEffect(() => {
+    if (!roomData?.voiceCall) return;
+    const vc = roomData.voiceCall;
+    const isFromOther = vc.from?.id !== currentUser?.id && vc.from?.username !== currentUser?.username;
+    if (vc.status === 'requesting' && isFromOther) {
+      if (voiceStatus !== 'invited' && voiceStatus !== 'connected') {
+        setInviter(vc.from);
+        setVoiceStatus('invited');
+        sound.playChat();
+      }
+    } else if (vc.status === 'connected' && voiceStatus === 'requesting') {
+      setVoiceStatus('connected');
+      startWebRTC(true);
+    } else if (vc.status === 'declined' && voiceStatus === 'requesting') {
+      setVoiceStatus('idle');
+      setVoiceError(`${vc.by?.username || 'Opponent'} declined voice call.`);
+      setTimeout(() => setVoiceError(''), 4000);
+    }
+  }, [roomData?.voiceCall, currentUser?.id, currentUser?.username, voiceStatus]);
 
   // Call duration timer
   useEffect(() => {
@@ -187,8 +215,13 @@ export function GameChat({
       };
 
       pc.onicecandidate = (event) => {
-        if (event.candidate && socket) {
-          socket.emit('webrtc_signal', { gameId, signal: { candidate: event.candidate } });
+        if (event.candidate) {
+          if (socket) {
+            socket.emit('webrtc_signal', { gameId, signal: { candidate: event.candidate } });
+          }
+          if (gameId) {
+            firebaseRoomService.sendRoomVoice(gameId, { action: 'signal', from: currentUser, signal: { candidate: event.candidate } }).catch(() => {});
+          }
         }
       };
 
@@ -197,7 +230,12 @@ export function GameChat({
       if (isInitiator) {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        socket.emit('webrtc_signal', { gameId, signal: offer });
+        if (socket) {
+          socket.emit('webrtc_signal', { gameId, signal: offer });
+        }
+        if (gameId) {
+          firebaseRoomService.sendRoomVoice(gameId, { action: 'signal', from: currentUser, signal: offer }).catch(() => {});
+        }
       }
 
       setVoiceStatus('connected');
@@ -253,6 +291,9 @@ export function GameChat({
       audioContext.current = null;
     }
     if (callTimerRef.current) clearInterval(callTimerRef.current);
+    if (gameId) {
+      firebaseRoomService.sendRoomVoice(gameId, { action: 'end' }).catch(() => {});
+    }
     setVoiceStatus('idle');
     setIsSpeaking(false);
   };
@@ -273,6 +314,7 @@ export function GameChat({
       socket.emit('request_voice_chat', { gameId, from: currentUser });
     }
     if (gameId) {
+      firebaseRoomService.sendRoomVoice(gameId, { action: 'request', from: currentUser }).catch(() => {});
       fetch('/api/rooms/voice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -287,6 +329,7 @@ export function GameChat({
       socket.emit('respond_voice_chat', { gameId, accept, by: currentUser });
     }
     if (gameId) {
+      firebaseRoomService.sendRoomVoice(gameId, { action: 'respond', accept, by: currentUser }).catch(() => {});
       fetch('/api/rooms/voice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -86,6 +86,44 @@ router.post('/auth/register', async (req, res) => {
       avatar: avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`
     });
 
+    // Asynchronously synchronize registered user profile to Firestore for cross-account discoverability
+    try {
+      firestoreRestService.saveRoom({
+        id: `user_${user.username.toLowerCase()}`,
+        type: 'user_profile',
+        userId: user.id,
+        username: user.username,
+        avatar: user.avatar,
+        country: user.country || 'IN',
+        elo: user.ratings?.rapid || user.elo || 1200,
+        isOnline: true,
+        lastActive: Date.now()
+      }).catch(() => {});
+
+      (async () => {
+        try {
+          const registry = await firestoreRestService.getRoom('arena_registered_users');
+          const userList = registry?.users && Array.isArray(registry.users) ? registry.users : [];
+          if (!userList.some(u => u.username?.toLowerCase() === user.username.toLowerCase())) {
+            userList.unshift({
+              id: user.id,
+              username: user.username,
+              avatar: user.avatar,
+              country: user.country || 'IN',
+              elo: user.ratings?.rapid || user.elo || 1200,
+              isOnline: true
+            });
+            await firestoreRestService.saveRoom({
+              id: 'arena_registered_users',
+              type: 'users_registry',
+              users: userList.slice(0, 100),
+              updatedAt: Date.now()
+            });
+          }
+        } catch {}
+      })().catch(() => {});
+    } catch {}
+
     const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '30d' });
     const { passwordHash: _, ...safeUser } = user;
     res.json({ token, user: safeUser });
@@ -733,11 +771,54 @@ router.post('/tournaments/:id/join', requireAuth, (req, res) => {
 
 // ================= FRIENDS & NOTIFICATIONS =================
 
-router.get('/users/search', (req, res) => {
-  const query = (req.query.q || '').trim();
-  if (!query) return res.json({ users: [] });
-  const users = Database.searchUsers(query);
-  res.json({ users });
+router.get('/users/search', async (req, res) => {
+  try {
+    const query = (req.query.q || '').trim();
+    if (!query) return res.json({ users: [] });
+
+    // 1. Search in-memory database
+    let users = Database.searchUsers(query);
+
+    // 2. Discover users dynamically stored in Firestore
+    try {
+      const lowerQuery = query.toLowerCase();
+      const directUserDoc = await firestoreRestService.getRoom(`user_${lowerQuery}`);
+      if (directUserDoc && directUserDoc.username) {
+        if (!users.some(u => u.username.toLowerCase() === directUserDoc.username.toLowerCase())) {
+          users.unshift({
+            id: directUserDoc.userId || directUserDoc.id,
+            username: directUserDoc.username,
+            avatar: directUserDoc.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${directUserDoc.username}`,
+            country: directUserDoc.country || 'IN',
+            elo: directUserDoc.elo || 1200,
+            isOnline: Boolean(directUserDoc.isOnline),
+            statusText: 'Registered Arena Player • Online',
+            isRegistered: true
+          });
+        }
+      }
+
+      const registryDoc = await firestoreRestService.getRoom('arena_registered_users');
+      if (registryDoc?.users && Array.isArray(registryDoc.users)) {
+        const matches = registryDoc.users.filter(u => u.username && u.username.toLowerCase().includes(lowerQuery));
+        for (const m of matches) {
+          if (!users.some(u => u.username.toLowerCase() === m.username.toLowerCase())) {
+            users.push({
+              ...m,
+              statusText: 'Registered Arena Player • Online',
+              isRegistered: true
+            });
+          }
+        }
+      }
+    } catch (fsErr) {
+      console.warn('Firestore user search fallback:', fsErr.message);
+    }
+
+    res.json({ users: users.slice(0, 10) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 router.get('/friends', requireAuth, (req, res) => {
@@ -749,37 +830,153 @@ router.get('/friends', requireAuth, (req, res) => {
   res.json({ friends, pendingRequests });
 });
 
-router.post('/friends/request', requireAuth, (req, res) => {
-  const { targetUsername } = req.body;
-  const target = Database.getUserByUsername(targetUsername);
-  if (!target) return res.status(404).json({ error: 'Player not found' });
-  if (target.id === req.user.id) return res.status(400).json({ error: 'Cannot friend yourself' });
+router.post('/friends/request', async (req, res) => {
+  try {
+    const { targetUsername, fromUser } = req.body;
+    if (!targetUsername) return res.status(400).json({ error: 'Target username is required' });
 
-  const reqObj = Database.sendFriendRequest(req.user.id, target.id);
-  Database.addNotification(target.id, {
-    type: 'friend_request',
-    title: 'New Friend Request',
-    message: `${req.user.username} sent you a friend request!`,
-    fromUserId: req.user.id
-  });
+    const sender = req.user || fromUser;
+    if (!sender || !sender.username) {
+      return res.status(400).json({ error: 'Sender information is required' });
+    }
 
-  res.json({ success: true, request: reqObj });
+    if (targetUsername.toLowerCase() === sender.username.toLowerCase()) {
+      return res.status(400).json({ error: 'Cannot send friend request to yourself' });
+    }
+
+    // Look up target in database or Firestore
+    let target = Database.getUserByUsername(targetUsername);
+    if (!target) {
+      try {
+        const targetDoc = await firestoreRestService.getRoom(`user_${targetUsername.toLowerCase()}`);
+        if (targetDoc && targetDoc.username) {
+          target = {
+            id: targetDoc.userId || targetDoc.id,
+            username: targetDoc.username,
+            avatar: targetDoc.avatar,
+            country: targetDoc.country,
+            elo: targetDoc.elo
+          };
+        }
+      } catch {}
+    }
+
+    const notifItem = {
+      id: `notif_freq_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      type: 'friend_request',
+      title: 'New Friend Request',
+      message: `@${sender.username} sent you a friend request!`,
+      time: 'Just now',
+      timestamp: Date.now(),
+      fromUser: {
+        id: sender.id || `u_${sender.username}`,
+        username: sender.username,
+        avatar: sender.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${sender.username}`,
+        country: sender.country || 'IN',
+        elo: sender.ratings?.rapid || sender.elo || 1200
+      }
+    };
+
+    // 1. Deliver to target's Firestore notification box so it immediately reaches the recipient across devices
+    const boxId = `notifs_${targetUsername.toLowerCase()}`;
+    try {
+      const box = await firestoreRestService.getRoom(boxId);
+      const items = box?.items && Array.isArray(box.items) ? box.items : [];
+      const filtered = items.filter(i => !(i.type === 'friend_request' && i.fromUser?.username?.toLowerCase() === sender.username.toLowerCase()));
+      filtered.unshift(notifItem);
+      await firestoreRestService.saveRoom({
+        id: boxId,
+        type: 'notifications_box',
+        username: targetUsername.toLowerCase(),
+        items: filtered.slice(0, 30),
+        updatedAt: Date.now()
+      });
+    } catch (fErr) {
+      console.warn('Firestore notification save fallback:', fErr.message);
+    }
+
+    // 2. Also deliver to in-memory database if present
+    if (target?.id && sender.id) {
+      try {
+        Database.sendFriendRequest(sender.id, target.id);
+        Database.addNotification(target.id, notifItem);
+      } catch {}
+    }
+
+    res.json({ success: true, notification: notifItem });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-router.post('/friends/respond', requireAuth, (req, res) => {
-  const { fromUserId, accept } = req.body;
-  if (accept) {
-    Database.acceptFriendRequest(fromUserId, req.user.id);
-    Database.addNotification(fromUserId, {
-      type: 'friend_accepted',
-      title: 'Friend Request Accepted',
-      message: `${req.user.username} accepted your friend request!`,
-      fromUserId: req.user.id
-    });
-  } else {
-    Database.removeFriendship(fromUserId, req.user.id);
+router.post('/friends/respond', async (req, res) => {
+  try {
+    const { fromUserId, fromUsername, targetUsername, accept } = req.body;
+    const recipientUsername = req.user?.username || targetUsername;
+
+    // 1. Remove notification from recipient's Firestore box
+    if (recipientUsername) {
+      const boxId = `notifs_${recipientUsername.toLowerCase()}`;
+      try {
+        const box = await firestoreRestService.getRoom(boxId);
+        if (box?.items && Array.isArray(box.items)) {
+          const updatedItems = box.items.filter(i => {
+            if (fromUsername && i.fromUser?.username?.toLowerCase() === fromUsername.toLowerCase()) return false;
+            if (fromUserId && i.fromUser?.id === fromUserId) return false;
+            return true;
+          });
+          await firestoreRestService.saveRoom({
+            id: boxId,
+            type: 'notifications_box',
+            username: recipientUsername.toLowerCase(),
+            items: updatedItems,
+            updatedAt: Date.now()
+          });
+        }
+      } catch {}
+    }
+
+    // 2. If accepted, send acceptance notification back to sender's notification box
+    if (accept && fromUsername && recipientUsername) {
+      const senderBoxId = `notifs_${fromUsername.toLowerCase()}`;
+      try {
+        const senderBox = await firestoreRestService.getRoom(senderBoxId);
+        const sItems = senderBox?.items && Array.isArray(senderBox.items) ? senderBox.items : [];
+        sItems.unshift({
+          id: `notif_acc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+          type: 'friend_accepted',
+          title: 'Friend Request Accepted 🎉',
+          message: `@${recipientUsername} accepted your friend request! You can now challenge them or chat.`,
+          time: 'Just now',
+          timestamp: Date.now(),
+          fromUser: {
+            username: recipientUsername,
+            avatar: req.user?.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${recipientUsername}`
+          }
+        });
+        await firestoreRestService.saveRoom({
+          id: senderBoxId,
+          type: 'notifications_box',
+          username: fromUsername.toLowerCase(),
+          items: sItems.slice(0, 30),
+          updatedAt: Date.now()
+        });
+      } catch {}
+    }
+
+    // 3. Update database friendship if authenticated
+    if (req.user?.id && fromUserId) {
+      if (accept) {
+        Database.acceptFriendRequest(fromUserId, req.user.id);
+      } else {
+        Database.removeFriendship(fromUserId, req.user.id);
+      }
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-  res.json({ success: true });
 });
 
 router.post('/friends/remove', requireAuth, (req, res) => {
@@ -788,8 +985,34 @@ router.post('/friends/remove', requireAuth, (req, res) => {
   res.json({ success: true });
 });
 
-router.get('/notifications', requireAuth, (req, res) => {
-  res.json({ notifications: Database.getUserNotifications(req.user.id) });
+router.get('/notifications', async (req, res) => {
+  try {
+    const username = req.user?.username || req.query.username;
+    const userId = req.user?.id || req.query.userId;
+
+    let notifs = [];
+    if (userId) {
+      try {
+        notifs = Database.getUserNotifications(userId) || [];
+      } catch {}
+    }
+
+    if (username) {
+      try {
+        const box = await firestoreRestService.getRoom(`notifs_${username.toLowerCase()}`);
+        if (box?.items && Array.isArray(box.items)) {
+          const map = new Map();
+          box.items.forEach(item => map.set(item.id, item));
+          notifs.forEach(item => map.set(item.id, item));
+          notifs = Array.from(map.values());
+        }
+      } catch {}
+    }
+
+    res.json({ notifications: notifs });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 router.post('/notifications/read', requireAuth, (req, res) => {

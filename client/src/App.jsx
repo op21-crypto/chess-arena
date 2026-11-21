@@ -43,6 +43,7 @@ import { getLocalAIMove, getAIMoveAsync, getCapturedPieces } from './utils/aiEng
 import { calculateUserRanking } from './data/leaderboardData.js';
 import { calculateEloDelta, getFormatFromTimeControl } from './utils/elo.js';
 import { getStreakInfo } from './utils/streak.js';
+import { firebaseRoomService } from './services/firebaseRoomService.js';
 import { getRandomAnimeAvatar, FAMOUS_AVATARS } from './data/avatarData.js';
 import {
   processAppOpenNotifications,
@@ -277,6 +278,18 @@ export default function App() {
   });
   const [avgPairingTime, setAvgPairingTime] = useState('1.1s');
   const [activeBattlesCount, setActiveBattlesCount] = useState(() => Math.round(12023 * 0.24));
+
+  // Signal Android native container that web app has mounted and is ready
+  useEffect(() => {
+    try {
+      if (window.AndroidBridge && typeof window.AndroidBridge.onAppReady === 'function') {
+        window.AndroidBridge.onAppReady();
+      }
+      if (window.AndroidTTS && typeof window.AndroidTTS.onAppReady === 'function') {
+        window.AndroidTTS.onAppReady();
+      }
+    } catch {}
+  }, []);
 
   useEffect(() => {
     // Dynamic periodic fluctuations every 3.5 seconds
@@ -845,6 +858,17 @@ export default function App() {
     const roomParam = params.get('room');
     if (roomParam) {
       const activeUser = getOrCreateUser();
+      // Join in Firestore first for instant real-time synchronization
+      firebaseRoomService.joinRoom(roomParam, activeUser).then(room => {
+        if (room) {
+          setGameSession(room);
+          const isWhite = room.whitePlayer?.id === activeUser.id;
+          setPlayerColor(isWhite ? 'w' : 'b');
+          setActiveTab('game');
+          sound.playMatchStart();
+        }
+      }).catch(() => {});
+
       fetch('/api/rooms/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -857,7 +881,7 @@ export default function App() {
             const isWhite = data.room.whitePlayer?.id === activeUser.id;
             setPlayerColor(isWhite ? 'w' : 'b');
             setActiveTab('game');
-            sound.playMove();
+            sound.playMatchStart();
           }
         })
         .catch(() => {});
@@ -873,79 +897,105 @@ export default function App() {
     };
   }, []);
 
-  // Room synchronization polling (ensures moves, chat & player joins stay synced even if WebSocket is disconnected)
+  // Room synchronization (Real-time Firestore Push + HTTP Polling Fallback)
   useEffect(() => {
-    if (!gameSession?.id || isAIGame || gameSession.isGameOver) return;
+    if (!gameSession?.id || isAIGame) return;
 
+    const handleRoomData = (r) => {
+      if (!r) return;
+      const movesDiffer = (r.moveHistory?.length || 0) !== (gameSession.moveHistory?.length || 0);
+      const fenDiffers = r.fen && r.fen !== gameSession.fen;
+      const statusDiffers = r.status && r.status !== gameSession.status;
+      const opponentJoined = (gameSession.status === 'waiting' && r.status === 'active') ||
+        (!gameSession.blackPlayer && r.blackPlayer) ||
+        (!gameSession.whitePlayer && r.whitePlayer);
+
+      // Play match start sound when friend enters room!
+      if (opponentJoined) {
+        sound.playMatchStart();
+      }
+
+      // Synchronize room chat messages
+      if (Array.isArray(r.chatMessages) && r.chatMessages.length > 0) {
+        setChatMessages(prev => {
+          const prevIds = new Set(prev.map(m => m.id));
+          const newIncoming = r.chatMessages.filter(m => !prevIds.has(m.id));
+          if (newIncoming.length > 0) {
+            const fromOpponent = newIncoming.some(
+              m => m.sender?.id !== currentUser?.id && m.sender?.username !== currentUser?.username
+            );
+            if (fromOpponent) {
+              sound.playChat();
+            }
+            return [...prev, ...newIncoming];
+          }
+          return prev;
+        });
+      }
+
+      // Synchronize live opponent typing status
+      if (r.typingUsers) {
+        const now = Date.now();
+        const isTyping = Object.values(r.typingUsers).some(u => {
+          const isOther = u.id !== currentUser?.id && u.username !== currentUser?.username;
+          return isOther && (now - (u.timestamp || 0) < 3500);
+        });
+        setOpponentIsTyping(isTyping);
+      }
+
+      if (movesDiffer || fenDiffers || statusDiffers || opponentJoined) {
+        const captured = getCapturedPieces(r.fen || gameSession.fen);
+        setGameSession(prev => ({
+          ...prev,
+          ...r,
+          status: opponentJoined ? 'active' : (r.status || prev?.status),
+          turn: new Chess(r.fen || prev?.fen || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1').turn(),
+          capturedPieces: { white: captured.byWhite, black: captured.byBlack }
+        }));
+
+        if (movesDiffer) {
+          sound.playMove();
+          const lastMove = r.moveHistory?.[r.moveHistory.length - 1];
+          if (lastMove && settings.voiceCommentary) {
+            speakMove(lastMove.san);
+          }
+        }
+
+        if (r.status === 'checkmate' || r.status === 'resigned' || r.status === 'stalemate' || r.status === 'draw') {
+          setShowGameOverModal(true);
+          const isWinner = (r.winner === 'white' && playerColor === 'w') || (r.winner === 'black' && playerColor === 'b');
+          if (isWinner) sound.playVictory();
+          else sound.playGameOver();
+          handleMatchFinished({
+            winner: r.winner,
+            status: r.status,
+            winReason: r.winReason,
+            currentSession: r
+          });
+        }
+      }
+    };
+
+    // 1. Primary: Instant Firestore onSnapshot subscription (<50ms)
+    const unsubscribe = firebaseRoomService.subscribeToRoom(gameSession.id, handleRoomData);
+
+    // 2. Fallback: Secondary HTTP poll
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`/api/rooms/get?id=${gameSession.id}`);
         if (!res.ok) return;
         const data = await res.json();
         if (data?.room) {
-          const r = data.room;
-          const movesDiffer = (r.moveHistory?.length || 0) !== (gameSession.moveHistory?.length || 0);
-          const fenDiffers = r.fen && r.fen !== gameSession.fen;
-          const statusDiffers = r.status && r.status !== gameSession.status;
-          const opponentJoined = (!gameSession.blackPlayer && r.blackPlayer) || (!gameSession.whitePlayer && r.whitePlayer);
-
-          // Synchronize room chat messages
-          if (Array.isArray(r.chatMessages) && r.chatMessages.length > 0) {
-            setChatMessages(prev => {
-              const prevIds = new Set(prev.map(m => m.id));
-              const newIncoming = r.chatMessages.filter(m => !prevIds.has(m.id));
-              if (newIncoming.length > 0) {
-                const fromOpponent = newIncoming.some(
-                  m => m.sender?.id !== currentUser?.id && m.sender?.username !== currentUser?.username
-                );
-                if (fromOpponent) {
-                  sound.playChat();
-                }
-                return [...prev, ...newIncoming];
-              }
-              return prev;
-            });
-          }
-
-          // Synchronize live opponent typing status
-          if (r.typingUsers) {
-            const now = Date.now();
-            const isTyping = Object.values(r.typingUsers).some(u => {
-              const isOther = u.id !== currentUser?.id && u.username !== currentUser?.username;
-              return isOther && (now - (u.timestamp || 0) < 3500);
-            });
-            setOpponentIsTyping(isTyping);
-          }
-
-          if (movesDiffer || fenDiffers || statusDiffers || opponentJoined) {
-            const captured = getCapturedPieces(r.fen || prev.fen);
-            setGameSession(prev => ({
-              ...prev,
-              ...r,
-              turn: new Chess(r.fen || prev.fen).turn(),
-              capturedPieces: { white: captured.byWhite, black: captured.byBlack }
-            }));
-
-            if (movesDiffer) {
-              sound.playMove();
-              const lastMove = r.moveHistory?.[r.moveHistory.length - 1];
-              if (lastMove && settings.voiceCommentary) {
-                speakMove(lastMove.san);
-              }
-            }
-
-            if (r.status === 'checkmate' || r.status === 'resigned' || r.status === 'stalemate' || r.status === 'draw') {
-              setShowGameOverModal(true);
-            }
-          }
+          handleRoomData(data.room);
         }
-      } catch {
-        // Silent poll fallback
-      }
+      } catch {}
     }, 1500);
 
-    return () => clearInterval(interval);
-  }, [gameSession?.id, gameSession?.fen, gameSession?.moveHistory?.length, gameSession?.status, isAIGame, currentUser?.id, currentUser?.username]);
+    return () => {
+      unsubscribe();
+      clearInterval(interval);
+    };
+  }, [gameSession?.id, gameSession?.fen, gameSession?.moveHistory?.length, gameSession?.status, gameSession?.whitePlayer?.id, gameSession?.blackPlayer?.id, isAIGame, currentUser?.id, currentUser?.username, playerColor]);
 
   // Update socket authentication when user changes
   useEffect(() => {
@@ -991,6 +1041,10 @@ export default function App() {
       status: 'waiting',
       moveHistory: [],
       capturedPieces: { white: [], black: [] },
+      chatMessages: [],
+      typingUsers: {},
+      voiceCall: null,
+      voiceSignals: [],
       createdAt: new Date().toISOString()
     };
 
@@ -999,7 +1053,10 @@ export default function App() {
     setGameSession(initialGame);
     setPlayerColor(isWhite ? 'w' : 'b');
 
-    // Sync room with backend REST endpoint
+    // 1. Create in Firestore directly for instant real-time synchronization
+    firebaseRoomService.createRoom(initialGame).catch(() => {});
+
+    // 2. Sync room with backend REST endpoint
     try {
       await fetch('/api/rooms/create', {
         method: 'POST',
@@ -1025,6 +1082,19 @@ export default function App() {
     const activeUser = getOrCreateUser();
 
     try {
+      // 1. Direct real-time Firestore join
+      const joinedRoom = await firebaseRoomService.joinRoom(cleanId, activeUser);
+      if (joinedRoom) {
+        setGameSession(joinedRoom);
+        const isWhite = joinedRoom.whitePlayer?.id === activeUser.id;
+        setPlayerColor(isWhite ? 'w' : 'b');
+        setShowFriendRoomModal(false);
+        setShowGameOverModal(false);
+        setActiveTab('game');
+        sound.playMatchStart();
+      }
+
+      // 2. Backend REST join
       const res = await fetch('/api/rooms/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1038,7 +1108,7 @@ export default function App() {
         setShowFriendRoomModal(false);
         setShowGameOverModal(false);
         setActiveTab('game');
-        sound.playMove();
+        sound.playMatchStart();
       }
     } catch {
       // Socket fallback
@@ -1464,8 +1534,27 @@ export default function App() {
           };
           setGameSession(updatedSession);
 
-          // REST Sync for serverless persistence
+          // Sync room moves with Firestore and REST
           if (gameSession.id) {
+            firebaseRoomService.updateRoomMove(gameSession.id, {
+              move: {
+                from: res.from,
+                to: res.to,
+                piece: res.piece,
+                color: res.color,
+                san: res.san,
+                fen: chess.fen()
+              },
+              fen: chess.fen(),
+              turn: chess.turn(),
+              status: isOver ? status : 'active',
+              winner: isOver ? winner : null,
+              winReason: isOver ? winReason : null,
+              whiteTime: gameSession.whiteTime,
+              blackTime: gameSession.blackTime,
+              capturedPieces: { white: captured.byWhite, black: captured.byBlack }
+            }).catch(() => {});
+
             fetch('/api/rooms/move', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -1499,8 +1588,8 @@ export default function App() {
   };
 
   const handleResign = () => {
+    const oppWinner = playerColor === 'w' ? 'black' : 'white';
     if (isAIGame) {
-      const oppWinner = playerColor === 'w' ? 'black' : 'white';
       setGameSession(prev => ({
         ...prev,
         isGameOver: true,
@@ -1516,7 +1605,39 @@ export default function App() {
         winReason: 'resignation'
       });
     } else {
-      socketRef.current?.emit('resign_game', { gameId: gameSession.id });
+      if (gameSession?.id) {
+        firebaseRoomService.updateRoomMove(gameSession.id, {
+          status: 'resigned',
+          winner: oppWinner,
+          winReason: 'resignation'
+        }).catch(() => {});
+
+        fetch('/api/rooms/move', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            roomId: gameSession.id,
+            status: 'resigned',
+            winner: oppWinner,
+            winReason: 'resignation'
+          })
+        }).catch(() => {});
+      }
+      socketRef.current?.emit('resign_game', { gameId: gameSession?.id });
+      setGameSession(prev => prev ? ({
+        ...prev,
+        isGameOver: true,
+        status: 'resigned',
+        winner: oppWinner,
+        winReason: 'resignation'
+      }) : null);
+      setShowGameOverModal(true);
+      sound.playGameOver();
+      handleMatchFinished({
+        winner: oppWinner,
+        status: 'resigned',
+        winReason: 'resignation'
+      });
     }
   };
 
@@ -1607,8 +1728,9 @@ export default function App() {
       });
     }
 
-    // 3. Persist and broadcast via HTTP room endpoint for resilient delivery
+    // 3. Persist and broadcast via Firestore & HTTP room endpoint for resilient delivery
     if (gameSession?.id) {
+      firebaseRoomService.sendRoomChat(gameSession.id, newMsg).catch(() => {});
       fetch('/api/rooms/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1631,6 +1753,7 @@ export default function App() {
       });
     }
     if (gameSession?.id) {
+      firebaseRoomService.sendRoomTyping(gameSession.id, currentUser, isTyping).catch(() => {});
       fetch('/api/rooms/typing', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2521,6 +2644,7 @@ export default function App() {
                       triggerVoiceCall={voiceCallTrigger}
                       isOpponentTyping={opponentIsTyping}
                       onTyping={handleSendTyping}
+                      roomData={gameSession}
                     />
                   ) : (
                     <div className={`p-3 border rounded-xl text-center text-xs italic ${
