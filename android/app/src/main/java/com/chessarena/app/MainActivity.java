@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
     private void initTextToSpeech() {
         try {
-            textToSpeech = new TextToSpeech(this, this);
+            textToSpeech = new TextToSpeech(getApplicationContext(), this);
         } catch (Exception e) {
             isTtsInitialized = false;
         }
@@ -79,7 +79,10 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             try {
                 int langResult = textToSpeech.setLanguage(Locale.US);
                 if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
-                    textToSpeech.setLanguage(Locale.getDefault());
+                    langResult = textToSpeech.setLanguage(Locale.ENGLISH);
+                    if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        textToSpeech.setLanguage(Locale.getDefault());
+                    }
                 }
                 textToSpeech.setSpeechRate(1.0f);
                 textToSpeech.setPitch(1.05f);
@@ -123,9 +126,16 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                 });
 
                 isTtsInitialized = true;
+                runOnUiThread(() -> {
+                    if (webView != null) {
+                        webView.evaluateJavascript("window.__nativeTtsReady && window.__nativeTtsReady();", null);
+                    }
+                });
             } catch (Exception e) {
                 isTtsInitialized = false;
             }
+        } else {
+            isTtsInitialized = false;
         }
     }
 
@@ -137,23 +147,36 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         }
 
         @JavascriptInterface
-        public void speak(String text) {
-            speakWithRate(text, 1.0f, 1.05f);
+        public boolean speak(String text) {
+            return speakWithRate(text, 1.0f, 1.05f);
         }
 
         @JavascriptInterface
-        public void speakWithRate(String text, float rate, float pitch) {
-            if (text == null || text.trim().isEmpty()) return;
+        public boolean speakWithRate(String text, float rate, float pitch) {
+            if (text == null || text.trim().isEmpty()) return false;
             if (textToSpeech != null && isTtsInitialized) {
                 try {
                     textToSpeech.setSpeechRate(rate > 0 ? rate : 1.0f);
                     textToSpeech.setPitch(pitch > 0 ? pitch : 1.05f);
                     String utteranceId = "sensei_" + System.currentTimeMillis();
-                    textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+                    int res;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        Bundle params = new Bundle();
+                        params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f);
+                        res = textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, params, utteranceId);
+                    } else {
+                        java.util.HashMap<String, String> map = new java.util.HashMap<>();
+                        map.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, utteranceId);
+                        res = textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, map);
+                    }
+                    return res == TextToSpeech.SUCCESS;
                 } catch (Exception e) {
-                    // Fail silently or ignore
+                    return false;
                 }
+            } else if (!isTtsInitialized && textToSpeech == null) {
+                initTextToSpeech();
             }
+            return false;
         }
 
         @JavascriptInterface

@@ -1,6 +1,7 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import https from 'https';
 import { Database, getProgressionTier } from '../db/database.js';
 import { aiEngine } from '../engine/aiEngine.js';
 import { CHESS_PUZZLES, PUZZLE_THEMES, PUZZLE_OPENINGS_LIST, CHESS_LESSONS } from '../puzzles/puzzleData.js';
@@ -1170,6 +1171,64 @@ router.delete('/admin/tournaments/:id', requireAuth, (req, res) => {
   }
   const success = Database.deleteTournament(req.params.id);
   res.json({ success: Boolean(success) });
+});
+
+// Universal High-Reliability Text-To-Speech (TTS) Proxy
+const ttsAudioCache = new Map();
+router.get('/tts', (req, res) => {
+  try {
+    const text = (req.query.text || '').toString().slice(0, 300).trim();
+    const lang = (req.query.lang || 'en').toString();
+    if (!text) {
+      return res.status(400).json({ error: 'Text query parameter is required' });
+    }
+
+    const cacheKey = `${lang}:${text}`;
+    if (ttsAudioCache.has(cacheKey)) {
+      const cached = ttsAudioCache.get(cacheKey);
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+      res.setHeader('X-TTS-Cache', 'HIT');
+      return res.send(cached);
+    }
+
+    const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${encodeURIComponent(lang)}&client=tw-ob`;
+    const options = {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://translate.google.com/'
+      }
+    };
+
+    https.get(ttsUrl, options, (upstream) => {
+      if (upstream.statusCode !== 200) {
+        return res.status(upstream.statusCode || 502).json({ error: 'TTS upstream response status ' + upstream.statusCode });
+      }
+
+      const chunks = [];
+      upstream.on('data', chunk => chunks.push(chunk));
+      upstream.on('end', () => {
+        const fullBuffer = Buffer.concat(chunks);
+        if (ttsAudioCache.size > 200) {
+          const firstKey = ttsAudioCache.keys().next().value;
+          ttsAudioCache.delete(firstKey);
+        }
+        ttsAudioCache.set(cacheKey, fullBuffer);
+
+        res.setHeader('Content-Type', 'audio/mpeg');
+        res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+        res.setHeader('X-TTS-Cache', 'MISS');
+        res.send(fullBuffer);
+      });
+      upstream.on('error', (err) => {
+        res.status(502).json({ error: 'TTS fetch stream failed', details: err.message });
+      });
+    }).on('error', (err) => {
+      res.status(502).json({ error: 'TTS connection failed', details: err.message });
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'TTS handler failed', details: err.message });
+  }
 });
 
 export default router;

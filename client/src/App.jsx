@@ -264,6 +264,56 @@ export default function App() {
   const [analysisGame, setAnalysisGame] = useState(null);
   const [showGameOverModal, setShowGameOverModal] = useState(false);
 
+  // Dynamic live fluctuating online players and arena telemetry
+  const [liveOnlineCount, setLiveOnlineCount] = useState(() => {
+    try {
+      const saved = safeStorage.getItem('chess_arena_live_online_count');
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed > 5000) return parsed;
+      }
+    } catch {}
+    return 12023; // Baseline realistic starting counter: 12,023
+  });
+  const [avgPairingTime, setAvgPairingTime] = useState('1.1s');
+  const [activeBattlesCount, setActiveBattlesCount] = useState(() => Math.round(12023 * 0.24));
+
+  useEffect(() => {
+    // Dynamic periodic fluctuations every 3.5 seconds
+    const interval = setInterval(() => {
+      setLiveOnlineCount(prev => {
+        // Natural progression through realistic traffic waves (12,023 -> 12,272 -> ... up to 146,526)
+        const isSurge = Math.random() < 0.12;
+        let delta = 0;
+        if (isSurge) {
+          // Surge up or down by 80-250
+          delta = (Math.random() > 0.42 ? 1 : -1) * (Math.floor(Math.random() * 200) + 80);
+        } else {
+          // Micro fluctuations (-12 to +28)
+          delta = Math.floor(Math.random() * 41) - 13;
+        }
+
+        let next = prev + delta;
+        if (next < 11800) next = 12023 + Math.floor(Math.random() * 180);
+        if (next > 155000) next = 146526 - Math.floor(Math.random() * 800);
+
+        try {
+          safeStorage.setItem('chess_arena_live_online_count', String(next));
+        } catch {}
+
+        setActiveBattlesCount(Math.round(next * 0.24));
+
+        // Periodically update pairing time slightly
+        const times = ['0.8s', '0.9s', '1.0s', '1.1s', '1.2s', '1.3s'];
+        setAvgPairingTime(times[Math.floor(Math.random() * times.length)]);
+
+        return next;
+      });
+    }, 3600);
+
+    return () => clearInterval(interval);
+  }, []);
+
   // Notifications State & Handlers
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState(() => {
@@ -1887,16 +1937,18 @@ export default function App() {
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                     </span>
-                    <span className={`font-extrabold font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>18,450</span>
+                    <span className={`font-extrabold font-mono transition-all duration-300 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                      {liveOnlineCount.toLocaleString()}
+                    </span>
                     <span className={isLight ? 'text-slate-500 font-medium' : 'text-slate-400 font-medium'}>Players Online</span>
                   </div>
                   <div className={`hidden sm:flex items-center gap-2 font-medium ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                    <span className="text-amber-500 font-bold font-mono">⚔️ 4,280</span>
+                    <span className="text-amber-500 font-bold font-mono">⚔️ {activeBattlesCount.toLocaleString()}</span>
                     <span>Active Battles</span>
                   </div>
                   <div className={`flex items-center gap-1.5 font-medium ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
                     <Zap className="w-3.5 h-3.5 text-amber-500" />
-                    <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono">1.1s</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono">{avgPairingTime}</span>
                     <span>Avg Pairing</span>
                   </div>
                 </div>
@@ -1937,14 +1989,16 @@ export default function App() {
                         : 'bg-slate-950/80 border-slate-800 text-slate-300'
                     }`}>
                       <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                      <span className={`font-mono font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>18,450</span>
+                      <span className={`font-mono font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                        {liveOnlineCount.toLocaleString()}
+                      </span>
                       <span className={isLight ? 'text-slate-500' : 'text-slate-400'}>online</span>
                     </div>
                   </div>
 
-                  {/* 4 Game Mode Buttons (Unified, Sleek & Non-Bulky) */}
+                  {/* 4 Game Mode Buttons (Clean, Sleek, Highlighted & Non-Bulky) */}
                   <div className="space-y-2.5 pt-1">
-                    {/* 1st: Play with Stockfish */}
+                    {/* 1st: Play with Stockfish (AI Bot) */}
                     {isButtonVisible('homePlayAi') && (
                     <button
                       onClick={() => {
@@ -1952,48 +2006,40 @@ export default function App() {
                         triggerHaptic('move');
                         setShowAIModal(true);
                       }}
-                      className={`w-full text-left p-3 sm:p-4 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
+                      className={`w-full text-left p-3 sm:p-3.5 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
                         isLight
-                          ? 'bg-gradient-to-r from-indigo-50/90 via-white to-purple-50/70 hover:from-indigo-100/90 hover:to-purple-100/80 border-indigo-200/90 hover:border-indigo-400 shadow-md shadow-indigo-100'
-                          : 'bg-gradient-to-r from-indigo-950/70 via-slate-900/90 to-purple-950/50 hover:from-indigo-900/80 hover:via-purple-900/60 hover:to-indigo-850/80 active:from-indigo-900/95 active:to-purple-900/90 border-indigo-500/35 hover:border-indigo-400/70 shadow-lg shadow-indigo-950/30'
+                          ? 'bg-gradient-to-r from-indigo-50/90 via-white to-purple-50/70 hover:from-indigo-100/90 hover:to-purple-100/80 border-2 border-indigo-200/90 hover:border-indigo-400 shadow-sm hover:shadow-md'
+                          : 'bg-gradient-to-r from-indigo-950/70 via-slate-900/90 to-purple-950/50 hover:from-indigo-900/80 hover:via-purple-900/60 hover:to-indigo-850/80 border border-indigo-500/35 hover:border-indigo-400/70 shadow-md shadow-indigo-950/30'
                       }`}
                     >
                       <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-indigo-500/25 transition-all duration-300" />
                       <div className="flex items-center justify-between gap-3 relative z-10">
                         <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
-                          {/* Stockfish AI Neural Bot Avatar Profile Picture */}
-                          <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl border p-1.5 shadow-md flex flex-col items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 relative overflow-hidden ${
+                          {/* Stockfish AI Neural Bot Avatar */}
+                          <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl border p-1 shadow-sm flex flex-col items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 relative overflow-hidden ${
                             isLight
-                              ? 'bg-gradient-to-br from-indigo-100 via-white to-purple-100 border-indigo-200 group-hover:border-indigo-400 group-hover:shadow-[0_0_15px_rgba(99,102,241,0.25)]'
-                              : 'bg-gradient-to-br from-indigo-900/80 via-slate-950 to-purple-950/90 border-indigo-400/50 group-hover:border-indigo-300 group-hover:shadow-[0_0_15px_rgba(99,102,241,0.35)]'
+                              ? 'bg-gradient-to-br from-indigo-100 via-white to-purple-100 border-indigo-200 group-hover:border-indigo-400'
+                              : 'bg-gradient-to-br from-indigo-900/80 via-slate-950 to-purple-950/90 border-indigo-400/50 group-hover:border-indigo-300'
                           }`}>
-                            {/* Circuit lines backdrop */}
-                            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#818cf8_1px,transparent_1px)] [background-size:6px_6px] pointer-events-none" />
-                            {/* Glowing Bot Face & Dual Cyan Eyes */}
                             <div className="relative z-10 flex flex-col items-center">
-                              <Bot className={`w-5 h-5 sm:w-6 sm:h-6 transition-colors ${
+                              <Bot className={`w-5 h-5 transition-colors ${
                                 isLight
                                   ? 'text-indigo-600 group-hover:text-indigo-700'
                                   : 'text-indigo-300 drop-shadow-[0_0_6px_rgba(99,102,241,0.7)] group-hover:text-indigo-200'
                               }`} />
-                              <div className="flex items-center gap-1 mt-0.5">
-                                <span className="w-1 h-1 rounded-full bg-cyan-400 shadow-[0_0_4px_#22d3ee] animate-pulse" />
-                                <span className="w-1 h-1 rounded-full bg-cyan-400 shadow-[0_0_4px_#22d3ee] animate-pulse" style={{ animationDelay: '200ms' }} />
-                              </div>
                             </div>
-                            {/* Bottom tag strip */}
+                            {/* Little name strip */}
                             <div className={`absolute bottom-0 inset-x-0 border-t py-0.5 flex justify-center items-center ${
                               isLight
                                 ? 'bg-indigo-100/95 border-indigo-200 text-indigo-700'
                                 : 'bg-indigo-950/95 border-indigo-500/40 text-indigo-300'
                             }`}>
-                              <span className="text-[7px] sm:text-[8px] font-black tracking-widest uppercase">AI BOT</span>
+                              <span className="text-[7.5px] font-black tracking-widest uppercase">AI BOT</span>
                             </div>
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            {/* Title with flex-wrap and NO truncate so title is 100% visible on all screens */}
-                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <h3 className={`text-sm sm:text-base font-black transition-colors leading-tight ${
                                 isLight
                                   ? 'text-slate-900 group-hover:text-indigo-700'
@@ -2001,34 +2047,25 @@ export default function App() {
                               }`}>
                                 {getButtonLabel('homePlayAi', 'Play with Stockfish')}
                               </h3>
-                              <span className={`px-1.5 sm:px-2 py-0.5 rounded-full border text-[9px] sm:text-[10px] font-black uppercase tracking-wider shrink-0 shadow-sm ${
+                              <span className={`px-2 py-0.5 rounded-full border text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider shrink-0 shadow-xs flex items-center gap-1 ${
                                 isLight
                                   ? 'bg-indigo-100 text-indigo-800 border-indigo-300'
-                                  : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
+                                  : 'bg-indigo-500/25 text-indigo-300 border-indigo-400/40'
                               }`}>
-                                AI Bot 🤖
+                                <span>AI BOT</span>
+                                <span className="text-xs">🤖</span>
                               </span>
                             </div>
-                            <p className={`text-[11px] sm:text-xs mt-1 font-medium leading-tight ${
-                              isLight ? 'text-slate-600' : 'text-slate-400'
-                            }`}>
-                              Practice against engine bots (800–2500+ Elo)
-                            </p>
                           </div>
                         </div>
-                        <div className={`flex items-center gap-1 text-xs font-bold shrink-0 ${
+                        <ChevronRight className={`w-5 h-5 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all shrink-0 ${
                           isLight ? 'text-indigo-600' : 'text-indigo-400'
-                        }`}>
-                          <span className="hidden md:inline">Play AI</span>
-                          <ChevronRight className={`w-5 h-5 group-hover:translate-x-1 transition-all ${
-                            isLight ? 'group-hover:text-indigo-800' : 'group-hover:text-indigo-300'
-                          }`} />
-                        </div>
+                        }`} />
                       </div>
                     </button>
                     )}
 
-                    {/* 2nd: Play with Friends (Chat & Voice Room) */}
+                    {/* 2nd: Play with Friends (Chat & Voice) */}
                     {isButtonVisible('homePlayFriends') && (
                     <button
                       onClick={() => {
@@ -2037,52 +2074,49 @@ export default function App() {
                         setFriendRoomTab('room');
                         setShowFriendRoomModal(true);
                       }}
-                      className={`w-full text-left p-3 sm:p-4 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
+                      className={`w-full text-left p-3 sm:p-3.5 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
                         isLight
-                          ? 'bg-gradient-to-r from-emerald-50/90 via-white to-teal-50/70 hover:from-emerald-100/90 hover:to-teal-100/80 border-emerald-200/90 hover:border-emerald-400 shadow-md shadow-emerald-100'
-                          : 'bg-gradient-to-r from-emerald-950/70 via-slate-900/90 to-teal-950/50 hover:from-emerald-900/80 hover:via-teal-900/60 hover:to-emerald-850/80 active:from-emerald-900/95 active:to-teal-900/90 border-emerald-500/35 hover:border-emerald-400/70 shadow-lg shadow-emerald-950/30'
+                          ? 'bg-gradient-to-r from-emerald-50/90 via-white to-teal-50/70 hover:from-emerald-100/90 hover:to-teal-100/80 border-2 border-emerald-200/90 hover:border-emerald-400 shadow-sm hover:shadow-md'
+                          : 'bg-gradient-to-r from-emerald-950/70 via-slate-900/90 to-teal-950/50 hover:from-emerald-900/80 hover:via-teal-900/60 hover:to-emerald-850/80 border border-emerald-500/35 hover:border-emerald-400/70 shadow-md shadow-emerald-950/30'
                       }`}
                     >
                       <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-emerald-500/25 transition-all duration-300" />
                       <div className="flex items-center justify-between gap-3 relative z-10">
                         <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
-                          {/* Friends & Live Voice Audio Wave Avatar Profile Picture */}
-                          <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl border p-1.5 shadow-md flex flex-col items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 relative overflow-hidden ${
+                          {/* Friends & Live Voice Avatar */}
+                          <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl border p-1 shadow-sm flex flex-col items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 relative overflow-hidden ${
                             isLight
-                              ? 'bg-gradient-to-br from-emerald-100 via-white to-teal-100 border-emerald-200 group-hover:border-emerald-400 group-hover:shadow-[0_0_15px_rgba(16,185,129,0.25)]'
-                              : 'bg-gradient-to-br from-emerald-900/80 via-slate-950 to-teal-950/90 border-emerald-400/50 group-hover:border-emerald-300 group-hover:shadow-[0_0_15px_rgba(16,185,129,0.35)]'
+                              ? 'bg-gradient-to-br from-emerald-100 via-white to-teal-100 border-emerald-200 group-hover:border-emerald-400'
+                              : 'bg-gradient-to-br from-emerald-900/80 via-slate-950 to-teal-950/90 border-emerald-400/50 group-hover:border-emerald-300'
                           }`}>
-                            {/* Two friend avatar badges overlapping + live sound equalizer waves */}
                             <div className="relative z-10 flex flex-col items-center">
-                              <div className="flex items-center justify-center -space-x-1.5">
-                                <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 border border-emerald-200/50 flex items-center justify-center text-[8px] font-black text-white shadow-sm">
+                              <div className="flex items-center justify-center -space-x-1">
+                                <div className="w-3.5 h-3.5 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 border border-emerald-200/50 flex items-center justify-center text-[7.5px] font-black text-white shadow-xs">
                                   ♔
                                 </div>
-                                <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 border border-amber-200/50 flex items-center justify-center text-[8px] font-black text-white shadow-sm">
+                                <div className="w-3.5 h-3.5 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 border border-amber-200/50 flex items-center justify-center text-[7.5px] font-black text-white shadow-xs">
                                   ♚
                                 </div>
                               </div>
                               {/* Audio Soundwave Equalizer */}
-                              <div className="flex items-end gap-0.5 justify-center mt-1">
-                                <span className="w-0.5 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                <span className="w-0.5 h-3 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                <span className="w-0.5 h-1.5 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                                <span className="w-0.5 h-2.5 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '100ms' }} />
+                              <div className="flex items-end gap-0.5 justify-center mt-0.5">
+                                <span className="w-0.5 h-1.5 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                <span className="w-0.5 h-2.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                <span className="w-0.5 h-1 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                               </div>
                             </div>
-                            {/* Bottom tag strip */}
+                            {/* Little name strip */}
                             <div className={`absolute bottom-0 inset-x-0 border-t py-0.5 flex justify-center items-center ${
                               isLight
                                 ? 'bg-emerald-100/95 border-emerald-200 text-emerald-700'
                                 : 'bg-emerald-950/95 border-emerald-500/40 text-emerald-300'
                             }`}>
-                              <span className="text-[7px] sm:text-[8px] font-black tracking-widest uppercase">VOICE</span>
+                              <span className="text-[6.5px] font-black tracking-wider uppercase">CHAT VOICE</span>
                             </div>
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            {/* Title with flex-wrap and NO truncate so title is 100% visible on all screens */}
-                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <h3 className={`text-sm sm:text-base font-black transition-colors leading-tight ${
                                 isLight
                                   ? 'text-slate-900 group-hover:text-emerald-700'
@@ -2090,35 +2124,25 @@ export default function App() {
                               }`}>
                                 {getButtonLabel('homePlayFriends', 'Play with Friends')}
                               </h3>
-                              <span className={`px-1.5 sm:px-2 py-0.5 rounded-full border text-[9px] sm:text-[10px] font-black uppercase tracking-wider shrink-0 flex items-center gap-1 shadow-sm ${
+                              <span className={`px-2 py-0.5 rounded-full border text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider shrink-0 shadow-xs flex items-center gap-1 ${
                                 isLight
                                   ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                                  : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                                  : 'bg-emerald-500/25 text-emerald-300 border-emerald-400/40'
                               }`}>
-                                <span>Chat & Voice</span>
-                                <span className="text-[10px]">🎙️</span>
+                                <span>CHAT & VOICE</span>
+                                <span className="text-xs">🎙️</span>
                               </span>
                             </div>
-                            <p className={`text-[11px] sm:text-xs mt-1 font-medium leading-tight ${
-                              isLight ? 'text-slate-600' : 'text-slate-400'
-                            }`}>
-                              Private rooms with live chat, voice & invites
-                            </p>
                           </div>
                         </div>
-                        <div className={`flex items-center gap-1 text-xs font-bold shrink-0 ${
+                        <ChevronRight className={`w-5 h-5 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all shrink-0 ${
                           isLight ? 'text-emerald-600' : 'text-emerald-400'
-                        }`}>
-                          <span className="hidden md:inline">Join Room</span>
-                          <ChevronRight className={`w-5 h-5 group-hover:translate-x-1 transition-all ${
-                            isLight ? 'group-hover:text-emerald-800' : 'group-hover:text-emerald-300'
-                          }`} />
-                        </div>
+                        }`} />
                       </div>
                     </button>
                     )}
 
-                    {/* 3rd: Play Online (Opens Time Selection Modal) */}
+                    {/* 3rd: Play Online (Rated FIDE) */}
                     {isButtonVisible('homePlayOnline') && (
                     <button
                       onClick={() => {
@@ -2126,44 +2150,40 @@ export default function App() {
                         triggerHaptic('move');
                         setShowMatchmakingModal(true);
                       }}
-                      className={`w-full text-left p-3 sm:p-4 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
+                      className={`w-full text-left p-3 sm:p-3.5 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
                         isLight
-                          ? 'bg-gradient-to-r from-rose-50/90 via-white to-red-50/80 hover:from-rose-100/90 hover:to-red-100/80 border-rose-200/90 hover:border-rose-400 shadow-md shadow-rose-100'
-                          : 'bg-gradient-to-r from-rose-950/70 via-slate-900/90 to-red-950/50 hover:from-rose-900/80 hover:via-red-900/60 hover:to-rose-850/80 active:from-rose-900/95 active:to-red-900/90 border-rose-500/35 hover:border-rose-400/70 shadow-lg shadow-rose-950/30'
+                          ? 'bg-gradient-to-r from-rose-50/90 via-white to-red-50/80 hover:from-rose-100/90 hover:to-red-100/80 border-2 border-rose-200/90 hover:border-rose-400 shadow-sm hover:shadow-md'
+                          : 'bg-gradient-to-r from-rose-950/70 via-slate-900/90 to-red-950/50 hover:from-rose-900/80 hover:via-red-900/60 hover:to-rose-850/80 border border-rose-500/35 hover:border-rose-400/70 shadow-md shadow-rose-950/30'
                       }`}
                     >
                       <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-rose-500/25 transition-all duration-300" />
                       <div className="flex items-center justify-between gap-3 relative z-10">
                         <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
-                          {/* Global Arena Matchmaking Profile Picture with Crossed Swords */}
-                          <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl border p-1.5 shadow-md flex flex-col items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 relative overflow-hidden ${
+                          {/* Global Arena Crossed Swords Avatar */}
+                          <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl border p-1 shadow-sm flex flex-col items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 relative overflow-hidden ${
                             isLight
-                              ? 'bg-gradient-to-br from-rose-100 via-white to-red-100 border-rose-300 group-hover:border-rose-400 group-hover:shadow-[0_0_15px_rgba(244,63,94,0.25)]'
-                              : 'bg-gradient-to-br from-rose-900/80 via-slate-950 to-red-950/90 border-rose-500/50 group-hover:border-rose-300 group-hover:shadow-[0_0_15px_rgba(244,63,94,0.35)]'
+                              ? 'bg-gradient-to-br from-rose-100 via-white to-red-100 border-rose-300 group-hover:border-rose-400'
+                              : 'bg-gradient-to-br from-rose-900/80 via-slate-950 to-red-950/90 border-rose-500/50 group-hover:border-rose-300'
                           }`}>
-                            {/* Live radar pulse in corner */}
-                            <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-rose-500 shadow-[0_0_6px_#f43f5e] animate-pulse" />
-                            {/* Crossed Swords with crimson flare */}
                             <div className="relative z-10 flex flex-col items-center">
-                              <Swords className={`w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-12 transition-transform duration-300 ${
+                              <Swords className={`w-5 h-5 group-hover:rotate-12 transition-transform duration-300 ${
                                 isLight
                                   ? 'text-rose-600'
                                   : 'text-rose-400 drop-shadow-[0_0_6px_rgba(244,63,94,0.7)]'
                               }`} />
                             </div>
-                            {/* Bottom tag strip */}
+                            {/* Little name strip */}
                             <div className={`absolute bottom-0 inset-x-0 border-t py-0.5 flex justify-center items-center ${
                               isLight
                                 ? 'bg-rose-100/95 border-rose-200 text-rose-800'
                                 : 'bg-rose-950/95 border-rose-500/40 text-rose-300'
                             }`}>
-                              <span className="text-[7px] sm:text-[8px] font-black tracking-widest uppercase">ONLINE</span>
+                              <span className="text-[7.5px] font-black tracking-widest uppercase">ONLINE</span>
                             </div>
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            {/* Title with flex-wrap and NO truncate so title is 100% visible on all screens */}
-                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <h3 className={`text-sm sm:text-base font-black transition-colors leading-tight ${
                                 isLight
                                   ? 'text-slate-900 group-hover:text-rose-700'
@@ -2171,34 +2191,25 @@ export default function App() {
                               }`}>
                                 {getButtonLabel('homePlayOnline', 'Play Online')}
                               </h3>
-                              <span className={`px-1.5 sm:px-2 py-0.5 rounded-full border text-[9px] sm:text-[10px] font-black uppercase tracking-wider shrink-0 shadow-sm ${
+                              <span className={`px-2 py-0.5 rounded-full border text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider shrink-0 shadow-xs flex items-center gap-1 ${
                                 isLight
                                   ? 'bg-rose-100 text-rose-800 border-rose-300'
-                                  : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                                  : 'bg-rose-500/25 text-rose-300 border-rose-400/40'
                               }`}>
-                                Rated FIDE ⚔️
+                                <span>RATED FIDE</span>
+                                <span className="text-xs">⚔️</span>
                               </span>
                             </div>
-                            <p className={`text-[11px] sm:text-xs mt-1 font-medium leading-tight ${
-                              isLight ? 'text-slate-600' : 'text-slate-400'
-                            }`}>
-                              Choose time control & match with global players
-                            </p>
                           </div>
                         </div>
-                        <div className={`flex items-center gap-1 text-xs font-bold shrink-0 ${
+                        <ChevronRight className={`w-5 h-5 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all shrink-0 ${
                           isLight ? 'text-rose-600' : 'text-rose-400'
-                        }`}>
-                          <span className="hidden md:inline">Choose Time</span>
-                          <ChevronRight className={`w-5 h-5 group-hover:translate-x-1 transition-all ${
-                            isLight ? 'group-hover:text-rose-800' : 'group-hover:text-rose-300'
-                          }`} />
-                        </div>
+                        }`} />
                       </div>
                     </button>
                     )}
 
-                    {/* 4th: Offline Chess Board (High-Definition 3D Wooden Chessboard Vector Artwork) */}
+                    {/* 4th: Offline Chess Board (Pass & Play) */}
                     {isButtonVisible('homeOfflineBoard') && (
                     <button
                       onClick={() => {
@@ -2206,22 +2217,22 @@ export default function App() {
                         triggerHaptic('move');
                         setActiveTab('offline');
                       }}
-                      className={`w-full text-left p-3 sm:p-4 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
+                      className={`w-full text-left p-3 sm:p-3.5 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
                         isLight
-                          ? 'bg-gradient-to-r from-amber-50/90 via-white to-yellow-50/70 hover:from-amber-100/90 hover:to-yellow-100/80 border-amber-300/90 hover:border-amber-500 shadow-md shadow-amber-100'
-                          : 'bg-gradient-to-r from-amber-950/70 via-slate-900/90 to-yellow-950/50 hover:from-amber-900/80 hover:via-yellow-900/60 hover:to-amber-850/80 active:from-amber-900/95 active:to-yellow-900/90 border-amber-500/40 hover:border-amber-400/80 shadow-lg shadow-amber-950/35'
+                          ? 'bg-gradient-to-r from-amber-50/90 via-white to-yellow-50/70 hover:from-amber-100/90 hover:to-yellow-100/80 border-2 border-amber-300/90 hover:border-amber-500 shadow-sm hover:shadow-md'
+                          : 'bg-gradient-to-r from-amber-950/70 via-slate-900/90 to-yellow-950/50 hover:from-amber-900/80 hover:via-yellow-900/60 hover:to-amber-850/80 border border-amber-500/40 hover:border-amber-400/80 shadow-md shadow-amber-950/35'
                       }`}
                     >
                       <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-500/25 transition-all duration-300" />
                       <div className="flex items-center justify-between gap-3 relative z-10">
                         <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
-                          {/* Premium 3D Luxury Chessboard Illustration */}
-                          <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl border p-1 shadow-md flex flex-col items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 relative overflow-hidden ${
+                          {/* 3D Luxury Chessboard Icon */}
+                          <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl border p-1 shadow-sm flex flex-col items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 relative overflow-hidden ${
                             isLight
-                              ? 'bg-gradient-to-br from-amber-100 via-white to-yellow-100 border-amber-300 group-hover:border-amber-400 group-hover:shadow-[0_0_15px_rgba(245,158,11,0.25)]'
-                              : 'bg-gradient-to-br from-amber-900/80 via-slate-950 to-yellow-950/90 border-amber-500/50 group-hover:border-amber-300 group-hover:shadow-[0_0_15px_rgba(245,158,11,0.35)]'
+                              ? 'bg-gradient-to-br from-amber-100 via-white to-yellow-100 border-amber-300 group-hover:border-amber-400'
+                              : 'bg-gradient-to-br from-amber-900/80 via-slate-950 to-yellow-950/90 border-amber-500/50 group-hover:border-amber-300'
                           }`}>
-                            <svg className="w-9 h-9 sm:w-10 sm:h-10 drop-shadow-md transition-transform duration-300 group-hover:scale-110" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <svg className="w-8 h-8 drop-shadow-xs transition-transform duration-300 group-hover:scale-110" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <defs>
                                 <linearGradient id="boardBaseWood" x1="0%" y1="0%" x2="100%" y2="100%">
                                   <stop offset="0%" stopColor="#92400e" />
@@ -2252,12 +2263,9 @@ export default function App() {
                                   <stop offset="100%" stopColor="#0f172a" />
                                 </linearGradient>
                               </defs>
-                              {/* 3D Board Base with Walnut Depth */}
                               <rect x="5" y="7" width="54" height="52" rx="7" fill="#451a03" />
                               <rect x="5" y="5" width="54" height="52" rx="7" fill="url(#boardBaseWood)" stroke="url(#goldBoardTrim)" strokeWidth="1.2" />
-                              {/* Inner Playing Field with Bevel */}
                               <rect x="9" y="9" width="46" height="44" rx="3.5" fill="#451a03" stroke="#fde047" strokeWidth="0.8" />
-                              {/* 4x4 Grid Squares */}
                               <g transform="translate(10, 10)">
                                 <rect x="0" y="0" width="11" height="10.5" fill="url(#sqLight)" rx="1" />
                                 <rect x="11" y="0" width="11" height="10.5" fill="url(#sqDark)" rx="1" />
@@ -2276,12 +2284,10 @@ export default function App() {
                                 <rect x="22" y="31.5" width="11" height="10.5" fill="url(#sqDark)" rx="1" />
                                 <rect x="33" y="31.5" width="11" height="10.5" fill="url(#sqLight)" rx="1" />
                               </g>
-                              {/* Polished Gold Knight (White piece) */}
                               <g transform="translate(13, 24)">
                                 <path d="M12 2C9.5 2 7 3.5 6 6.5C5.5 8 5.8 10 5 11.5C4.2 13 2.5 14 2 15.5C1.5 17 2.2 18.2 3.5 18.5C5 18.8 6.5 17.5 7 16.5C7.2 18 8 19 9.5 19.5C8.8 20 8 20.8 8 22H16C16 20.5 15.5 18.5 15.5 16.5C16.8 15 17.5 12.8 17.2 10.5C16.8 6 15 2 12 2Z" fill="url(#knightGold)" stroke="#b45309" strokeWidth="0.8" />
                                 <circle cx="8" cy="8" r="0.9" fill="#78350f" />
                               </g>
-                              {/* Obsidian King with Gold Crown (Black piece) */}
                               <g transform="translate(34, 11)">
                                 <path d="M10 3V1H8V3H6V5H8V6H10V5H12V3H10Z" fill="#fbbf24" />
                                 <path d="M4 8L5.5 13H12.5L14 8L11 10L9 6.5L7 10L4 8Z" fill="url(#kingObsidian)" stroke="#64748b" strokeWidth="0.7" />
@@ -2289,19 +2295,18 @@ export default function App() {
                                 <rect x="4" y="18" width="10" height="2.5" rx="1.2" fill="#0f172a" stroke="#f59e0b" strokeWidth="0.6" />
                               </g>
                             </svg>
-                            {/* Bottom tag strip */}
+                            {/* Little name strip */}
                             <div className={`absolute bottom-0 inset-x-0 border-t py-0.5 flex justify-center items-center ${
                               isLight
                                 ? 'bg-amber-100/95 border-amber-200 text-amber-800'
                                 : 'bg-amber-950/95 border-amber-600/40 text-amber-300'
                             }`}>
-                              <span className="text-[7px] sm:text-[8px] font-black tracking-widest uppercase">BOARD</span>
+                              <span className="text-[7.5px] font-black tracking-widest uppercase">PASS & PLAY</span>
                             </div>
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            {/* Title with flex-wrap and NO truncate so title is 100% visible on all screens */}
-                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <h3 className={`text-sm sm:text-base font-black transition-colors leading-tight ${
                                 isLight
                                   ? 'text-slate-900 group-hover:text-amber-800'
@@ -2309,29 +2314,20 @@ export default function App() {
                               }`}>
                                 {getButtonLabel('homeOfflineBoard', 'Offline Chess Board')}
                               </h3>
-                              <span className={`px-1.5 sm:px-2 py-0.5 rounded-full border text-[9px] sm:text-[10px] font-black uppercase tracking-wider shrink-0 shadow-sm ${
+                              <span className={`px-2 py-0.5 rounded-full border text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider shrink-0 shadow-xs flex items-center gap-1 ${
                                 isLight
                                   ? 'bg-amber-100 text-amber-800 border-amber-300'
-                                  : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                                  : 'bg-amber-500/25 text-amber-300 border-amber-400/40'
                               }`}>
-                                Pass & Play 👥
+                                <span>PASS & PLAY</span>
+                                <span className="text-xs">👥</span>
                               </span>
                             </div>
-                            <p className={`text-[11px] sm:text-xs mt-1 font-medium leading-tight ${
-                              isLight ? 'text-slate-600' : 'text-slate-400'
-                            }`}>
-                              Play face-to-face on 1 phone (No internet needed)
-                            </p>
                           </div>
                         </div>
-                        <div className={`flex items-center gap-1 text-xs font-bold shrink-0 ${
-                          isLight ? 'text-amber-600' : 'text-slate-400 group-hover:text-amber-400'
-                        }`}>
-                          <span className="hidden md:inline">Pass & Play</span>
-                          <ChevronRight className={`w-5 h-5 group-hover:translate-x-1 transition-all ${
-                            isLight ? 'group-hover:text-amber-800' : 'group-hover:text-amber-300'
-                          }`} />
-                        </div>
+                        <ChevronRight className={`w-5 h-5 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all shrink-0 ${
+                          isLight ? 'text-amber-600' : 'text-amber-400'
+                        }`} />
                       </div>
                     </button>
                     )}
