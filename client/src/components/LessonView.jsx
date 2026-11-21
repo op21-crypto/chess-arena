@@ -193,6 +193,14 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
     }
   }, [isLessonStarted, activeMode, currentStepIdx, selectedLessonIdx, voiceEnabled]);
 
+  // Automatically speak when entering or advancing drills in Practice mode
+  useEffect(() => {
+    if (isLessonStarted && activeMode === 'practice' && voiceEnabled && currentPractice) {
+      const textToSpeak = currentPractice.prompt || "Your turn! Tap the correct square to solve the drill.";
+      speakText(textToSpeak);
+    }
+  }, [isLessonStarted, activeMode, practiceStepIdx, selectedLessonIdx, voiceEnabled]);
+
   // Toggle Voice Narration ON/OFF
   const toggleVoice = () => {
     sound.playClick();
@@ -474,7 +482,7 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
               </h1>
             </div>
 
-            {/* Quick Audio Controls (Sensei Voice Toggle & Ambient Music Toggle) */}
+            {/* Quick Audio Control (Sensei Voice Toggle - Music Removed per user request) */}
             <div className="flex items-center gap-1.5">
               <button
                 onClick={toggleVoice}
@@ -489,76 +497,44 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
               >
                 {voiceEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
               </button>
-
-              <button
-                onClick={toggleMusic}
-                className={`p-2 rounded-xl transition-all cursor-pointer active:scale-95 ${
-                  musicEnabled
-                    ? 'bg-amber-400 text-slate-950 font-bold shadow-md shadow-amber-400/25 ring-2 ring-amber-300/40'
-                    : isLightMode
-                    ? 'bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-900'
-                    : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
-                }`}
-                title={musicEnabled ? 'Ambient Music: ON' : 'Ambient Music: OFF'}
-              >
-                <Music className="w-5 h-5" />
-              </button>
             </div>
           </div>
         </header>
 
         {/* Academy Hub Main Body */}
         <main className="flex-1 max-w-md w-full mx-auto px-3.5 py-4 space-y-4">
-          {/* Professional Academic Mastery Tracker Card */}
-          <div className={`border rounded-2xl p-4 shadow-md backdrop-blur-xl space-y-3 relative overflow-hidden transition-colors ${
+          {/* Professional Academic Mastery Tracker Card (Single Line, No Bulky Subheading) */}
+          <div className={`border rounded-2xl p-3.5 sm:p-4 shadow-md backdrop-blur-xl relative overflow-hidden transition-colors ${
             isLightMode
               ? 'bg-white border-slate-200/90 shadow-slate-200/40 text-slate-900'
               : 'bg-gradient-to-br from-slate-900/90 via-slate-900/80 to-slate-950/90 border-slate-800/80 text-white'
           }`}>
-            <div className="flex items-center justify-between gap-2 relative z-10">
+            <div className="flex items-center justify-between gap-2 mb-2.5 relative z-10">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-slate-950 font-black shadow-md shadow-emerald-500/20 shrink-0">
                   <GraduationCap className="w-4 h-4 text-slate-950" />
                 </div>
-                <div className="min-w-0">
-                  <h2 className={`text-xs sm:text-sm font-black uppercase tracking-wider truncate ${
-                    isLightMode ? 'text-slate-900' : 'text-white'
-                  }`}>
-                    Academic Mastery Tracker
-                  </h2>
-                  <p className={`text-[11px] font-medium truncate ${
-                    isLightMode ? 'text-slate-500' : 'text-slate-400'
-                  }`}>
-                    Structured FIDE Curriculum • 64 Master Lessons
-                  </p>
-                </div>
+                <h2 className={`text-xs sm:text-sm font-black uppercase tracking-wider truncate ${
+                  isLightMode ? 'text-slate-900' : 'text-white'
+                }`}>
+                  Academic Mastery Tracker
+                </h2>
               </div>
+              <span className={`font-mono font-black text-xs shrink-0 ${
+                isLightMode ? 'text-emerald-700' : 'text-emerald-400'
+              }`}>
+                {completedCount} / 64 Lessons ({progressPercent}%)
+              </span>
             </div>
 
-            {/* Single Premium Progress Line */}
-            <div className="space-y-1.5 pt-0.5 relative z-10">
-              <div className="flex items-center justify-between text-xs font-mono font-bold">
-                <span className={`flex items-center gap-1.5 text-[11px] ${
-                  isLightMode ? 'text-slate-600' : 'text-slate-300'
-                }`}>
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Curriculum Completed</span>
-                </span>
-                <span className={`font-black text-xs ${
-                  isLightMode ? 'text-emerald-700' : 'text-emerald-400'
-                }`}>
-                  {completedCount} / 64 Lessons ({progressPercent}%)
-                </span>
-              </div>
-
-              <div className={`w-full h-2.5 rounded-full overflow-hidden p-0.5 border shadow-inner ${
-                isLightMode ? 'bg-slate-100 border-slate-300' : 'bg-slate-950 border-slate-800'
-              }`}>
-                <div
-                  className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-400 rounded-full transition-all duration-700 shadow-md shadow-emerald-500/30"
-                  style={{ width: `${Math.max(4, progressPercent)}%` }}
-                />
-              </div>
+            {/* Single Premium Progress Bar */}
+            <div className={`w-full h-2.5 rounded-full overflow-hidden p-0.5 border shadow-inner ${
+              isLightMode ? 'bg-slate-100 border-slate-300' : 'bg-slate-950 border-slate-800'
+            }`}>
+              <div
+                className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-400 rounded-full transition-all duration-700 shadow-md shadow-emerald-500/30"
+                style={{ width: `${Math.max(4, progressPercent)}%` }}
+              />
             </div>
           </div>
 
@@ -801,62 +777,6 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
                 ) : (
                   <ChevronDown className={`w-5 h-5 opacity-60 group-hover:opacity-100 transition-all shrink-0 ${isLightMode ? 'text-indigo-600' : 'text-indigo-400'}`} />
                 )}
-              </div>
-            </button>
-
-            {/* 4th: Sensei Audio Coach (Amber / Golden Honey) */}
-            <button
-              onClick={() => {
-                sound.playClick();
-                triggerHaptic('move');
-                if (!voiceEnabled) toggleVoice();
-                handleManualSpeak();
-              }}
-              className={`w-full text-left p-3.5 sm:p-4 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
-                isLightMode
-                  ? 'bg-gradient-to-r from-amber-50/90 via-white to-yellow-50/70 hover:from-amber-100/90 hover:to-yellow-100/80 border-2 border-amber-300/90 hover:border-amber-500 shadow-sm hover:shadow-md'
-                  : 'bg-gradient-to-r from-amber-950/70 via-slate-900/90 to-yellow-950/50 hover:from-amber-900/80 hover:via-yellow-900/60 hover:to-amber-850/80 border border-amber-500/35 hover:border-amber-400/70 shadow-md shadow-amber-950/30'
-              }`}
-            >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-500/25 transition-all duration-300" />
-              <div className="flex items-center justify-between gap-3 relative z-10">
-                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                  {/* Clean Amber Headphones Avatar */}
-                  <div className={`w-12 h-12 sm:w-13 sm:h-13 rounded-2xl border flex items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 relative shadow-xs overflow-hidden ${
-                    isLightMode
-                      ? 'bg-gradient-to-br from-amber-100 via-white to-yellow-100 border-amber-300 group-hover:border-amber-400'
-                      : 'bg-gradient-to-br from-amber-900/80 via-slate-950 to-yellow-950/90 border-amber-400/50 group-hover:border-amber-300'
-                  }`}>
-                    <Headphones className={`w-6 h-6 transition-colors ${
-                      isLightMode
-                        ? 'text-amber-600 group-hover:text-amber-700'
-                        : 'text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.7)] group-hover:text-amber-300'
-                    }`} />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
-                      <h3 className={`text-base sm:text-lg font-black tracking-tight transition-colors leading-tight ${
-                        isLightMode
-                          ? 'text-slate-900 group-hover:text-amber-800'
-                          : 'text-white group-hover:text-amber-200'
-                      }`}>
-                        Sensei Audio Coach
-                      </h3>
-                      <span className={`px-2.5 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-black uppercase tracking-wider shrink-0 shadow-xs flex items-center gap-1 ${
-                        isLightMode
-                          ? 'bg-amber-100 text-amber-800 border-amber-300 shadow-amber-100'
-                          : 'bg-amber-500/25 text-amber-300 border-amber-400/40 shadow-amber-950/50'
-                      }`}>
-                        <span>{isSpeaking ? 'SPEAKING' : 'AUDIO COACH'}</span>
-                        <span className="text-xs">🎙️</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <ChevronRight className={`w-5 h-5 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all shrink-0 ${
-                  isLightMode ? 'text-amber-600' : 'text-amber-400'
-                }`} />
               </div>
             </button>
           </div>
