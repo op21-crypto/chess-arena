@@ -6,6 +6,7 @@ import { Database, getProgressionTier } from '../db/database.js';
 import { aiEngine } from '../engine/aiEngine.js';
 import { CHESS_PUZZLES, PUZZLE_THEMES, PUZZLE_OPENINGS_LIST, CHESS_LESSONS } from '../puzzles/puzzleData.js';
 import { tournamentManager } from '../tournaments/tournamentManager.js';
+import { firestoreRestService } from '../services/firestoreRestService.js';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'chess-arena-super-secure-key-2026';
@@ -326,9 +327,9 @@ router.get('/games/:id', (req, res) => {
   res.json({ game });
 });
 
-// ================= ROOMS (FRIEND PLAY & SERVERLESS SYNC) =================
+// ================= ROOMS (FRIEND PLAY & CENTRALIZED FIRESTORE SYNC) =================
 
-router.post('/rooms/create', (req, res) => {
+router.post('/rooms/create', async (req, res) => {
   const { roomId, timeControl, colorPreference, user } = req.body;
   const id = roomId || `arena_${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
   const baseMinutes = timeControl?.baseMinutes || 10;
@@ -363,14 +364,21 @@ router.post('/rooms/create', (req, res) => {
   };
 
   Database.saveGame(room);
+  await firestoreRestService.saveRoom(room);
   res.json({ success: true, room });
 });
 
 // Universal Get Room (supports both ?id=... and /rooms/:id)
-router.get(['/rooms/get', '/rooms/:id'], (req, res) => {
+router.get(['/rooms/get', '/rooms/:id'], async (req, res) => {
   const roomId = req.query.id || req.params.id;
   if (!roomId) return res.status(400).json({ error: 'Room ID required' });
-  let room = Database.getGameById(roomId);
+  
+  // Try getting from Firestore first for authoritative multi-instance state
+  let room = await firestoreRestService.getRoom(roomId);
+  if (!room) {
+    room = Database.getGameById(roomId);
+  }
+
   if (!room) {
     room = {
       id: roomId,
@@ -390,21 +398,23 @@ router.get(['/rooms/get', '/rooms/:id'], (req, res) => {
       createdAt: new Date().toISOString(),
       lastUpdated: Date.now()
     };
-    Database.saveGame(room);
+    await firestoreRestService.saveRoom(room);
   } else {
     // Ensure room fields are initialized
     if (!room.chatMessages) room.chatMessages = [];
     if (!room.typingUsers) room.typingUsers = {};
     if (!room.voiceSignals) room.voiceSignals = [];
   }
+
+  Database.saveGame(room);
   res.json({ room });
 });
 
 // Universal Join Room (supports both POST /rooms/join with body.roomId and POST /rooms/:id/join)
-router.post(['/rooms/join', '/rooms/:id/join'], (req, res) => {
+router.post(['/rooms/join', '/rooms/:id/join'], async (req, res) => {
   const roomId = req.body.roomId || req.params.id;
   if (!roomId) return res.status(400).json({ error: 'Room ID required' });
-  let room = Database.getGameById(roomId);
+  
   const { user } = req.body;
   const joiningPlayer = user || {
     id: `guest_${Date.now()}`,
@@ -412,6 +422,12 @@ router.post(['/rooms/join', '/rooms/:id/join'], (req, res) => {
     role: 'guest',
     elo: 1200
   };
+
+  // Authoritative check from Firestore
+  let room = await firestoreRestService.getRoom(roomId);
+  if (!room) {
+    room = Database.getGameById(roomId);
+  }
 
   if (!room) {
     room = {
@@ -433,6 +449,7 @@ router.post(['/rooms/join', '/rooms/:id/join'], (req, res) => {
       lastUpdated: Date.now()
     };
     Database.saveGame(room);
+    await firestoreRestService.saveRoom(room);
     return res.json({ success: true, room });
   }
 
@@ -440,25 +457,35 @@ router.post(['/rooms/join', '/rooms/:id/join'], (req, res) => {
   if (!room.typingUsers) room.typingUsers = {};
   if (!room.voiceSignals) room.voiceSignals = [];
 
-  if (!room.whitePlayer) {
+  // Slot the joining player into the open seat
+  if (!room.whitePlayer && (!room.blackPlayer || room.blackPlayer.id !== joiningPlayer.id)) {
     room.whitePlayer = joiningPlayer;
     room.status = 'active';
-  } else if (!room.blackPlayer && room.whitePlayer.id !== joiningPlayer.id) {
+  } else if (!room.blackPlayer && (!room.whitePlayer || room.whitePlayer.id !== joiningPlayer.id)) {
     room.blackPlayer = joiningPlayer;
+    room.status = 'active';
+  } else if (room.whitePlayer && room.blackPlayer) {
+    // Both seats occupied; activate room
     room.status = 'active';
   }
 
   room.lastUpdated = Date.now();
   Database.saveGame(room);
+  await firestoreRestService.saveRoom(room);
   res.json({ success: true, room });
 });
 
 // Universal Room Chat (supports both POST /rooms/chat and POST /rooms/:id/chat)
-router.post(['/rooms/chat', '/rooms/:id/chat'], (req, res) => {
+router.post(['/rooms/chat', '/rooms/:id/chat'], async (req, res) => {
   const roomId = req.body.roomId || req.body.gameId || req.params.id;
   const { text, emoji, sender } = req.body;
   if (!roomId || (!text && !emoji)) return res.status(400).json({ error: 'Room ID and message required' });
-  let room = Database.getGameById(roomId);
+  
+  let room = await firestoreRestService.getRoom(roomId);
+  if (!room) {
+    room = Database.getGameById(roomId);
+  }
+
   if (!room) {
     room = {
       id: roomId,
@@ -488,15 +515,21 @@ router.post(['/rooms/chat', '/rooms/:id/chat'], (req, res) => {
   if (room.chatMessages.length > 100) room.chatMessages = room.chatMessages.slice(-100);
   room.lastUpdated = Date.now();
   Database.saveGame(room);
+  await firestoreRestService.saveRoom(room);
   res.json({ success: true, message: newMsg, chatMessages: room.chatMessages });
 });
 
 // Universal Room Typing status
-router.post(['/rooms/typing', '/rooms/:id/typing'], (req, res) => {
+router.post(['/rooms/typing', '/rooms/:id/typing'], async (req, res) => {
   const roomId = req.body.roomId || req.body.gameId || req.params.id;
   const { user, isTyping } = req.body;
   if (!roomId || !user) return res.status(400).json({ error: 'Room ID and user required' });
-  let room = Database.getGameById(roomId);
+  
+  let room = await firestoreRestService.getRoom(roomId);
+  if (!room) {
+    room = Database.getGameById(roomId);
+  }
+
   if (room) {
     if (!room.typingUsers) room.typingUsers = {};
     const userId = user.id || user.username;
@@ -516,16 +549,22 @@ router.post(['/rooms/typing', '/rooms/:id/typing'], (req, res) => {
     });
     room.lastUpdated = Date.now();
     Database.saveGame(room);
+    await firestoreRestService.saveRoom(room);
   }
   res.json({ success: true });
 });
 
 // Universal Room Voice Signaling Fallback
-router.post(['/rooms/voice', '/rooms/:id/voice'], (req, res) => {
+router.post(['/rooms/voice', '/rooms/:id/voice'], async (req, res) => {
   const roomId = req.body.roomId || req.body.gameId || req.params.id;
   const { action, from, by, accept, signal } = req.body;
   if (!roomId) return res.status(400).json({ error: 'Room ID required' });
-  let room = Database.getGameById(roomId);
+  
+  let room = await firestoreRestService.getRoom(roomId);
+  if (!room) {
+    room = Database.getGameById(roomId);
+  }
+
   if (room) {
     if (action === 'request') {
       room.voiceCall = { status: 'requesting', from, requestedAt: Date.now() };
@@ -541,15 +580,21 @@ router.post(['/rooms/voice', '/rooms/:id/voice'], (req, res) => {
     }
     room.lastUpdated = Date.now();
     Database.saveGame(room);
+    await firestoreRestService.saveRoom(room);
   }
   res.json({ success: true, voiceCall: room?.voiceCall, voiceSignals: room?.voiceSignals || [] });
 });
 
 // Universal Move in Room (supports both POST /rooms/move with body.roomId and POST /rooms/:id/move)
-router.post(['/rooms/move', '/rooms/:id/move'], (req, res) => {
+router.post(['/rooms/move', '/rooms/:id/move'], async (req, res) => {
   const roomId = req.body.roomId || req.params.id;
   if (!roomId) return res.status(400).json({ error: 'Room ID required' });
-  let room = Database.getGameById(roomId);
+  
+  let room = await firestoreRestService.getRoom(roomId);
+  if (!room) {
+    room = Database.getGameById(roomId);
+  }
+
   if (!room) {
     room = {
       id: roomId,
@@ -569,16 +614,20 @@ router.post(['/rooms/move', '/rooms/:id/move'], (req, res) => {
 
   const { move, fen, whiteTime, blackTime, capturedPieces, status, winner, winReason } = req.body;
   if (fen) room.fen = fen;
-  if (move) room.moveHistory.push(move);
+  if (move) {
+    if (!room.moveHistory) room.moveHistory = [];
+    room.moveHistory.push(move);
+  }
   if (whiteTime !== undefined) room.whiteTime = whiteTime;
   if (blackTime !== undefined) room.blackTime = blackTime;
   if (capturedPieces) room.capturedPieces = capturedPieces;
   if (status) room.status = status;
-  if (winner) room.winner = winner;
-  if (winReason) room.winReason = winReason;
+  if (winner !== undefined) room.winner = winner;
+  if (winReason !== undefined) room.winReason = winReason;
 
   room.lastUpdated = Date.now();
   Database.saveGame(room);
+  await firestoreRestService.saveRoom(room);
   res.json({ success: true, room });
 });
 
