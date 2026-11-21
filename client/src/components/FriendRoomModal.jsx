@@ -1697,10 +1697,10 @@ export function FriendRoomModal({
               <div className="flex-1 overflow-y-auto space-y-4 pr-1">
                 {/* Search Form */}
                 <div className={`p-4 rounded-2xl border space-y-3 ${theme.innerBox}`}>
-                  <div className="flex items-center gap-2 text-amber-500">
-                    <UserPlus className="w-4 h-4" />
+                  <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+                    <Search className="w-4 h-4" />
                     <span className="text-xs font-black uppercase tracking-wider">
-                      Search Player to Add
+                      Search Friend by Username
                     </span>
                   </div>
                   <p className={`text-xs ${theme.textMuted}`}>
@@ -1714,18 +1714,18 @@ export function FriendRoomModal({
                         type="text"
                         value={searchUsername}
                         onChange={e => setSearchUsername(e.target.value)}
-                        placeholder="Enter username (e.g. Magnus, Levi, Gojo)..."
-                        className={`w-full border rounded-xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-amber-500 ${theme.input}`}
+                        placeholder="Enter username (e.g. Zoro_Gambit, Gojo_Limitless, Magnus_C)..."
+                        className={`w-full border rounded-xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-emerald-500 ${theme.input}`}
                       />
                     </div>
 
                     <button
                       type="submit"
                       disabled={!searchUsername.trim() || isSearching}
-                      className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-40 text-slate-950 font-black text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
+                      className="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 disabled:opacity-40 text-white font-black text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
                     >
                       <Search className="w-3.5 h-3.5" />
-                      <span>{isSearching ? 'Searching...' : 'Search Player'}</span>
+                      <span>{isSearching ? 'Searching...' : 'Search Friend'}</span>
                     </button>
                   </form>
 
@@ -1853,78 +1853,79 @@ export function FriendRoomModal({
                   )}
                 </div>
 
-                {/* Popular Featured Online Contenders */}
+                {/* Popular Featured Online Contenders (Only unadded players) */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between px-1">
-                    <span className="text-xs font-black uppercase tracking-wider block">
+                    <span className="text-xs font-black uppercase tracking-wider block text-emerald-600 dark:text-emerald-400">
                       Active Arena Players Online
                     </span>
                     <span className={`text-[11px] ${theme.textMuted}`}>Fast Connect</span>
                   </div>
 
-                  <div className="space-y-2">
-                    {ANIME_GAMING_CANDIDATES.slice(0, 4).map(candidate => {
-                      const isFriend = friends.some(f => f.username.toLowerCase() === candidate.username.toLowerCase());
-                      const isRequested = sentRequests.includes(candidate.username);
+                  {unaddedCandidates.length === 0 ? (
+                    <div className={`p-4 rounded-2xl border text-center space-y-1 ${theme.innerBox}`}>
+                      <p className="text-xs font-bold text-emerald-500">🎉 All active featured players are in your Friends list!</p>
+                      <p className={`text-[11px] ${theme.textMuted}`}>Use the search bar above to search and connect with any player.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {unaddedCandidates.slice(0, 5).map(candidate => {
+                        const isRequested = sentRequests.includes(candidate.username);
 
-                      return (
-                        <div
-                          key={candidate.username}
-                          className={`flex items-center justify-between p-3 rounded-2xl border ${theme.card}`}
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <img
-                              src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${candidate.seed}`}
-                              alt={candidate.username}
-                              className="w-9 h-9 rounded-full border border-amber-500/30 object-cover shrink-0"
-                            />
-                            <div className="truncate">
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-bold text-xs truncate">@{candidate.username}</span>
-                                <span>{COUNTRY_FLAGS[candidate.country] || '🌐'}</span>
-                                <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border ${theme.badge}`}>
-                                  {candidate.elo}
-                                </span>
+                        return (
+                          <div
+                            key={candidate.username}
+                            className={`flex items-center justify-between p-3 rounded-2xl border ${theme.card}`}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <img
+                                src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${candidate.seed}`}
+                                alt={candidate.username}
+                                className="w-9 h-9 rounded-full border border-emerald-500/30 object-cover shrink-0"
+                              />
+                              <div className="truncate">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-bold text-xs truncate">@{candidate.username}</span>
+                                  <span>{COUNTRY_FLAGS[candidate.country] || '🌐'}</span>
+                                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border ${theme.badge}`}>
+                                    {candidate.elo}
+                                  </span>
+                                </div>
+                                <span className={`text-[11px] block ${theme.textMuted}`}>{candidate.title}</span>
                               </div>
-                              <span className={`text-[11px] block ${theme.textMuted}`}>{candidate.title}</span>
                             </div>
-                          </div>
 
-                          {isFriend ? (
-                            <span className="text-xs text-emerald-600 font-bold px-3 py-1 flex items-center gap-1">
-                              <UserCheck className="w-3.5 h-3.5" />
-                              <span>Friends</span>
-                            </span>
-                          ) : isRequested ? (
-                            <span className="text-xs text-amber-600 font-bold px-3 py-1 flex items-center gap-1">
-                              <Clock className="w-3.5 h-3.5" />
-                              <span>Pending</span>
-                            </span>
-                          ) : (
-                            <button
-                              onClick={() => {
-                                handleSendFriendRequest({
-                                  id: `sug_${candidate.username.toLowerCase()}`,
-                                  username: candidate.username,
-                                  avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${candidate.seed}`,
-                                  country: candidate.country,
-                                  elo: candidate.elo,
-                                  isOnline: true,
-                                  statusText: `${candidate.title} • Online`,
-                                  bio: candidate.bio,
-                                  isBot: true
-                                });
-                              }}
-                              className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-xs transition-all cursor-pointer active:scale-95 flex items-center gap-1"
-                            >
-                              <UserPlus className="w-3.5 h-3.5" />
-                              <span>Request</span>
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                            {isRequested ? (
+                              <span className="text-xs text-amber-500 font-bold px-3 py-1 flex items-center gap-1">
+                                <Clock className="w-3.5 h-3.5" />
+                                <span>Pending</span>
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  handleAddSuggestedOnlinePlayer({
+                                    id: `sug_${candidate.username.toLowerCase()}`,
+                                    username: candidate.username,
+                                    avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${candidate.seed}`,
+                                    country: candidate.country,
+                                    elo: candidate.elo,
+                                    isOnline: true,
+                                    statusText: `${candidate.title} • Online`,
+                                    bio: candidate.bio,
+                                    isBot: true
+                                  });
+                                }}
+                                className="px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-xs rounded-xl shadow-xs transition-all cursor-pointer active:scale-95 flex items-center gap-1"
+                              >
+                                <UserPlus className="w-3.5 h-3.5" />
+                                <span>Add</span>
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1939,7 +1940,7 @@ export function FriendRoomModal({
             <div className={`border rounded-3xl p-5 max-w-sm w-full space-y-4 shadow-2xl relative ${theme.modalBg}`}>
               <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
                 <div className="flex items-center gap-2">
-                  <Swords className="w-4 h-4 text-amber-500" />
+                  <Swords className="w-4 h-4 text-emerald-500" />
                   <h4 className="text-sm font-black">Challenge @{challengeFriendTarget.username}</h4>
                 </div>
                 <button
@@ -1966,7 +1967,9 @@ export function FriendRoomModal({
                       }}
                       className={`py-2 px-1 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer ${
                         !isCustomChallenge && challengeMinutes === t.m
-                          ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-xs'
+                          ? isLight
+                            ? 'bg-emerald-600 text-white font-black border-emerald-700 shadow-sm'
+                            : 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black border-emerald-400 shadow-sm shadow-emerald-500/20'
                           : isLight
                           ? 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'
                           : 'bg-slate-800 border-slate-700 text-slate-200'
@@ -1980,7 +1983,9 @@ export function FriendRoomModal({
                     onClick={() => setIsCustomChallenge(true)}
                     className={`py-2 px-1 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer flex items-center justify-center gap-1 ${
                       isCustomChallenge
-                        ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-xs'
+                        ? isLight
+                          ? 'bg-emerald-600 text-white font-black border-emerald-700 shadow-sm'
+                          : 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black border-emerald-400 shadow-sm shadow-emerald-500/20'
                         : isLight
                         ? 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'
                         : 'bg-slate-800 border-slate-700 text-slate-200'
@@ -1994,7 +1999,7 @@ export function FriendRoomModal({
                 {/* Custom Minutes Input */}
                 {isCustomChallenge && (
                   <div className={`mt-2 p-2.5 rounded-xl border flex items-center gap-2 animate-fade-in ${theme.innerBox}`}>
-                    <span className="text-xs font-bold text-amber-500">Minutes:</span>
+                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">Minutes:</span>
                     <input
                       type="number"
                       min="1"
@@ -2015,7 +2020,7 @@ export function FriendRoomModal({
                     : challengeMinutes;
                   handleExecuteChallenge(challengeFriendTarget, finalM);
                 }}
-                className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-white font-black text-xs rounded-xl shadow-md transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-1.5"
               >
                 <Swords className="w-4 h-4" />
                 <span>Start Match ({isCustomChallenge ? challengeCustomMinutes : challengeMinutes} min)</span>
