@@ -1031,43 +1031,50 @@ export function FriendRoomModal({
       return;
     }
 
-    // Check local masters roster & registered db users
-    let match = DEFAULT_FRIENDS.find(f => f.username.toLowerCase() === query.toLowerCase());
-    if (!match) {
-      match = ANIME_GAMING_CANDIDATES.find(c => c.username.toLowerCase() === query.toLowerCase());
-      if (match) {
-        match = {
-          id: `sug_${match.username.toLowerCase()}`,
-          username: match.username,
-          avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${match.seed}`,
-          country: match.country,
-          elo: match.elo,
-          isOnline: true,
-          statusText: `${match.title} • Online`,
-          bio: match.bio,
-          isBot: true
-        };
-      }
-    }
-
-    // Try server search if available
-    if (!match) {
-      try {
-        const res = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`);
+    // 1. Prioritize querying registered users from Server & Firestore database
+    let match = null;
+    try {
+      const res = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`);
+      if (res.ok) {
         const data = await res.json();
         if (data?.users?.length) {
-          const u = data.users[0];
+          // Find exact match or first substring match
+          const u = data.users.find(usr => usr.username?.toLowerCase() === query.toLowerCase()) || data.users[0];
+          if (u) {
+            match = {
+              id: u.id,
+              username: u.username,
+              avatar: u.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${u.username}`,
+              country: u.country || 'IN',
+              elo: u.elo || u.rating || 1200,
+              isOnline: Boolean(u.isOnline),
+              statusText: u.statusText || (u.isOnline ? 'Registered Arena Player • Online' : 'Offline'),
+              isRegistered: true
+            };
+          }
+        }
+      }
+    } catch {}
+
+    // 2. If no server registered account found, check local masters roster & anime candidates
+    if (!match) {
+      match = DEFAULT_FRIENDS.find(f => f.username.toLowerCase() === query.toLowerCase());
+      if (!match) {
+        match = ANIME_GAMING_CANDIDATES.find(c => c.username.toLowerCase() === query.toLowerCase());
+        if (match) {
           match = {
-            id: u.id,
-            username: u.username,
-            avatar: u.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${u.username}`,
-            country: u.country || 'UN',
-            elo: u.rating || 1200,
-            isOnline: Boolean(u.isOnline),
-            statusText: u.isOnline ? 'Online • In Arena' : 'Offline'
+            id: `sug_${match.username.toLowerCase()}`,
+            username: match.username,
+            avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${match.seed}`,
+            country: match.country,
+            elo: match.elo,
+            isOnline: true,
+            statusText: `${match.title} • Online`,
+            bio: match.bio,
+            isBot: true
           };
         }
-      } catch {}
+      }
     }
 
     setIsSearching(false);
@@ -1111,7 +1118,7 @@ export function FriendRoomModal({
 
   /**
    * Send Friend Request to the found user
-   * Does NOT instantly add to friends; queues as pending friend request!
+   * Does NOT instantly add to friends; delivers to recipient's notifications and queues as pending!
    */
   const handleSendFriendRequest = (userToSend) => {
     if (!userToSend) return;
@@ -1123,26 +1130,69 @@ export function FriendRoomModal({
       return;
     }
 
+    const newPending = {
+      username: targetUsername,
+      avatar: userToSend.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${targetUsername}`,
+      country: userToSend.country || 'IN',
+      elo: userToSend.elo || 1200,
+      timestamp: Date.now()
+    };
+
+    setPendingSentRequests(prev => {
+      const filtered = prev.filter(p => p.username.toLowerCase() !== targetUsername.toLowerCase());
+      const updated = [newPending, ...filtered];
+      safeStorage.setItem('chess_arena_sent_requests_v3_detailed', JSON.stringify(updated));
+      return updated;
+    });
+
     setSentRequests(prev => [targetUsername, ...prev]);
     setRequestStatus({
       type: 'success',
-      text: `Friend request sent to @${targetUsername}! 📩 You'll be notified when they accept.`
+      text: `Friend request sent to @${targetUsername}! 📩 Delivered to their notifications.`
     });
     sound.playMove();
     triggerHaptic('move');
 
-    // If logged in genuine user, send to server
-    const token = safeStorage.getItem('token');
-    if (token) {
-      fetch('/api/friends/request', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ targetUsername })
-      }).catch(() => {});
+    // Deliver friend request to recipient's notification box in Firestore & Server
+    const token = safeStorage.getItem('token') || '';
+    const senderData = {
+      id: currentUser?.id || `user_${Date.now()}`,
+      username: currentUser?.username || 'ArenaPlayer',
+      avatar: currentUser?.avatar || safeStorage.getItem('chess_arena_selected_avatar') || 'https://api.dicebear.com/7.x/adventurer/svg?seed=LuffyGear5&radius=50',
+      country: currentUser?.country || 'IN',
+      elo: currentUser?.ratings?.rapid || currentUser?.elo || 1200
+    };
+
+    fetch('/api/friends/request', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        targetUsername,
+        fromUser: senderData
+      })
+    }).catch(() => {});
+
+    // If target is a simulated bot/community player, accept after a friendly delay
+    if (userToSend?.isBot || (userToSend?.id && (userToSend.id.startsWith('f_') || userToSend.id.startsWith('sug_') || userToSend.id.startsWith('anime_')))) {
+      setTimeout(() => {
+        setFriends(prev => {
+          const list = Array.isArray(prev) ? prev : [];
+          if (list.some(f => f?.username && typeof f.username === 'string' && f.username.toLowerCase() === targetUsername.toLowerCase())) return list;
+          const updated = [userToSend, ...list];
+          safeStorage.setItem('chess_arena_friends_v3', JSON.stringify(updated));
+          return updated;
+        });
+        setPendingSentRequests(prev => {
+          const filtered = prev.filter(p => p.username.toLowerCase() !== targetUsername.toLowerCase());
+          safeStorage.setItem('chess_arena_sent_requests_v3_detailed', JSON.stringify(filtered));
+          return filtered;
+        });
+      }, 3500);
     }
+  };
 
     // If target is a bot or community friend, simulate acceptance after a short delay!
     if (userToSend?.isBot || (userToSend?.id && (userToSend.id.startsWith('f_') || userToSend.id.startsWith('sug_') || userToSend.id.startsWith('anime_')))) {
