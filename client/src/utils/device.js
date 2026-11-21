@@ -1,6 +1,13 @@
 // Haptic Vibrations & Speech Commentary Engine
 
 export function triggerHaptic(type = 'move') {
+  if (typeof window !== 'undefined' && window.AndroidBridge && typeof window.AndroidBridge.vibrate === 'function') {
+    try {
+      const ms = type === 'move' ? 15 : type === 'capture' ? 30 : type === 'check' ? 50 : 80;
+      window.AndroidBridge.vibrate(ms);
+      return;
+    } catch (e) {}
+  }
   if (typeof window === 'undefined' || !navigator.vibrate) return;
   try {
     switch (type) {

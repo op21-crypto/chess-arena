@@ -978,14 +978,14 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
             <span className="hidden sm:inline">Exit</span>
           </button>
 
-          {/* Lesson Title & Number */}
+          {/* Lesson Title & Number (Centered, Full-Width, Click to browse) */}
           <button
             onClick={() => {
               sound.playClick();
               triggerHaptic('move');
               setIsModalOpen(true);
             }}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-2xl border transition-all cursor-pointer truncate max-w-[200px] sm:max-w-none ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl border transition-all cursor-pointer truncate max-w-[280px] sm:max-w-none ${
               isLightMode
                 ? 'bg-slate-100 border-slate-200 hover:border-emerald-500/50 text-slate-900'
                 : 'bg-slate-900 border-slate-800 hover:border-emerald-500/50 text-white'
@@ -999,52 +999,8 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
             </span>
           </button>
 
-          {/* Right Action Icons (Chapter List, Voice, Music) */}
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => {
-                sound.playClick();
-                triggerHaptic('move');
-                setIsModalOpen(true);
-              }}
-              className={`p-1.5 rounded-xl border transition-colors cursor-pointer active:scale-95 ${
-                isLightMode
-                  ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-emerald-700'
-                  : 'bg-slate-900 border-slate-800 text-slate-300 hover:text-emerald-400'
-              }`}
-              title="All Lessons"
-            >
-              <List className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={toggleVoice}
-              className={`p-1.5 rounded-xl transition-all cursor-pointer active:scale-95 ${
-                voiceEnabled
-                  ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/25'
-                  : isLightMode
-                  ? 'bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-900'
-                  : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
-              }`}
-              title={voiceEnabled ? 'Sensei Voice: ON' : 'Sensei Voice: OFF'}
-            >
-              {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-            </button>
-
-            <button
-              onClick={toggleMusic}
-              className={`p-1.5 rounded-xl transition-all cursor-pointer active:scale-95 ${
-                musicEnabled
-                  ? 'bg-amber-400 text-slate-950 font-bold shadow-md shadow-amber-400/25'
-                  : isLightMode
-                  ? 'bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-900'
-                  : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
-              }`}
-              title={musicEnabled ? 'Ambient Music: ON' : 'Ambient Music: OFF'}
-            >
-              <Music className="w-4 h-4" />
-            </button>
-          </div>
+          {/* Right Spacer (Keeps title centered and uncluttered; top buttons removed per user instruction) */}
+          <div className="w-8 shrink-0" />
         </div>
       </header>
 
@@ -1111,9 +1067,9 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
           <div
             className="shrink-0 pt-0.5 cursor-pointer hover:scale-105 transition-transform"
             onClick={handleManualSpeak}
-            title="Tap Anime Sensei to hear voice"
+            title={activeMode === 'practice' ? "Tap Sparring Coach to hear voice" : "Tap Anime Sensei to hear voice"}
           >
-            <MentorAvatar size={54} isSpeaking={isSpeaking} />
+            <MentorAvatar size={54} isSpeaking={isSpeaking} type={activeMode === 'practice' ? 'coach' : 'sensei'} />
           </div>
 
           <div className={`relative flex-1 rounded-2xl p-3 shadow-md border text-xs sm:text-sm leading-relaxed backdrop-blur-md ${
@@ -1155,15 +1111,36 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
                 </div>
               </div>
             ) : (
-              <div>
-                <p className={`font-bold ${isLightMode ? 'text-slate-900' : 'text-white'}`}>
-                  {practiceFeedback || currentPractice?.prompt || "Your turn! Tap the correct square."}
+              <div className="space-y-2">
+                <p className={`font-bold leading-normal ${isLightMode ? 'text-slate-900' : 'text-white'}`}>
+                  {practiceFeedback || currentPractice?.prompt || "Your turn! Tap the correct square to solve the drill."}
                 </p>
                 {practiceFeedback && practiceFeedback.includes("!") && (
-                  <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-extrabold mt-1">
-                    <Check className="w-3.5 h-3.5" /> Correct! Moving to next drill...
-                  </span>
+                  <div className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-extrabold">
+                    <Check className="w-3.5 h-3.5" /> Correct! Advancing...
+                  </div>
                 )}
+                <div className={`flex items-center justify-between pt-1 border-t ${
+                  isLightMode ? 'border-slate-200' : 'border-slate-800/60'
+                }`}>
+                  <button
+                    type="button"
+                    onClick={handleManualSpeak}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black transition-all cursor-pointer ${
+                      isSpeaking
+                        ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30 animate-pulse'
+                        : isLightMode
+                        ? 'bg-amber-100 text-amber-900 hover:bg-amber-200 border border-amber-300'
+                        : 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/40'
+                    }`}
+                  >
+                    <Volume2 className="w-3.5 h-3.5" />
+                    <span>{isSpeaking ? 'Speaking... (Tap to stop)' : 'Listen to Coach'}</span>
+                  </button>
+                  <span className={`text-[10px] font-mono font-bold ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                    Drill {practiceStepIdx + 1}/{practiceDrills.length}
+                  </span>
+                </div>
               </div>
             )}
           </div>
@@ -1176,15 +1153,15 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
               ? 'bg-emerald-50 border-emerald-300 text-slate-900'
               : 'bg-gradient-to-r from-emerald-500/20 via-slate-900 to-amber-500/15 border-emerald-500/40 text-white'
           }`}>
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-emerald-500 animate-spin" />
-              <div>
+            <div className="flex items-center gap-2 min-w-0 pr-2">
+              <Sparkles className="w-5 h-5 text-emerald-500 shrink-0 animate-spin" />
+              <div className="min-w-0">
                 <p className={`text-[11px] font-black uppercase tracking-wider ${
                   isLightMode ? 'text-emerald-800' : 'text-emerald-400'
                 }`}>
                   {activeMode === 'practice' ? 'Practice Complete! 🏆' : 'Lesson Complete! 🎉'}
                 </p>
-                <p className={`text-xs font-bold ${isLightMode ? 'text-slate-800' : 'text-slate-200'}`}>
+                <p className={`text-xs font-bold truncate ${isLightMode ? 'text-slate-800' : 'text-slate-200'}`}>
                   {activeMode === 'practice'
                     ? `Mastered all drills for ${currentLesson.title}!`
                     : `Great job on ${currentLesson.title}! Ready for practice?`}
@@ -1200,18 +1177,27 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
                   setPracticeStepIdx(0);
                   setShowCompletionBanner(false);
                 }}
-                className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
+                className="px-3.5 py-2 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 rounded-xl text-xs font-black shadow-md shadow-amber-500/20 transition-all active:scale-95 cursor-pointer shrink-0 flex items-center gap-1"
               >
-                Practice 🎯 &rarr;
+                <span>Practice Drills</span>
+                <span>🎯 &rarr;</span>
               </button>
             ) : selectedLessonIdx < lessons.length - 1 ? (
               <button
                 onClick={handleAdvanceToNextLesson}
-                className="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-xs font-black shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
+                className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 rounded-xl text-xs font-black shadow-md shadow-emerald-500/20 transition-all active:scale-95 cursor-pointer shrink-0 flex items-center gap-1"
               >
-                Next &rarr;
+                <span>Next Lesson {currentLesson.num + 1}</span>
+                <span>⚡ &rarr;</span>
               </button>
-            ) : null}
+            ) : (
+              <button
+                onClick={() => setIsLessonStarted(false)}
+                className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 rounded-xl text-xs font-black shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
+              >
+                Academy Hub &rarr;
+              </button>
+            )}
           </div>
         )}
 

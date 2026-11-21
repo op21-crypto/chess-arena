@@ -325,6 +325,39 @@ export default function App() {
     } catch {}
   }, []);
 
+  // Handle native Android hardware back button
+  useEffect(() => {
+    window.__onAndroidBackPressed = () => {
+      // 1. Close open modals in priority order
+      if (showGameOverModal) { setShowGameOverModal(false); return true; }
+      if (showInGameDesignModal) { setShowInGameDesignModal(false); return true; }
+      if (showSettingsModal) { setShowSettingsModal(false); return true; }
+      if (showProfileModal) { setShowProfileModal(false); return true; }
+      if (showNotifications) { setShowNotifications(false); return true; }
+      if (showStreakModal) { setShowStreakModal(false); return true; }
+      if (showAuthModal) { setShowAuthModal(false); return true; }
+      if (showFriendRoomModal) { setShowFriendRoomModal(false); return true; }
+      if (showMatchmakingModal) { setShowMatchmakingModal(false); return true; }
+      if (showAIModal) { setShowAIModal(false); return true; }
+
+      // 2. If in sub-view / sub-tab, return to home lobby
+      if (activeTab !== 'home') {
+        setActiveTab('home');
+        return true;
+      }
+
+      // 3. Otherwise let Android handle standard back (minimize/exit)
+      return false;
+    };
+    return () => {
+      delete window.__onAndroidBackPressed;
+    };
+  }, [
+    showGameOverModal, showInGameDesignModal, showSettingsModal, showProfileModal,
+    showNotifications, showStreakModal, showAuthModal, showFriendRoomModal,
+    showMatchmakingModal, showAIModal, activeTab
+  ]);
+
   useEffect(() => {
     // Dynamic periodic fluctuations every 3.5 seconds
     const interval = setInterval(() => {
@@ -2560,17 +2593,29 @@ export default function App() {
                   />
                 </div>
 
-                {/* Opening Name Banner (Screenshot 6: Show Opening Names) */}
+                {/* Opening Name Banner (High-contrast, prominent, premium text) */}
                 {isButtonVisible('gameOpeningsBanner') && settings.showOpenings && getOpeningName(gameSession.moveHistory) && (
-                  <div className={`w-full max-w-[520px] px-3.5 py-1.5 border rounded-xl flex items-center justify-between text-xs shadow-xs animate-fade-in ${
-                    isLight ? "bg-white border-slate-200 text-amber-600 shadow-xs" : "bg-slate-900/90 border-slate-800 text-amber-300 shadow-sm"
+                  <div className={`w-full max-w-[520px] px-4 py-2.5 rounded-2xl border flex items-center justify-between text-sm shadow-md animate-fade-in backdrop-blur-md transition-all ${
+                    isLight
+                      ? "bg-gradient-to-r from-amber-50/95 via-white to-amber-50/80 border-amber-300/80 text-amber-900 shadow-amber-500/5"
+                      : "bg-gradient-to-r from-slate-900/95 via-slate-900/90 to-amber-950/40 border-amber-500/40 text-amber-300 shadow-slate-950/60"
                   }`}>
-                    <div className="flex items-center gap-2 truncate">
-                      <BookOpen className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                      <span className={`font-bold truncate ${isLight ? "text-slate-800" : "text-amber-300"}`}>{getOpeningName(gameSession.moveHistory).name}</span>
+                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                      <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border ${
+                        isLight ? "bg-amber-100/80 border-amber-300 text-amber-700" : "bg-amber-500/20 border-amber-500/30 text-amber-400"
+                      }`}>
+                        <BookOpen className="w-4 h-4" />
+                      </div>
+                      <span className={`font-black text-xs sm:text-sm tracking-tight truncate ${
+                        isLight ? "text-slate-900" : "text-amber-200"
+                      }`}>
+                        {getOpeningName(gameSession.moveHistory).name}
+                      </span>
                     </div>
-                    <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded font-bold shrink-0 ${
-                      isLight ? "bg-slate-100 text-slate-700" : "bg-slate-800 text-slate-300"
+                    <span className={`font-mono text-xs px-2.5 py-1 rounded-xl font-black uppercase tracking-wider shrink-0 border shadow-2xs ${
+                      isLight
+                        ? "bg-amber-100/90 text-amber-900 border-amber-300"
+                        : "bg-amber-500/20 text-amber-300 border-amber-500/40"
                     }`}>
                       {getOpeningName(gameSession.moveHistory).eco}
                     </span>
@@ -2585,7 +2630,11 @@ export default function App() {
                     timeControl={gameSession.timeControl?.baseMinutes || 5}
                     onCopyLink={() => {
                       const shareUrl = `${window.location.origin}/?room=${gameSession.roomId || createdRoomInfo?.roomId}`;
-                      navigator.clipboard.writeText(shareUrl);
+                      if (typeof window !== 'undefined' && window.AndroidBridge && typeof window.AndroidBridge.copyToClipboard === 'function') {
+                        window.AndroidBridge.copyToClipboard(shareUrl);
+                      } else if (navigator?.clipboard?.writeText) {
+                        navigator.clipboard.writeText(shareUrl).catch(() => {});
+                      }
                       sound.playClick();
                       triggerHaptic('move');
                     }}

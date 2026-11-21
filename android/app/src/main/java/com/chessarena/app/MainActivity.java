@@ -4,6 +4,9 @@ import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.ActivityNotFoundException;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -13,6 +16,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.view.View;
@@ -101,10 +106,26 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         configureWebView();
         checkAndRequestPermissions();
 
-        if (savedInstanceState != null) {
+        Intent startIntent = getIntent();
+        Uri startData = startIntent != null ? startIntent.getData() : null;
+        if (startData != null && (startData.toString().startsWith("http://") || startData.toString().startsWith("https://"))) {
+            webView.loadUrl(startData.toString());
+        } else if (savedInstanceState != null) {
             webView.restoreState(savedInstanceState);
         } else {
             webView.loadUrl(APP_URL);
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (intent != null && intent.getData() != null && webView != null) {
+            Uri data = intent.getData();
+            if (data != null && (data.toString().startsWith("http://") || data.toString().startsWith("https://"))) {
+                webView.loadUrl(data.toString());
+            }
         }
     }
 
@@ -276,6 +297,61 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                 return false;
             }
         }
+
+        @JavascriptInterface
+        public boolean share(String title, String text, String url) {
+            try {
+                Intent intent = new Intent(Intent.ACTION_SEND);
+                intent.setType("text/plain");
+                intent.putExtra(Intent.EXTRA_SUBJECT, title != null ? title : "Chess Arena");
+                String content = (text != null ? text + " " : "") + (url != null ? url : "");
+                intent.putExtra(Intent.EXTRA_TEXT, content.trim());
+                Intent chooser = Intent.createChooser(intent, title != null ? title : "Share with Friends");
+                chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(chooser);
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+
+        @JavascriptInterface
+        public boolean copyToClipboard(String text) {
+            try {
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                if (clipboard != null && text != null) {
+                    ClipData clip = ClipData.newPlainText("Chess Arena", text);
+                    clipboard.setPrimaryClip(clip);
+                    return true;
+                }
+            } catch (Exception ignored) {}
+            return false;
+        }
+
+        @JavascriptInterface
+        public void vibrate(long milliseconds) {
+            try {
+                Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                if (v != null && v.hasVibrator()) {
+                    long duration = Math.max(5, Math.min(milliseconds, 500));
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        v.vibrate(VibrationEffect.createOneShot(duration, VibrationEffect.DEFAULT_AMPLITUDE));
+                    } else {
+                        v.vibrate(duration);
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        @JavascriptInterface
+        public boolean isAndroidApp() {
+            return true;
+        }
+
+        @JavascriptInterface
+        public String getAppVersion() {
+            return "1.0.0";
+        }
     }
 
     // JavaScript Bridge interface exposed to WebView as window.AndroidTTS
@@ -352,6 +428,13 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         settings.setJavaScriptCanOpenWindowsAutomatically(true);
         settings.setSupportMultipleWindows(true);
 
+        // Standard mobile Chrome user agent to allow Google Auth and all web capabilities
+        String defaultUa = settings.getUserAgentString();
+        if (defaultUa != null) {
+            String cleanUa = defaultUa.replace("; wv", "").replaceAll("Version/[0-9.]+\\s*", "");
+            settings.setUserAgentString(cleanUa);
+        }
+
         // Cookies and cross-site cookies for OAuth
         CookieManager cookieManager = CookieManager.getInstance();
         cookieManager.setAcceptCookie(true);
@@ -360,6 +443,15 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         // Expose JavaScript bridges
         webView.addJavascriptInterface(new AndroidBridge(), "AndroidBridge");
         webView.addJavascriptInterface(new AndroidTTSBridge(), "AndroidTTS");
+
+        // Handle file and PGN downloads
+        webView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
+            try {
+                Intent i = new Intent(Intent.ACTION_VIEW);
+                i.setData(Uri.parse(url));
+                startActivity(i);
+            } catch (Exception ignored) {}
+        });
 
         // Performance & background
         webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
@@ -520,8 +612,21 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
     @Override
     public void onBackPressed() {
-        if (webView.canGoBack()) {
-            webView.goBack();
+        if (webView != null) {
+            webView.evaluateJavascript(
+                "(function() { if (window.__onAndroidBackPressed && window.__onAndroidBackPressed()) { return true; } return false; })()",
+                value -> {
+                    if (!"true".equals(value)) {
+                        runOnUiThread(() -> {
+                            if (webView.canGoBack()) {
+                                webView.goBack();
+                            } else {
+                                super.onBackPressed();
+                            }
+                        });
+                    }
+                }
+            );
         } else {
             super.onBackPressed();
         }

@@ -1334,6 +1334,17 @@ export function FriendRoomModal({
     : '';
 
   const copyLink = async () => {
+    if (typeof window !== 'undefined' && window.AndroidBridge && typeof window.AndroidBridge.copyToClipboard === 'function') {
+      try {
+        const ok = window.AndroidBridge.copyToClipboard(fullShareUrl);
+        if (ok) {
+          setCopied(true);
+          triggerHaptic('move');
+          setTimeout(() => setCopied(false), 2000);
+          return;
+        }
+      } catch {}
+    }
     try {
       await navigator.clipboard.writeText(fullShareUrl);
     } catch {
@@ -1350,6 +1361,16 @@ export function FriendRoomModal({
   };
 
   const handleNativeShare = async () => {
+    if (typeof window !== 'undefined' && window.AndroidBridge && typeof window.AndroidBridge.share === 'function') {
+      try {
+        const ok = window.AndroidBridge.share(
+          'Chess Arena Match Room',
+          '♟️ Battle me in Chess Arena! Join my room here:',
+          fullShareUrl
+        );
+        if (ok) return;
+      } catch {}
+    }
     if (navigator?.share) {
       try {
         await navigator.share({
