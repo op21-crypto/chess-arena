@@ -70,10 +70,28 @@ export const HOME_TIME_CONTROLS = [
   { id: '30m', label: '30 min', type: 'Classical', icon: '🏛️', format: 'classical', baseMinutes: 30, incrementSeconds: 0 }
 ];
 
+function KnightNavIcon({ className = 'w-4 h-4' }) {
+  return (
+    <svg
+      viewBox="0 0 45 45"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M22 10c10.5 1 16.5 8 16 29H15c0-9 10-6.5 8-21" />
+      <path d="M24 18c.38 2.91-5.55 7.37-8 9-3 2-2.82 4.34-5 4-1.042-.94 1.41-3.04 0-3-1 0-.95 1.23-1.5 1.5-1 0-2.06 1.15-2.5-.5-.45-1.69 1-3.69 2.5-4.5 2-1 3.5-3.5 3.5-6.5 0-2.8 1.5-5.5 3.5-7 2.5-2 5.5-2 7.5-1.5z" />
+      <circle cx="15.5" cy="19.5" r="1.5" fill="currentColor" />
+    </svg>
+  );
+}
+
 const PRIMARY_NAV_TABS = [
-  { id: 'home', label: 'Home', icon: Home },
-  { id: 'puzzles', label: 'Puzzles', icon: Puzzle },
+  { id: 'home', label: 'Play', icon: KnightNavIcon },
   { id: 'lessons', label: 'Learn', icon: GraduationCap },
+  { id: 'puzzles', label: 'Puzzle', icon: Puzzle },
   { id: 'profile', label: 'Profile', icon: CircleUserRound }
 ];
 
