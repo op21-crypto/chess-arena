@@ -124,6 +124,24 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, isLight = false }) {
       data.user.role = data.user.role === 'guest' ? 'guest' : 'user';
     }
     safeStorage.setItem('token', data.token);
+
+    // Cache registered user profile for fast client discovery
+    try {
+      const cachedRaw = safeStorage.getItem('chess_arena_registered_users_cache');
+      const cached = cachedRaw ? JSON.parse(cachedRaw) : [];
+      if (!cached.some(u => u.username?.toLowerCase() === data.user.username?.toLowerCase())) {
+        cached.unshift({
+          id: data.user.id,
+          username: data.user.username,
+          avatar: data.user.avatar,
+          country: data.user.country || 'IN',
+          elo: data.user.ratings?.rapid || data.user.elo || 1200,
+          isOnline: true
+        });
+        safeStorage.setItem('chess_arena_registered_users_cache', JSON.stringify(cached.slice(0, 50)));
+      }
+    } catch {}
+
     onAuthSuccess(data.user);
     onClose();
   };
@@ -306,6 +324,17 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, isLight = false }) {
         sessionStorage.setItem('chess_arena_admin_verified', 'true');
       }
 
+      // Persist to quick-pick Google account list
+      try {
+        const stored = safeStorage.getItem('chess_arena_saved_emails');
+        const list = stored ? JSON.parse(stored) : [];
+        if (!list.includes(targetEmail)) {
+          const updated = [targetEmail, ...list].slice(0, 5);
+          safeStorage.setItem('chess_arena_saved_emails', JSON.stringify(updated));
+          setSavedEmails(updated);
+        }
+      } catch {}
+
       finalizeLogin(data);
     } catch (err) {
       setError(err.message);
@@ -434,6 +463,13 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, isLight = false }) {
                 <div className="relative">
                   <input
                     type="email"
+                    id="google-email-input"
+                    name="email"
+                    autoComplete="email"
+                    inputMode="email"
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    spellCheck="false"
                     value={googleEmail}
                     onChange={e => setGoogleEmail(e.target.value)}
                     placeholder="player@gmail.com"
@@ -448,6 +484,39 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, isLight = false }) {
                   <Mail className={`w-4 h-4 absolute right-3 top-3.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`} />
                 </div>
               </div>
+
+              {/* Quick-Pick Available Gmail List for instant 1-tap Autofill */}
+              {savedEmails && savedEmails.length > 0 && (
+                <div className="space-y-1.5 pt-0.5">
+                  <div className="flex items-center justify-between">
+                    <span className={`text-[11px] font-bold tracking-wide uppercase ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                      Available Accounts
+                    </span>
+                    <span className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-slate-500'}`}>
+                      Tap to Autofill
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {savedEmails.map((saved) => (
+                      <button
+                        key={saved}
+                        type="button"
+                        onClick={() => setGoogleEmail(saved)}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                          googleEmail === saved
+                            ? 'bg-amber-500 text-slate-950 font-black shadow-xs ring-2 ring-amber-400'
+                            : isLight
+                            ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300/80'
+                            : 'bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                        }`}
+                      >
+                        <UserCheck className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                        <span className="truncate max-w-[210px]">{saved}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Master Administrator PIN Verification if admin email entered */}
               {googleEmail.trim().toLowerCase() === 'op21plus@gmail.com' && (
