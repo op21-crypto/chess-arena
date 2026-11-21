@@ -263,7 +263,59 @@ router.get('/auth/me', requireAuth, (req, res) => {
 
 // ================= PROFILES & LEADERBOARDS =================
 
-router.get('/users/:id', (req, res) => {
+// User search must be declared BEFORE parameterized /users/:id route
+router.get('/users/search', async (req, res) => {
+  try {
+    const query = (req.query.q || '').trim();
+    if (!query) return res.json({ users: [] });
+
+    // 1. Search in-memory database
+    let users = Database.searchUsers(query);
+
+    // 2. Discover users dynamically stored in Firestore
+    try {
+      const lowerQuery = query.toLowerCase();
+      const directUserDoc = await firestoreRestService.getRoom(`user_${lowerQuery}`);
+      if (directUserDoc && directUserDoc.username) {
+        if (!users.some(u => u.username.toLowerCase() === directUserDoc.username.toLowerCase())) {
+          users.unshift({
+            id: directUserDoc.userId || directUserDoc.id,
+            username: directUserDoc.username,
+            avatar: directUserDoc.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${directUserDoc.username}`,
+            country: directUserDoc.country || 'IN',
+            elo: directUserDoc.elo || 1200,
+            isOnline: Boolean(directUserDoc.isOnline),
+            statusText: 'Registered Arena Player • Online',
+            isRegistered: true
+          });
+        }
+      }
+
+      const registryDoc = await firestoreRestService.getRoom('arena_registered_users');
+      if (registryDoc?.users && Array.isArray(registryDoc.users)) {
+        const matches = registryDoc.users.filter(u => u.username && u.username.toLowerCase().includes(lowerQuery));
+        for (const m of matches) {
+          if (!users.some(u => u.username.toLowerCase() === m.username.toLowerCase())) {
+            users.push({
+              ...m,
+              statusText: 'Registered Arena Player • Online',
+              isRegistered: true
+            });
+          }
+        }
+      }
+    } catch (fsErr) {
+      console.warn('Firestore user search fallback:', fsErr.message);
+    }
+
+    res.json({ users: users.slice(0, 10) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/users/:id', (req, res, next) => {
+  if (req.params.id === 'search') return next();
   const user = Database.getUserById(req.params.id);
   if (!user) return res.status(404).json({ error: 'User not found' });
 
@@ -770,56 +822,6 @@ router.post('/tournaments/:id/join', requireAuth, (req, res) => {
 });
 
 // ================= FRIENDS & NOTIFICATIONS =================
-
-router.get('/users/search', async (req, res) => {
-  try {
-    const query = (req.query.q || '').trim();
-    if (!query) return res.json({ users: [] });
-
-    // 1. Search in-memory database
-    let users = Database.searchUsers(query);
-
-    // 2. Discover users dynamically stored in Firestore
-    try {
-      const lowerQuery = query.toLowerCase();
-      const directUserDoc = await firestoreRestService.getRoom(`user_${lowerQuery}`);
-      if (directUserDoc && directUserDoc.username) {
-        if (!users.some(u => u.username.toLowerCase() === directUserDoc.username.toLowerCase())) {
-          users.unshift({
-            id: directUserDoc.userId || directUserDoc.id,
-            username: directUserDoc.username,
-            avatar: directUserDoc.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${directUserDoc.username}`,
-            country: directUserDoc.country || 'IN',
-            elo: directUserDoc.elo || 1200,
-            isOnline: Boolean(directUserDoc.isOnline),
-            statusText: 'Registered Arena Player • Online',
-            isRegistered: true
-          });
-        }
-      }
-
-      const registryDoc = await firestoreRestService.getRoom('arena_registered_users');
-      if (registryDoc?.users && Array.isArray(registryDoc.users)) {
-        const matches = registryDoc.users.filter(u => u.username && u.username.toLowerCase().includes(lowerQuery));
-        for (const m of matches) {
-          if (!users.some(u => u.username.toLowerCase() === m.username.toLowerCase())) {
-            users.push({
-              ...m,
-              statusText: 'Registered Arena Player • Online',
-              isRegistered: true
-            });
-          }
-        }
-      }
-    } catch (fsErr) {
-      console.warn('Firestore user search fallback:', fsErr.message);
-    }
-
-    res.json({ users: users.slice(0, 10) });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
 router.get('/friends', requireAuth, (req, res) => {
   const friends = Database.getUserFriends(req.user.id).map(f => {
