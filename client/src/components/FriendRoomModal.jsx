@@ -9,6 +9,7 @@ import { safeStorage } from '../utils/storage.js';
 import { triggerHaptic } from '../utils/device.js';
 import { sound } from '../utils/audio.js';
 import { removeFriendPermanently, blockFriendPermanently, getBlockedFriends } from '../utils/socialAutomation.js';
+import { getSmartFriendReply } from '../services/aiChatService.js';
 
 const COUNTRY_FLAGS = {
   US: '🇺🇸',

@@ -614,6 +614,96 @@ router.post('/notifications/read', requireAuth, (req, res) => {
   res.json({ success: true });
 });
 
+// ================= AI-POWERED CONVERSATIONAL CHAT ROUTE =================
+router.post('/chat/friend-reply', async (req, res) => {
+  try {
+    const { friend, message, history, detectedMinutes } = req.body || {};
+    if (!friend || !message) {
+      return res.status(400).json({ error: 'Missing friend or message parameter' });
+    }
+
+    const username = friend.username || 'Friend';
+    const elo = friend.elo || 1800;
+    const country = friend.country || 'International';
+    const bio = friend.bio || friend.statusText || 'skilled, friendly chess competitor';
+
+    const systemPrompt = `You are ${username}, an active online chess player (${elo} Elo, from ${country}, ${bio}) chatting in real-time with a friend on the Chess Arena app.
+Core Rules:
+1. Speak in a completely natural, witty, conversational human voice — NEVER like an AI, customer service bot, or corporate assistant.
+2. Keep your response short: 1 to 2 punchy, human sentences max.
+3. React directly and specifically to what the user said (rematch challenge, jokes, trash talk, greetings, time controls, opening traps, etc.).
+4. Use occasional chess flair or emojis (e.g., ♟️, ⚔️, 🏆, 3m blitz, fork, blunder, checkmate, king).
+5. If the user asks for a rematch or a game, accept playfully and tell them to hit the Challenge button above.
+6. NEVER say "As an AI" or "How can I assist you". Talk 100% like a real person having fun playing chess online.`;
+
+    // 1. Try Gemini if GEMINI_API_KEY is configured in environment
+    if (process.env.GEMINI_API_KEY) {
+      try {
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
+        const contents = [
+          {
+            role: 'user',
+            parts: [{ text: `${systemPrompt}\n\nRecent context: ${JSON.stringify(history?.slice(-4) || [])}\n\nUser: ${message}\n${username}:` }]
+          }
+        ];
+        const geminiRes = await fetch(geminiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents }),
+          signal: AbortSignal.timeout(4000)
+        });
+        if (geminiRes.ok) {
+          const geminiData = await geminiRes.json();
+          const reply = geminiData.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+          if (reply) {
+            return res.json({ reply: reply.replace(/^["']|["']$/g, '').trim(), source: 'gemini' });
+          }
+        }
+      } catch (err) {
+        // Fall through to Pollinations
+      }
+    }
+
+    // 2. Pollinations AI OpenAI-compatible endpoint
+    try {
+      const messages = [
+        { role: 'system', content: systemPrompt },
+        ...(Array.isArray(history) ? history.slice(-6).map(h => ({
+          role: h.sender === 'me' ? 'user' : 'assistant',
+          content: h.text || ''
+        })) : []),
+        { role: 'user', content: message }
+      ];
+
+      const aiRes = await fetch('https://text.pollinations.ai/openai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages,
+          model: 'openai',
+          temperature: 0.88
+        }),
+        signal: AbortSignal.timeout(4500)
+      });
+
+      if (aiRes.ok) {
+        const data = await aiRes.json();
+        const rawText = data.choices?.[0]?.message?.content?.trim();
+        if (rawText) {
+          const reply = rawText.replace(/^["']|["']$/g, '').trim();
+          return res.json({ reply, source: 'pollinations' });
+        }
+      }
+    } catch (err) {
+      // Fall through to fallback signal
+    }
+
+    return res.json({ reply: null, source: 'fallback' });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 // ================= FULL ADMIN CONTROL CENTER (EXCLUSIVE TO op21plus@gmail.com) =================
 
 function checkOpAdmin(req) {
