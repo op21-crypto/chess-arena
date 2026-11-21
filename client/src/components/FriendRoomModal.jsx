@@ -1739,31 +1739,45 @@ export function FriendRoomModal({
                         <label className={`text-[11px] font-bold block mb-1.5 ${theme.textMuted}`}>Select Time Control</label>
                         <div className="grid grid-cols-4 gap-1.5">
                           {[
-                            { m: 3, label: '3m Blitz', icon: '🔥' },
-                            { m: 5, label: '5m Blitz', icon: '⏱️' },
-                            { m: 10, label: '10m Rapid', icon: '🎯' }
-                          ].map(t => (
-                            <button
-                              key={t.m}
-                              type="button"
-                              onClick={() => {
-                                setSelectedRoomMinutes(t.m);
-                                setIsCustomRoom(false);
-                                triggerHaptic('move');
-                              }}
-                              className={`py-2 px-1 rounded-xl text-xs font-bold border transition-all text-center cursor-pointer ${
-                                !isCustomRoom && selectedRoomMinutes === t.m
-                                  ? isLight
-                                    ? 'bg-emerald-600 text-white font-black border-emerald-700 shadow-sm'
-                                    : 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black border-emerald-400 shadow-sm shadow-emerald-500/20'
-                                  : isLight
-                                  ? 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
-                                  : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
-                              }`}
-                            >
-                              <span>{t.icon} {t.m}m</span>
-                            </button>
-                          ))}
+                            { m: 3, label: '3 min', sub: 'Blitz', icon: Flame, color: 'text-orange-500' },
+                            { m: 5, label: '5 min', sub: 'Blitz', icon: Flame, color: 'text-orange-500' },
+                            { m: 10, label: '10 min', sub: 'Rapid', icon: Clock, color: 'text-emerald-500' }
+                          ].map(t => {
+                            const isSelected = !isCustomRoom && selectedRoomMinutes === t.m;
+                            const IconComponent = t.icon;
+                            return (
+                              <button
+                                key={t.m}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedRoomMinutes(t.m);
+                                  setIsCustomRoom(false);
+                                  triggerHaptic('move');
+                                }}
+                                className={`py-1.5 px-1 rounded-xl border text-center transition-all cursor-pointer active:scale-95 ${
+                                  isSelected
+                                    ? isLight
+                                      ? 'bg-gradient-to-b from-emerald-50 via-emerald-100/60 to-emerald-50/80 border-emerald-500 text-emerald-950 font-black shadow-xs ring-1.5 ring-emerald-400/50'
+                                      : 'bg-gradient-to-b from-emerald-500/20 via-emerald-500/10 to-transparent border-emerald-400 text-white font-black shadow-sm ring-1.5 ring-emerald-400/40'
+                                    : isLight
+                                    ? 'bg-slate-50/80 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-100'
+                                    : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
+                                }`}
+                              >
+                                <div className="flex items-center justify-center gap-1 mb-0.5">
+                                  <IconComponent className={`w-2.5 h-2.5 ${isSelected ? (isLight ? 'text-emerald-700' : 'text-emerald-400') : t.color}`} />
+                                  <span className="text-[11px] font-bold block truncate leading-tight">{t.label}</span>
+                                </div>
+                                <span className={`text-[9px] block uppercase font-bold tracking-wider truncate ${
+                                  isSelected
+                                    ? isLight ? 'text-emerald-900 font-extrabold' : 'text-emerald-300 font-extrabold'
+                                    : isLight ? 'text-slate-400' : 'text-slate-500'
+                                }`}>
+                                  {t.sub}
+                                </span>
+                              </button>
+                            );
+                          })}
 
                           {/* Custom Time Button */}
                           <button
@@ -1772,18 +1786,27 @@ export function FriendRoomModal({
                               setIsCustomRoom(true);
                               triggerHaptic('move');
                             }}
-                            className={`py-2 px-1 rounded-xl text-xs font-bold border transition-all text-center cursor-pointer flex items-center justify-center gap-1 ${
+                            className={`py-1.5 px-1 rounded-xl border text-center transition-all cursor-pointer active:scale-95 ${
                               isCustomRoom
                                 ? isLight
-                                  ? 'bg-emerald-600 text-white font-black border-emerald-700 shadow-sm'
-                                  : 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black border-emerald-400 shadow-sm shadow-emerald-500/20'
+                                  ? 'bg-gradient-to-b from-emerald-50 via-emerald-100/60 to-emerald-50/80 border-emerald-500 text-emerald-950 font-black shadow-xs ring-1.5 ring-emerald-400/50'
+                                  : 'bg-gradient-to-b from-emerald-500/20 via-emerald-500/10 to-transparent border-emerald-400 text-white font-black shadow-sm ring-1.5 ring-emerald-400/40'
                                 : isLight
-                                ? 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
+                                ? 'bg-slate-50/80 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-100'
                                 : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
                             }`}
                           >
-                            <Sliders className="w-3 h-3" />
-                            <span>Custom</span>
+                            <div className="flex items-center justify-center gap-1 mb-0.5">
+                              <Sliders className={`w-2.5 h-2.5 ${isCustomRoom ? (isLight ? 'text-emerald-700' : 'text-emerald-400') : 'text-slate-400'}`} />
+                              <span className="text-[11px] font-bold block truncate leading-tight">Custom</span>
+                            </div>
+                            <span className={`text-[9px] block uppercase font-bold tracking-wider truncate ${
+                              isCustomRoom
+                                ? isLight ? 'text-emerald-900 font-extrabold' : 'text-emerald-300 font-extrabold'
+                                : isLight ? 'text-slate-400' : 'text-slate-500'
+                            }`}>
+                              Adjust
+                            </span>
                           </button>
                         </div>
 
@@ -2340,44 +2363,73 @@ export function FriendRoomModal({
                 <label className={`text-xs font-bold block mb-2 ${theme.textMuted}`}>Select Time Control</label>
                 <div className="grid grid-cols-4 gap-1.5">
                   {[
-                    { m: 3, label: '3m Blitz 🔥' },
-                    { m: 5, label: '5m Blitz ⏱️' },
-                    { m: 10, label: '10m Rapid 🎯' }
-                  ].map(t => (
-                    <button
-                      key={t.m}
-                      onClick={() => {
-                        setChallengeMinutes(t.m);
-                        setIsCustomChallenge(false);
-                      }}
-                      className={`py-2 px-1 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer ${
-                        !isCustomChallenge && challengeMinutes === t.m
-                          ? isLight
-                            ? 'bg-emerald-600 text-white font-black border-emerald-700 shadow-sm'
-                            : 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black border-emerald-400 shadow-sm shadow-emerald-500/20'
-                          : isLight
-                          ? 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'
-                          : 'bg-slate-800 border-slate-700 text-slate-200'
-                      }`}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
+                    { m: 3, label: '3 min', sub: 'Blitz', icon: Flame, color: 'text-orange-500' },
+                    { m: 5, label: '5 min', sub: 'Blitz', icon: Flame, color: 'text-orange-500' },
+                    { m: 10, label: '10 min', sub: 'Rapid', icon: Clock, color: 'text-emerald-500' }
+                  ].map(t => {
+                    const isSelected = !isCustomChallenge && challengeMinutes === t.m;
+                    const IconComponent = t.icon;
+                    return (
+                      <button
+                        key={t.m}
+                        type="button"
+                        onClick={() => {
+                          setChallengeMinutes(t.m);
+                          setIsCustomChallenge(false);
+                          triggerHaptic('move');
+                        }}
+                        className={`py-1.5 px-1 rounded-xl border text-center transition-all cursor-pointer active:scale-95 ${
+                          isSelected
+                            ? isLight
+                              ? 'bg-gradient-to-b from-emerald-50 via-emerald-100/60 to-emerald-50/80 border-emerald-500 text-emerald-950 font-black shadow-xs ring-1.5 ring-emerald-400/50'
+                              : 'bg-gradient-to-b from-emerald-500/20 via-emerald-500/10 to-transparent border-emerald-400 text-white font-black shadow-sm ring-1.5 ring-emerald-400/40'
+                            : isLight
+                            ? 'bg-slate-50/80 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-100'
+                            : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-center justify-center gap-1 mb-0.5">
+                          <IconComponent className={`w-2.5 h-2.5 ${isSelected ? (isLight ? 'text-emerald-700' : 'text-emerald-400') : t.color}`} />
+                          <span className="text-[11px] font-bold block truncate leading-tight">{t.label}</span>
+                        </div>
+                        <span className={`text-[9px] block uppercase font-bold tracking-wider truncate ${
+                          isSelected
+                            ? isLight ? 'text-emerald-900 font-extrabold' : 'text-emerald-300 font-extrabold'
+                            : isLight ? 'text-slate-400' : 'text-slate-500'
+                        }`}>
+                          {t.sub}
+                        </span>
+                      </button>
+                    );
+                  })}
 
                   <button
-                    onClick={() => setIsCustomChallenge(true)}
-                    className={`py-2 px-1 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer flex items-center justify-center gap-1 ${
+                    type="button"
+                    onClick={() => {
+                      setIsCustomChallenge(true);
+                      triggerHaptic('move');
+                    }}
+                    className={`py-1.5 px-1 rounded-xl border text-center transition-all cursor-pointer active:scale-95 ${
                       isCustomChallenge
                         ? isLight
-                          ? 'bg-emerald-600 text-white font-black border-emerald-700 shadow-sm'
-                          : 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black border-emerald-400 shadow-sm shadow-emerald-500/20'
+                          ? 'bg-gradient-to-b from-emerald-50 via-emerald-100/60 to-emerald-50/80 border-emerald-500 text-emerald-950 font-black shadow-xs ring-1.5 ring-emerald-400/50'
+                          : 'bg-gradient-to-b from-emerald-500/20 via-emerald-500/10 to-transparent border-emerald-400 text-white font-black shadow-sm ring-1.5 ring-emerald-400/40'
                         : isLight
-                        ? 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'
-                        : 'bg-slate-800 border-slate-700 text-slate-200'
+                        ? 'bg-slate-50/80 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-100'
+                        : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
                     }`}
                   >
-                    <Sliders className="w-3 h-3" />
-                    <span>Custom</span>
+                    <div className="flex items-center justify-center gap-1 mb-0.5">
+                      <Sliders className={`w-2.5 h-2.5 ${isCustomChallenge ? (isLight ? 'text-emerald-700' : 'text-emerald-400') : 'text-slate-400'}`} />
+                      <span className="text-[11px] font-bold block truncate leading-tight">Custom</span>
+                    </div>
+                    <span className={`text-[9px] block uppercase font-bold tracking-wider truncate ${
+                      isCustomChallenge
+                        ? isLight ? 'text-emerald-900 font-extrabold' : 'text-emerald-300 font-extrabold'
+                        : isLight ? 'text-slate-400' : 'text-slate-500'
+                    }`}>
+                      Adjust
+                    </span>
                   </button>
                 </div>
 
