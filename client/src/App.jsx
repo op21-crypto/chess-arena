@@ -26,8 +26,11 @@ import { GameOverModal } from './components/GameOverModal.jsx';
 import { SettingsModal } from './components/SettingsModal.jsx';
 import { DailyStreakModal } from './components/DailyStreakModal.jsx';
 import { MiniMusicPlayer } from './components/MiniMusicPlayer.jsx';
+import { InGameDesignModal } from './components/InGameDesignModal.jsx';
+import { AIBattleCard } from './components/AIBattleCard.jsx';
 import { ChessLogo } from './components/ChessLogo.jsx';
 import { BOARD_THEMES } from './components/PieceIcons.jsx';
+import { getRandomAnimeOpponent, ANIME_AI_ROSTER } from './data/animeOpponents.js';
 import { sound } from './utils/audio.js';
 import { musicEngine } from './utils/music.js';
 import { triggerHaptic, speakMove } from './utils/device.js';
@@ -89,9 +92,9 @@ function KnightNavIcon({ className = 'w-4 h-4' }) {
 }
 
 const PRIMARY_NAV_TABS = [
-  { id: 'home', label: 'Play', icon: KnightNavIcon },
+  { id: 'home', label: 'Home', icon: Home },
+  { id: 'puzzles', label: 'Puzzles', icon: Puzzle },
   { id: 'lessons', label: 'Learn', icon: GraduationCap },
-  { id: 'puzzles', label: 'Puzzle', icon: Puzzle },
   { id: 'profile', label: 'Profile', icon: CircleUserRound }
 ];
 
@@ -201,6 +204,9 @@ export default function App() {
   const [isAIGame, setIsAIGame] = useState(false);
   const [aiLevel, setAiLevel] = useState(2);
   const [aiThinking, setAiThinking] = useState(false);
+  const [currentAIOpponent, setCurrentAIOpponent] = useState(null);
+  const [inGameNotice, setInGameNotice] = useState(null);
+  const [showInGameDesignModal, setShowInGameDesignModal] = useState(false);
   const [voiceCallTrigger, setVoiceCallTrigger] = useState(0);
 
   // Socket reference
@@ -654,14 +660,20 @@ export default function App() {
       color = rawColor === 'random' ? (Math.random() < 0.5 ? 'w' : 'b') : (rawColor === 'b' ? 'b' : 'w');
     }
 
-    const botRoster = [
-      { name: 'Beginner', elo: 800 },
-      { name: 'Casual', elo: 1200 },
-      { name: 'Master', elo: 1600 },
-      { name: 'FIDE Master', elo: 2000 },
-      { name: 'Grandmaster', elo: 2500 }
-    ];
-    const bot = botRoster[level - 1] || { name: `Stockfish Level ${level}`, elo: 800 + level * 350 };
+    // Select a randomized cool anime opponent for this AI match
+    const animeBot = getRandomAnimeOpponent(level);
+    setCurrentAIOpponent(animeBot);
+    setInGameNotice(null);
+
+    const botPlayerObj = {
+      username: animeBot.username,
+      elo: animeBot.elo,
+      avatar: animeBot.avatar,
+      title: animeBot.title,
+      country: animeBot.country || 'JP',
+      anime: animeBot.anime,
+      quote: animeBot.quote
+    };
 
     setIsAIGame(true);
     setAiLevel(level);
@@ -675,10 +687,12 @@ export default function App() {
 
     const initialTimeMs = timeMinutes === 0 ? 3600000 : timeMinutes * 60 * 1000;
 
+    const playerObj = currentUser || { username: 'You', elo: 1200, country: 'IN' };
+
     const startingSession = {
       id: `ai_${Date.now()}`,
-      whitePlayer: color === 'w' ? currentUser || { username: 'You', elo: 1200 } : { username: bot.name, elo: bot.elo },
-      blackPlayer: color === 'w' ? { username: bot.name, elo: bot.elo } : currentUser || { username: 'You', elo: 1200 },
+      whitePlayer: color === 'w' ? playerObj : botPlayerObj,
+      blackPlayer: color === 'w' ? botPlayerObj : playerObj,
       fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
       turn: 'w',
       inCheck: false,
@@ -1047,9 +1061,43 @@ export default function App() {
     }
   };
 
+  const handleExitGame = () => {
+    sound.playClick();
+    if (!isAIGame && gameSession && !gameSession.isGameOver) {
+      socketRef.current?.emit('resign_game', { gameId: gameSession.id });
+    }
+    setShowGameOverModal(false);
+    setActiveTab('home');
+  };
+
   const handleOfferDraw = () => {
     if (!isAIGame) {
       socketRef.current?.emit('offer_draw', { gameId: gameSession.id });
+    } else {
+      // In AI Game: evaluate position or provide Anime Opponent dialogue
+      let isTechnicallyDrawn = false;
+      try {
+        const c = new Chess(gameSession?.fen || '');
+        isTechnicallyDrawn = c.isDraw();
+      } catch (e) {}
+
+      const moveCount = gameSession?.moveHistory?.length || 0;
+      if (isTechnicallyDrawn || moveCount >= 24) {
+        setGameSession(prev => ({
+          ...prev,
+          isGameOver: true,
+          status: 'draw',
+          winner: null,
+          winReason: 'agreement'
+        }));
+        setShowGameOverModal(true);
+        sound.playVictory();
+      } else {
+        const reaction = currentAIOpponent?.drawReaction || "A true grandmaster fights until the final move!";
+        setInGameNotice(reaction);
+        sound.playMove();
+        setTimeout(() => setInGameNotice(null), 6000);
+      }
     }
   };
 
@@ -1893,7 +1941,7 @@ export default function App() {
                   onOpenSettings={() => setShowSettingsModal(true)}
                 />
 
-                {/* Game Controls */}
+                {/* Game Controls: Exit, Draw, Design, Resign */}
                 <GameControls
                   isLight={isLight}
                   isGameOver={gameSession.isGameOver}
@@ -1905,34 +1953,44 @@ export default function App() {
                   onOfferDraw={handleOfferDraw}
                   onRespondDraw={handleRespondDraw}
                   onRequestRematch={handleRequestRematch}
-                  onFlipBoard={() => setBoardFlipped(!boardFlipped)}
+                  onOpenDesign={() => setShowInGameDesignModal(true)}
+                  onExit={handleExitGame}
                   onAnalyze={() => setAnalysisGame(gameSession)}
-                  onShareRoom={() => {
-                    const url = `${window.location.origin}/?room=${gameSession.id}`;
-                    navigator.clipboard.writeText(url);
-                  }}
                   onViewResult={() => setShowGameOverModal(true)}
-                  isFriendRoom={!isAIGame && !gameSession.isMatchmaking}
-                  onVoiceCall={() => setVoiceCallTrigger(c => c + 1)}
+                  isAIGame={isAIGame}
+                  onVoiceCall={!isAIGame ? () => setVoiceCallTrigger(c => c + 1) : null}
                 />
 
-                {/* Live Chat with Unified Voice Call */}
-                {settings.allowChat ? (
-                  <GameChat
+                {/* AI Battle Card for AI Matches, or Live Chat with Voice Call for Multiplayer */}
+                {isAIGame ? (
+                  <AIBattleCard
+                    opponent={currentAIOpponent || opponent}
+                    aiLevel={aiLevel}
+                    isThinking={aiThinking}
+                    inCheck={gameSession.inCheck}
                     isLight={isLight}
-                    messages={chatMessages}
-                    onSendMessage={handleSendMessage}
-                    currentUser={currentUser}
-                    opponentUser={opponent}
-                    socket={socketRef.current}
-                    gameId={gameSession.id}
-                    isPlayer={!isAIGame && (playerColor === 'w' || playerColor === 'b')}
-                    triggerVoiceCall={voiceCallTrigger}
+                    inGameNotice={inGameNotice}
                   />
                 ) : (
-                  <div className={`p-3 border rounded-xl text-center text-xs italic ${isLight ? "bg-white border-slate-200 text-slate-400" : "bg-slate-900/60 border-slate-800 text-slate-500"}`}>
-                    In-game text chat is disabled in Settings.
-                  </div>
+                  settings.allowChat ? (
+                    <GameChat
+                      isLight={isLight}
+                      messages={chatMessages}
+                      onSendMessage={handleSendMessage}
+                      currentUser={currentUser}
+                      opponentUser={opponent}
+                      socket={socketRef.current}
+                      gameId={gameSession.id}
+                      isPlayer={playerColor === 'w' || playerColor === 'b'}
+                      triggerVoiceCall={voiceCallTrigger}
+                    />
+                  ) : (
+                    <div className={`p-3 border rounded-xl text-center text-xs italic ${
+                      isLight ? "bg-white border-slate-200 text-slate-400" : "bg-slate-900/60 border-slate-800 text-slate-500"
+                    }`}>
+                      In-game text chat is disabled in Settings.
+                    </div>
+                  )
                 )}
               </div>
             </div>
@@ -2204,6 +2262,17 @@ export default function App() {
           }
         }}
         onClose={() => setShowGameOverModal(false)}
+      />
+
+      {/* Real-Time In-Game Design Customization Studio */}
+      <InGameDesignModal
+        isOpen={showInGameDesignModal}
+        onClose={() => setShowInGameDesignModal(false)}
+        settings={settings}
+        onUpdateSettings={handleUpdateSettings}
+        isBoardFlipped={boardFlipped}
+        onToggleFlip={() => setBoardFlipped(!boardFlipped)}
+        isLight={isLight}
       />
 
       {/* Full Feature Settings Modal */}

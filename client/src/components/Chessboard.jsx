@@ -204,7 +204,7 @@ export function Chessboard({
         if (isPromotion && !alwaysPromoteToQueen) {
           setPromotionPending({ from: selectedSquare, to: matchMove.to });
         } else {
-          executeMove({ from: selectedSquare, to: matchMove.to, promotion: 'q' });
+          executeMove({ from: selectedSquare, to: matchMove.to, promotion: isPromotion ? 'q' : undefined });
         }
       } else {
         setSelectedSquare(null);
@@ -213,12 +213,16 @@ export function Chessboard({
     }
   };
 
-  const executeMove = ({ from, to, promotion = 'q' }) => {
+  const executeMove = ({ from, to, promotion }) => {
     setSelectedSquare(null);
     setLegalMoves([]);
     setPromotionPending(null);
 
-    const moveObj = { from, to, promotion };
+    const selectedPiece = chess ? chess.get(from) : null;
+    const isPawnPromotion = selectedPiece?.type === 'p' && (to.endsWith('8') || to.endsWith('1'));
+    const actualPromotion = isPawnPromotion ? (promotion || 'q') : undefined;
+
+    const moveObj = actualPromotion ? { from, to, promotion: actualPromotion } : { from, to };
     const tempChess = new Chess(fen);
     const result = tempChess.move(moveObj);
 

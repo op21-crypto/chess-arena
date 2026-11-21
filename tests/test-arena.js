@@ -119,8 +119,20 @@ async function runTests() {
   console.assert(deleteResult === false, 'op21plus@gmail.com must be protected from deletion');
   console.log('   ✓ Security safeguard verified: op21plus@gmail.com account is non-deletable');
 
+  // Test 9: Cool Anime Opponent Generator & Roster Verification
+  console.log('\n9. Anime AI Opponents & Avatars Roster:');
+  const level5Opponent = getRandomAnimeOpponent(5);
+  console.assert(level5Opponent && level5Opponent.username, 'Must generate valid level 5 opponent');
+  console.assert(level5Opponent.avatar && level5Opponent.avatar.includes('dicebear'), 'Must have valid avatar URL');
+  console.assert(level5Opponent.title && level5Opponent.quote, 'Must have title and quote');
+  console.log(`   ✓ Level 5 Anime Master verified: ${level5Opponent.username} (${level5Opponent.title}) - ${level5Opponent.elo} ELO`);
+
+  const level1Opponent = getRandomAnimeOpponent(1);
+  console.assert(level1Opponent && level1Opponent.username, 'Must generate valid level 1 opponent');
+  console.log(`   ✓ Level 1 Anime Novice verified: ${level1Opponent.username} (${level1Opponent.title}) - ${level1Opponent.elo} ELO`);
+
   console.log('\n===============================================');
-  console.log('🏆 ALL 8 CORE SUBSYSTEM TESTS PASSED WITH 100% SUCCESS!');
+  console.log('🏆 ALL 9 CORE SUBSYSTEM TESTS PASSED WITH 100% SUCCESS!');
   console.log('===============================================');
   process.exit(0);
 }

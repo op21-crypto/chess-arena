@@ -289,13 +289,28 @@ export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOle
   const handleMove = (moveObj) => {
     if (!currentPuzzle || status === 'solved' || (viewState === 'storm' && !stormActive && stormFinished)) return;
 
-    const uciMove = `${moveObj.from}${moveObj.to}${moveObj.promotion || ''}`;
-    const expectedMove = currentPuzzle.solution[solutionStep];
+    // Validate and sanitize promotion: ONLY pawn moves landing on rank 8 or 1 can promote
+    let promo = '';
+    try {
+      const tempC = new Chess(currentFen);
+      const piece = tempC.get(moveObj.from);
+      if (piece?.type === 'p' && (moveObj.to.endsWith('8') || moveObj.to.endsWith('1'))) {
+        promo = (moveObj.promotion || 'q').toLowerCase();
+      }
+    } catch (e) {
+      if (moveObj.promotion) promo = moveObj.promotion.toLowerCase();
+    }
+
+    const uciMove = `${moveObj.from}${moveObj.to}${promo}`.toLowerCase();
+    const expectedMove = (currentPuzzle.solution?.[solutionStep] || '').toLowerCase().trim();
 
     if (uciMove === expectedMove) {
       const nextStep = solutionStep + 1;
       const chess = new Chess(currentFen);
-      const moveRes = chess.move(moveObj);
+      const cleanMove = promo
+        ? { from: moveObj.from, to: moveObj.to, promotion: promo }
+        : { from: moveObj.from, to: moveObj.to };
+      const moveRes = chess.move(cleanMove);
       setCurrentFen(chess.fen());
       setLastMove({ from: moveObj.from, to: moveObj.to });
 
@@ -382,27 +397,33 @@ export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOle
         setStatus('correct_step');
         setSolutionStep(nextStep);
 
-        const oppUci = currentPuzzle.solution[nextStep];
+        const oppUci = currentPuzzle?.solution?.[nextStep];
         setTimeout(() => {
+          if (!oppUci) return;
           const oppFrom = oppUci.substring(0, 2);
           const oppTo = oppUci.substring(2, 4);
-          const oppProm = oppUci.length > 4 ? oppUci.substring(4, 5) : undefined;
+          const oppProm = oppUci.length > 4 ? oppUci.substring(4, 5).toLowerCase() : undefined;
 
-          const oppRes = chess.move({ from: oppFrom, to: oppTo, promotion: oppProm });
-          setCurrentFen(chess.fen());
-          setLastMove({ from: oppFrom, to: oppTo });
-          setSolutionStep(nextStep + 1);
-          setStatus('playing');
+          try {
+            const oppMove = oppProm ? { from: oppFrom, to: oppTo, promotion: oppProm } : { from: oppFrom, to: oppTo };
+            const oppRes = chess.move(oppMove);
+            setCurrentFen(chess.fen());
+            setLastMove({ from: oppFrom, to: oppTo });
+            setSolutionStep(nextStep + 1);
+            setStatus('playing');
 
-          if (oppRes?.captured) {
-            if (puzzleSettings.sound) sound.playCapture();
-            triggerHaptic('capture');
-          } else if (chess.inCheck()) {
-            if (puzzleSettings.sound) sound.playCheck();
-            triggerHaptic('check');
-          } else {
-            if (puzzleSettings.sound) sound.playMove();
-            triggerHaptic('move');
+            if (oppRes?.captured) {
+              if (puzzleSettings.sound) sound.playCapture();
+              triggerHaptic('capture');
+            } else if (chess.inCheck()) {
+              if (puzzleSettings.sound) sound.playCheck();
+              triggerHaptic('check');
+            } else {
+              if (puzzleSettings.sound) sound.playMove();
+              triggerHaptic('move');
+            }
+          } catch (e) {
+            console.error('Opponent move execution failed:', e);
           }
         }, viewState === 'storm' ? 250 : 500);
       }
@@ -549,67 +570,100 @@ export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOle
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  // Board theme resolution for light/dark
+  const activeBoardTheme = safeStorage.getItem('arena_board_theme') || (isLightMode ? 'greenwich' : 'amoled');
+
   // ================= VIEW 1: THEMES DIRECTORY =================
   if (viewState === 'themes') {
     return (
-      <div className="max-w-md mx-auto w-full px-3.5 py-4 min-h-screen text-slate-100 pb-24 space-y-4 animate-fade-in">
+      <div className={`max-w-md mx-auto w-full px-3.5 py-4 min-h-screen pb-24 space-y-4 animate-fade-in ${
+        isLightMode ? 'text-slate-900' : 'text-slate-100'
+      }`}>
         {/* Top Header */}
-        <div className="flex items-center gap-3 py-2 border-b border-slate-800">
+        <div className={`flex items-center gap-3 py-2 border-b ${isLightMode ? 'border-slate-200' : 'border-slate-800'}`}>
           <button
             onClick={() => {
               sound.playClick();
               triggerHaptic('move');
               setViewState('hub');
             }}
-            className="p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+            className={`p-2 rounded-xl transition-colors cursor-pointer ${
+              isLightMode
+                ? 'bg-white border border-slate-250 text-slate-700 hover:bg-slate-100 shadow-xs'
+                : 'bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white'
+            }`}
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-base sm:text-lg font-black tracking-tight text-white">Puzzle Themes</h1>
-            <p className="text-[11px] text-slate-400">Drill tactical motifs, pins, forks & mates</p>
+            <h1 className={`text-base sm:text-lg font-black tracking-tight ${isLightMode ? 'text-slate-900' : 'text-white'}`}>
+              Puzzle Themes
+            </h1>
+            <p className={`text-[11px] font-medium ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
+              Drill tactical motifs, pins, forks & mates
+            </p>
           </div>
         </div>
 
         {/* Search Input */}
         <div className="relative">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 ${isLightMode ? 'text-slate-400' : 'text-slate-400'}`} />
           <input
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search tactical motifs (e.g. Pin, Fork)..."
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-900/90 rounded-xl text-xs placeholder:text-slate-500 focus:outline-hidden focus:ring-2 focus:ring-amber-500/50 border border-slate-800 text-slate-100"
+            className={`w-full pl-10 pr-4 py-2.5 rounded-xl text-xs focus:outline-hidden focus:ring-2 focus:ring-amber-500/50 border transition-all ${
+              isLightMode
+                ? 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 shadow-xs'
+                : 'bg-slate-900/90 border-slate-800 text-slate-100 placeholder:text-slate-500'
+            }`}
           />
         </div>
 
         {/* By Openings Row */}
-        <div className="border-b border-slate-800/80 pb-2">
+        <div className={`border-b pb-2 ${isLightMode ? 'border-slate-200' : 'border-slate-800/80'}`}>
           <button
             onClick={() => {
               sound.playClick();
               triggerHaptic('move');
               setViewState('openings');
             }}
-            className="w-full flex items-center justify-between p-3 bg-slate-900/90 border border-slate-800 hover:border-amber-500/40 rounded-xl transition-all group cursor-pointer"
+            className={`w-full flex items-center justify-between p-3.5 rounded-2xl border transition-all group cursor-pointer ${
+              isLightMode
+                ? 'bg-white border-slate-200 hover:border-amber-400 hover:bg-amber-50/40 shadow-xs'
+                : 'bg-slate-900/90 border-slate-800 hover:border-amber-500/40'
+            }`}
           >
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold">
+            <div className="flex items-center gap-3">
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-base shadow-xs ${
+                isLightMode
+                  ? 'bg-amber-100 border border-amber-300 text-amber-800'
+                  : 'bg-amber-500/15 border border-amber-500/30 text-amber-400'
+              }`}>
                 📖
               </div>
               <div className="text-left">
-                <span className="text-xs font-bold text-white group-hover:text-amber-400 block transition-colors">
+                <span className={`text-xs font-bold block transition-colors ${
+                  isLightMode
+                    ? 'text-slate-900 group-hover:text-amber-700'
+                    : 'text-white group-hover:text-amber-400'
+                }`}>
                   By openings
                 </span>
-                <span className="text-[10px] text-slate-400">Sicilian, French, Caro-Kann & more</span>
+                <span className={`text-[11px] font-medium ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Sicilian, French, Caro-Kann & more
+                </span>
               </div>
             </div>
-            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-amber-400 transition-transform group-hover:translate-x-0.5" />
+            <ChevronRight className={`w-4 h-4 transition-transform group-hover:translate-x-0.5 ${
+              isLightMode ? 'text-slate-400 group-hover:text-amber-700' : 'text-slate-400 group-hover:text-amber-400'
+            }`} />
           </button>
         </div>
 
         {/* Accordion Categories */}
-        <div className="space-y-1 divide-y divide-slate-800/60">
+        <div className={`space-y-1 divide-y ${isLightMode ? 'divide-slate-200' : 'divide-slate-800/60'}`}>
           {filteredCategories.map(cat => {
             const isExpanded = expandedCategories[cat.id] ?? false;
             return (
@@ -620,15 +674,17 @@ export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOle
                     triggerHaptic('move');
                     toggleCategory(cat.id);
                   }}
-                  className="w-full flex items-center justify-between py-2.5 px-2 hover:bg-slate-900/60 rounded-xl transition-colors cursor-pointer"
+                  className={`w-full flex items-center justify-between py-2.5 px-2 rounded-xl transition-colors cursor-pointer ${
+                    isLightMode ? 'hover:bg-slate-100' : 'hover:bg-slate-900/60'
+                  }`}
                 >
-                  <span className="text-xs sm:text-sm font-bold text-slate-200">
+                  <span className={`text-xs sm:text-sm font-bold ${isLightMode ? 'text-slate-900' : 'text-slate-200'}`}>
                     {cat.name}
                   </span>
                   {isExpanded ? (
-                    <ChevronDown className="w-4 h-4 text-amber-400" />
+                    <ChevronDown className="w-4 h-4 text-amber-500" />
                   ) : (
-                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                    <ChevronRight className={`w-4 h-4 ${isLightMode ? 'text-slate-400' : 'text-slate-400'}`} />
                   )}
                 </button>
 
@@ -643,22 +699,38 @@ export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOle
                           const subset = getPuzzlesByTheme(item.name);
                           startTrainerWithTheme(item.name, subset);
                         }}
-                        className="flex items-start justify-between py-2.5 px-3 rounded-xl hover:bg-amber-500/10 cursor-pointer transition-colors group border border-transparent hover:border-amber-500/20"
+                        className={`flex items-start justify-between py-2.5 px-3 rounded-xl cursor-pointer transition-colors group border border-transparent ${
+                          isLightMode
+                            ? 'hover:bg-amber-50 hover:border-amber-300'
+                            : 'hover:bg-amber-500/10 hover:border-amber-500/20'
+                        }`}
                       >
                         <div className="flex gap-2.5 min-w-0">
-                          <div className="mt-0.5 text-slate-400 group-hover:text-amber-400 transition-colors shrink-0">
+                          <div className={`mt-0.5 shrink-0 transition-colors ${
+                            isLightMode
+                              ? 'text-slate-400 group-hover:text-amber-700'
+                              : 'text-slate-400 group-hover:text-amber-400'
+                          }`}>
                             <BookOpen className="w-3.5 h-3.5" />
                           </div>
                           <div className="min-w-0">
-                            <div className="text-xs font-semibold text-slate-200 group-hover:text-amber-300 truncate">
+                            <div className={`text-xs font-semibold truncate ${
+                              isLightMode
+                                ? 'text-slate-800 group-hover:text-amber-800'
+                                : 'text-slate-200 group-hover:text-amber-300'
+                            }`}>
                               {item.name}
                             </div>
-                            <div className="text-[10px] text-slate-400 mt-0.5 leading-relaxed line-clamp-1">
+                            <div className={`text-[10px] mt-0.5 leading-relaxed line-clamp-1 ${
+                              isLightMode ? 'text-slate-500' : 'text-slate-400'
+                            }`}>
                               {item.desc}
                             </div>
                           </div>
                         </div>
-                        <div className="text-[11px] font-mono text-amber-400/80 font-medium ml-2 shrink-0">
+                        <div className={`text-[11px] font-mono font-bold ml-2 shrink-0 ${
+                          isLightMode ? 'text-amber-800' : 'text-amber-400/80'
+                        }`}>
                           {item.count.toLocaleString()}
                         </div>
                       </div>
@@ -676,9 +748,11 @@ export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOle
   // ================= VIEW 2: PUZZLES BY OPENINGS =================
   if (viewState === 'openings') {
     return (
-      <div className="max-w-md mx-auto w-full px-3.5 py-4 min-h-screen text-slate-100 pb-24 space-y-4 animate-fade-in">
+      <div className={`max-w-md mx-auto w-full px-3.5 py-4 min-h-screen pb-24 space-y-4 animate-fade-in ${
+        isLightMode ? 'text-slate-900' : 'text-slate-100'
+      }`}>
         {/* Top Header */}
-        <div className="flex items-center justify-between py-2 border-b border-slate-800">
+        <div className={`flex items-center justify-between py-2 border-b ${isLightMode ? 'border-slate-200' : 'border-slate-800'}`}>
           <div className="flex items-center gap-3">
             <button
               onClick={() => {
@@ -686,13 +760,21 @@ export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOle
                 triggerHaptic('move');
                 setViewState('themes');
               }}
-              className="p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+              className={`p-2 rounded-xl transition-colors cursor-pointer ${
+                isLightMode
+                  ? 'bg-white border border-slate-250 text-slate-700 hover:bg-slate-100 shadow-xs'
+                  : 'bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white'
+              }`}
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-base sm:text-lg font-black tracking-tight text-white">Puzzles by Openings</h1>
-              <p className="text-[11px] text-slate-400">Opening refutations & traps</p>
+              <h1 className={`text-base sm:text-lg font-black tracking-tight ${isLightMode ? 'text-slate-900' : 'text-white'}`}>
+                Puzzles by Openings
+              </h1>
+              <p className={`text-[11px] font-medium ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                Opening refutations & traps
+              </p>
             </div>
           </div>
           <button
@@ -701,7 +783,11 @@ export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOle
               triggerHaptic('move');
               setOpeningsSortBy(prev => (prev === 'count' ? 'name' : 'count'));
             }}
-            className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-amber-400 transition-colors cursor-pointer"
+            className={`p-2 rounded-xl transition-colors cursor-pointer ${
+              isLightMode
+                ? 'bg-white border border-slate-250 text-slate-600 hover:text-amber-700 shadow-xs'
+                : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-amber-400'
+            }`}
             title="Toggle sort"
           >
             <Layers className="w-4 h-4" />
@@ -710,18 +796,22 @@ export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOle
 
         {/* Search Input */}
         <div className="relative">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 ${isLightMode ? 'text-slate-400' : 'text-slate-400'}`} />
           <input
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search openings (e.g. Sicilian, French)..."
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-900/90 rounded-xl text-xs placeholder:text-slate-500 focus:outline-hidden focus:ring-2 focus:ring-amber-500/50 border border-slate-800 text-slate-100"
+            className={`w-full pl-10 pr-4 py-2.5 rounded-xl text-xs focus:outline-hidden focus:ring-2 focus:ring-amber-500/50 border transition-all ${
+              isLightMode
+                ? 'bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 shadow-xs'
+                : 'bg-slate-900/90 border-slate-800 text-slate-100 placeholder:text-slate-500'
+            }`}
           />
         </div>
 
         {/* Openings List */}
-        <div className="space-y-1 divide-y divide-slate-800/60">
+        <div className={`space-y-1 divide-y ${isLightMode ? 'divide-slate-200' : 'divide-slate-800/60'}`}>
           {filteredOpenings.map(op => (
             <div
               key={op.id}
@@ -731,21 +821,31 @@ export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOle
                 const subset = getPuzzlesByOpening(op.name);
                 startTrainerWithTheme(op.name, subset);
               }}
-              className="flex items-center justify-between py-2.5 px-3 hover:bg-slate-900/80 rounded-xl cursor-pointer transition-colors group border border-transparent hover:border-slate-800"
+              className={`flex items-center justify-between py-2.5 px-3 rounded-xl cursor-pointer transition-colors group border border-transparent ${
+                isLightMode
+                  ? 'hover:bg-amber-50/70 hover:border-amber-300'
+                  : 'hover:bg-slate-900/80 hover:border-slate-800'
+              }`}
             >
               <div className="min-w-0">
-                <div className="text-xs font-bold text-slate-200 group-hover:text-amber-400 truncate transition-colors">
+                <div className={`text-xs font-bold truncate transition-colors ${
+                  isLightMode
+                    ? 'text-slate-800 group-hover:text-amber-800'
+                    : 'text-slate-200 group-hover:text-amber-400'
+                }`}>
                   {op.name}
                 </div>
                 {op.code && (
-                  <div className="text-[10px] font-mono text-slate-500">{op.code}</div>
+                  <div className={`text-[10px] font-mono font-medium ${isLightMode ? 'text-slate-500' : 'text-slate-500'}`}>{op.code}</div>
                 )}
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-[11px] font-mono text-amber-400/80 font-semibold">
+                <span className={`text-[11px] font-mono font-bold ${isLightMode ? 'text-amber-800' : 'text-amber-400/80'}`}>
                   {op.count.toLocaleString()}
                 </span>
-                <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-transform" />
+                <ChevronRight className={`w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform ${
+                  isLightMode ? 'text-slate-400 group-hover:text-amber-700' : 'text-slate-500 group-hover:text-amber-400'
+                }`} />
               </div>
             </div>
           ))}

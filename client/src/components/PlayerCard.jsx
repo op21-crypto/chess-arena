@@ -99,6 +99,13 @@ export function PlayerCard({
             }`}>
               {player.username}
             </span>
+            {player.title && (
+              <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full border shrink-0 truncate max-w-[120px] ${
+                isLight ? 'bg-indigo-100 text-indigo-800 border-indigo-200' : 'bg-indigo-950/70 text-indigo-300 border-indigo-500/30'
+              }`}>
+                {player.title}
+              </span>
+            )}
             <span className="text-xs" title={player.countryName || player.country}>
               {flag}
             </span>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Flag, Handshake, RotateCcw, Share2, Sparkles, RefreshCw, Trophy, Swords, Check, X, PhoneCall } from 'lucide-react';
+import { Flag, Handshake, Palette, LogOut, RefreshCw, Trophy, Sparkles, Check, X, PhoneCall } from 'lucide-react';
 
 export function GameControls({
   isGameOver,
@@ -11,50 +11,56 @@ export function GameControls({
   onOfferDraw,
   onRespondDraw,
   onRequestRematch,
-  onFlipBoard,
+  onOpenDesign,
+  onExit,
   onAnalyze,
-  onShareRoom,
   onViewResult,
   onVoiceCall,
+  isAIGame = false,
   isLight = false
 }) {
   const [showResignModal, setShowResignModal] = useState(false);
-  const [copiedLink, setCopiedLink] = useState(false);
+  const [showExitModal, setShowExitModal] = useState(false);
 
-  const handleCopyLink = () => {
-    onShareRoom?.();
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2000);
+  const handleExitClick = () => {
+    if (isGameOver) {
+      onExit?.();
+    } else {
+      setShowExitModal(true);
+    }
   };
 
   const btnBaseClass = isLight
     ? 'bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 shadow-xs'
-    : 'bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white';
+    : 'bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white';
 
   return (
     <div className="space-y-2.5">
-      {/* Voice Call Quick Connect Banner for Playing with Friends */}
-      {onVoiceCall && !isGameOver && (
+      {/* Voice Call Quick Connect Banner: ONLY FOR PVP MATCHES (Friends & Online Worldwide) */}
+      {onVoiceCall && !isGameOver && !isAIGame && (
         <button
           onClick={onVoiceCall}
-          className={`w-full py-2.5 px-3 rounded-2xl font-bold text-xs flex items-center justify-between transition-all group shadow-sm border ${
+          className={`w-full py-2.5 px-3.5 rounded-2xl font-bold text-xs flex items-center justify-between transition-all group shadow-sm border ${
             isLight
               ? 'bg-gradient-to-r from-emerald-50 via-teal-50 to-slate-50 border-emerald-300/80 text-emerald-900 hover:border-emerald-400'
               : 'bg-gradient-to-r from-emerald-950/60 via-indigo-950/40 to-slate-900 border-emerald-500/40 hover:border-emerald-400 text-emerald-300'
           }`}
         >
           <div className="flex items-center gap-2">
-            <div className={`w-6 h-6 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform ${
+            <div className={`w-7 h-7 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform ${
               isLight ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-500/20 text-emerald-400'
             }`}>
-              <PhoneCall className="w-3.5 h-3.5" />
+              <PhoneCall className="w-4 h-4" />
             </div>
-            <span>Voice Call Friend</span>
+            <div className="text-left">
+              <div className="font-extrabold leading-tight">Voice Call Opponent</div>
+              <div className={`text-[10px] ${isLight ? 'text-emerald-700' : 'text-emerald-400/80'}`}>Real-time low-latency audio</div>
+            </div>
           </div>
-          <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold ${
-            isLight ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-emerald-500/20 text-emerald-300'
+          <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+            isLight ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
           }`}>
-            Live Audio
+            Live Audio 🎙️
           </span>
         </button>
       )}
@@ -132,17 +138,18 @@ export function GameControls({
           >
             <div className="flex items-center gap-2">
               <Trophy className="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform" />
-              <span>View Match Celebration & Result</span>
+              <span>View Match Scorecard & Celebration</span>
             </div>
             <span className={`text-[11px] font-mono px-2 py-0.5 rounded-full font-bold ${
               isLight ? 'bg-amber-200 text-amber-900' : 'bg-amber-500/30 text-amber-200'
             }`}>
-              Scorecard
+              Result
             </span>
           </button>
 
-          {/* Action Button Grid */}
+          {/* Action Button Grid: Rematch, Review, Design, Exit */}
           <div className="grid grid-cols-4 gap-2">
+            {/* 1. Rematch */}
             <button
               onClick={onRequestRematch}
               className={`flex flex-col items-center justify-center p-2.5 rounded-2xl border transition-all text-xs font-bold gap-1 shadow-sm cursor-pointer ${
@@ -150,12 +157,13 @@ export function GameControls({
                   ? 'bg-amber-100 hover:bg-amber-200 border-amber-300 text-amber-900'
                   : 'bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/40 text-amber-300 hover:text-amber-200'
               }`}
-              title="Request a rematch"
+              title="Start a new game or rematch"
             >
               <RefreshCw className="w-4 h-4" />
               <span>Rematch</span>
             </button>
 
+            {/* 2. Review (Analysis) */}
             <button
               onClick={onAnalyze}
               className={`flex flex-col items-center justify-center p-2.5 rounded-2xl border transition-all text-xs font-bold gap-1 shadow-sm cursor-pointer ${
@@ -169,74 +177,134 @@ export function GameControls({
               <span>Review</span>
             </button>
 
+            {/* 3. Design (Customizer) */}
             <button
-              onClick={onFlipBoard}
-              className={`flex flex-col items-center justify-center p-2.5 rounded-2xl transition-all text-xs font-semibold gap-1 cursor-pointer ${btnBaseClass}`}
-              title="Flip chessboard orientation"
+              onClick={onOpenDesign}
+              className={`flex flex-col items-center justify-center p-2.5 rounded-2xl border transition-all text-xs font-bold gap-1 shadow-sm cursor-pointer ${
+                isLight
+                  ? 'bg-purple-50 hover:bg-purple-100 border-purple-200 text-purple-900'
+                  : 'bg-purple-500/15 hover:bg-purple-500/25 border-purple-500/40 text-purple-300 hover:text-purple-200'
+              }`}
+              title="In-Game Design Studio"
             >
-              <RotateCcw className="w-4 h-4" />
-              <span>Flip</span>
+              <Palette className="w-4 h-4" />
+              <span>Design</span>
             </button>
 
+            {/* 4. Exit */}
             <button
-              onClick={handleCopyLink}
-              className={`flex flex-col items-center justify-center p-2.5 rounded-2xl transition-all text-xs font-semibold gap-1 cursor-pointer ${btnBaseClass}`}
-              title="Share match link"
+              onClick={handleExitClick}
+              className={`flex flex-col items-center justify-center p-2.5 rounded-2xl border transition-all text-xs font-bold gap-1 shadow-sm cursor-pointer ${
+                isLight
+                  ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800'
+                  : 'bg-slate-800/80 hover:bg-slate-700 border-slate-700 text-slate-300 hover:text-white'
+              }`}
+              title="Exit to Home"
             >
-              {copiedLink ? <Check className="w-4 h-4 text-emerald-500 stroke-[3]" /> : <Share2 className="w-4 h-4" />}
-              <span>{copiedLink ? 'Copied!' : 'Share'}</span>
+              <LogOut className="w-4 h-4 text-rose-400" />
+              <span>Exit</span>
             </button>
           </div>
         </div>
       ) : (
-        /* Active Game Controls */
+        /* Active In-Game Controls: Exit, Draw, Design, Resign */
         <div className="space-y-2">
           <div className="grid grid-cols-4 gap-2">
+            {/* 1. Exit Button */}
             <button
-              onClick={onFlipBoard}
-              className={`flex flex-col items-center justify-center p-2.5 rounded-2xl transition-all text-xs font-semibold gap-1 cursor-pointer ${btnBaseClass}`}
-              title="Flip chessboard orientation"
+              onClick={handleExitClick}
+              className={`flex flex-col items-center justify-center p-2.5 rounded-2xl transition-all text-xs font-semibold gap-1 cursor-pointer ${
+                isLight
+                  ? 'bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 shadow-xs'
+                  : 'bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white'
+              }`}
+              title="Leave game and return to Home"
             >
-              <RotateCcw className="w-4 h-4" />
-              <span>Flip</span>
+              <LogOut className="w-4 h-4 text-slate-400 group-hover:text-rose-400 transition-colors" />
+              <span>Exit</span>
             </button>
 
+            {/* 2. Draw Button */}
             <button
-              onClick={handleCopyLink}
-              className={`flex flex-col items-center justify-center p-2.5 rounded-2xl transition-all text-xs font-semibold gap-1 cursor-pointer ${btnBaseClass}`}
-              title="Share room link with friends"
+              onClick={onOfferDraw}
+              disabled={Boolean(drawOfferedBy)}
+              className={`flex flex-col items-center justify-center p-2.5 rounded-2xl disabled:opacity-40 transition-all text-xs font-semibold gap-1 cursor-pointer ${btnBaseClass}`}
+              title="Offer or propose a draw"
             >
-              {copiedLink ? <Check className="w-4 h-4 text-emerald-500 stroke-[3]" /> : <Share2 className="w-4 h-4" />}
-              <span>{copiedLink ? 'Copied!' : 'Share'}</span>
+              <Handshake className="w-4 h-4 text-amber-500" />
+              <span>Draw</span>
             </button>
 
+            {/* 3. Design Studio Button */}
+            <button
+              onClick={onOpenDesign}
+              className={`flex flex-col items-center justify-center p-2.5 rounded-2xl transition-all text-xs font-semibold gap-1 cursor-pointer ${
+                isLight
+                  ? 'bg-white hover:bg-purple-50 border border-slate-200 hover:border-purple-300 text-slate-800 hover:text-purple-700 shadow-xs'
+                  : 'bg-slate-900/90 hover:bg-purple-950/40 border border-slate-800 hover:border-purple-500/50 text-slate-300 hover:text-purple-300'
+              }`}
+              title="In-Game Board & Piece Design Studio"
+            >
+              <Palette className="w-4 h-4 text-purple-400" />
+              <span>Design</span>
+            </button>
+
+            {/* 4. Resign Button */}
             {isPlayer && (
-              <>
-                <button
-                  onClick={onOfferDraw}
-                  disabled={Boolean(drawOfferedBy)}
-                  className={`flex flex-col items-center justify-center p-2.5 rounded-2xl disabled:opacity-40 transition-all text-xs font-semibold gap-1 cursor-pointer ${btnBaseClass}`}
-                  title="Offer a draw"
-                >
-                  <Handshake className="w-4 h-4" />
-                  <span>Draw</span>
-                </button>
-
-                <button
-                  onClick={() => setShowResignModal(true)}
-                  className={`flex flex-col items-center justify-center p-2.5 rounded-2xl transition-all text-xs font-semibold gap-1 cursor-pointer ${
-                    isLight
-                      ? 'bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-300 text-slate-800 hover:text-rose-600 shadow-xs'
-                      : 'bg-slate-900 hover:bg-rose-950/40 border border-slate-800 hover:border-rose-500/50 text-slate-300 hover:text-rose-400'
-                  }`}
-                  title="Resign match"
-                >
-                  <Flag className="w-4 h-4" />
-                  <span>Resign</span>
-                </button>
-              </>
+              <button
+                onClick={() => setShowResignModal(true)}
+                className={`flex flex-col items-center justify-center p-2.5 rounded-2xl transition-all text-xs font-semibold gap-1 cursor-pointer ${
+                  isLight
+                    ? 'bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-300 text-slate-800 hover:text-rose-600 shadow-xs'
+                    : 'bg-slate-900/90 hover:bg-rose-950/40 border border-slate-800 hover:border-rose-500/50 text-slate-300 hover:text-rose-400'
+                }`}
+                title="Resign match"
+              >
+                <Flag className="w-4 h-4 text-rose-500" />
+                <span>Resign</span>
+              </button>
             )}
           </div>
+
+          {/* Active Game Exit Confirmation Dialog */}
+          {showExitModal && (
+            <div className={`p-3.5 rounded-2xl space-y-2.5 animate-fade-in border shadow-lg ${
+              isLight
+                ? 'bg-white border-amber-200 text-slate-900 shadow-amber-100'
+                : 'bg-slate-900/95 border-amber-500/40 text-slate-100'
+            }`}>
+              <div className={`flex items-center gap-2 text-xs font-bold ${
+                isLight ? 'text-amber-800' : 'text-amber-300'
+              }`}>
+                <LogOut className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>Leave this game and return to the main lobby?</span>
+              </div>
+              <p className={`text-[11px] ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                {isAIGame
+                  ? 'Your progress in this AI match will be saved to history.'
+                  : 'Leaving an active multiplayer game counts as a forfeit.'}
+              </p>
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  onClick={() => setShowExitModal(false)}
+                  className={`px-3 py-1.5 text-xs rounded-xl font-bold transition-colors cursor-pointer ${
+                    isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+                  }`}
+                >
+                  Stay in Game
+                </button>
+                <button
+                  onClick={() => {
+                    setShowExitModal(false);
+                    onExit?.();
+                  }}
+                  className="px-3.5 py-1.5 text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl font-black shadow-md transition-colors cursor-pointer"
+                >
+                  Exit to Home
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Resign Safety Modal Confirmation */}
           {showResignModal && (
