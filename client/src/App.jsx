@@ -106,9 +106,9 @@ function KnightNavIcon({ className = 'w-4 h-4' }) {
 }
 
 const PRIMARY_NAV_TABS = [
-  { id: 'home', label: 'Home', icon: Home },
-  { id: 'puzzles', label: 'Puzzles', icon: Puzzle },
+  { id: 'home', label: 'Play', icon: KnightNavIcon },
   { id: 'lessons', label: 'Learn', icon: GraduationCap },
+  { id: 'puzzles', label: 'Puzzle', icon: Puzzle },
   { id: 'profile', label: 'Profile', icon: CircleUserRound }
 ];
 
@@ -2409,9 +2409,9 @@ export default function App() {
                 }}
                 className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl text-[10px] font-bold transition-all active:scale-95 cursor-pointer ${
                   active
-                    ? 'text-amber-400 font-black scale-105'
+                    ? isLight ? 'text-amber-600 font-black scale-105' : 'text-amber-400 font-black scale-105'
                     : isLight
-                    ? 'text-slate-600 hover:text-slate-900'
+                    ? 'text-slate-500 hover:text-slate-900'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >

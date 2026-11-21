@@ -1144,21 +1144,19 @@ export function FriendRoomModal({
     });
   };
 
-  // Color Theme Tokens - Elevated Emerald/Teal cyber-gaming aesthetic
+  // Color Theme Tokens - Unified, professional & soothing in Day and Night modes
   const theme = {
-    modalBg: isLight ? 'bg-white border-slate-200 shadow-2xl text-slate-900' : 'bg-slate-900 border-slate-700/80 shadow-2xl text-white',
-    tabContainer: isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-950/90 border-slate-800',
-    tabActive: isLight
-      ? 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-extrabold shadow-md shadow-emerald-700/20'
-      : 'bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-white font-extrabold shadow-lg shadow-emerald-500/25 border border-emerald-400/30',
+    modalBg: isLight ? 'bg-white border-slate-200/90 shadow-2xl text-slate-900' : 'bg-slate-900 border-slate-800 shadow-2xl text-white',
+    tabContainer: isLight ? 'bg-slate-100/90 border-slate-200' : 'bg-slate-950 border-slate-800',
+    tabActive: 'bg-amber-500 text-slate-950 font-black shadow-xs',
     tabInactive: isLight
-      ? 'text-slate-600 hover:text-slate-900 font-bold hover:bg-slate-200/60'
-      : 'text-slate-400 hover:text-white font-bold hover:bg-slate-800/60',
-    card: isLight ? 'bg-slate-50/90 border-slate-200 hover:border-slate-300 text-slate-900' : 'bg-slate-950/70 border-slate-800 hover:border-slate-700 text-slate-100',
-    innerBox: isLight ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-slate-950/60 border-slate-800 text-slate-100',
-    input: isLight ? 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-emerald-500' : 'bg-slate-950 border-slate-700 text-white placeholder-slate-500 focus:border-emerald-500',
-    textMuted: isLight ? 'text-slate-600' : 'text-slate-400',
-    badge: isLight ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : 'bg-slate-800 text-emerald-400 border-slate-700'
+      ? 'text-slate-600 hover:text-slate-900 font-bold hover:bg-white/60'
+      : 'text-slate-400 hover:text-white font-bold hover:bg-slate-900/60',
+    card: isLight ? 'bg-slate-50/70 border-slate-200 hover:border-slate-300 text-slate-900' : 'bg-slate-950/70 border-slate-800 hover:border-slate-700 text-slate-100',
+    innerBox: isLight ? 'bg-slate-50/70 border-slate-200 text-slate-900' : 'bg-slate-950/60 border-slate-800 text-slate-100',
+    input: isLight ? 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-amber-500' : 'bg-slate-950 border-slate-700 text-white placeholder-slate-500 focus:border-amber-500',
+    textMuted: isLight ? 'text-slate-500' : 'text-slate-400',
+    badge: isLight ? 'bg-slate-100 text-slate-700 border-slate-200' : 'bg-slate-800 text-amber-400 border-slate-700'
   };
 
   return (
