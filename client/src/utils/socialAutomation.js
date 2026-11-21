@@ -464,6 +464,7 @@ export function addFriendPermanently(userObj) {
     statusText: `Online • ${userObj.title || 'Ready to play'}`,
     bio: userObj.bio || 'Chess friend from Arena',
     anime: userObj.anime || null,
+    isBot: Boolean(userObj.isBot || userObj.anime || userObj.id?.startsWith('anime_') || userObj.id?.startsWith('f_') || userObj.id?.startsWith('sug_')),
     addedAt: Date.now()
   };
 

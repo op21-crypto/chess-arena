@@ -892,6 +892,16 @@ export function FriendRoomModal({
     setIsBotTyping(false);
   }, [chattingFriend?.id]);
 
+  // Fail-safe watchdog: ensure isBotTyping NEVER hangs beyond 3.5s under any circumstance
+  useEffect(() => {
+    if (isBotTyping) {
+      const watchdog = setTimeout(() => {
+        setIsBotTyping(false);
+      }, 3500);
+      return () => clearTimeout(watchdog);
+    }
+  }, [isBotTyping]);
+
   // Periodic 2-3 hour incoming friend requests / challenges upon opening Search Friend
   useEffect(() => {
     if (activeTab !== 'add') return;
@@ -1092,7 +1102,12 @@ export function FriendRoomModal({
       }
 
       // Generate a truly unique online candidate every single time
-      const uniqueCandidate = generateUniqueArenaCandidate(new Set([...friendUsernamesSet, ...blockedSet]));
+      const exclude = new Set([
+        ...friendUsernamesSet,
+        ...blockedSet,
+        ...unaddedCandidates.map(c => (c.username || '').toLowerCase())
+      ]);
+      const uniqueCandidate = generateUniqueArenaCandidate(exclude);
       setSuggestedOnlinePlayer(uniqueCandidate);
       setSuggestProgress(100);
       sound.playClick();
@@ -1207,6 +1222,7 @@ export function FriendRoomModal({
     }
     const list = Array.isArray(friends) ? friends : [];
     if (list.some(f => f?.username && typeof f.username === 'string' && f.username.toLowerCase() === player.username.toLowerCase())) {
+      setSearchNotFound(false);
       setRequestStatus({ type: 'info', text: `@${player.username} is already in your friends list!` });
       setSuggestedOnlinePlayer(null);
       return;
@@ -2107,13 +2123,29 @@ export function FriendRoomModal({
                           setSuggestedOnlinePlayer(null);
                           setRequestStatus(null);
                         }}
-                        placeholder="Enter username (e.g. Zoro_Gambit, Gojo_Limitless, Magnus_C)..."
-                        className={`w-full border rounded-xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-emerald-500 ${theme.input}`}
+                        placeholder="Enter username (e.g. jassi, Gojo_Limitless, Magnus_C)..."
+                        className={`w-full border rounded-xl pl-9 pr-8 py-2 text-xs focus:outline-none focus:border-emerald-500 ${theme.input}`}
                       />
+                      {searchUsername && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSearchUsername('');
+                            setSearchNotFound(false);
+                            setSearchedUser(null);
+                            setRequestStatus(null);
+                            setSuggestedOnlinePlayer(null);
+                          }}
+                          className={`absolute right-2.5 top-2.5 ${theme.textMuted} hover:text-slate-300 cursor-pointer`}
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
 
                     <button
                       type="submit"
+                      onClick={handleSearchUser}
                       disabled={!searchUsername.trim() || isSearching}
                       className="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 disabled:opacity-40 text-white font-black text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
                     >
@@ -2241,13 +2273,13 @@ export function FriendRoomModal({
                   )}
 
                   {/* CASE 2: USER NOT FOUND -> Display Message AND Suggest Random Online Candidate with 3-4s Auto-Disappear */}
-                  {searchNotFound && (
+                  {searchNotFound && !requestStatus && (
                     <div className="space-y-2.5 animate-fade-in pt-1">
                       <div className={`p-2.5 rounded-xl border text-xs flex items-center gap-2 ${
                         isLight ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-amber-950/30 border-amber-500/30 text-amber-300'
                       }`}>
                         <AlertCircle className="w-4 h-4 shrink-0 text-amber-500" />
-                        <span>No friend found with username "{searchUsername.trim()}".</span>
+                        <span>No registered player found with username "{searchUsername.trim()}".</span>
                       </div>
 
                       {/* Random Online Suggested Candidate with 3-4s Auto-Disappear Progress */}
@@ -2335,7 +2367,7 @@ export function FriendRoomModal({
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               <img
-                                src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${candidate.seed}`}
+                                src={candidate.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${candidate.seed || candidate.username}`}
                                 alt={candidate.username}
                                 className="w-9 h-9 rounded-full border border-emerald-500/30 object-cover shrink-0"
                               />
@@ -2360,9 +2392,9 @@ export function FriendRoomModal({
                               <button
                                 onClick={() => {
                                   handleAddSuggestedOnlinePlayer({
-                                    id: `sug_${candidate.username.toLowerCase()}`,
+                                    id: candidate.id || `sug_${candidate.username.toLowerCase()}`,
                                     username: candidate.username,
-                                    avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${candidate.seed}`,
+                                    avatar: candidate.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${candidate.seed || candidate.username}`,
                                     country: candidate.country,
                                     elo: candidate.elo,
                                     isOnline: true,

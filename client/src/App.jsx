@@ -325,39 +325,6 @@ export default function App() {
     } catch {}
   }, []);
 
-  // Handle native Android hardware back button
-  useEffect(() => {
-    window.__onAndroidBackPressed = () => {
-      // 1. Close open modals in priority order
-      if (showGameOverModal) { setShowGameOverModal(false); return true; }
-      if (showInGameDesignModal) { setShowInGameDesignModal(false); return true; }
-      if (showSettingsModal) { setShowSettingsModal(false); return true; }
-      if (showProfileModal) { setShowProfileModal(false); return true; }
-      if (showNotifications) { setShowNotifications(false); return true; }
-      if (showStreakModal) { setShowStreakModal(false); return true; }
-      if (showAuthModal) { setShowAuthModal(false); return true; }
-      if (showFriendRoomModal) { setShowFriendRoomModal(false); return true; }
-      if (showMatchmakingModal) { setShowMatchmakingModal(false); return true; }
-      if (showAIModal) { setShowAIModal(false); return true; }
-
-      // 2. If in sub-view / sub-tab, return to home lobby
-      if (activeTab !== 'home') {
-        setActiveTab('home');
-        return true;
-      }
-
-      // 3. Otherwise let Android handle standard back (minimize/exit)
-      return false;
-    };
-    return () => {
-      delete window.__onAndroidBackPressed;
-    };
-  }, [
-    showGameOverModal, showInGameDesignModal, showSettingsModal, showProfileModal,
-    showNotifications, showStreakModal, showAuthModal, showFriendRoomModal,
-    showMatchmakingModal, showAIModal, activeTab
-  ]);
-
   useEffect(() => {
     // Dynamic periodic fluctuations every 3.5 seconds
     const interval = setInterval(() => {
@@ -563,6 +530,41 @@ export default function App() {
   const [inGameNotice, setInGameNotice] = useState(null);
   const [showInGameDesignModal, setShowInGameDesignModal] = useState(false);
   const [voiceCallTrigger, setVoiceCallTrigger] = useState(0);
+
+  // Handle native Android hardware back button (placed safely after all modal & view states are initialized)
+  useEffect(() => {
+    window.__onAndroidBackPressed = () => {
+      // 1. Close open modals in priority order
+      if (showGameOverModal) { setShowGameOverModal(false); return true; }
+      if (showInGameDesignModal) { setShowInGameDesignModal(false); return true; }
+      if (showSettingsModal) { setShowSettingsModal(false); return true; }
+      if (showProfileModal) { setShowProfileModal(false); return true; }
+      if (showNotifications) { setShowNotifications(false); return true; }
+      if (showStreakModal) { setShowStreakModal(false); return true; }
+      if (showAuthModal) { setShowAuthModal(false); return true; }
+      if (showFriendRoomModal) { setShowFriendRoomModal(false); return true; }
+      if (showMatchmakingModal) { setShowMatchmakingModal(false); return true; }
+      if (showAIModal) { setShowAIModal(false); return true; }
+      if (inGameNotice) { setInGameNotice(null); return true; }
+      if (incomingChallenge) { setIncomingChallenge(null); return true; }
+
+      // 2. If in sub-view / sub-tab, return to home lobby
+      if (activeTab !== 'home') {
+        setActiveTab('home');
+        return true;
+      }
+
+      // 3. Otherwise let Android handle standard back (minimize/exit)
+      return false;
+    };
+    return () => {
+      delete window.__onAndroidBackPressed;
+    };
+  }, [
+    showGameOverModal, showInGameDesignModal, showSettingsModal, showProfileModal,
+    showNotifications, showStreakModal, showAuthModal, showFriendRoomModal,
+    showMatchmakingModal, showAIModal, inGameNotice, incomingChallenge, activeTab
+  ]);
 
   // Match rating and stats tracking reference (prevents duplicate calculation)
   const processedMatchIdsRef = useRef(new Set());
