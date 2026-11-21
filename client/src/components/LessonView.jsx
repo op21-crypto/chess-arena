@@ -44,11 +44,11 @@ const ENCOURAGING_PRAISES = [
   { title: "Superb Insight! ✨", text: "Spot-on! Another critical fundamental mastered!" }
 ];
 
-export function LessonView({ onBack, isLight, isOled }) {
+export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', pieceTheme = 'alexander' }) {
   const isLightMode = isLight !== undefined
     ? isLight
     : (typeof window !== 'undefined' && window.matchMedia && !window.matchMedia('(prefers-color-scheme: dark)').matches);
-  const [boardTheme] = useState(() => (Math.random() < 0.5 ? 'gold' : 'emerald'));
+  const activeBoardTheme = (boardTheme && boardTheme !== 'amoled') ? boardTheme : 'greenwich';
   const [lessons] = useState(ALL_LESSONS);
   const [selectedLessonIdx, setSelectedLessonIdx] = useState(() => {
     const saved = safeStorage.getItem('chess_current_lesson_idx');
@@ -1321,7 +1321,8 @@ export function LessonView({ onBack, isLight, isOled }) {
               playerColor="w"
               disabled={activeMode === 'lesson'}
               onSquareClick={activeMode === 'practice' ? handlePracticeSquareClick : undefined}
-              boardTheme={boardTheme}
+              boardTheme={activeBoardTheme}
+              pieceTheme={pieceTheme || 'alexander'}
               highlightSquares={activeMode === 'lesson' ? (currentStep?.highlightSquares || []) : (currentPractice?.highlightSquares || [])}
               successSquares={successSquares}
               errorSquares={errorSquares}

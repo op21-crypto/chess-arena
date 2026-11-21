@@ -2587,6 +2587,8 @@ export default function App() {
       {analysisGame && (
         <AnalysisView
           game={analysisGame}
+          boardTheme={settings.boardTheme}
+          pieceTheme={settings.pieceTheme}
           onClose={() => setAnalysisGame(null)}
         />
       )}

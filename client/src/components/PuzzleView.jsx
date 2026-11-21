@@ -1025,6 +1025,7 @@ export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOle
           <Chessboard
             fen={currentFen}
             boardTheme={activeBoardTheme}
+            pieceTheme={pieceTheme || 'alexander'}
             playerColor="auto"
             flipped={shouldFlipBoard}
             onMove={handleMove}
@@ -1276,6 +1277,7 @@ export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOle
           <Chessboard
             fen={currentFen}
             boardTheme={activeBoardTheme}
+            pieceTheme={pieceTheme || 'alexander'}
             playerColor="auto"
             flipped={shouldFlipBoard}
             onMove={handleMove}
@@ -1654,6 +1656,7 @@ export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOle
           <Chessboard
             fen={currentFen}
             boardTheme={activeBoardTheme}
+            pieceTheme={pieceTheme || 'alexander'}
             playerColor="auto"
             flipped={shouldFlipBoard}
             onMove={handleMove}

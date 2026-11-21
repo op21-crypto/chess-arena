@@ -3,12 +3,12 @@ import { Chess } from 'chess.js';
 import { Chessboard } from './Chessboard.jsx';
 import { Sparkles, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Play, Pause, Download, AlertTriangle, CheckCircle, ShieldAlert } from 'lucide-react';
 
-export function AnalysisView({ game, onClose }) {
+export function AnalysisView({ game, onClose, boardTheme = 'greenwich', pieceTheme = 'alexander' }) {
   const [currentIdx, setCurrentIdx] = useState(-1);
   const [analysisData, setAnalysisData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [boardTheme, setBoardTheme] = useState(() => (Math.random() < 0.5 ? 'gold' : 'emerald'));
+  const activeBoardTheme = (boardTheme && boardTheme !== 'amoled') ? boardTheme : 'greenwich';
 
   const moves = game?.moveHistory || [];
 
@@ -129,7 +129,8 @@ export function AnalysisView({ game, onClose }) {
             <Chessboard
               fen={getFenAt(currentIdx)}
               playerColor="w"
-              boardTheme={boardTheme}
+              boardTheme={activeBoardTheme}
+              pieceTheme={pieceTheme || 'alexander'}
               disabled={true}
               lastMove={currentMove ? { from: currentMove.from, to: currentMove.to } : null}
             />
