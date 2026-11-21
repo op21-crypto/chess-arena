@@ -8,7 +8,7 @@ import {
 import { safeStorage } from '../utils/storage.js';
 import { triggerHaptic } from '../utils/device.js';
 import { sound } from '../utils/audio.js';
-import { removeFriendPermanently, blockFriendPermanently } from '../utils/socialAutomation.js';
+import { removeFriendPermanently, blockFriendPermanently, getBlockedFriends } from '../utils/socialAutomation.js';
 
 const COUNTRY_FLAGS = {
   US: '🇺🇸',
@@ -634,10 +634,23 @@ export function FriendRoomModal({
 
   // Safe reference to friends list preventing any runtime null/undefined crashes
   const safeFriends = Array.isArray(friends) ? friends : [];
+  const blockedFriends = getBlockedFriends();
+  const blockedSet = new Set(
+    (Array.isArray(blockedFriends) ? blockedFriends : [])
+      .map(b => (typeof b === 'string' ? b.toLowerCase() : ''))
+  );
+  const friendUsernamesSet = new Set(
+    safeFriends
+      .filter(f => f?.username && typeof f.username === 'string')
+      .map(f => f.username.toLowerCase())
+  );
 
-  // Filter out ANY candidate already in friends list safely
+  // Filter out ANY candidate already in friends list or blocked safely
   const unaddedCandidates = ANIME_GAMING_CANDIDATES.filter(
-    candidate => !safeFriends.some(f => f?.username && typeof f.username === 'string' && f.username.toLowerCase() === candidate.username.toLowerCase())
+    candidate =>
+      candidate?.username &&
+      !friendUsernamesSet.has(candidate.username.toLowerCase()) &&
+      !blockedSet.has(candidate.username.toLowerCase())
   );
 
   // Tab items arranged contextually based on user entry point:
@@ -764,7 +777,7 @@ export function FriendRoomModal({
     if (chattingFriend) {
       chatMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [chattingFriend, directMessages]);
+  }, [chattingFriend, directMessages, isBotTyping]);
 
   if (!isOpen) return null;
 
@@ -819,6 +832,7 @@ export function FriendRoomModal({
     setSearchedUser(null);
     setSearchNotFound(false);
     setRequestStatus(null);
+    setSuggestedOnlinePlayer(null);
 
     // Self check
     if (currentUser && query.toLowerCase() === currentUser.username?.toLowerCase()) {
@@ -880,23 +894,28 @@ export function FriendRoomModal({
     if (match) {
       setSearchedUser(match);
       setSearchNotFound(false);
+      setSuggestedOnlinePlayer(null);
     } else {
-      // NOT FOUND: Dynamically generate a cool anime/gaming online candidate
+      // NOT FOUND: Dynamically suggest an online candidate ONLY from players not in friends list and not blocked
       setSearchNotFound(true);
-      const randomCandidate = ANIME_GAMING_CANDIDATES[Math.floor(Math.random() * ANIME_GAMING_CANDIDATES.length)];
-      const randomSeed = `${randomCandidate.seed}_${Date.now() % 1000}`;
-      setSuggestedOnlinePlayer({
-        id: `sug_${Date.now()}`,
-        username: randomCandidate.username,
-        avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${randomSeed}`,
-        country: randomCandidate.country,
-        elo: randomCandidate.elo,
-        title: randomCandidate.title,
-        statusText: '🔥 In Lobby • Looking for Match',
-        bio: randomCandidate.bio,
-        isBot: true
-      });
-      sound.playClick();
+      if (unaddedCandidates.length > 0) {
+        const randomCandidate = unaddedCandidates[Math.floor(Math.random() * unaddedCandidates.length)];
+        const randomSeed = `${randomCandidate.seed}_${Date.now() % 1000}`;
+        setSuggestedOnlinePlayer({
+          id: `sug_${Date.now()}`,
+          username: randomCandidate.username,
+          avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${randomSeed}`,
+          country: randomCandidate.country,
+          elo: randomCandidate.elo,
+          title: randomCandidate.title,
+          statusText: '🔥 In Lobby • Looking for Match',
+          bio: randomCandidate.bio,
+          isBot: true
+        });
+        sound.playClick();
+      } else {
+        setSuggestedOnlinePlayer(null);
+      }
     }
   };
 
@@ -960,6 +979,7 @@ export function FriendRoomModal({
     const list = Array.isArray(friends) ? friends : [];
     if (list.some(f => f?.username && typeof f.username === 'string' && f.username.toLowerCase() === player.username.toLowerCase())) {
       setRequestStatus({ type: 'info', text: `@${player.username} is already in your friends list!` });
+      setSuggestedOnlinePlayer(null);
       return;
     }
     const updated = [player, ...list];
@@ -1037,12 +1057,26 @@ export function FriendRoomModal({
     sound.playMove();
     triggerHaptic('move');
 
-    // Bot witty response with natural typing delay
-    if (targetId.startsWith('f_') || targetId.startsWith('sug_') || chattingFriend.isBot) {
+    // Bot smart conversational response with authentic human typing delay
+    if (targetId.startsWith('f_') || targetId.startsWith('sug_') || targetId.startsWith('anime_') || chattingFriend.isBot) {
       setIsBotTyping(true);
-      const typingDelay = 700 + Math.floor(Math.random() * 450);
-      setTimeout(() => {
-        const replyText = generateBotReply(targetId, chattingFriend.username, text, detected);
+      const currentHistory = [...(directMessages[targetId] || []), newMsg];
+      const startTime = Date.now();
+
+      getSmartFriendReply({
+        friend: chattingFriend,
+        message: text,
+        history: currentHistory,
+        detectedMinutes: detected
+      }).then(async (replyText) => {
+        // Natural human typing duration: 1.8s - 3.2s so the user clearly sees typing
+        const textLen = (replyText || '').length;
+        const targetDuration = Math.min(3200, Math.max(1800, 1600 + textLen * 20));
+        const elapsed = Date.now() - startTime;
+        if (elapsed < targetDuration) {
+          await new Promise(r => setTimeout(r, targetDuration - elapsed));
+        }
+
         const replyMsg = {
           id: `reply_${Date.now()}`,
           sender: 'them',
@@ -1055,7 +1089,11 @@ export function FriendRoomModal({
         }));
         setIsBotTyping(false);
         sound.playMove();
-      }, typingDelay);
+        triggerHaptic('move');
+      }).catch((err) => {
+        console.warn('Friend reply error:', err);
+        setIsBotTyping(false);
+      });
     }
   };
 
@@ -1230,9 +1268,16 @@ export function FriendRoomModal({
                     <span className="font-bold text-xs truncate">{chattingFriend.username}</span>
                     <span>{COUNTRY_FLAGS[chattingFriend.country] || '🌐'}</span>
                   </div>
-                  <span className={`text-[10px] block ${chattingFriend.isOnline ? 'text-emerald-600 font-bold' : theme.textMuted}`}>
-                    {chattingFriend.statusText || (chattingFriend.isOnline ? 'Online' : 'Offline')}
-                  </span>
+                  {isBotTyping ? (
+                    <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1 animate-pulse">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                      <span>typing... ✍️</span>
+                    </span>
+                  ) : (
+                    <span className={`text-[10px] block ${chattingFriend.isOnline ? 'text-emerald-600 font-bold' : theme.textMuted}`}>
+                      {chattingFriend.statusText || (chattingFriend.isOnline ? 'Online' : 'Offline')}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -1325,13 +1370,24 @@ export function FriendRoomModal({
                 })
               )}
               {isBotTyping && (
-                <div className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-slate-800/80 border border-slate-700/60 text-slate-300 text-xs w-fit animate-fade-in">
-                  <span className="text-[10px] font-bold text-emerald-400">@{chattingFriend.username} is typing</span>
-                  <span className="flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '300ms' }} />
-                  </span>
+                <div className="flex items-end gap-2 max-w-[85%] self-start animate-fade-in my-1">
+                  <img
+                    src={chattingFriend.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${chattingFriend.username}`}
+                    alt={chattingFriend.username}
+                    className="w-7 h-7 rounded-full border border-slate-700/60 shrink-0 mb-1 object-cover"
+                  />
+                  <div className={`px-4 py-3 rounded-2xl rounded-bl-xs border flex items-center gap-2.5 shadow-md ${
+                    isLight
+                      ? 'bg-white border-slate-200 text-slate-700'
+                      : 'bg-slate-800/95 border-slate-700 text-slate-200'
+                  }`}>
+                    <span className="text-xs font-semibold text-emerald-400">{chattingFriend.username} is typing</span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '180ms' }} />
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '360ms' }} />
+                    </span>
+                  </div>
                 </div>
               )}
               <div ref={chatMessagesEndRef} />
@@ -1740,7 +1796,12 @@ export function FriendRoomModal({
                       <input
                         type="text"
                         value={searchUsername}
-                        onChange={e => setSearchUsername(e.target.value)}
+                        onChange={e => {
+                          setSearchUsername(e.target.value);
+                          setSearchNotFound(false);
+                          setSuggestedOnlinePlayer(null);
+                          setRequestStatus(null);
+                        }}
                         placeholder="Enter username (e.g. Zoro_Gambit, Gojo_Limitless, Magnus_C)..."
                         className={`w-full border rounded-xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-emerald-500 ${theme.input}`}
                       />
@@ -1896,7 +1957,7 @@ export function FriendRoomModal({
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {unaddedCandidates.slice(0, 5).map(candidate => {
+                      {unaddedCandidates.slice(0, 3).map(candidate => {
                         const isRequested = sentRequests.includes(candidate.username);
 
                         return (
