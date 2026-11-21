@@ -21,8 +21,18 @@ export function ProfileView({
   onOpenStreak,
   onOpenAdmin,
   onSignOut,
-  onSignIn
+  onSignIn,
+  isLight,
+  isOled
 }) {
+  const isLightMode = isLight !== undefined
+    ? isLight
+    : ((settings?.appTheme || 'system') === 'light' ||
+       ((settings?.appTheme || 'system') === 'system' &&
+        typeof window !== 'undefined' &&
+        window.matchMedia &&
+        !window.matchMedia('(prefers-color-scheme: dark)').matches));
+
   // Accordion state: by default ALL 3 buttons are strictly CLOSED
   const [openSections, setOpenSections] = useState({
     stats: false,
@@ -90,11 +100,19 @@ export function ProfileView({
   };
 
   return (
-    <div className="max-w-5xl w-full mx-auto p-3 sm:p-6 space-y-3 sm:space-y-4 animate-fade-in pb-16">
+    <div className={`max-w-5xl w-full mx-auto p-3 sm:p-6 space-y-3 sm:space-y-4 animate-fade-in pb-16 ${
+      isLightMode ? 'text-slate-900' : 'text-slate-100'
+    }`}>
       {/* Top Profile Header Hero */}
-      <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl relative overflow-hidden">
+      <div className={`border rounded-2xl p-4 sm:p-5 shadow-xl relative overflow-hidden transition-colors ${
+        isLightMode
+          ? 'bg-white border-slate-200/90 shadow-slate-200/50'
+          : 'bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border-slate-800'
+      }`}>
         {/* Ambient background glow */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className={`absolute top-0 right-0 w-80 h-80 rounded-full blur-3xl pointer-events-none ${
+          isLightMode ? 'bg-amber-400/10' : 'bg-amber-500/5'
+        }`} />
 
         <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-3 relative z-10">
           {/* Avatar & User Details */}
@@ -103,14 +121,18 @@ export function ProfileView({
               <img
                 src={selectedAvatar || user?.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=Guest'}
                 alt={user?.username || 'Player'}
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 sm:border-3 border-amber-500 shadow-lg bg-slate-950"
+                className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 sm:border-3 border-amber-500 shadow-lg ${
+                  isLightMode ? 'bg-slate-100' : 'bg-slate-950'
+                }`}
               />
               <button
                 onClick={() => {
                   triggerHaptic('move');
                   setIsEditingAvatar(!isEditingAvatar);
                 }}
-                className="absolute bottom-0 right-0 p-2 rounded-full bg-amber-500 border-2 border-slate-900 text-slate-950 font-bold hover:scale-110 transition-transform shadow-md"
+                className={`absolute bottom-0 right-0 p-2 rounded-full bg-amber-500 border-2 font-bold hover:scale-110 transition-transform shadow-md cursor-pointer ${
+                  isLightMode ? 'border-white text-slate-950' : 'border-slate-900 text-slate-950'
+                }`}
                 title="Change Avatar (32 Anime & Classic GM avatars)"
               >
                 <Edit2 className="w-3.5 h-3.5" />
@@ -119,16 +141,22 @@ export function ProfileView({
 
             <div className="space-y-1.5">
               <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                <h1 className={`text-xl sm:text-2xl font-black tracking-tight ${
+                  isLightMode ? 'text-slate-900' : 'text-white'
+                }`}>
                   {user?.username || 'Guest Player'}
                 </h1>
-                <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[11px] font-bold">
+                <span className={`px-2.5 py-0.5 rounded-full border text-[11px] font-bold ${
+                  isLightMode
+                    ? 'bg-amber-100 text-amber-800 border-amber-300'
+                    : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                }`}>
                   {user?.role === 'admin' ? '🛡️ Arena Admin' : '⚔️ Arena Competitor'}
                 </span>
               </div>
 
-              <p className="text-xs text-slate-400">
-                Country: <span className="font-semibold text-slate-200">{user?.countryName || user?.country || 'India 🇮🇳'}</span>
+              <p className={`text-xs ${isLightMode ? 'text-slate-600' : 'text-slate-400'}`}>
+                Country: <span className={`font-semibold ${isLightMode ? 'text-slate-800' : 'text-slate-200'}`}>{user?.countryName || user?.country || 'India 🇮🇳'}</span>
               </p>
 
               <div className="flex items-center justify-center sm:justify-start gap-2 pt-0.5 flex-wrap">
@@ -137,12 +165,20 @@ export function ProfileView({
                     triggerHaptic('move');
                     if (onOpenStreak) onOpenStreak();
                   }}
-                  className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-orange-500/20 border border-orange-500/40 text-orange-400 text-xs font-bold hover:bg-orange-500/30 transition-colors shadow-xs"
+                  className={`inline-flex items-center gap-1 px-3 py-1 rounded-full border text-xs font-bold transition-colors shadow-xs cursor-pointer ${
+                    isLightMode
+                      ? 'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100'
+                      : 'bg-orange-500/20 border-orange-500/40 text-orange-400 hover:bg-orange-500/30'
+                  }`}
                 >
-                  <Flame className="w-3.5 h-3.5 fill-orange-400 animate-pulse" />
+                  <Flame className="w-3.5 h-3.5 fill-orange-500 animate-pulse text-orange-500" />
                   <span>7 Day Streak</span>
                 </button>
-                <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
+                  isLightMode
+                    ? 'text-emerald-800 bg-emerald-50 border-emerald-200'
+                    : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                }`}>
                   Better than {percentile}% of players
                 </span>
               </div>
@@ -157,10 +193,14 @@ export function ProfileView({
                   triggerHaptic('move');
                   onOpenAdmin();
                 }}
-                className="px-3 py-1.5 rounded-xl bg-purple-500/20 border border-purple-500/40 text-purple-300 hover:text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
+                className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-colors ${
+                  isLightMode
+                    ? 'bg-purple-100 border-purple-300 text-purple-800 hover:bg-purple-200'
+                    : 'bg-purple-500/20 border-purple-500/40 text-purple-300 hover:text-white'
+                }`}
                 title="Admin Command Center"
               >
-                <Shield className="w-3.5 h-3.5 text-purple-400" />
+                <Shield className="w-3.5 h-3.5 text-purple-500" />
                 <span className="hidden sm:inline">Admin Hub</span>
               </button>
             )}
@@ -171,7 +211,11 @@ export function ProfileView({
                   triggerHaptic('move');
                   if (onSignOut) onSignOut();
                 }}
-                className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-red-500/20 border border-slate-700 hover:border-red-500/40 text-slate-300 hover:text-red-400 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+                className={`px-3.5 py-1.5 rounded-xl border text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
+                  isLightMode
+                    ? 'bg-slate-100 hover:bg-rose-50 border-slate-200 hover:border-rose-300 text-slate-700 hover:text-rose-600'
+                    : 'bg-slate-800 hover:bg-red-500/20 border-slate-700 hover:border-red-500/40 text-slate-300 hover:text-red-400'
+                }`}
                 title="Sign Out"
               >
                 <LogOut className="w-3.5 h-3.5" />
@@ -183,10 +227,14 @@ export function ProfileView({
 
         {/* Famous Avatars Selector Drawer (Across Categories) */}
         {isEditingAvatar && (
-          <div className="mt-5 p-4 bg-slate-950 border border-slate-800 rounded-2xl space-y-3 animate-fade-in shadow-xl">
+          <div className={`mt-5 p-4 rounded-2xl space-y-3 animate-fade-in shadow-xl border ${
+            isLightMode ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-slate-950 border-slate-800 text-slate-100'
+          }`}>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span className={`text-xs font-bold flex items-center gap-1.5 ${
+                isLightMode ? 'text-amber-600' : 'text-amber-400'
+              }`}>
+                <Sparkles className="w-3.5 h-3.5" />
                 <span>Choose Your Avatar ({FAMOUS_AVATARS.length} Famous Characters)</span>
               </span>
             </div>
@@ -209,13 +257,19 @@ export function ProfileView({
                     className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
                       isActive
                         ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                        : isLightMode
+                        ? 'bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300'
                         : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
                     }`}
                   >
                     <span>{cat.icon}</span>
                     <span>{cat.label}</span>
                     <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                      isActive ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-800 text-slate-400'
+                      isActive
+                        ? 'bg-slate-950/20 text-slate-950'
+                        : isLightMode
+                        ? 'bg-slate-100 text-slate-600'
+                        : 'bg-slate-800 text-slate-400'
                     }`}>
                       {count}
                     </span>
@@ -225,7 +279,11 @@ export function ProfileView({
             </div>
 
             {/* Grid of Avatars */}
-            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2.5 max-h-60 overflow-y-auto p-2 border border-slate-800/80 rounded-xl bg-slate-900/60 custom-scrollbar">
+            <div className={`grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2.5 max-h-60 overflow-y-auto p-2 border rounded-xl custom-scrollbar ${
+              isLightMode
+                ? 'border-slate-200 bg-white'
+                : 'border-slate-800/80 bg-slate-900/60'
+            }`}>
               {filteredAvatars.map((av, idx) => {
                 const isSelected = selectedAvatar === av.url;
                 return (
@@ -238,6 +296,8 @@ export function ProfileView({
                     className={`p-2 rounded-xl border flex flex-col items-center gap-1 cursor-pointer transition-all ${
                       isSelected
                         ? 'bg-amber-500/20 border-amber-400 ring-2 ring-amber-400/50 scale-105'
+                        : isLightMode
+                        ? 'bg-slate-50 border-slate-200 hover:border-slate-300 hover:bg-slate-100/80'
                         : 'bg-slate-950/70 border-slate-800 hover:border-slate-600 hover:bg-slate-900/80'
                     }`}
                     title={`${av.name} (${av.series})`}
@@ -246,7 +306,9 @@ export function ProfileView({
                       <img
                         src={av.url}
                         alt={av.name}
-                        className="w-12 h-12 rounded-full bg-slate-800 object-cover shadow-xs"
+                        className={`w-12 h-12 rounded-full object-cover shadow-xs ${
+                          isLightMode ? 'bg-slate-200' : 'bg-slate-800'
+                        }`}
                         loading="lazy"
                       />
                       {isSelected && (
@@ -255,10 +317,14 @@ export function ProfileView({
                         </div>
                       )}
                     </div>
-                    <span className="text-[10px] font-bold text-slate-200 truncate w-full text-center">
+                    <span className={`text-[10px] font-bold truncate w-full text-center ${
+                      isLightMode ? 'text-slate-800' : 'text-slate-200'
+                    }`}>
                       {av.name}
                     </span>
-                    <span className="text-[8px] text-slate-500 truncate w-full text-center -mt-0.5">
+                    <span className={`text-[8px] truncate w-full text-center -mt-0.5 ${
+                      isLightMode ? 'text-slate-500' : 'text-slate-500'
+                    }`}>
                       {av.series}
                     </span>
                   </div>
@@ -266,16 +332,20 @@ export function ProfileView({
               })}
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+            <div className={`flex justify-end gap-2 pt-2 border-t ${isLightMode ? 'border-slate-200' : 'border-slate-800'}`}>
               <button
                 onClick={() => setIsEditingAvatar(false)}
-                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-xl font-semibold"
+                className={`px-4 py-1.5 text-xs rounded-xl font-semibold cursor-pointer ${
+                  isLightMode
+                    ? 'bg-slate-200 hover:bg-slate-300 text-slate-700'
+                    : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+                }`}
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveAvatar}
-                className="px-5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all active:scale-95"
+                className="px-5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all active:scale-95 cursor-pointer"
               >
                 Apply Avatar
               </button>
@@ -285,37 +355,45 @@ export function ProfileView({
       </div>
 
       {/* ================= DAY & NIGHT THEME SWITCH (SLIDING TOGGLE AAGE-PICHE) ================= */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 shadow-md">
+      <div className={`border rounded-2xl p-3 shadow-md transition-colors ${
+        isLightMode
+          ? 'bg-white border-slate-200/90 shadow-slate-200/40 text-slate-900'
+          : 'bg-slate-900/90 border-slate-800 text-white'
+      }`}>
         <div className="flex items-center justify-between gap-3">
           {/* Label & Active State */}
           <div className="flex items-center gap-2.5 min-w-0">
             <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-              (settings?.appTheme || 'dark') === 'light'
-                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
+              isLightMode
+                ? 'bg-amber-100 text-amber-600 border border-amber-300'
                 : 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/40'
             }`}>
-              {(settings?.appTheme || 'dark') === 'light' ? (
-                <Sun className="w-4 h-4 text-amber-400" />
+              {isLightMode ? (
+                <Sun className="w-4 h-4 text-amber-600" />
               ) : (
                 <Moon className="w-4 h-4 text-indigo-300" />
               )}
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-bold text-white">
-                  {(settings?.appTheme || 'dark') === 'light'
+                <span className={`text-xs font-bold ${isLightMode ? 'text-slate-900' : 'text-white'}`}>
+                  {isLightMode
                     ? 'Day Mode (Light)'
-                    : (settings?.appTheme || 'dark') === 'black'
+                    : (settings?.appTheme || 'system') === 'black'
                     ? 'OLED Black'
-                    : (settings?.appTheme || 'dark') === 'system'
+                    : (settings?.appTheme || 'system') === 'system'
                     ? 'Auto System'
                     : 'Night Mode (Dark)'}
                 </span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700 uppercase">
-                  {settings?.appTheme || 'dark'}
+                <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono font-bold uppercase border ${
+                  isLightMode
+                    ? 'bg-amber-100 border-amber-300 text-amber-800'
+                    : 'bg-slate-800 border-slate-700 text-slate-300'
+                }`}>
+                  {settings?.appTheme || 'system'}
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400 truncate">
+              <p className={`text-[10px] truncate ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
                 Slide switch for Day ☀️ & Night 🌙
               </p>
             </div>
@@ -326,10 +404,10 @@ export function ProfileView({
             <button
               type="button"
               role="switch"
-              aria-checked={(settings?.appTheme || 'dark') !== 'light'}
+              aria-checked={!isLightMode}
               onClick={() => {
-                const current = (settings?.appTheme || 'dark').toLowerCase();
-                const nextTheme = current === 'light' ? 'dark' : 'light';
+                const current = (settings?.appTheme || 'system').toLowerCase();
+                const nextTheme = isLightMode ? 'dark' : 'light';
                 sound.playClick();
                 triggerHaptic('move');
                 if (onUpdateSettings) {
@@ -337,8 +415,8 @@ export function ProfileView({
                 }
               }}
               className={`relative inline-flex h-8 w-16 shrink-0 cursor-pointer rounded-full border-2 transition-colors duration-300 ease-in-out focus:outline-none select-none ${
-                (settings?.appTheme || 'dark') === 'light'
-                  ? 'bg-amber-500/25 border-amber-400/60'
+                isLightMode
+                  ? 'bg-amber-100 border-amber-400'
                   : 'bg-indigo-600/30 border-indigo-500/60'
               }`}
               title="Slide switch forward/backward for Day & Night"
@@ -355,12 +433,12 @@ export function ProfileView({
               {/* Sliding Knob: Left (translate-x-0.5) for Day, Right (translate-x-8.5) for Night */}
               <span
                 className={`pointer-events-none inline-block h-6.5 w-6.5 transform rounded-full shadow-md ring-0 transition duration-300 ease-in-out flex items-center justify-center my-auto ${
-                  (settings?.appTheme || 'dark') === 'light'
+                  isLightMode
                     ? 'translate-x-0.5 bg-amber-400 text-slate-950 shadow-amber-400/40'
                     : 'translate-x-8.5 bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-indigo-500/40'
                 }`}
               >
-                {(settings?.appTheme || 'dark') === 'light' ? (
+                {isLightMode ? (
                   <Sun className="w-3.5 h-3.5 stroke-[2.5]" />
                 ) : (
                   <Moon className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -371,8 +449,12 @@ export function ProfileView({
         </div>
 
         {/* Compact Chip Row for OLED Black & Device Auto Sync */}
-        <div className="flex items-center justify-end gap-1.5 mt-2 pt-2 border-t border-slate-800/80">
-          <span className="text-[10px] text-slate-500 font-medium mr-auto">Options:</span>
+        <div className={`flex items-center justify-end gap-1.5 mt-2 pt-2 border-t ${
+          isLightMode ? 'border-slate-200' : 'border-slate-800/80'
+        }`}>
+          <span className={`text-[10px] font-medium mr-auto ${
+            isLightMode ? 'text-slate-500' : 'text-slate-500'
+          }`}>Options:</span>
           <button
             type="button"
             onClick={() => {
@@ -380,9 +462,13 @@ export function ProfileView({
               triggerHaptic('move');
               if (onUpdateSettings) onUpdateSettings({ ...settings, appTheme: 'light' });
             }}
-            className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all ${
-              (settings?.appTheme || 'dark') === 'light'
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+            className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+              (settings?.appTheme || 'system') === 'light'
+                ? isLightMode
+                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                : isLightMode
+                ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
             }`}
           >
@@ -395,9 +481,11 @@ export function ProfileView({
               triggerHaptic('move');
               if (onUpdateSettings) onUpdateSettings({ ...settings, appTheme: 'dark' });
             }}
-            className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all ${
-              (settings?.appTheme || 'dark') === 'dark'
-                ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40'
+            className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+              (settings?.appTheme || 'system') === 'dark'
+                ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/40 font-bold'
+                : isLightMode
+                ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
             }`}
           >
@@ -410,9 +498,11 @@ export function ProfileView({
               triggerHaptic('move');
               if (onUpdateSettings) onUpdateSettings({ ...settings, appTheme: 'black' });
             }}
-            className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all ${
-              (settings?.appTheme || 'dark') === 'black'
-                ? 'bg-zinc-700 text-white border border-zinc-500'
+            className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+              (settings?.appTheme || 'system') === 'black'
+                ? 'bg-zinc-700 text-white border border-zinc-500 font-bold'
+                : isLightMode
+                ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
             }`}
           >
@@ -425,9 +515,13 @@ export function ProfileView({
               triggerHaptic('move');
               if (onUpdateSettings) onUpdateSettings({ ...settings, appTheme: 'system' });
             }}
-            className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all ${
-              (settings?.appTheme || 'dark') === 'system'
-                ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40'
+            className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+              (settings?.appTheme || 'system') === 'system'
+                ? isLightMode
+                  ? 'bg-teal-100 text-teal-900 border border-teal-300 font-bold'
+                  : 'bg-teal-500/20 text-teal-300 border border-teal-500/40 font-bold'
+                : isLightMode
+                ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
             }`}
           >

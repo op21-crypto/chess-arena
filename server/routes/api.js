@@ -23,12 +23,12 @@ function authenticateToken(req, res, next) {
     if (err) {
       req.user = null;
     } else {
-      if (user.username === 'op21plus' || user.id === 'admin_op21') {
-        user.role = 'admin';
-      }
       const dbUser = Database.getUserById(user.id);
-      if (dbUser && (dbUser.email?.toLowerCase() === 'op21plus@gmail.com' || dbUser.username?.toLowerCase() === 'op21plus')) {
+      const userEmail = (user.email || dbUser?.email || '').toLowerCase().trim();
+      if (userEmail === 'op21plus@gmail.com') {
         user.role = 'admin';
+      } else {
+        user.role = dbUser?.role === 'guest' ? 'guest' : 'user';
       }
       req.user = user;
     }
@@ -55,10 +55,14 @@ router.post('/auth/register', async (req, res) => {
       return res.status(400).json({ error: 'Username, email and password are required' });
     }
 
+    const cleanEmail = email.toLowerCase().trim();
+    if (cleanEmail === 'op21plus@gmail.com') {
+      return res.status(400).json({ error: 'This account already exists. Please sign in via Google or password.' });
+    }
     if (Database.getUserByUsername(username)) {
       return res.status(400).json({ error: 'Username already taken' });
     }
-    if (Database.getUserByEmail(email)) {
+    if (Database.getUserByEmail(cleanEmail)) {
       return res.status(400).json({ error: 'Email already registered' });
     }
 
@@ -105,11 +109,8 @@ router.post('/auth/login', async (req, res) => {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
-    const isOp = (user.email && user.email.toLowerCase() === 'op21plus@gmail.com') ||
-                 (user.username && user.username.toLowerCase() === 'op21plus');
-    if (isOp) {
-      user.role = 'admin';
-    }
+    const isOp = (user.email && user.email.toLowerCase().trim() === 'op21plus@gmail.com');
+    user.role = isOp ? 'admin' : (user.role === 'guest' ? 'guest' : 'user');
 
     const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '30d' });
     const { passwordHash: _, ...safeUser } = user;
@@ -172,9 +173,9 @@ router.post('/auth/google', async (req, res) => {
         countryName: isOp ? 'India' : 'United States',
         avatar: avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`
       });
-    } else if (isOp) {
-      user.role = 'admin';
-      Database.updateUser(user.id, { role: 'admin', provider: 'google', ...(avatar ? { avatar } : {}) });
+    } else {
+      user.role = isOp ? 'admin' : 'user';
+      Database.updateUser(user.id, { role: user.role, provider: 'google', ...(avatar ? { avatar } : {}) });
     }
 
     const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '30d' });
@@ -189,9 +190,8 @@ router.post('/auth/google', async (req, res) => {
 router.get('/auth/me', requireAuth, (req, res) => {
   const user = Database.getUserById(req.user.id);
   if (!user) return res.status(404).json({ error: 'User not found' });
-  if (user.email?.toLowerCase() === 'op21plus@gmail.com' || user.username?.toLowerCase() === 'op21plus') {
-    user.role = 'admin';
-  }
+  const cleanEmail = (user.email || '').toLowerCase().trim();
+  user.role = cleanEmail === 'op21plus@gmail.com' ? 'admin' : (user.role === 'guest' ? 'guest' : 'user');
   const { passwordHash: _, ...safeUser } = user;
   res.json({ user: safeUser });
 });
@@ -604,12 +604,12 @@ router.post('/notifications/read', requireAuth, (req, res) => {
 // ================= ADMIN DASHBOARD =================
 
 router.get('/admin/stats', requireAuth, (req, res) => {
-  const isOpAdmin = req.user.role === 'admin' ||
-                    req.user.email?.toLowerCase() === 'op21plus@gmail.com' ||
-                    req.user.username === 'op21plus';
+  const dbUser = req.user?.id ? Database.getUserById(req.user.id) : null;
+  const userEmail = (dbUser?.email || req.user?.email || '').toLowerCase().trim();
+  const isOpAdmin = userEmail === 'op21plus@gmail.com';
 
   if (!isOpAdmin) {
-    return res.status(403).json({ error: 'Admin access required' });
+    return res.status(403).json({ error: 'Access denied: Admin command center restricted exclusively to op21plus@gmail.com' });
   }
 
   const allUsers = Database.getAllUsers();
@@ -643,12 +643,12 @@ router.get('/admin/stats', requireAuth, (req, res) => {
 });
 
 router.post('/admin/users/:id/moderate', requireAuth, (req, res) => {
-  const isOpAdmin = req.user.role === 'admin' ||
-                    req.user.email?.toLowerCase() === 'op21plus@gmail.com' ||
-                    req.user.username === 'op21plus';
+  const dbUser = req.user?.id ? Database.getUserById(req.user.id) : null;
+  const userEmail = (dbUser?.email || req.user?.email || '').toLowerCase().trim();
+  const isOpAdmin = userEmail === 'op21plus@gmail.com';
 
   if (!isOpAdmin) {
-    return res.status(403).json({ error: 'Admin access required' });
+    return res.status(403).json({ error: 'Access denied: Admin moderation restricted exclusively to op21plus@gmail.com' });
   }
 
   const { banned, ratingAdjustment, reason } = req.body;

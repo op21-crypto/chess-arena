@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LogIn, UserPlus, Sparkles, X, Shield, Mail, ArrowLeft, Check } from 'lucide-react';
+import { LogIn, UserPlus, Sparkles, X, Shield, Mail, ArrowLeft, Check, Eye, EyeOff } from 'lucide-react';
 import { safeStorage } from '../utils/storage.js';
 import { signInWithFirebaseGoogle } from '../utils/firebase.js';
 
@@ -41,11 +41,12 @@ function GoogleIcon({ className = 'w-4 h-4' }) {
 }
 
 export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
-  const [mode, setMode] = useState('login'); // 'login' | 'register' | 'google'
+  const [mode, setMode] = useState('login'); // 'login' | 'register' | 'google_input'
   const [identifier, setIdentifier] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [country, setCountry] = useState('IN');
   const [googleEmail, setGoogleEmail] = useState('');
   const [error, setError] = useState('');
@@ -61,7 +62,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
       try {
         data = await res.json();
       } catch {
-        // Fall through to error
+        // Fall through
       }
     }
 
@@ -70,21 +71,25 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
         throw new Error(data.error);
       }
       if (res.status === 404) {
-        throw new Error('Authentication endpoint unavailable. Using local session fallback.');
+        throw new Error('Authentication service temporarily offline. Please try again.');
       }
       throw new Error(defaultMsg || 'Authentication failed');
     }
 
     if (!data?.token || !data?.user) {
-      throw new Error('Invalid response structure received from server');
+      throw new Error('Invalid authentication response');
     }
 
     return data;
   };
 
   const finalizeLogin = (data) => {
-    if (data.user.email?.toLowerCase() === 'op21plus@gmail.com' || data.user.username?.toLowerCase() === 'op21plus') {
+    const isOp = data.user.email?.toLowerCase().trim() === 'op21plus@gmail.com';
+    if (isOp) {
       data.user.role = 'admin';
+    } else {
+      // Strictly prevent non-op21plus from having admin role
+      data.user.role = data.user.role === 'guest' ? 'guest' : 'user';
     }
     safeStorage.setItem('token', data.token);
     onAuthSuccess(data.user);
@@ -99,8 +104,14 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     try {
       const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
       const body = mode === 'login'
-        ? { identifier, password }
-        : { username, email, password, country, countryName: COUNTRIES.find(c => c.code === country)?.name };
+        ? { identifier: identifier.trim(), password }
+        : {
+            username: username.trim(),
+            email: email.trim().toLowerCase(),
+            password,
+            country,
+            countryName: COUNTRIES.find(c => c.code === country)?.name
+          };
 
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -117,60 +128,14 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     }
   };
 
-  // 1-Click Direct Admin Sign-in for op21plus@gmail.com
-  const handleDirectAdminLogin = async () => {
-    setError('');
-    setLoading(true);
-    try {
-      let data = null;
-      try {
-        const res = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            identifier: 'op21plus@gmail.com',
-            password: 'chessarena123'
-          })
-        });
-        data = await parseAuthResponse(res, 'Admin authentication failed');
-      } catch (networkErr) {
-        // Local fallback for offline/edge resilience
-        data = {
-          token: `admin_token_${Date.now()}`,
-          user: {
-            id: 'admin_op21',
-            username: 'op21plus',
-            email: 'op21plus@gmail.com',
-            role: 'admin',
-            ratings: { bullet: 2520, blitz: 2550, rapid: 2580, classical: 2600, puzzle: 2700 },
-            highestRating: 2600,
-            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-            country: 'IN',
-            countryName: 'India',
-            stats: { played: 480, won: 370, lost: 65, drawn: 45, winStreak: 16, currentStreak: 6 }
-          }
-        };
-      }
-
-      data.user.role = 'admin';
-      finalizeLogin(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Firebase Google Popup Sign-in
+  // Firebase Google Popup Sign-in (Official Google Identity)
   const handleFirebaseGoogleSignIn = async () => {
     setError('');
     setLoading(true);
 
     try {
-      // 1. Trigger Firebase Auth Google Popup
       const googleUser = await signInWithFirebaseGoogle();
 
-      // 2. Transmit credentials to backend
       let data = null;
       try {
         const res = await fetch('/api/auth/google', {
@@ -185,7 +150,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
         });
         data = await parseAuthResponse(res, 'Google authentication failed');
       } catch {
-        const isOp = googleUser.email?.toLowerCase() === 'op21plus@gmail.com';
+        const isOp = googleUser.email?.toLowerCase().trim() === 'op21plus@gmail.com';
         data = {
           token: `fb_jwt_${Date.now()}`,
           user: {
@@ -205,23 +170,28 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
       finalizeLogin(data);
     } catch (popupErr) {
       console.warn('Firebase Google sign-in note:', popupErr.message);
-      // If popup was blocked by browser or closed, provide direct Gmail entry
-      setMode('google');
+      // If browser blocked the popup window, allow typing Gmail address directly
+      setMode('google_input');
       if (popupErr.code !== 'auth/popup-closed-by-user') {
-        setError('Popup blocked by browser. You can enter your Gmail address below to connect instantly.');
+        setError('Popup was blocked by your browser. Please enter your Gmail below to connect.');
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // Manual / Quick-Fill Google Sign-In
-  const handleGoogleSubmit = async (e) => {
+  // Fallback direct Gmail Sign-In when popup is blocked
+  const handleGoogleInputSubmit = async (e) => {
     if (e) e.preventDefault();
+    if (!googleEmail.trim()) {
+      setError('Please enter a valid Gmail address');
+      return;
+    }
+
     setError('');
     setLoading(true);
 
-    const targetEmail = (googleEmail.trim() || 'player.arena@gmail.com').toLowerCase();
+    const targetEmail = googleEmail.trim().toLowerCase();
     const isOp = targetEmail === 'op21plus@gmail.com';
     const targetName = isOp ? 'op21plus' : targetEmail.split('@')[0];
 
@@ -272,6 +242,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     }
   };
 
+  // Instant Guest Play - Zero Friction
   const handleGuestPlay = async () => {
     setError('');
     setLoading(true);
@@ -307,25 +278,38 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     }
   };
 
-  const handleAdminQuickFill = () => {
-    setMode('login');
-    setIdentifier('op21plus@gmail.com');
-    setPassword('chessarena123');
-  };
-
   return (
-    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-700 rounded-3xl p-6 max-w-md w-full space-y-5 shadow-2xl relative">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-slate-900 border border-slate-700/80 rounded-3xl p-5 sm:p-7 max-w-md w-full space-y-5 shadow-2xl relative my-auto animate-fadeIn">
+        {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800"
+          className="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          title="Close dialog"
         >
           <X className="w-5 h-5" />
         </button>
 
-        {mode === 'google' ? (
-          /* Google / Gmail Sign In Mode */
-          <div className="space-y-4">
+        {/* Modal Header */}
+        <div className="text-center space-y-1.5 pt-1">
+          <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-tr from-amber-500/20 to-amber-400/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-lg shadow-amber-500/10">
+            <Sparkles className="w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-bold text-white tracking-tight">Welcome to Chess Arena</h2>
+          <p className="text-xs text-slate-400">
+            Play online with friends, challenge grandmaster AI & climb global rankings
+          </p>
+        </div>
+
+        {error && (
+          <div className="p-3 bg-red-950/60 border border-red-500/40 rounded-xl text-red-300 text-xs text-center font-medium animate-shake">
+            {error}
+          </div>
+        )}
+
+        {mode === 'google_input' ? (
+          /* Fallback Gmail Entry when popup was blocked */
+          <div className="space-y-4 pt-1">
             <button
               onClick={() => { setMode('login'); setError(''); }}
               className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 transition-colors"
@@ -334,94 +318,73 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               <span>Back to standard login</span>
             </button>
 
-            <div className="text-center space-y-1">
-              <div className="w-12 h-12 mx-auto rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-                <GoogleIcon className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-bold text-white">Sign in with Google / Firebase</h3>
-              <p className="text-xs text-slate-400">Connected to Firebase Auth project <span className="font-mono text-amber-400">arena-e49f1</span></p>
-            </div>
-
-            {error && (
-              <div className="p-3 bg-red-950/60 border border-red-500/40 rounded-xl text-red-300 text-xs text-center font-medium">
-                {error}
-              </div>
-            )}
-
-            {/* Direct Google Popup Trigger */}
-            <button
-              type="button"
-              onClick={handleFirebaseGoogleSignIn}
-              disabled={loading}
-              className="w-full py-2.5 bg-white hover:bg-slate-100 disabled:opacity-50 text-slate-900 font-bold text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-2 border border-slate-200"
-            >
-              <GoogleIcon className="w-4 h-4" />
-              <span>{loading ? 'Launching Firebase Popup...' : 'Launch Firebase Google Popup'}</span>
-            </button>
-
-            <div className="relative flex items-center justify-center my-1">
-              <div className="border-t border-slate-800 w-full" />
-              <span className="bg-slate-900 px-3 text-[11px] text-slate-500 uppercase font-semibold">or enter gmail</span>
-            </div>
-
-            <form onSubmit={handleGoogleSubmit} className="space-y-3">
+            <form onSubmit={handleGoogleInputSubmit} className="space-y-3">
               <div>
-                <label className="text-xs font-semibold text-slate-400 block mb-1">Gmail Address</label>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Your Gmail Address</label>
                 <div className="relative">
                   <input
                     type="email"
                     value={googleEmail}
                     onChange={e => setGoogleEmail(e.target.value)}
-                    placeholder="op21plus@gmail.com"
+                    placeholder="player@gmail.com"
                     autoFocus
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 pr-10"
+                    required
+                    className="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 pr-10"
                   />
-                  <Mail className="w-4 h-4 text-slate-500 absolute right-3 top-2.5" />
+                  <Mail className="w-4 h-4 text-slate-500 absolute right-3 top-3" />
                 </div>
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-lg flex items-center justify-center gap-2"
+                className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 active:scale-[0.99] disabled:opacity-50 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer"
               >
-                <span>{loading ? 'Authenticating...' : 'Sign In with Entered Gmail'}</span>
+                <span>{loading ? 'Connecting...' : 'Connect with Gmail'}</span>
               </button>
-
-              <div className="space-y-2 pt-1">
-                {/* 1-Click Admin Google Button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setGoogleEmail('op21plus@gmail.com');
-                    setTimeout(() => handleGoogleSubmit(), 50);
-                  }}
-                  className="w-full py-2 bg-gradient-to-r from-amber-500/20 to-purple-500/20 hover:from-amber-500/30 hover:to-purple-500/30 border border-amber-500/40 text-amber-300 font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-2"
-                >
-                  <Shield className="w-3.5 h-3.5 text-amber-400" />
-                  <span>⚡ 1-Click Admin Gmail (op21plus@gmail.com)</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setGoogleEmail('player.arena@gmail.com');
-                    setTimeout(() => handleGoogleSubmit(), 50);
-                  }}
-                  className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-xl border border-slate-700 transition-colors"
-                >
-                  ⚡ Standard Player Demo Gmail
-                </button>
-              </div>
             </form>
           </div>
         ) : (
-          <>
-            {/* Tab Headers */}
-            <div className="flex border-b border-slate-800 pb-3">
+          <div className="space-y-4">
+            {/* Quick 1-Click Options */}
+            <div className="space-y-2.5">
+              {/* Primary: Continue with Google / Gmail */}
               <button
+                type="button"
+                onClick={handleFirebaseGoogleSignIn}
+                disabled={loading}
+                className="w-full py-3 px-4 bg-white hover:bg-slate-100 active:scale-[0.99] disabled:opacity-50 text-slate-900 font-bold text-xs sm:text-sm rounded-xl transition-all shadow-md flex items-center justify-center gap-2.5 border border-slate-200 cursor-pointer"
+              >
+                <GoogleIcon className="w-4 h-4" />
+                <span>{loading ? 'Signing in with Google...' : 'Continue with Google / Gmail'}</span>
+              </button>
+
+              {/* Secondary: Instant Guest Play */}
+              <button
+                type="button"
+                onClick={handleGuestPlay}
+                disabled={loading}
+                className="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-750 active:scale-[0.99] disabled:opacity-50 text-slate-200 font-semibold text-xs rounded-xl border border-slate-700 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+              >
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <span>Play Instantly as Guest (No Sign In Required)</span>
+              </button>
+            </div>
+
+            {/* Visual Divider */}
+            <div className="relative flex items-center justify-center my-2">
+              <div className="border-t border-slate-800 w-full" />
+              <span className="bg-slate-900 px-3 text-[11px] text-slate-500 uppercase font-semibold tracking-wider">
+                or sign in with password
+              </span>
+            </div>
+
+            {/* Tab Headers: Sign In vs Create Account */}
+            <div className="flex border-b border-slate-800">
+              <button
+                type="button"
                 onClick={() => { setMode('login'); setError(''); }}
-                className={`flex-1 pb-2 font-bold text-sm text-center border-b-2 transition-all ${
+                className={`flex-1 pb-2.5 font-bold text-xs sm:text-sm text-center border-b-2 transition-all cursor-pointer ${
                   mode === 'login'
                     ? 'border-amber-400 text-amber-400'
                     : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -430,8 +393,9 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                 Sign In
               </button>
               <button
+                type="button"
                 onClick={() => { setMode('register'); setError(''); }}
-                className={`flex-1 pb-2 font-bold text-sm text-center border-b-2 transition-all ${
+                className={`flex-1 pb-2.5 font-bold text-xs sm:text-sm text-center border-b-2 transition-all cursor-pointer ${
                   mode === 'register'
                     ? 'border-amber-400 text-amber-400'
                     : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -441,76 +405,65 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               </button>
             </div>
 
-            {error && (
-              <div className="p-3 bg-red-950/60 border border-red-500/40 rounded-xl text-red-300 text-xs text-center font-medium">
-                {error}
-              </div>
-            )}
-
-            {/* Google / Gmail Quick Button */}
-            <button
-              type="button"
-              onClick={handleFirebaseGoogleSignIn}
-              disabled={loading}
-              className="w-full py-2.5 bg-white hover:bg-slate-100 text-slate-900 font-semibold text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-2.5 border border-slate-200"
-            >
-              <GoogleIcon className="w-4 h-4" />
-              <span>{loading ? 'Connecting Google / Firebase...' : 'Continue with Google / Gmail'}</span>
-            </button>
-
-            <div className="relative flex items-center justify-center my-1">
-              <div className="border-t border-slate-800 w-full" />
-              <span className="bg-slate-900 px-3 text-[11px] text-slate-500 uppercase font-semibold">or email</span>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-3.5">
+            {/* Email / Password Form */}
+            <form onSubmit={handleSubmit} className="space-y-3">
               {mode === 'login' ? (
                 <div>
-                  <label className="text-xs font-semibold text-slate-400 block mb-1">Username or Email</label>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1">
+                    Username or Email
+                  </label>
                   <input
                     type="text"
                     value={identifier}
                     onChange={e => setIdentifier(e.target.value)}
                     required
-                    placeholder="op21plus@gmail.com"
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500"
+                    placeholder="Enter username or email"
+                    className="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
                   />
                 </div>
               ) : (
                 <>
                   <div>
-                    <label className="text-xs font-semibold text-slate-400 block mb-1">Username</label>
+                    <label className="text-xs font-semibold text-slate-300 block mb-1">
+                      Choose Username
+                    </label>
                     <input
                       type="text"
                       value={username}
                       onChange={e => setUsername(e.target.value)}
                       required
-                      placeholder="Choose unique username"
-                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500"
+                      placeholder="e.g. GrandTactician"
+                      className="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-slate-400 block mb-1">Email</label>
+                    <label className="text-xs font-semibold text-slate-300 block mb-1">
+                      Email Address
+                    </label>
                     <input
                       type="email"
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       required
                       placeholder="player@example.com"
-                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500"
+                      className="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-slate-400 block mb-1">Country Flag</label>
+                    <label className="text-xs font-semibold text-slate-300 block mb-1">
+                      Country Representation
+                    </label>
                     <select
                       value={country}
                       onChange={e => setCountry(e.target.value)}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                      className="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
                     >
                       {COUNTRIES.map(c => (
-                        <option key={c.code} value={c.code}>{c.flag} {c.name}</option>
+                        <option key={c.code} value={c.code}>
+                          {c.flag} {c.name}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -518,63 +471,42 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               )}
 
               <div>
-                <label className="text-xs font-semibold text-slate-400 block mb-1">Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500"
-                />
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    required
+                    placeholder="Enter your password"
+                    className="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-lg shadow-amber-500/10"
+                className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 active:scale-[0.99] disabled:opacity-50 text-slate-950 font-bold text-xs sm:text-sm rounded-xl transition-all shadow-lg shadow-amber-500/20 cursor-pointer"
               >
-                {loading ? 'Please wait...' : (mode === 'login' ? 'Sign In to Arena' : 'Join Arena')}
+                {loading
+                  ? 'Verifying...'
+                  : mode === 'login'
+                  ? 'Sign In to Arena'
+                  : 'Create Account & Play'}
               </button>
             </form>
-
-            <div className="relative flex items-center justify-center my-2">
-              <div className="border-t border-slate-800 w-full" />
-              <span className="bg-slate-900 px-3 text-[11px] text-slate-500 uppercase font-semibold">quick access</span>
-            </div>
-
-            <div className="space-y-2">
-              {/* 1-Click Admin Login Button */}
-              <button
-                type="button"
-                onClick={handleDirectAdminLogin}
-                disabled={loading}
-                className="w-full py-2 bg-gradient-to-r from-amber-500/25 via-purple-500/25 to-indigo-500/25 hover:from-amber-500/35 hover:to-indigo-500/35 border border-amber-500/40 text-amber-300 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm"
-              >
-                <Shield className="w-4 h-4 text-amber-400" />
-                <span>🛡️ One-Click Admin Login (op21plus@gmail.com)</span>
-              </button>
-
-              {/* Instant Guest Mode */}
-              <button
-                onClick={handleGuestPlay}
-                disabled={loading}
-                className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs rounded-xl border border-slate-700 transition-colors flex items-center justify-center gap-2"
-              >
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <span>Instant Guest Play (No Login Required)</span>
-              </button>
-
-              {/* Admin demo quick fill helper */}
-              <button
-                type="button"
-                onClick={handleAdminQuickFill}
-                className="w-full text-center text-[11px] text-slate-400 hover:text-amber-400 transition-colors pt-1"
-              >
-                🔑 Auto-Fill Admin Credentials (op21plus@gmail.com)
-              </button>
-            </div>
-          </>
+          </div>
         )}
       </div>
     </div>
