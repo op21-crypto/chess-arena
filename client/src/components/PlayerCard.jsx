@@ -35,17 +35,59 @@ export function PlayerCard({
 }) {
   if (!player) {
     return (
-      <div className={`flex items-center justify-between p-3 border rounded-xl animate-pulse ${
-        isLight ? 'bg-white/80 border-slate-200' : 'bg-slate-900/60 border-slate-800'
+      <div className={`flex items-center justify-between p-2.5 md:p-3 border rounded-xl backdrop-blur-md transition-all duration-300 ${
+        isLight
+          ? 'bg-amber-50/70 border-amber-300/80 shadow-xs text-slate-900'
+          : 'bg-slate-900/90 border-amber-500/40 text-slate-100 shadow-md'
       }`}>
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-full ${isLight ? 'bg-slate-200' : 'bg-slate-800'}`} />
-          <div className="space-y-1">
-            <div className={`w-24 h-4 rounded ${isLight ? 'bg-slate-200' : 'bg-slate-800'}`} />
-            <div className={`w-16 h-3 rounded ${isLight ? 'bg-slate-200' : 'bg-slate-800'}`} />
+        {/* Left: Animated Radar Seat Indicator */}
+        <div className="flex items-center gap-2.5 md:gap-3 min-w-0">
+          <div className="relative flex-shrink-0">
+            <div className={`w-10 h-10 md:w-11 md:h-11 rounded-full flex items-center justify-center border-2 border-dashed ${
+              isLight
+                ? 'border-amber-500 bg-amber-100 text-amber-700'
+                : 'border-amber-400 bg-amber-500/10 text-amber-400'
+            }`}>
+              <span className="text-base select-none">⚔️</span>
+            </div>
+            {/* Live radar pulsing beacon */}
+            <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+            </span>
+          </div>
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className={`font-black text-xs md:text-sm truncate ${
+                isLight ? 'text-amber-900' : 'text-amber-300'
+              }`}>
+                Friend's Seat 🪑
+              </span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono font-bold uppercase border ${
+                isLight ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+              }`}>
+                {color === 'w' ? 'White' : 'Black'}
+              </span>
+            </div>
+            <p className={`text-[11px] font-medium truncate flex items-center gap-1.5 ${
+              isLight ? 'text-slate-600' : 'text-slate-400'
+            }`}>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Waiting for friend to enter room...</span>
+            </p>
           </div>
         </div>
-        <div className={`w-20 h-8 rounded-xl ${isLight ? 'bg-slate-200' : 'bg-slate-800'}`} />
+
+        {/* Right: Frozen Full Clock */}
+        <div className="flex items-center gap-2 shrink-0">
+          <Clock
+            timeMs={timeMs}
+            isTurn={false}
+            isActive={false}
+            isLight={isLight}
+          />
+        </div>
       </div>
     );
   }

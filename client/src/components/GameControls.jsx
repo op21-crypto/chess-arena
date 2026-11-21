@@ -36,35 +36,6 @@ export function GameControls({
 
   return (
     <div className="space-y-2.5">
-      {/* Voice Call Quick Connect Banner: ONLY FOR PVP MATCHES (Friends & Online Worldwide) */}
-      {onVoiceCall && !isGameOver && !isAIGame && (
-        <button
-          onClick={onVoiceCall}
-          className={`w-full py-2.5 px-3.5 rounded-2xl font-bold text-xs flex items-center justify-between transition-all group shadow-sm border ${
-            isLight
-              ? 'bg-gradient-to-r from-emerald-50 via-teal-50 to-slate-50 border-emerald-300/80 text-emerald-900 hover:border-emerald-400'
-              : 'bg-gradient-to-r from-emerald-950/60 via-indigo-950/40 to-slate-900 border-emerald-500/40 hover:border-emerald-400 text-emerald-300'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            <div className={`w-7 h-7 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform ${
-              isLight ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-500/20 text-emerald-400'
-            }`}>
-              <PhoneCall className="w-4 h-4" />
-            </div>
-            <div className="text-left">
-              <div className="font-extrabold leading-tight">Voice Call Opponent</div>
-              <div className={`text-[10px] ${isLight ? 'text-emerald-700' : 'text-emerald-400/80'}`}>Real-time low-latency audio</div>
-            </div>
-          </div>
-          <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-            isLight ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-          }`}>
-            Live Audio 🎙️
-          </span>
-        </button>
-      )}
-
       {/* Draw Offer Notification Banner */}
       {drawOfferedBy && !isGameOver && (
         <div className={`p-3 rounded-2xl shadow-lg flex items-center justify-between gap-3 animate-fade-in border ${
@@ -265,6 +236,27 @@ export function GameControls({
               </button>
             )}
           </div>
+
+          {/* Voice Call Quick Connect Banner — PvP only (onVoiceCall is null for AI) */}
+          {onVoiceCall && !isGameOver && !isAIGame && (
+            <button
+              onClick={onVoiceCall}
+              className={`w-full py-2.5 px-4 rounded-2xl font-bold text-xs flex items-center justify-between transition-all group shadow-sm border animate-fade-in cursor-pointer ${
+                isLight
+                  ? 'bg-emerald-50 hover:bg-emerald-100 border-emerald-300 text-emerald-900'
+                  : 'bg-gradient-to-r from-emerald-900/40 via-emerald-900/20 to-transparent hover:from-emerald-900/60 border border-emerald-500/40 text-emerald-300'
+              }`}
+              title="Start a live voice call with your opponent"
+            >
+              <div className="flex items-center gap-2">
+                <PhoneCall className={`w-4 h-4 shrink-0 ${isLight ? 'text-emerald-600' : 'text-emerald-400'} group-hover:scale-110 transition-transform`} />
+                <span>Voice Call Friend</span>
+              </div>
+              <span className={`text-[11px] font-mono px-2 py-0.5 rounded-full font-bold animate-pulse ${
+                isLight ? 'bg-emerald-200 text-emerald-900' : 'bg-emerald-500/30 text-emerald-200'
+              }`}>Live Audio</span>
+            </button>
+          )}
 
           {/* Active Game Exit Confirmation Dialog */}
           {showExitModal && (

@@ -7,11 +7,16 @@ export function Clock({ timeMs, isTurn, isActive, isLight = false }) {
 
   useEffect(() => {
     setDisplayTime(timeMs);
-  }, [timeMs]);
+  }, [timeMs, isActive]);
 
   // Local tick interpolation
   useEffect(() => {
-    if (!isTurn || !isActive || displayTime <= 0) return;
+    if (!isTurn || !isActive || displayTime <= 0) {
+      if (!isActive) {
+        setDisplayTime(timeMs);
+      }
+      return;
+    }
 
     const interval = setInterval(() => {
       setDisplayTime((prev) => {

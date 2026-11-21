@@ -622,35 +622,47 @@ export function FriendRoomModal({
   const [friends, setFriends] = useState(() => {
     try {
       const saved = safeStorage.getItem('chess_arena_friends_v3');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(f => f && typeof f === 'object' && typeof f.username === 'string');
+        }
+      }
     } catch {}
     return DEFAULT_FRIENDS;
   });
 
-  // Filter out ANY candidate already in friends list
+  // Safe reference to friends list preventing any runtime null/undefined crashes
+  const safeFriends = Array.isArray(friends) ? friends : [];
+
+  // Filter out ANY candidate already in friends list safely
   const unaddedCandidates = ANIME_GAMING_CANDIDATES.filter(
-    candidate => !friends.some(f => f.username.toLowerCase() === candidate.username.toLowerCase())
+    candidate => !safeFriends.some(f => f?.username && typeof f.username === 'string' && f.username.toLowerCase() === candidate.username.toLowerCase())
   );
 
   // Tab items arranged contextually based on user entry point:
   // From Header Friends Button: 1st Friends, 2nd Search Friend by Username, 3rd Room
   // From Play Navigation Card: 1st Room, 2nd Friends, 3rd Search Friend by Username
+  const friendCount = safeFriends.length;
   const tabItems = isHeaderEntry
     ? [
-        { id: 'friends', label: `Friends (${friends.length})`, shortLabel: `Friends (${friends.length})`, icon: Users },
+        { id: 'friends', label: `Friends (${friendCount})`, shortLabel: `Friends (${friendCount})`, icon: Users },
         { id: 'add', label: 'Search Friend by Username', shortLabel: 'Search Friend', icon: Search },
         { id: 'room', label: 'Room', shortLabel: 'Room', icon: null, emoji: '🎮' }
       ]
     : [
         { id: 'room', label: 'Room', shortLabel: 'Room', icon: null, emoji: '🎮' },
-        { id: 'friends', label: `Friends (${friends.length})`, shortLabel: `Friends (${friends.length})`, icon: Users },
+        { id: 'friends', label: `Friends (${friendCount})`, shortLabel: `Friends (${friendCount})`, icon: Users },
         { id: 'add', label: 'Search Friend by Username', shortLabel: 'Search Friend', icon: Search }
       ];
 
   const [directMessages, setDirectMessages] = useState(() => {
     try {
       const saved = safeStorage.getItem('chess_arena_dms_v3');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') return parsed;
+      }
     } catch {}
     return INITIAL_DIRECT_MESSAGES;
   });
@@ -659,7 +671,10 @@ export function FriendRoomModal({
   const [sentRequests, setSentRequests] = useState(() => {
     try {
       const saved = safeStorage.getItem('chess_arena_sent_requests_v3');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
     } catch {}
     return [];
   });
@@ -701,11 +716,19 @@ export function FriendRoomModal({
       try {
         const saved = safeStorage.getItem('chess_arena_friends_v3');
         if (saved) {
-          setFriends(JSON.parse(saved));
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            setFriends(parsed.filter(f => f && typeof f === 'object' && typeof f.username === 'string'));
+          } else {
+            setFriends(DEFAULT_FRIENDS);
+          }
         } else {
           safeStorage.setItem('chess_arena_friends_v3', JSON.stringify(DEFAULT_FRIENDS));
+          setFriends(DEFAULT_FRIENDS);
         }
-      } catch {}
+      } catch {
+        setFriends(DEFAULT_FRIENDS);
+      }
       setActiveTab(initialTab || (initialTab === 'friends' ? 'friends' : 'room'));
       setSelectedFriend(null);
       setChattingFriend(null);
@@ -805,7 +828,7 @@ export function FriendRoomModal({
     }
 
     // Check existing friends list
-    const existing = friends.find(f => f.username.toLowerCase() === query.toLowerCase());
+    const existing = safeFriends.find(f => f?.username && typeof f.username === 'string' && f.username.toLowerCase() === query.toLowerCase());
     if (existing) {
       setIsSearching(false);
       setSearchedUser(existing);
@@ -913,15 +936,16 @@ export function FriendRoomModal({
     }
 
     // If target is a bot or community friend, simulate acceptance after a short delay!
-    if (userToSend.isBot || userToSend.id.startsWith('f_') || userToSend.id.startsWith('sug_') || userToSend.id.startsWith('anime_')) {
+    if (userToSend?.isBot || (userToSend?.id && (userToSend.id.startsWith('f_') || userToSend.id.startsWith('sug_') || userToSend.id.startsWith('anime_')))) {
       setTimeout(() => {
         setFriends(prev => {
-          if (prev.some(f => f.username.toLowerCase() === targetUsername.toLowerCase())) return prev;
-          const updated = [userToSend, ...prev];
+          const list = Array.isArray(prev) ? prev : [];
+          if (list.some(f => f?.username && typeof f.username === 'string' && f.username.toLowerCase() === targetUsername.toLowerCase())) return list;
+          const updated = [userToSend, ...list];
           safeStorage.setItem('chess_arena_friends_v3', JSON.stringify(updated));
           return updated;
         });
-        setSentRequests(prev => prev.filter(u => u !== targetUsername));
+        setSentRequests(prev => (Array.isArray(prev) ? prev : []).filter(u => u !== targetUsername));
         sound.playVictory();
         triggerHaptic('success');
       }, 3000);
@@ -932,11 +956,13 @@ export function FriendRoomModal({
    * Directly add / follow suggested online player
    */
   const handleAddSuggestedOnlinePlayer = (player) => {
-    if (friends.some(f => f.username.toLowerCase() === player.username.toLowerCase())) {
+    if (!player || !player.username) return;
+    const list = Array.isArray(friends) ? friends : [];
+    if (list.some(f => f?.username && typeof f.username === 'string' && f.username.toLowerCase() === player.username.toLowerCase())) {
       setRequestStatus({ type: 'info', text: `@${player.username} is already in your friends list!` });
       return;
     }
-    const updated = [player, ...friends];
+    const updated = [player, ...list];
     setFriends(updated);
     safeStorage.setItem('chess_arena_friends_v3', JSON.stringify(updated));
     setSuggestedOnlinePlayer(null);
@@ -1533,7 +1559,7 @@ export function FriendRoomModal({
             {/* ========================================================= */}
             {activeTab === 'friends' && (
               <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-                {friends.length === 0 ? (
+                {safeFriends.length === 0 ? (
                   <div className={`p-6 text-center space-y-3 rounded-2xl border ${theme.innerBox}`}>
                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto border ${
                       isLight ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
@@ -1559,7 +1585,8 @@ export function FriendRoomModal({
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {friends.map(friend => {
+                    {safeFriends.map(friend => {
+                      if (!friend) return null;
                       const flag = COUNTRY_FLAGS[friend.country] || '🌐';
                       const isSelected = selectedFriend?.id === friend.id;
 
@@ -1772,7 +1799,7 @@ export function FriendRoomModal({
                         </div>
                       </div>
 
-                      {friends.some(f => f.username.toLowerCase() === searchedUser.username.toLowerCase()) ? (
+                      {safeFriends.some(f => f?.username && typeof f.username === 'string' && f.username.toLowerCase() === (searchedUser?.username || '').toLowerCase()) ? (
                         <span className="text-xs text-emerald-600 font-bold px-3 py-1 flex items-center gap-1 shrink-0">
                           <UserCheck className="w-3.5 h-3.5" />
                           <span>Friends</span>
