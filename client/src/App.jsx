@@ -1795,6 +1795,7 @@ export default function App() {
                 {/* Opponent Card */}
                 <div className="w-full max-w-[520px]">
                   <PlayerCard
+                    isLight={isLight}
                     player={opponent}
                     color={isWhite ? 'b' : 'w'}
                     isTurn={currentTurn === (isWhite ? 'b' : 'w')}
@@ -1807,12 +1808,16 @@ export default function App() {
 
                 {/* Opening Name Banner (Screenshot 6: Show Opening Names) */}
                 {settings.showOpenings && getOpeningName(gameSession.moveHistory) && (
-                  <div className="w-full max-w-[520px] px-3.5 py-1.5 bg-slate-900/90 border border-slate-800 rounded-xl flex items-center justify-between text-xs text-amber-300 shadow-sm animate-fade-in">
+                  <div className={`w-full max-w-[520px] px-3.5 py-1.5 border rounded-xl flex items-center justify-between text-xs shadow-xs animate-fade-in ${
+                    isLight ? "bg-white border-slate-200 text-amber-600 shadow-xs" : "bg-slate-900/90 border-slate-800 text-amber-300 shadow-sm"
+                  }`}>
                     <div className="flex items-center gap-2 truncate">
-                      <BookOpen className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span className="font-bold truncate">{getOpeningName(gameSession.moveHistory).name}</span>
+                      <BookOpen className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                      <span className={`font-bold truncate ${isLight ? "text-slate-800" : "text-amber-300"}`}>{getOpeningName(gameSession.moveHistory).name}</span>
                     </div>
-                    <span className="font-mono text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-bold shrink-0">
+                    <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded font-bold shrink-0 ${
+                      isLight ? "bg-slate-100 text-slate-700" : "bg-slate-800 text-slate-300"
+                    }`}>
                       {getOpeningName(gameSession.moveHistory).eco}
                     </span>
                   </div>
@@ -1843,6 +1848,7 @@ export default function App() {
                 {/* User Card */}
                 <div className="w-full max-w-[520px]">
                   <PlayerCard
+                    isLight={isLight}
                     player={me}
                     color={isWhite ? 'w' : 'b'}
                     isTurn={currentTurn === (isWhite ? 'w' : 'b')}
@@ -1858,6 +1864,7 @@ export default function App() {
               <div className="lg:col-span-5 space-y-3 w-full max-w-md mx-auto lg:max-w-none">
                 {/* In-Game Mini Ambient Music Player & Settings Bar */}
                 <MiniMusicPlayer
+                  isLight={isLight}
                   settings={settings}
                   onUpdateSettings={handleUpdateSettings}
                   onOpenSettings={() => setShowSettingsModal(true)}
@@ -1865,6 +1872,7 @@ export default function App() {
 
                 {/* Game Controls */}
                 <GameControls
+                  isLight={isLight}
                   isGameOver={gameSession.isGameOver}
                   isPlayer={playerColor === 'w' || playerColor === 'b'}
                   drawOfferedBy={gameSession.drawOfferedBy}
@@ -1888,6 +1896,7 @@ export default function App() {
                 {/* Live Chat with Unified Voice Call */}
                 {settings.allowChat ? (
                   <GameChat
+                    isLight={isLight}
                     messages={chatMessages}
                     onSendMessage={handleSendMessage}
                     currentUser={currentUser}
@@ -1898,7 +1907,7 @@ export default function App() {
                     triggerVoiceCall={voiceCallTrigger}
                   />
                 ) : (
-                  <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-xl text-center text-xs text-slate-500 italic">
+                  <div className={`p-3 border rounded-xl text-center text-xs italic ${isLight ? "bg-white border-slate-200 text-slate-400" : "bg-slate-900/60 border-slate-800 text-slate-500"}`}>
                     In-game text chat is disabled in Settings.
                   </div>
                 )}
@@ -1917,7 +1926,7 @@ export default function App() {
 
         {/* Play Offline Board Tab (Pass & Play Two Players Local) */}
         {activeTab === 'offline' && (
-          <OfflineBoardView onBack={() => setActiveTab('home')} />
+          <OfflineBoardView onBack={() => setActiveTab('home')} isLight={isLight} />
         )}
 
         {/* Puzzles Tab */}

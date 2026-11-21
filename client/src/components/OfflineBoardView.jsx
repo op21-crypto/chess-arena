@@ -477,7 +477,7 @@ export function OfflineBoardView({ onBack, isLight = false }) {
             <button
               onClick={() => setPromotionPending(null)}
               className={`text-xs pt-1 transition-colors cursor-pointer ${
-                isLight ? 'text-slate-500 hover:text-slate-900 font-semibold' : 'text-slate-400 hover:text-white'
+                isLight ? 'text-slate-500 hover:text-slate-900 font-semibold' : isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'
               }`}
             >
               Cancel Move
@@ -587,7 +587,9 @@ export function OfflineBoardView({ onBack, isLight = false }) {
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowGameOverModal(false)}
-                  className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl cursor-pointer transition-colors"
+                  className={`flex-1 py-3 font-bold text-xs rounded-xl cursor-pointer transition-colors ${
+                    isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+                  }`}
                 >
                   Review Board
                 </button>
@@ -616,7 +618,11 @@ export function OfflineBoardView({ onBack, isLight = false }) {
       <header className="w-full max-w-md mx-auto px-3 pt-2 pb-1 flex items-center justify-between z-30 shrink-0">
         <button
           onClick={onBack}
-          className="p-2 rounded-xl bg-black/75 border border-amber-400/80 text-amber-400 hover:text-white flex items-center gap-1.5 shadow-md active:scale-95 transition-transform cursor-pointer"
+          className={`p-2 rounded-xl border flex items-center gap-1.5 shadow-md active:scale-95 transition-transform cursor-pointer ${
+            isLight
+              ? 'bg-white border-amber-500/40 text-amber-600 hover:text-amber-700 hover:bg-amber-50'
+              : 'bg-black/75 border-amber-400/80 text-amber-400 hover:text-white'
+          }`}
           title="Exit to Lobby"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -624,9 +630,11 @@ export function OfflineBoardView({ onBack, isLight = false }) {
         </button>
 
         {/* Turn Status Pill */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/85 border border-amber-500/50 shadow-lg">
-          <span className={`w-2.5 h-2.5 rounded-full border ${turn === 'w' ? 'bg-white border-slate-300 shadow-xs' : 'bg-slate-900 border-white shadow-xs'}`} />
-          <span className="text-white font-mono font-bold text-xs">
+        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border shadow-lg ${
+          isLight ? 'bg-white border-amber-500/40 text-slate-900' : 'bg-black/85 border-amber-500/50 text-white'
+        }`}>
+          <span className={`w-2.5 h-2.5 rounded-full border ${turn === 'w' ? 'bg-white border-slate-400 shadow-xs' : 'bg-slate-900 border-white shadow-xs'}`} />
+          <span className={`font-mono font-bold text-xs ${isLight ? 'text-slate-900' : 'text-white'}`}>
             {turnLabel}
           </span>
           {chess.inCheck() && (
@@ -645,8 +653,8 @@ export function OfflineBoardView({ onBack, isLight = false }) {
             }}
             className={`p-2 rounded-xl border transition-all cursor-pointer ${
               soundEnabled
-                ? 'bg-amber-500/20 border-amber-400 text-amber-300'
-                : 'bg-black/60 border-slate-700 text-slate-500'
+                ? (isLight ? 'bg-amber-50 border-amber-400 text-amber-600' : 'bg-amber-500/20 border-amber-400 text-amber-300')
+                : (isLight ? 'bg-white border-slate-200 text-slate-400 hover:text-slate-600' : 'bg-black/60 border-slate-700 text-slate-500')
             }`}
             title={soundEnabled ? 'Sound ON' : 'Sound OFF'}
           >
@@ -655,7 +663,11 @@ export function OfflineBoardView({ onBack, isLight = false }) {
 
           <button
             onClick={() => setShowSettingsDrawer(true)}
-            className="p-2 rounded-xl bg-black/75 border border-amber-400/80 text-amber-400 hover:text-white flex items-center justify-center shadow-md active:scale-95 transition-transform cursor-pointer"
+            className={`p-2 rounded-xl border flex items-center justify-center shadow-md active:scale-95 transition-transform cursor-pointer ${
+              isLight
+                ? 'bg-white border-amber-500/40 text-amber-600 hover:text-amber-700 hover:bg-amber-50'
+                : 'bg-black/75 border-amber-400/80 text-amber-400 hover:text-white'
+            }`}
             title="Settings & Themes"
           >
             <Settings className="w-4 h-4" />
@@ -669,37 +681,41 @@ export function OfflineBoardView({ onBack, isLight = false }) {
           viewMode === 'face-to-face' ? 'rotate-180' : ''
         }`}
       >
-        <div className="flex items-center gap-2 bg-black/75 border border-slate-700/80 px-2.5 py-1 rounded-xl shadow-xs">
-          <div className={`w-6 h-6 rounded-lg bg-slate-900 border flex items-center justify-center text-sm ${turn === 'b' ? 'border-amber-400 ring-2 ring-amber-400/50' : 'border-slate-700'}`}>
-            ♚
+        <div className={`flex items-center gap-2 px-2.5 py-1 rounded-xl shadow-xs border ${
+          isLight ? 'bg-white border-slate-200' : 'bg-black/75 border-slate-700/80'
+        }`}>
+          <div className={`w-6 h-6 rounded-lg bg-slate-900 border flex items-center justify-center text-sm ${turn === 'b' ? 'border-amber-400 ring-2 ring-amber-400/50' : (isLight ? 'border-slate-300' : 'border-slate-700')}`}>
+            <span className="text-white">♚</span>
           </div>
           <div>
-            <span className="text-white font-bold text-xs block leading-tight">
+            <span className={`font-bold text-xs block leading-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
               {viewMode === 'face-to-face' ? 'Player 2' : (playAs === 'black' ? 'You (Black)' : 'Black')}
             </span>
-            <span className="text-[10px] text-slate-400 block leading-none">
+            <span className={`text-[10px] block leading-none ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
               {turn === 'b' ? 'Thinking...' : 'Waiting'}
             </span>
           </div>
         </div>
 
         {/* Captured Pieces by Black */}
-        <div className="flex items-center gap-1 bg-black/60 px-2 py-1 rounded-lg border border-slate-800 min-h-[26px]">
+        <div className={`flex items-center gap-1 px-2 py-1 rounded-lg border min-h-[26px] ${
+          isLight ? 'bg-white border-slate-200 text-slate-800' : 'bg-black/60 border-slate-800'
+        }`}>
           {capturedPieces.b.length > 0 ? (
             <div className="flex items-center gap-0.5 flex-wrap max-w-[150px]">
               {capturedPieces.b.map((p, idx) => (
-                <span key={idx} className="text-white font-mono text-[11px] drop-shadow-xs">
+                <span key={idx} className={`font-mono text-[11px] drop-shadow-xs ${isLight ? 'text-slate-900' : 'text-white'}`}>
                   {p === 'p' ? '♟' : p === 'n' ? '♞' : p === 'b' ? '♝' : p === 'r' ? '♜' : '♛'}
                 </span>
               ))}
               {materialScore.blackAdvantage > 0 && (
-                <span className="text-[10px] font-black text-emerald-400 font-mono ml-1">
+                <span className="text-[10px] font-black text-emerald-500 font-mono ml-1">
                   +{materialScore.blackAdvantage}
                 </span>
               )}
             </div>
           ) : (
-            <span className="text-[10px] text-slate-500 italic">No captures</span>
+            <span className={`text-[10px] italic ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>No captures</span>
           )}
         </div>
       </div>
@@ -818,37 +834,41 @@ export function OfflineBoardView({ onBack, isLight = false }) {
 
       {/* 4. BOTTOM USER PLAYER BAR (White) */}
       <div className="w-full max-w-md mx-auto px-3 py-1 flex items-center justify-between text-xs z-20 shrink-0">
-        <div className="flex items-center gap-2 bg-black/75 border border-slate-700/80 px-2.5 py-1 rounded-xl shadow-xs">
+        <div className={`flex items-center gap-2 px-2.5 py-1 rounded-xl shadow-xs border ${
+          isLight ? 'bg-white border-slate-200' : 'bg-black/75 border-slate-700/80'
+        }`}>
           <div className={`w-6 h-6 rounded-lg bg-white border flex items-center justify-center text-sm ${turn === 'w' ? 'border-amber-400 ring-2 ring-amber-400/50' : 'border-slate-300'}`}>
-            ♔
+            <span className="text-slate-900">♔</span>
           </div>
           <div>
-            <span className="text-white font-bold text-xs block leading-tight">
+            <span className={`font-bold text-xs block leading-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
               {viewMode === 'face-to-face' ? 'Player 1' : (playAs === 'white' ? 'You (White)' : 'White')}
             </span>
-            <span className="text-[10px] text-slate-400 block leading-none">
+            <span className={`text-[10px] block leading-none ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
               {turn === 'w' ? 'Thinking...' : 'Waiting'}
             </span>
           </div>
         </div>
 
         {/* Captured Pieces by White */}
-        <div className="flex items-center gap-1 bg-black/60 px-2 py-1 rounded-lg border border-slate-800 min-h-[26px]">
+        <div className={`flex items-center gap-1 px-2 py-1 rounded-lg border min-h-[26px] ${
+          isLight ? 'bg-white border-slate-200 text-slate-800' : 'bg-black/60 border-slate-800'
+        }`}>
           {capturedPieces.w.length > 0 ? (
             <div className="flex items-center gap-0.5 flex-wrap max-w-[150px]">
               {capturedPieces.w.map((p, idx) => (
-                <span key={idx} className="text-amber-200 font-mono text-[11px] drop-shadow-xs">
+                <span key={idx} className={`font-mono text-[11px] drop-shadow-xs ${isLight ? 'text-amber-700' : 'text-amber-200'}`}>
                   {p === 'p' ? '♟' : p === 'n' ? '♞' : p === 'b' ? '♝' : p === 'r' ? '♜' : '♛'}
                 </span>
               ))}
               {materialScore.whiteAdvantage > 0 && (
-                <span className="text-[10px] font-black text-amber-400 font-mono ml-1">
+                <span className="text-[10px] font-black text-amber-500 font-mono ml-1">
                   +{materialScore.whiteAdvantage}
                 </span>
               )}
             </div>
           ) : (
-            <span className="text-[10px] text-slate-500 italic">No captures</span>
+            <span className={`text-[10px] italic ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>No captures</span>
           )}
         </div>
       </div>
@@ -858,7 +878,11 @@ export function OfflineBoardView({ onBack, isLight = false }) {
         {/* Restart / New Match */}
         <button
           onClick={() => setShowRestartConfirm(true)}
-          className="flex-1 max-w-[70px] h-11 rounded-2xl bg-black/85 border border-amber-400/80 hover:border-amber-300 text-amber-400 flex flex-col items-center justify-center gap-0.5 shadow-lg active:scale-95 transition-transform cursor-pointer"
+          className={`flex-1 max-w-[70px] h-11 rounded-2xl border flex flex-col items-center justify-center gap-0.5 shadow-lg active:scale-95 transition-transform cursor-pointer ${
+            isLight
+              ? 'bg-white border-amber-500/40 text-amber-600 hover:text-amber-700 hover:bg-amber-50 shadow-slate-200'
+              : 'bg-black/85 border-amber-400/80 hover:border-amber-300 text-amber-400'
+          }`}
           title="Restart Match"
         >
           <RotateCw className="w-4 h-4" />
@@ -869,10 +893,12 @@ export function OfflineBoardView({ onBack, isLight = false }) {
         <button
           onClick={handleUndo}
           disabled={moveHistory.length === 0}
-          className={`flex-1 max-w-[70px] h-11 rounded-2xl bg-black/85 border flex flex-col items-center justify-center gap-0.5 shadow-lg transition-transform ${
+          className={`flex-1 max-w-[70px] h-11 rounded-2xl border flex flex-col items-center justify-center gap-0.5 shadow-lg transition-transform ${
             moveHistory.length > 0
-              ? 'border-amber-400/80 text-amber-400 hover:border-amber-300 active:scale-95 cursor-pointer'
-              : 'border-slate-800 text-slate-600 opacity-40 cursor-not-allowed'
+              ? (isLight
+                ? 'bg-white border-amber-500/40 text-amber-600 hover:text-amber-700 hover:bg-amber-50 shadow-slate-200 active:scale-95 cursor-pointer'
+                : 'bg-black/85 border-amber-400/80 text-amber-400 hover:border-amber-300 active:scale-95 cursor-pointer')
+              : (isLight ? 'bg-slate-100 border-slate-200 text-slate-400 opacity-50 cursor-not-allowed' : 'bg-black/85 border-slate-800 text-slate-600 opacity-40 cursor-not-allowed')
           }`}
           title="Undo Move"
         >
@@ -888,8 +914,8 @@ export function OfflineBoardView({ onBack, isLight = false }) {
           }}
           className={`flex-1 max-w-[70px] h-11 rounded-2xl border flex flex-col items-center justify-center gap-0.5 shadow-lg transition-transform cursor-pointer ${
             helpEnabled
-              ? 'bg-amber-500/20 border-amber-400 text-amber-300 active:scale-95'
-              : 'bg-black/85 border-slate-700/80 text-slate-500'
+              ? (isLight ? 'bg-amber-50 border-amber-400 text-amber-600 active:scale-95' : 'bg-amber-500/20 border-amber-400 text-amber-300 active:scale-95')
+              : (isLight ? 'bg-white border-slate-200 text-slate-500 hover:text-slate-700 shadow-slate-200' : 'bg-black/85 border-slate-700/80 text-slate-500')
           }`}
           title="Toggle Legal Move Hints"
         >
@@ -903,7 +929,11 @@ export function OfflineBoardView({ onBack, isLight = false }) {
             setPlayAs(playAs === 'black' ? 'white' : 'black');
             triggerHaptic('move');
           }}
-          className="flex-1 max-w-[70px] h-11 rounded-2xl bg-black/85 border border-amber-400/80 hover:border-amber-300 text-amber-400 flex flex-col items-center justify-center gap-0.5 shadow-lg active:scale-95 transition-transform cursor-pointer"
+          className={`flex-1 max-w-[70px] h-11 rounded-2xl border flex flex-col items-center justify-center gap-0.5 shadow-lg active:scale-95 transition-transform cursor-pointer ${
+            isLight
+              ? 'bg-white border-amber-500/40 text-amber-600 hover:text-amber-700 hover:bg-amber-50 shadow-slate-200'
+              : 'bg-black/85 border-amber-400/80 hover:border-amber-300 text-amber-400'
+          }`}
           title="Flip Board Orientation"
         >
           <span className="text-sm leading-none">🔁</span>
@@ -913,7 +943,11 @@ export function OfflineBoardView({ onBack, isLight = false }) {
         {/* Board Settings & Themes */}
         <button
           onClick={() => setShowSettingsDrawer(true)}
-          className="flex-1 max-w-[70px] h-11 rounded-2xl bg-black/85 border border-amber-400/80 hover:border-amber-300 text-amber-400 flex flex-col items-center justify-center gap-0.5 shadow-lg active:scale-95 transition-transform cursor-pointer"
+          className={`flex-1 max-w-[70px] h-11 rounded-2xl border flex flex-col items-center justify-center gap-0.5 shadow-lg active:scale-95 transition-transform cursor-pointer ${
+            isLight
+              ? 'bg-white border-amber-500/40 text-amber-600 hover:text-amber-700 hover:bg-amber-50 shadow-slate-200'
+              : 'bg-black/85 border-amber-400/80 hover:border-amber-300 text-amber-400'
+          }`}
           title="Board Settings & Themes"
         >
           <Settings className="w-4 h-4" />
@@ -928,16 +962,20 @@ export function OfflineBoardView({ onBack, isLight = false }) {
           <div className="flex-1" onClick={() => setShowSettingsDrawer(false)} />
 
           {/* Drawer container */}
-          <div className="w-full max-w-md bg-slate-900/98 border-l border-slate-800 shadow-2xl h-full flex flex-col p-5 space-y-6 overflow-y-auto animate-slide-left">
+          <div className={`w-full max-w-md border-l shadow-2xl h-full flex flex-col p-5 space-y-6 overflow-y-auto animate-slide-left ${
+            isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-slate-900/98 border-slate-800 text-white'
+          }`}>
             {/* Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2 text-amber-400">
-                <Settings className="w-5 h-5 text-amber-400" />
-                <h2 className="text-base font-extrabold uppercase tracking-wider text-white">Settings</h2>
+            <div className={`flex items-center justify-between pb-3 border-b ${isLight ? 'border-slate-200' : 'border-slate-800'}`}>
+              <div className="flex items-center gap-2 text-amber-500">
+                <Settings className="w-5 h-5 text-amber-500" />
+                <h2 className={`text-base font-extrabold uppercase tracking-wider ${isLight ? 'text-slate-900' : 'text-white'}`}>Settings</h2>
               </div>
               <button
                 onClick={() => setShowSettingsDrawer(false)}
-                className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                className={`p-1.5 rounded-full transition-colors cursor-pointer ${
+                  isLight ? 'text-slate-400 hover:text-slate-800 hover:bg-slate-100' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -945,8 +983,8 @@ export function OfflineBoardView({ onBack, isLight = false }) {
 
             {/* Row 1: Theme */}
             <div className="space-y-2.5">
-              <div className="flex items-center gap-2 text-slate-300 text-xs font-bold">
-                <Eye className="w-4 h-4 text-amber-400" />
+              <div className={`flex items-center gap-2 text-xs font-bold ${isLight ? "text-slate-700" : "text-slate-300"}`}>
+                <Eye className="w-4 h-4 text-amber-500" />
                 <span>Theme</span>
               </div>
 
@@ -992,12 +1030,12 @@ export function OfflineBoardView({ onBack, isLight = false }) {
 
             {/* Row 2: View */}
             <div className="flex items-center justify-between pt-1">
-              <div className="flex items-center gap-2 text-slate-300 text-xs font-bold">
-                <Camera className="w-4 h-4 text-amber-400" />
+              <div className={`flex items-center gap-2 text-xs font-bold ${isLight ? "text-slate-700" : "text-slate-300"}`}>
+                <Camera className="w-4 h-4 text-amber-500" />
                 <span>View</span>
               </div>
 
-              <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+              <div className={`flex p-1 rounded-xl border ${isLight ? "bg-slate-100 border-slate-200" : "bg-slate-950 border-slate-800"}`}>
                 {[
                   { id: 'face-to-face', label: 'Face to Face' },
                   { id: 'auto-flip', label: 'Auto Flip' },
@@ -1012,7 +1050,7 @@ export function OfflineBoardView({ onBack, isLight = false }) {
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       viewMode === mode.id
                         ? 'bg-amber-500 text-slate-950 shadow-md'
-                        : 'text-slate-400 hover:text-white'
+                        : isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'
                     }`}
                   >
                     {mode.label}
@@ -1023,12 +1061,12 @@ export function OfflineBoardView({ onBack, isLight = false }) {
 
             {/* Row 3: Play As */}
             <div className="flex items-center justify-between pt-1">
-              <div className="flex items-center gap-2 text-slate-300 text-xs font-bold">
-                <User className="w-4 h-4 text-amber-400" />
+              <div className={`flex items-center gap-2 text-xs font-bold ${isLight ? "text-slate-700" : "text-slate-300"}`}>
+                <User className="w-4 h-4 text-amber-500" />
                 <span>Play As</span>
               </div>
 
-              <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+              <div className={`flex p-1 rounded-xl border ${isLight ? "bg-slate-100 border-slate-200" : "bg-slate-950 border-slate-800"}`}>
                 {[
                   { id: 'white', label: 'White' },
                   { id: 'black', label: 'Black' },
@@ -1043,7 +1081,7 @@ export function OfflineBoardView({ onBack, isLight = false }) {
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       playAs === mode.id
                         ? 'bg-amber-500 text-slate-950 shadow-md'
-                        : 'text-slate-400 hover:text-white'
+                        : isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'
                     }`}
                   >
                     {mode.label}
@@ -1054,19 +1092,19 @@ export function OfflineBoardView({ onBack, isLight = false }) {
 
             {/* Row 4: Sound / Vibe */}
             <div className="flex items-center justify-between pt-1">
-              <div className="flex items-center gap-2 text-slate-300 text-xs font-bold">
-                <Volume2 className="w-4 h-4 text-amber-400" />
+              <div className={`flex items-center gap-2 text-xs font-bold ${isLight ? "text-slate-700" : "text-slate-300"}`}>
+                <Volume2 className="w-4 h-4 text-amber-500" />
                 <span>Sound/Vibe</span>
               </div>
 
-              <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+              <div className={`flex p-1 rounded-xl border ${isLight ? "bg-slate-100 border-slate-200" : "bg-slate-950 border-slate-800"}`}>
                 <button
                   onClick={() => {
                     setSoundEnabled(true);
                     triggerHaptic('move');
                   }}
                   className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    soundEnabled ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400'
+                    soundEnabled ? 'bg-amber-500 text-slate-950 shadow-md' : (isLight ? 'text-slate-500' : 'text-slate-400')
                   }`}
                 >
                   On
@@ -1074,7 +1112,7 @@ export function OfflineBoardView({ onBack, isLight = false }) {
                 <button
                   onClick={() => setSoundEnabled(false)}
                   className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    !soundEnabled ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400'
+                    !soundEnabled ? 'bg-amber-500 text-slate-950 shadow-md' : (isLight ? 'text-slate-500' : 'text-slate-400')
                   }`}
                 >
                   Off
@@ -1084,19 +1122,19 @@ export function OfflineBoardView({ onBack, isLight = false }) {
 
             {/* Row 5: Help / Move Hints */}
             <div className="flex items-center justify-between pt-1">
-              <div className="flex items-center gap-2 text-slate-300 text-xs font-bold">
-                <HelpCircle className="w-4 h-4 text-amber-400" />
+              <div className={`flex items-center gap-2 text-xs font-bold ${isLight ? "text-slate-700" : "text-slate-300"}`}>
+                <HelpCircle className="w-4 h-4 text-amber-500" />
                 <span>Hints</span>
               </div>
 
-              <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+              <div className={`flex p-1 rounded-xl border ${isLight ? "bg-slate-100 border-slate-200" : "bg-slate-950 border-slate-800"}`}>
                 <button
                   onClick={() => {
                     setHelpEnabled(true);
                     triggerHaptic('move');
                   }}
                   className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    helpEnabled ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400'
+                    helpEnabled ? 'bg-amber-500 text-slate-950 shadow-md' : (isLight ? 'text-slate-500' : 'text-slate-400')
                   }`}
                 >
                   On
@@ -1104,7 +1142,7 @@ export function OfflineBoardView({ onBack, isLight = false }) {
                 <button
                   onClick={() => setHelpEnabled(false)}
                   className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    !helpEnabled ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400'
+                    !helpEnabled ? 'bg-amber-500 text-slate-950 shadow-md' : (isLight ? 'text-slate-500' : 'text-slate-400')
                   }`}
                 >
                   Off
@@ -1114,19 +1152,19 @@ export function OfflineBoardView({ onBack, isLight = false }) {
 
             {/* Row 6: Notification / Turn Alert */}
             <div className="flex items-center justify-between pt-1">
-              <div className="flex items-center gap-2 text-slate-300 text-xs font-bold">
-                <Bell className="w-4 h-4 text-amber-400" />
+              <div className={`flex items-center gap-2 text-xs font-bold ${isLight ? "text-slate-700" : "text-slate-300"}`}>
+                <Bell className="w-4 h-4 text-amber-500" />
                 <span>Notification</span>
               </div>
 
-              <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+              <div className={`flex p-1 rounded-xl border ${isLight ? "bg-slate-100 border-slate-200" : "bg-slate-950 border-slate-800"}`}>
                 <button
                   onClick={() => {
                     setNotificationEnabled(true);
                     triggerHaptic('move');
                   }}
                   className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    notificationEnabled ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400'
+                    notificationEnabled ? 'bg-amber-500 text-slate-950 shadow-md' : (isLight ? 'text-slate-500' : 'text-slate-400')
                   }`}
                 >
                   On
@@ -1134,7 +1172,7 @@ export function OfflineBoardView({ onBack, isLight = false }) {
                 <button
                   onClick={() => setNotificationEnabled(false)}
                   className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    !notificationEnabled ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400'
+                    !notificationEnabled ? 'bg-amber-500 text-slate-950 shadow-md' : (isLight ? 'text-slate-500' : 'text-slate-400')
                   }`}
                 >
                   Off

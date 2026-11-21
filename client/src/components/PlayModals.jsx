@@ -464,25 +464,29 @@ export function FriendRoomModal({
         {activeTab === 'room' && (
           <div className="flex-1 overflow-y-auto space-y-4 pr-1">
             {createdRoom ? (
-              <div className="p-4 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-4 animate-fade-in">
+              <div className={`p-4 border rounded-2xl space-y-4 animate-fade-in ${
+                isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/80 border-slate-800'
+              }`}>
                 <div className="text-center space-y-1">
-                  <span className="text-xs font-semibold text-emerald-400 block">
+                  <span className="text-xs font-semibold text-emerald-500 block">
                     ✓ Room Created! Share with your friend to begin
                   </span>
-                  <span className="text-[11px] text-slate-400 font-mono">
-                    Room Code: <strong className="text-amber-400">{createdRoom.roomId}</strong>
+                  <span className={`text-[11px] font-mono ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                    Room Code: <strong className="text-amber-500">{createdRoom.roomId}</strong>
                   </span>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[11px] text-slate-400 font-semibold block">Shareable Link</label>
+                  <label className={`text-[11px] font-semibold block ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Shareable Link</label>
                   <div className="flex items-center gap-2">
                     <input
                       type="text"
                       readOnly
                       value={fullShareUrl}
                       onClick={e => e.target.select()}
-                      className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-slate-200 select-all"
+                      className={`flex-1 rounded-xl px-3 py-2 text-xs font-mono select-all border ${
+                        isLight ? 'bg-white border-slate-300 text-slate-800' : 'bg-slate-900 border-slate-700 text-slate-200'
+                      }`}
                     />
                     <button
                       onClick={copyLink}
@@ -497,7 +501,9 @@ export function FriendRoomModal({
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     onClick={handleNativeShare}
-                    className="flex items-center justify-center gap-1.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl transition-colors border border-slate-700"
+                    className={`flex items-center justify-center gap-1.5 py-2 font-bold text-xs rounded-xl transition-colors border ${
+                    isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300' : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
+                  }`}
                   >
                     <Share2 className="w-3.5 h-3.5 text-amber-400" />
                     <span>Share</span>
@@ -533,18 +539,22 @@ export function FriendRoomModal({
             ) : (
               <div className="space-y-4">
                 {/* Create Room Section */}
-                <div className="space-y-3 p-4 bg-slate-950/50 border border-slate-800 rounded-2xl">
-                  <span className="text-xs font-bold text-amber-400 uppercase tracking-wider block">
+                <div className={`space-y-3 p-4 border rounded-2xl ${
+                  isLight ? 'bg-slate-50 border-slate-200 shadow-xs' : 'bg-slate-950/50 border-slate-800'
+                }`}>
+                  <span className={`text-xs font-black uppercase tracking-wider block ${isLight ? 'text-amber-600' : 'text-amber-400'}`}>
                     Create Private Match
                   </span>
 
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[11px] text-slate-400 block mb-1">Time Control</label>
+                      <label className={`text-[11px] block mb-1 ${isLight ? 'text-slate-600 font-medium' : 'text-slate-400'}`}>Time Control</label>
                       <select
                         value={selectedMinutes}
                         onChange={e => setSelectedMinutes(Number(e.target.value))}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white"
+                        className={`w-full border rounded-xl px-2.5 py-1.5 text-xs ${
+                          isLight ? 'bg-white border-slate-300 text-slate-900 focus:border-amber-500' : 'bg-slate-900 border-slate-700 text-white'
+                        }`}
                       >
                         <option value="1">1 min Bullet</option>
                         <option value="3">3 min Blitz</option>
@@ -556,11 +566,13 @@ export function FriendRoomModal({
                     </div>
 
                     <div>
-                      <label className="text-[11px] text-slate-400 block mb-1">Your Color</label>
+                      <label className={`text-[11px] block mb-1 ${isLight ? 'text-slate-600 font-medium' : 'text-slate-400'}`}>Your Color</label>
                       <select
                         value={colorPref}
                         onChange={e => setColorPref(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white"
+                        className={`w-full border rounded-xl px-2.5 py-1.5 text-xs ${
+                          isLight ? 'bg-white border-slate-300 text-slate-900 focus:border-amber-500' : 'bg-slate-900 border-slate-700 text-white'
+                        }`}
                       >
                         <option value="random">Random</option>
                         <option value="white">White</option>
@@ -578,8 +590,10 @@ export function FriendRoomModal({
                 </div>
 
                 {/* Join Room Section */}
-                <div className="space-y-2 p-4 bg-slate-950/50 border border-slate-800 rounded-2xl">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                <div className={`space-y-2 p-4 border rounded-2xl ${
+                  isLight ? 'bg-slate-50 border-slate-200 shadow-xs' : 'bg-slate-950/50 border-slate-800'
+                }`}>
+                  <span className={`text-xs font-black uppercase tracking-wider block ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                     Join Friend's Room
                   </span>
 
@@ -589,13 +603,16 @@ export function FriendRoomModal({
                       value={roomCode}
                       onChange={e => setRoomCode(e.target.value)}
                       placeholder="Enter Room Code..."
-                      className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                      className={`flex-1 border rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-amber-500 ${
+                        isLight ? 'bg-white border-slate-300 text-slate-900 placeholder-slate-400' : 'bg-slate-900 border-slate-700 text-white placeholder-slate-500'
+                      }`}
                     />
                     <button
                       onClick={() => onJoinRoom(roomCode.trim())}
                       disabled={!roomCode.trim()}
-                      className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-200 font-bold text-xs rounded-xl transition-colors"
-                    >
+                      className={`px-4 py-1.5 disabled:opacity-40 font-bold text-xs rounded-xl transition-colors ${
+                        isLight ? 'bg-slate-200 hover:bg-slate-300 text-slate-700' : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
+                      }`}>
                       Join
                     </button>
                   </div>
@@ -679,7 +696,9 @@ export function FriendRoomModal({
                 {friends.map((friend) => (
                   <div
                     key={friend.id}
-                    className="flex items-center justify-between p-3 bg-slate-950/70 border border-slate-800 rounded-2xl hover:border-slate-700 transition-colors"
+                    className={`flex items-center justify-between p-3 border rounded-2xl transition-colors ${
+                    isLight ? 'bg-slate-50 border-slate-200 hover:border-slate-300' : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
+                  }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="relative">
@@ -696,7 +715,7 @@ export function FriendRoomModal({
                       </div>
                       <div className="truncate">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-white text-xs truncate">
+                          <span className={`font-bold text-xs truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>
                             {friend.username}
                           </span>
                           <span className={`text-[9px] font-semibold ${friend.isOnline ? 'text-emerald-400' : 'text-slate-500'}`}>
@@ -738,14 +757,14 @@ export function FriendRoomModal({
         {activeTab === 'add' && (
           <div className="flex-1 overflow-y-auto space-y-4 pr-1">
             {/* Make Friend Request Form */}
-            <div className="p-4 bg-slate-950/60 border border-slate-800 rounded-2xl space-y-3">
+            <div className={`p-4 border rounded-2xl space-y-3 ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/60 border-slate-800'}`}>
               <div className="flex items-center gap-2 text-amber-400">
                 <UserPlus className="w-4 h-4" />
-                <span className="text-xs font-black uppercase tracking-wider text-white">
+                <span className={`text-xs font-black uppercase tracking-wider ${isLight ? 'text-slate-900' : 'text-white'}`}>
                   Make Friend Option (Give Request)
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
                 Enter any player's username to give them a friend request directly.
               </p>
 
@@ -757,7 +776,9 @@ export function FriendRoomModal({
                     value={searchUsername}
                     onChange={e => setSearchUsername(e.target.value)}
                     placeholder="Enter username (e.g. Magnus, Hikaru)..."
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                    className={`w-full border rounded-xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-amber-500 ${
+                    isLight ? 'bg-white border-slate-300 text-slate-900 placeholder-slate-400' : 'bg-slate-900 border-slate-700 text-white placeholder-slate-500'
+                  }`}
                   />
                 </div>
 
