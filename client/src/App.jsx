@@ -46,7 +46,10 @@ import {
   processAppOpenNotifications,
   generateRandomChallenge,
   getInitialNotifications,
-  addFriendPermanently
+  addFriendPermanently,
+  getDismissedNotifications,
+  markNotificationDismissed,
+  getStoredFriends
 } from './utils/socialAutomation.js';
 
 const DEFAULT_SETTINGS = {
@@ -250,55 +253,47 @@ export default function App() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState(() => {
     try {
-      const saved = safeStorage.getItem('chess_arena_notifications_v2');
-      if (saved) return JSON.parse(saved);
+      const isSeeded = safeStorage.getItem('chess_arena_initial_notifs_seeded_v3') === 'true';
+      const saved = safeStorage.getItem('chess_arena_notifications_v3');
+      const dismissed = new Set(getDismissedNotifications());
+      const friends = getStoredFriends();
+      const friendUsernames = new Set(friends.map(f => f.username?.toLowerCase()));
+
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed.filter(n => {
+          if (!n || dismissed.has(n.id)) return false;
+          const lowerName = n.fromUser?.username?.toLowerCase();
+          if (lowerName && dismissed.has(`user_${lowerName}`)) return false;
+          if (n.type === 'friend_request' && lowerName && friendUsernames.has(lowerName)) return false;
+          return true;
+        });
+      }
+      if (!isSeeded) {
+        safeStorage.setItem('chess_arena_initial_notifs_seeded_v3', 'true');
+        const initial = getInitialNotifications();
+        safeStorage.setItem('chess_arena_notifications_v3', JSON.stringify(initial));
+        return initial;
+      }
     } catch {}
-    return getInitialNotifications();
+    return [];
   });
 
   useEffect(() => {
     try {
-      safeStorage.setItem('chess_arena_notifications_v2', JSON.stringify(notifications));
+      safeStorage.setItem('chess_arena_notifications_v3', JSON.stringify(notifications));
     } catch {}
   }, [notifications]);
 
-  // App open notifications engine: delivers initial notifications on 1st open,
-  // and adds new challenge + 2-3 daily friend requests every 3-4 opens
+  // App open notifications engine: delivers initial notifications on 1st open (exactly once),
+  // and subsequent notifications ONLY after 5-7 app opens AND several hours have elapsed
   useEffect(() => {
     setNotifications(prev => processAppOpenNotifications(prev));
   }, []);
 
-  // Periodic random challenge scheduler: triggers a challenge every 3 to 10 minutes randomly
-  useEffect(() => {
-    let timerId = null;
-
-    const scheduleNextChallenge = () => {
-      // Delay randomized between 3 and 10 minutes (180,000 ms to 600,000 ms)
-      const delayMs = Math.floor((3 + Math.random() * 7) * 60 * 1000);
-      timerId = setTimeout(() => {
-        setNotifications(prev => {
-          const newChallenge = generateRandomChallenge(prev);
-          setIncomingChallenge({
-            ...newChallenge,
-            isAutomated: true
-          });
-          sound.playCheck();
-          triggerHaptic('capture');
-          return [newChallenge, ...prev];
-        });
-        scheduleNextChallenge();
-      }, delayMs);
-    };
-
-    scheduleNextChallenge();
-
-    return () => {
-      if (timerId) clearTimeout(timerId);
-    };
-  }, []);
-
   const handleAcceptNotificationChallenge = (notif) => {
     setShowNotifications(false);
+    markNotificationDismissed(notif);
     setNotifications(prev => prev.filter(n => n.id !== notif.id));
     sound.playMatchStart();
     triggerHaptic('move');
@@ -320,11 +315,14 @@ export default function App() {
   };
 
   const handleDeclineNotificationChallenge = (id) => {
+    const target = notifications.find(n => n.id === id);
+    markNotificationDismissed(target || id);
     setNotifications(prev => prev.filter(n => n.id !== id));
     sound.playClick();
   };
 
   const handleAcceptNotificationFriendRequest = (notif) => {
+    markNotificationDismissed(notif);
     setNotifications(prev => prev.filter(n => n.id !== notif.id));
     sound.playMove();
     triggerHaptic('move');
@@ -345,6 +343,8 @@ export default function App() {
   };
 
   const handleDeclineNotificationFriendRequest = (id) => {
+    const target = notifications.find(n => n.id === id);
+    markNotificationDismissed(target || id);
     setNotifications(prev => prev.filter(n => n.id !== id));
     sound.playClick();
   };
@@ -1891,6 +1891,7 @@ export default function App() {
                       onClick={() => {
                         sound.playClick();
                         triggerHaptic('move');
+                        setFriendRoomTab('room');
                         setShowFriendRoomModal(true);
                       }}
                       className={`w-full text-left p-3 sm:p-4 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
@@ -2553,7 +2554,10 @@ export default function App() {
         onDeclineChallenge={handleDeclineNotificationChallenge}
         onAcceptFriendRequest={handleAcceptNotificationFriendRequest}
         onDeclineFriendRequest={handleDeclineNotificationFriendRequest}
-        onClearAll={() => setNotifications([])}
+        onClearAll={() => {
+          notifications.forEach(n => markNotificationDismissed(n));
+          setNotifications([]);
+        }}
         isLight={isLight}
       />
 

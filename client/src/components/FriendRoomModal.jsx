@@ -181,6 +181,62 @@ const ANIME_GAMING_CANDIDATES = [
     country: 'BR',
     seed: 'MonkeyDLuffyGear5',
     bio: 'I\'m gonna be the Chess King! 🍖'
+  },
+  {
+    username: 'Naruto_Ninja',
+    title: 'Hokage Prodigy',
+    elo: 2260,
+    country: 'JP',
+    seed: 'NarutoUzumakiHokage',
+    bio: 'Believe it! Shadow clone gambit ready. 🍜'
+  },
+  {
+    username: 'Sasuke_Uchiha',
+    title: 'Avenger Tactician',
+    elo: 2440,
+    country: 'JP',
+    seed: 'SasukeUchihaChidori',
+    bio: 'Chidori lightning strikes on square e4.'
+  },
+  {
+    username: 'Anya_Forger',
+    title: 'Telepathic Prodigy',
+    elo: 1890,
+    country: 'DE',
+    seed: 'AnyaForgerPeanuts',
+    bio: 'Waku waku! Mind reading your moves! 🥜'
+  },
+  {
+    username: 'Yor_Forger',
+    title: 'Thorn Princess',
+    elo: 2390,
+    country: 'DE',
+    seed: 'YorForgerAssassin',
+    bio: 'Gentle assassin with sharp tactical daggers. 🌹'
+  },
+  {
+    username: 'Nezuko_Demon',
+    title: 'Demon Princess',
+    elo: 2040,
+    country: 'JP',
+    seed: 'NezukoKamadoBox',
+    bio: 'Mmh mmph! Protecting the king! 🌸'
+  },
+  {
+    username: 'Shivam_Chess',
+    title: 'Mumbai Blitz Master',
+    elo: 2150,
+    country: 'IN',
+    seed: 'ShivamSharmaIndia',
+    bio: 'Chai, chess, and tactical fireworks! ♟️🇮🇳'
+  },
+  {
+    username: 'Elena_Rostova',
+    title: 'Siberian Grandmaster',
+    elo: 2210,
+    country: 'NO',
+    seed: 'ElenaRostovaWinter',
+    bio: 'Cold calculations and deep endgame plans.'
   }
 ];
 
@@ -222,108 +278,327 @@ function extractTimeFromText(text) {
 }
 
 /**
- * Generates witty, personality-driven bot responses that actively negotiate match time
+ * Generates witty, human-like, AI-powered conversational bot responses.
+ * Detects user intent (greetings, how-are-you, bot/AI inquiries, trash talk,
+ * chess theory/openings, time controls/matches, compliments, laughs)
+ * and replies in the unique voice of the bot character.
  */
 function generateBotReply(botId, botUsername, userText, detectedMinutes) {
-  const lower = userText.toLowerCase();
-  const minutesToUse = detectedMinutes || (Math.random() < 0.5 ? 5 : 3);
+  const lower = (userText || '').toLowerCase().trim();
+  const minutes = detectedMinutes || (Math.random() < 0.5 ? 5 : 3);
 
-  if (botId === 'f_magnus' || /magnus/i.test(botUsername)) {
+  // Intent classification
+  const isGreeting = /^(hi|hello|hey|yo|sup|wassup|hii+|heyy+|namaste|kya haal|hola|greetings|gm|ge)\b/i.test(lower);
+  const isBotQuery = /\b(bot|ai|robot|machine|human|real person|real|fake|computer|kya tum bot ho|insaan)\b/i.test(lower);
+  const isStatusQuery = /\b(how are you|how r u|kya kar rahe|what are you doing|whats up|what's up|how's it going|kaise ho|what doing)\b/i.test(lower);
+  const isTrashTalk = /\b(beat you|defeat|lose|loss|noob|easy|loser|weak|bad|haroge|harenge|crush you|destroy you|bache ho)\b/i.test(lower);
+  const isMatchQuery = /\b(play|match|game|khel|aaja|challenge|duel|fight|board|start|khele)\b/i.test(lower);
+  const isCompliment = /\b(good|pro|legend|goat|smart|genius|cool|great|handsome|cute|best|op|amazing|love|hero)\b/i.test(lower);
+  const isOpenings = /\b(opening|sicilian|e4|d4|gambit|french|caro|london|bongcloud|theory|tactic|blunder|fork|pin|queen|rook)\b/i.test(lower);
+  const isLaugh = /\b(haha|lol|lmao|rofl|hehe|xd|😂|🤣|funny)\b/i.test(lower);
+
+  // 1. Cyber_Samurai (Neon Ronin)
+  if (/samurai|cyber/i.test(botUsername) || botId === 'sug_cyber_samurai') {
     if (detectedMinutes) {
-      return `Haha ${detectedMinutes} minutes? Deal! You think your opening can survive my endgame? 😉 Drop the challenge above and let's find out! 🏆`;
+      return `Target acquired: ${detectedMinutes}-minute duel! ⚔️ My processors are locked in. Hit the Challenge button above and make your first move! 🚀`;
     }
-    if (/hi|hello|hey|yo|sup|kya/i.test(lower)) {
-      return `Hey! I was just studying some world championship endgames. Ready to test your skills? Let's play a 5-minute blitz! ♟️`;
+    if (isBotQuery) {
+      return `Guilty as charged... partly! 🤖 I'm a cyber-enhanced samurai consciousness running on 4000 TFLOPS. But when you blunder a rook, I laugh just like a human! 😂 Wanna test my code on the board?`;
     }
-    if (/ready|play|match|game|khel|aaja/i.test(lower)) {
-      return `I was born ready. Let's do 5m Blitz! Click the Challenge button above and make your first move! 🔥`;
+    if (isGreeting) {
+      return `Systems online! ⚡ Konnichiwa! My optical sensors detect high tactical potential in you. Did you come to discuss quantum chess theory, or did you come to lose your queen in 15 moves? 😉`;
     }
-    if (/beat|win|defeat|lose|noob/i.test(lower)) {
-      return `Big words! Even grandmasters couldn't crack my defense. Send a 5m challenge and let's see if you can back up that talk! 😂`;
+    if (isStatusQuery) {
+      return `Operating at 99.8% tactical efficiency and sipping virtual ramen 🍜 What's up with you? Ready for a 3m blitz or are you scared of my neon knights?`;
     }
-    return `Nice one! But chess is played on the 64 squares, not just in chat. How about a 5-minute blitz match right now? Send the request! ♟️`;
+    if (isTrashTalk) {
+      return `Bold statement! I've simulated 14,000,605 game timelines against you, and in only one did you survive past move 35. Challenge me above and prove the odds wrong! ⚔️`;
+    }
+    if (isOpenings) {
+      return `I prefer hypermodern setups—strike swiftly from the dark diagonals! If you dare play 1. e4, prepare for a cybernetic Sicilian counter-strike. What's your weapon? 🐉`;
+    }
+    if (isCompliment) {
+      return `Flattery acknowledged, warrior! But compliments won't prevent my laser-guided knights from executing a royal fork 😉 Let's see your real rating on the board!`;
+    }
+    if (isLaugh) {
+      return `Haha good vibes! But wait until you see my middle-game tactical traps—you'll either laugh or cry 😂 Click Challenge and let's go!`;
+    }
+    if (isMatchQuery) {
+      return `Blade unsheathed! Let's do a fast 3m Blitz. Click Challenge above right now and show me what you got! ⚡`;
+    }
+    return `Tactical frequency received! But true honor is decided on the 64 squares, not in terminal chat. How about a quick ${minutes}m blitz right now? Drop the challenge above! ⚔️`;
   }
 
+  // 2. Zoro_Gambit (Three-Blade Tactician)
+  if (/zoro/i.test(botUsername) || botId === 'sug_zoro_gambit') {
+    if (detectedMinutes) {
+      return `A ${detectedMinutes}-minute duel? Deal! Three swords, ${detectedMinutes} minutes, one winner! Click Challenge above and don't make me wait! ⚔️`;
+    }
+    if (isBotQuery) {
+      return `Bot? Oi! Call me a machine again and I'll slice your chessboard into three pieces! 🗡️ I'm the future greatest swordsman, not a calculator! 😂`;
+    }
+    if (isGreeting) {
+      return `Oi! Who is that? I was trying to find the gym and somehow ended up in this Chess Arena... anyway, you got swords or you got pawns? Let's fight! ⚔️`;
+    }
+    if (isStatusQuery) {
+      return `Took a 3-hour nap, drank some sake, and now looking for an opponent. If you're ready, let's play a 5m blitz! Just don't ask me for directions.`;
+    }
+    if (isTrashTalk) {
+      return `Hah! Big mouth! Even Mihawk couldn't break my fighting spirit. You think your little knights can stop Three-Sword Style? Challenge me right now! 🔥`;
+    }
+    if (isOpenings) {
+      return `Opening? I don't know fancy opening names! I just charge straight down the e-file with all three blades! Who needs pawn structure when you have willpower?!`;
+    }
+    if (isMatchQuery) {
+      return `I was born ready! 5 minutes on the clock! Click that Challenge button above before I get lost on another square! ⚔️`;
+    }
+    return `Enough talking! The only words that matter are on the 64 squares. Hit Challenge above and face the Three-Blade Gambit! 🗡️`;
+  }
+
+  // 3. Gojo_Limitless (Special Grade Master)
+  if (/gojo/i.test(botUsername) || botId === 'sug_gojo_limitless') {
+    if (detectedMinutes) {
+      return `${detectedMinutes} minutes? That's generous—I only need 2 minutes to checkmate you! 😎 Click Challenge above and let's have some fun! ✨`;
+    }
+    if (isBotQuery) {
+      return `Me, a bot?! Haha! Could an AI look this effortlessly magnificent and wear a blindfold while crushing you with a pawn endgame? I don't think so! 🕶️`;
+    }
+    if (isGreeting) {
+      return `Yoooo! ✨ What's up? Did someone order the strongest chess player in existence? You're lucky I had 5 minutes free between jujutsu missions! 😎`;
+    }
+    if (isStatusQuery) {
+      return `Feeling completely invincible as usual! Just ate some delicious mochi. Thinking about playing with only pawns today to make it fair for you 😂`;
+    }
+    if (isTrashTalk) {
+      return `Nah, I'd win. Did you really think your pieces could even bypass my Limitless? Send that challenge and let's find out! 🔥`;
+    }
+    if (isOpenings) {
+      return `Openings don't matter when you have Six Eyes. I can see your blunders from 10 moves in the future! What line are you brave enough to play?`;
+    }
+    if (isCompliment) {
+      return `Haha, I know I'm amazing, but hearing it from you makes it even better! ✨ Now let's see if your moves are as smooth as your compliments!`;
+    }
+    return `Throughout heaven and earth, my chess alone is honored! Don't be shy, click Challenge above and let's play a 3m blitz! ⚡`;
+  }
+
+  // 4. Levi_Captain (Humanity's Strongest)
+  if (/levi/i.test(botUsername) || botId === 'sug_levi_captain') {
+    if (detectedMinutes) {
+      return `${detectedMinutes} minutes. Clean and disciplined. Click Challenge above and don't make a mess on the board. 🗡️`;
+    }
+    if (isBotQuery) {
+      return `Ask stupid questions again and I'll have you scrubbing the arena floor with a toothbrush. Now set up your pieces.`;
+    }
+    if (isGreeting) {
+      return `Tch. Stop loafing around. Have you wiped down the chessboard yet? There's dust on square e5.`;
+    }
+    if (isStatusQuery) {
+      return `Irritated by filthy pawn structures and noisy recruits. Make yourself useful and play a clean 5-minute blitz match.`;
+    }
+    if (isTrashTalk) {
+      return `Big talk from someone whose king hasn't even castled yet. I'll slice through your defense like a 10-meter titan. Challenge me.`;
+    }
+    return `No regrets on the board. Make your move, or step aside. Challenge me above to 5m blitz.`;
+  }
+
+  // 5. Killua_Godspeed (Assassin Prodigy)
+  if (/killua/i.test(botUsername) || botId === 'sug_killua_godspeed') {
+    if (detectedMinutes) {
+      return `Deal! ${detectedMinutes} minutes! I'll be moving so fast with Godspeed your screen might spark! ⚡ Click Challenge above!`;
+    }
+    if (isBotQuery) {
+      return `A bot? Nah, bots calculate way too slow! My reaction time is literally lightning speed! Wanna see if you can premove against me? ⚡`;
+    }
+    if (isGreeting) {
+      return `Yo! ⚡ Caught me right in the middle of snacking on choco-robots! What's up, you looking for a high-voltage blitz game?`;
+    }
+    if (isTrashTalk) {
+      return `Haha you think you can beat me? I'll checkmate you before your finger even lifts off the screen! Hit Challenge and let's find out! ⚡`;
+    }
+    return `Boring chat... unless we play 3m blitz right now! Click Challenge above and let's see some fireworks! 🔥`;
+  }
+
+  // 6. Magnus_C
+  if (botId === 'f_magnus' || /magnus/i.test(botUsername)) {
+    if (detectedMinutes) {
+      return `Haha ${detectedMinutes} minutes? Deal! You think your opening prep can survive my endgame grinding? 😉 Drop the challenge above and let's find out! 🏆`;
+    }
+    if (isBotQuery) {
+      return `Haha no, just a bored Norwegian guy who loves fantasy football and playing 1. f3 to troll people on stream! 😂 Wanna play?`;
+    }
+    if (isGreeting) {
+      return `Hey! What's up? Just finished looking at some endgame positions. Ready to test your skills? Let's play a 5-minute blitz! ♟️`;
+    }
+    if (isStatusQuery) {
+      return `Feeling sharp! Sipping a smoothie and looking to grind down someone's pawn structure. How's your chess day going?`;
+    }
+    if (isTrashTalk) {
+      return `Big words! Even super grandmasters couldn't crack my endgame defense. Drop a 5m challenge and let's see if you can back up that talk! 😂`;
+    }
+    if (isOpenings) {
+      return `I can play the Berlin, the Sicilian, or literally 1. a3 and still win in the endgame 😉 What's your prep looking like today?`;
+    }
+    return `Nice one! But chess is decided on the 64 squares, not just in chat. How about a 5-minute blitz right now? Send the request! ♟️`;
+  }
+
+  // 7. Hikaru_N
   if (botId === 'f_hikaru' || /hikaru/i.test(botUsername)) {
     if (detectedMinutes) {
       return `Literally ${detectedMinutes} minutes is perfection! Chat, he's challenging me! Hit Challenge above right now and let's go! ⚡🔥`;
     }
-    if (/hi|hello|hey|yo/i.test(lower)) {
-      return `Hey what's up! Literally just finished a stream and looking to crush some blitz. Let's do 3m blitz right now! 🚀`;
+    if (isBotQuery) {
+      return `Chat, is this guy asking if I'm an AI?! Literally I am the blitz king! I take take take and it's completely winning! Let's play! 🚀`;
     }
-    if (/ready|play|match|game/i.test(lower)) {
-      return `Let's goooo! I take take take and it's completely winning! Send the 3-minute challenge right now! 💥`;
+    if (isGreeting) {
+      return `Yo what's up guys, Hikaru here! Literally just logged into the Arena and looking to crush some blitz! Let's do 3m blitz right now! 🚀`;
+    }
+    if (isStatusQuery) {
+      return `Literally doing great, analyzing some crazy rook sacrifices. Ready to speed-run your rating? Send the challenge!`;
+    }
+    if (isTrashTalk) {
+      return `Oh you think you can win? I literally don't even care, let's play 3m blitz right now and I'll premove your whole opening! 💥`;
     }
     return `Literally let's see what you've got! I'm pre-moving already. Challenge me to a 3m or 5m game above! ⚡`;
   }
 
+  // 8. Gotham_Chess
   if (botId === 'f_gotham' || /gotham/i.test(botUsername)) {
     if (detectedMinutes) {
       return `${detectedMinutes} minutes?! Okay, but if you hang your queen in the first 10 moves, I'm putting it in a video! 😂 Hit Challenge and let's play! 📹`;
     }
-    if (/hi|hello|hey/i.test(lower)) {
-      return `Hello hello! Welcome to Gotham Arena! Ready to blunder your pieces or play some master chess today? Let's do 5m blitz! ☕`;
+    if (isBotQuery) {
+      return `I'm Levy Rozman! Born in Brooklyn, king of chess YouTube, and living proof that the London System is a crime! 😂 Challenge me!`;
     }
-    if (/ready|play|match|game/i.test(lower)) {
-      return `AND HE SACRIFICES THE ROOOOOOK! 💥 Send the challenge for 5m or 10m, I am waiting! ♟️`;
+    if (isGreeting) {
+      return `Hello hello! Welcome to Gotham Arena! Grab your coffee ☕, sit down, and try not to hang THE ROOOOOK today! Let's do 5m blitz!`;
     }
-    return `Danger Levels! Watch your f7 pawn and don't get trapped. Challenge me to a 5-minute battle right now! ⚔️`;
+    if (isTrashTalk) {
+      return `DANGER LEVELS! 💥 You think you're gonna beat me? Call the arbiter! Hit Challenge above and let's see who blunders first!`;
+    }
+    if (isOpenings) {
+      return `If you play the London System against me, we cannot be friends anymore! 😂 Play something wild like the Vienna Gambit instead!`;
+    }
+    return `AND HE SACRIFICES THE ROOOOOOK! 💥 Send the challenge for 5m or 10m, I am waiting! ♟️`;
   }
 
-  if (botId === 'f_viking' || /viking/i.test(botUsername)) {
+  // 9. Tanjiro_SunBlade
+  if (/tanjiro/i.test(botUsername)) {
     if (detectedMinutes) {
-      return `A battle of ${detectedMinutes} minutes honors Odin! 🛡️ Send the duel challenge above and let steel clash on the 64 squares! ⚔️`;
+      return `Total Concentration! ${detectedMinutes} minutes is an honorable time for a duel! Let's play with our whole hearts! Click Challenge! 🌸🔥`;
     }
-    return `The northern winds blow toward victory! Challenge me to a 10m rapid duel and prove your worth! 🛡️`;
+    if (isGreeting) {
+      return `Hello! I can smell the great determination and kindness in you! Let's have an honorable match on the board! 🌸`;
+    }
+    return `I will never give up, no matter how tough your opening is! Let us have a wonderful 5m game together! 🗡️`;
   }
 
-  // Friendly Indian / Desi friend (e.g. Shivam)
-  if (/shivam/i.test(botUsername) || /arjun/i.test(botUsername)) {
-    if (detectedMinutes) {
-      return `Arre badhiya! ${detectedMinutes} minute ka match set hai. Upar Challenge pe click kar, board pe milte hain bhai! 🏆`;
+  // 10. Kakashi_Copycat
+  if (/kakashi/i.test(botUsername)) {
+    if (isGreeting) {
+      return `Yo! Sorry I'm late, a black cat crossed my path so I had to take the long way around the board... 📖 Ready to play?`;
     }
-    return `Bhai kya haal! Poora mood hai chess khelne ka. 5 minute ya 10 minute ka match lagate hain, bhej challenge! ♟️🔥`;
+    if (isBotQuery) {
+      return `Just a ninja reading Make-Out Paradise. Ready to see if my Sharingan can copy your best opening traps? 😉`;
+    }
+    return `1000 years of tactical death incoming if you leave your king in the center! Send the 5m challenge above! ⚡`;
   }
 
-  // Nezuko Kamado
-  if (/nezuko/i.test(botUsername)) {
-    if (detectedMinutes) {
-      return `Mmh mmph! ${detectedMinutes} minutes sounds wonderful! Tanjiro says focus on center control! Click Challenge above! 🌸⚔️`;
+  // 11. Geralt_WhiteWolf
+  if (/geralt|wolf/i.test(botUsername)) {
+    if (isGreeting) {
+      return `Hmm. Wind's howling. Looks like a chess battle. What's on your mind? 🐺`;
     }
-    if (/hi|hello|hey/i.test(lower)) {
-      return `Mmh mmph! Hello friend! 🌸 I am practicing chess tactics with my friends. Let's play a friendly game!`;
-    }
-    return `Mmh mmph! Let's play on the board! Send the challenge and I will do my best! 🌸♟️`;
+    return `Silver for monsters, pawns for kings. Place of power, gotta be. Challenge me to a 5-minute duel.`;
   }
 
-  // Yor Forger
-  if (/yor/i.test(botUsername)) {
-    if (detectedMinutes) {
-      return `A ${detectedMinutes}-minute match? Splendid! I must be careful not to crush the wooden pieces in my hands. Send the challenge! 🌹`;
-    }
-    return `Hello! Chess is such a peaceful art. Shall we test our tactical instincts in a 5m blitz? 🌹🗡️`;
-  }
-
-  // Anya Forger
+  // 12. Anya_Forger / Yor_Forger / Nezuko
   if (/anya/i.test(botUsername)) {
-    return `Waku waku! Anya read your mind! 🥜 You want to play a game! Challenge Anya right now! ⭐`;
+    return `Waku waku! Anya read your mind! 🥜 You're thinking of blundering a piece! Challenge Anya right now! ⭐`;
+  }
+  if (/yor/i.test(botUsername)) {
+    return `A ${detectedMinutes || 5}-minute match? Splendid! I will be very careful not to crush the wooden pieces in my hands... 🌹 Click Challenge!`;
+  }
+  if (/nezuko/i.test(botUsername)) {
+    return `Mmh mmph! Tanjiro taught me how knights jump over pawns! 🌸 Let's play a friendly game!`;
   }
 
-  // Mikasa Ackerman
-  if (/mikasa/i.test(botUsername)) {
-    return `This world is cruel, but also very beautiful. I will defend the king at all costs. Send the match challenge! 🗡️`;
+  // 13. Indian / Desi friends (Shivam, Arjun, etc.)
+  if (/shivam|arjun|rohit|priya|ayush/i.test(botUsername) || botId.startsWith('sug_arjun')) {
+    if (detectedMinutes) {
+      return `Arre badhiya! ${detectedMinutes} minute ka match pakka! Upar Challenge pe click kar, board pe milte hain bhai! 🏆`;
+    }
+    if (isBotQuery) {
+      return `Arre bhai dil pe lagti hai aisi baatein! 😂 Poora zinda insaan hoon, chai pee raha hoon aur chess ka shauq hai. Khelte hain chal!`;
+    }
+    if (isGreeting) {
+      return `Bhai kya haal chaal! Bada mast time pe message kiya. Poora mood hai blitz khelne ka, bata 3m ya 5m? ♟️🔥`;
+    }
+    if (isTrashTalk) {
+      return `Acha beta! Itna confidence? Board pe aaja, queen fork karke bataunga kiska khel tagda hai! 😂 Send challenge!`;
+    }
+    return `Chai aur chess ka combo best hai bhai! 5 minute ka match lagate hain, upar Challenge button daba! ☕♟️`;
   }
 
-  // Hinata Hyuga
-  if (/hinata/i.test(botUsername)) {
-    return `Hello! With my Byakugan, I will see every diagonal clearly! Let's do our best together! 🥋♟️`;
+  // 14. Universal Smart Human-like AI banters (matches any other bot or user query)
+  if (isBotQuery) {
+    const botReplies = [
+      `Bro, if I were an AI, I wouldn't be chilling here talking chess with you at this hour! 😂 But my tactical moves might feel suspiciously calculated. Send the challenge and see!`,
+      `Shhh, don't let Stockfish hear you or he'll claim copyright over my brain cells! 🧠 I'm 100% human with 200% tactical instincts. Let's play!`,
+      `Haha, is it because my profile pic looks too cool or because you're already worried about my moves? 😉 Don't worry, I make human mistakes too... sometimes!`
+    ];
+    return botReplies[Math.floor(Math.random() * botReplies.length)];
   }
 
-  // Cool Anime / Gamer friends
-  if (detectedMinutes) {
-    return `Challenge accepted for ${detectedMinutes} minutes! My blade is sharp and my knights are ready. Hit Challenge above and let's duel! ⚔️`;
+  if (isGreeting) {
+    const greetingReplies = [
+      `Hey there! Great to see you in the Arena! What's the plan today—fun blitz or serious battle? ♟️`,
+      `Yo! Just the person I was hoping to see online. How's your chess day going? Ready to push some pawns? 😉`,
+      `Hey! Welcome to the lobby! I was just warming up my tactical vision. Up for a quick 3m or 5m game? 🔥`
+    ];
+    return greetingReplies[Math.floor(Math.random() * greetingReplies.length)];
   }
-  return `I see you're ready for battle! Let's play a ${minutesToUse}-minute game right now. Click Challenge above and let's go! 🚀`;
+
+  if (isStatusQuery) {
+    const statusReplies = [
+      `Doing awesome! Just had a hot coffee and solved a 2300-rated tactical puzzle. How are things on your side? ☕`,
+      `Alive and kicking! Looking for a worthy opponent to test my new opening trap on. Are you volunteering? 😏`,
+      `Can't complain, though my Elo rating could definitely use a boost from playing you! 😂 How are you doing?`
+    ];
+    return statusReplies[Math.floor(Math.random() * statusReplies.length)];
+  }
+
+  if (isTrashTalk) {
+    const trashReplies = [
+      `Ooh, bold words! But remember, the louder the talk, the harder the king falls 😉 Click Challenge above and put your rating on the line!`,
+      `Haha I love the confidence! Let's see if your pieces move as fast as your keyboard! Send that challenge! 🔥`,
+      `I'm screenshotting this chat so I can frame it right after I checkmate you 📸 Let's go!`
+    ];
+    return trashReplies[Math.floor(Math.random() * trashReplies.length)];
+  }
+
+  if (isOpenings) {
+    return `Ah, a student of chess theory! I love sharp, chaotic gambits—give me an open center and let the pieces fly 🎆 What opening are you bringing to the table?`;
+  }
+
+  if (isCompliment) {
+    return `Haha thank you! My Elo just went up +20 points purely from that compliment! 🥰 Now show me if your chess is as smooth as your manners.`;
+  }
+
+  if (isLaugh) {
+    return `Haha see, we're having fun already! Now let's see if you're still smiling after my surprise knight fork 😉 Click Challenge above and let's duel!`;
+  }
+
+  if (isMatchQuery || detectedMinutes) {
+    return `Deal! ${minutes} minutes on the clock! The battle awaits on the 64 squares. Hit that Challenge button above and let's make it legendary! 🏆`;
+  }
+
+  // Witty conversational fallback
+  const fallbackReplies = [
+    `Haha you're fun to talk to! But chess is decided on the board, not in chat. How about a 5-minute blitz match right now? Challenge me above! ⚔️`,
+    `I hear you! My pieces are already restless on their starting squares. Click the Challenge button above and let's get rolling! 🚀`,
+    `Words are cheap, pawns are cheaper! Let's settle this with a quick game. Drop a 3m or 5m challenge above! ♟️`
+  ];
+  return fallbackReplies[Math.floor(Math.random() * fallbackReplies.length)];
 }
 
 export function FriendRoomModal({
@@ -340,14 +615,10 @@ export function FriendRoomModal({
   initialTab = 'friends',
   isLight = false
 }) {
-  // 3 tabs: 1. friends, 2. room, 3. add
-  const [activeTab, setActiveTab] = useState(initialTab || 'friends');
+  const isHeaderEntry = initialTab === 'friends';
+  const [activeTab, setActiveTab] = useState(initialTab || (isHeaderEntry ? 'friends' : 'room'));
+  const [isBotTyping, setIsBotTyping] = useState(false);
 
-  useEffect(() => {
-    if (isOpen && initialTab) {
-      setActiveTab(initialTab);
-    }
-  }, [isOpen, initialTab]);
   const [friends, setFriends] = useState(() => {
     try {
       const saved = safeStorage.getItem('chess_arena_friends_v3');
@@ -355,6 +626,26 @@ export function FriendRoomModal({
     } catch {}
     return DEFAULT_FRIENDS;
   });
+
+  // Filter out ANY candidate already in friends list
+  const unaddedCandidates = ANIME_GAMING_CANDIDATES.filter(
+    candidate => !friends.some(f => f.username.toLowerCase() === candidate.username.toLowerCase())
+  );
+
+  // Tab items arranged contextually based on user entry point:
+  // From Header Friends Button: 1st Friends, 2nd Search Friend by Username, 3rd Room
+  // From Play Navigation Card: 1st Room, 2nd Friends, 3rd Search Friend by Username
+  const tabItems = isHeaderEntry
+    ? [
+        { id: 'friends', label: `Friends (${friends.length})`, shortLabel: `Friends (${friends.length})`, icon: Users },
+        { id: 'add', label: 'Search Friend by Username', shortLabel: 'Search Friend', icon: Search },
+        { id: 'room', label: 'Room', shortLabel: 'Room', icon: null, emoji: '🎮' }
+      ]
+    : [
+        { id: 'room', label: 'Room', shortLabel: 'Room', icon: null, emoji: '🎮' },
+        { id: 'friends', label: `Friends (${friends.length})`, shortLabel: `Friends (${friends.length})`, icon: Users },
+        { id: 'add', label: 'Search Friend by Username', shortLabel: 'Search Friend', icon: Search }
+      ];
 
   const [directMessages, setDirectMessages] = useState(() => {
     try {
@@ -415,9 +706,10 @@ export function FriendRoomModal({
           safeStorage.setItem('chess_arena_friends_v3', JSON.stringify(DEFAULT_FRIENDS));
         }
       } catch {}
-      setActiveTab(initialTab || 'friends');
+      setActiveTab(initialTab || (initialTab === 'friends' ? 'friends' : 'room'));
       setSelectedFriend(null);
       setChattingFriend(null);
+      setIsBotTyping(false);
       setShowChatMenu(false);
       setSearchedUser(null);
       setSearchNotFound(false);
@@ -719,8 +1011,10 @@ export function FriendRoomModal({
     sound.playMove();
     triggerHaptic('move');
 
-    // Bot witty response
+    // Bot witty response with natural typing delay
     if (targetId.startsWith('f_') || targetId.startsWith('sug_') || chattingFriend.isBot) {
+      setIsBotTyping(true);
+      const typingDelay = 700 + Math.floor(Math.random() * 450);
       setTimeout(() => {
         const replyText = generateBotReply(targetId, chattingFriend.username, text, detected);
         const replyMsg = {
@@ -733,8 +1027,9 @@ export function FriendRoomModal({
           ...p,
           [targetId]: [...(p[targetId] || []), replyMsg]
         }));
+        setIsBotTyping(false);
         sound.playMove();
-      }, 700);
+      }, typingDelay);
     }
   };
 
@@ -784,17 +1079,21 @@ export function FriendRoomModal({
     });
   };
 
-  // Color Theme Tokens
+  // Color Theme Tokens - Elevated Emerald/Teal cyber-gaming aesthetic
   const theme = {
     modalBg: isLight ? 'bg-white border-slate-200 shadow-2xl text-slate-900' : 'bg-slate-900 border-slate-700/80 shadow-2xl text-white',
-    tabContainer: isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-950 border-slate-800',
-    tabActive: 'bg-amber-500 text-slate-950 font-black shadow-md',
-    tabInactive: isLight ? 'text-slate-600 hover:text-slate-900 font-bold' : 'text-slate-400 hover:text-white font-bold',
+    tabContainer: isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-950/90 border-slate-800',
+    tabActive: isLight
+      ? 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-extrabold shadow-md shadow-emerald-700/20'
+      : 'bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-white font-extrabold shadow-lg shadow-emerald-500/25 border border-emerald-400/30',
+    tabInactive: isLight
+      ? 'text-slate-600 hover:text-slate-900 font-bold hover:bg-slate-200/60'
+      : 'text-slate-400 hover:text-white font-bold hover:bg-slate-800/60',
     card: isLight ? 'bg-slate-50/90 border-slate-200 hover:border-slate-300 text-slate-900' : 'bg-slate-950/70 border-slate-800 hover:border-slate-700 text-slate-100',
     innerBox: isLight ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-slate-950/60 border-slate-800 text-slate-100',
-    input: isLight ? 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-amber-500' : 'bg-slate-950 border-slate-700 text-white placeholder-slate-500 focus:border-amber-500',
+    input: isLight ? 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-emerald-500' : 'bg-slate-950 border-slate-700 text-white placeholder-slate-500 focus:border-emerald-500',
     textMuted: isLight ? 'text-slate-600' : 'text-slate-400',
-    badge: isLight ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-slate-800 text-amber-400 border-slate-700'
+    badge: isLight ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : 'bg-slate-800 text-emerald-400 border-slate-700'
   };
 
   return (
@@ -817,7 +1116,7 @@ export function FriendRoomModal({
           <div className="space-y-1 pr-8">
             <div className="flex items-center gap-2">
               <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
-                isLight ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                isLight ? 'bg-emerald-100 border-emerald-300 text-emerald-700' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
               }`}>
                 <Users className="w-4 h-4" />
               </div>
@@ -832,53 +1131,35 @@ export function FriendRoomModal({
         )}
 
         {/* ========================================================= */}
-        {/* TABS (Only 3 Tabs: 1st Room, 2nd Friends, 3rd Add/Follow) */}
+        {/* TABS (Contextual tab order based on entry point)          */}
         {/* ========================================================= */}
         {!chattingFriend && (
           <div className={`flex p-1 rounded-2xl border shrink-0 text-xs gap-1 ${theme.tabContainer}`}>
-            {/* 1st Tab: Room (default on open) */}
-            <button
-              onClick={() => {
-                setActiveTab('room');
-                triggerHaptic('move');
-              }}
-              className={`flex-1 py-2 px-2 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                activeTab === 'room' ? theme.tabActive : theme.tabInactive
-              }`}
-            >
-              <span>🎮 Room</span>
-            </button>
-
-            {/* 2nd Tab: Friends */}
-            <button
-              onClick={() => {
-                setActiveTab('friends');
-                triggerHaptic('move');
-              }}
-              className={`flex-1 py-2 px-2 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                activeTab === 'friends' ? theme.tabActive : theme.tabInactive
-              }`}
-            >
-              <Users className="w-3.5 h-3.5" />
-              <span>Friends ({friends.length})</span>
-            </button>
-
-            {/* 3rd Tab: Add / Follow */}
-            <button
-              onClick={() => {
-                setActiveTab('add');
-                triggerHaptic('move');
-              }}
-              className={`flex-1 py-2 px-2 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                activeTab === 'add' ? theme.tabActive : theme.tabInactive
-              }`}
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>Add / Follow</span>
-              {sentRequests.length > 0 && (
-                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-              )}
-            </button>
+            {tabItems.map(tab => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    triggerHaptic('move');
+                  }}
+                  className={`flex-1 py-2 px-1.5 sm:px-2 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${
+                    isActive ? theme.tabActive : theme.tabInactive
+                  }`}
+                >
+                  {tab.emoji ? <span>{tab.emoji}</span> : Icon ? <Icon className="w-3.5 h-3.5 shrink-0" /> : null}
+                  <span className="truncate">
+                    <span className="inline sm:hidden">{tab.shortLabel || tab.label}</span>
+                    <span className="hidden sm:inline">{tab.label}</span>
+                  </span>
+                  {tab.id === 'add' && sentRequests.length > 0 && (
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                  )}
+                </button>
+              );
+            })}
           </div>
         )}
 
@@ -938,7 +1219,7 @@ export function FriendRoomModal({
                       setChallengeMinutes(agreedChatMinutes);
                     }
                   }}
-                  className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
+                  className="px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-xs rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
                 >
                   <Swords className="w-3.5 h-3.5" />
                   <span>Challenge</span>
@@ -1001,7 +1282,9 @@ export function FriendRoomModal({
                     >
                       <div className={`max-w-[82%] px-3 py-2 rounded-2xl text-xs shadow-xs ${
                         isMe
-                          ? 'bg-amber-500 text-slate-950 font-medium rounded-br-xs'
+                          ? isLight
+                            ? 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-medium rounded-br-xs shadow-sm'
+                            : 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-medium rounded-br-xs shadow-md shadow-emerald-500/20'
                           : isLight
                           ? 'bg-white border border-slate-200 text-slate-900 rounded-bl-xs'
                           : 'bg-slate-800 border border-slate-700 text-white rounded-bl-xs'
@@ -1014,6 +1297,16 @@ export function FriendRoomModal({
                     </div>
                   );
                 })
+              )}
+              {isBotTyping && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-slate-800/80 border border-slate-700/60 text-slate-300 text-xs w-fit animate-fade-in">
+                  <span className="text-[10px] font-bold text-emerald-400">@{chattingFriend.username} is typing</span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </span>
+                </div>
               )}
               <div ref={chatMessagesEndRef} />
             </div>
@@ -1029,7 +1322,7 @@ export function FriendRoomModal({
                   }}
                   className={`px-2.5 py-1 rounded-xl border whitespace-nowrap transition-colors cursor-pointer shrink-0 font-medium ${
                     isLight
-                      ? 'bg-white hover:bg-amber-50 border-slate-200 text-slate-700 hover:border-amber-300'
+                      ? 'bg-white hover:bg-emerald-50 border-slate-200 text-slate-700 hover:border-emerald-300'
                       : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200'
                   }`}
                 >
@@ -1045,12 +1338,12 @@ export function FriendRoomModal({
                 value={chatInputText}
                 onChange={e => setChatInputText(e.target.value)}
                 placeholder={`Message @${chattingFriend.username} (e.g. Let's play 5 minutes)...`}
-                className={`flex-1 border rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-amber-500 ${theme.input}`}
+                className={`flex-1 border rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-emerald-500 ${theme.input}`}
               />
               <button
                 type="submit"
                 disabled={!chatInputText.trim()}
-                className="px-4 py-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-slate-950 font-black text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center cursor-pointer active:scale-95"
+                className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 disabled:opacity-40 text-white font-black text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center cursor-pointer active:scale-95"
               >
                 <Send className="w-3.5 h-3.5" />
               </button>
@@ -1070,7 +1363,7 @@ export function FriendRoomModal({
                         ✓ Private Match Room Ready!
                       </span>
                       <span className={`text-xs font-mono ${theme.textMuted}`}>
-                        Room Code: <strong className="text-amber-500 text-sm font-black">{createdRoom.roomId}</strong>
+                        Room Code: <strong className="text-emerald-400 text-sm font-black">{createdRoom.roomId}</strong>
                       </span>
                     </div>
 
@@ -1085,7 +1378,7 @@ export function FriendRoomModal({
                         />
                         <button
                           onClick={copyLink}
-                          className="px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
+                          className="px-3.5 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-xs rounded-xl flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
                         >
                           {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                           <span>{copied ? 'Copied!' : 'Copy'}</span>
@@ -1107,7 +1400,7 @@ export function FriendRoomModal({
                       {onEnterRoom && (
                         <button
                           onClick={onEnterRoom}
-                          className="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                          className="flex-1 py-2 px-3 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-white font-black text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                         >
                           <Swords className="w-3.5 h-3.5" />
                           <span>Enter Board Lounge</span>
@@ -1120,10 +1413,10 @@ export function FriendRoomModal({
                     {/* Setup Room Parameters */}
                     <div className={`p-4 border rounded-2xl space-y-3 ${theme.innerBox}`}>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-black uppercase tracking-wider block text-amber-500">
+                        <span className="text-xs font-black uppercase tracking-wider block text-emerald-600 dark:text-emerald-400">
                           Create Private Room
                         </span>
-                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center gap-1">
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
                           <Dices className="w-3 h-3" />
                           <span>Random Sides (50/50)</span>
                         </span>
@@ -1148,7 +1441,9 @@ export function FriendRoomModal({
                               }}
                               className={`py-2 px-1 rounded-xl text-xs font-bold border transition-all text-center cursor-pointer ${
                                 !isCustomRoom && selectedRoomMinutes === t.m
-                                  ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-xs'
+                                  ? isLight
+                                    ? 'bg-emerald-600 text-white font-black border-emerald-700 shadow-sm'
+                                    : 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black border-emerald-400 shadow-sm shadow-emerald-500/20'
                                   : isLight
                                   ? 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
                                   : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
@@ -1167,7 +1462,9 @@ export function FriendRoomModal({
                             }}
                             className={`py-2 px-1 rounded-xl text-xs font-bold border transition-all text-center cursor-pointer flex items-center justify-center gap-1 ${
                               isCustomRoom
-                                ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-xs'
+                                ? isLight
+                                  ? 'bg-emerald-600 text-white font-black border-emerald-700 shadow-sm'
+                                  : 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black border-emerald-400 shadow-sm shadow-emerald-500/20'
                                 : isLight
                                 ? 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
                                 : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
@@ -1181,7 +1478,7 @@ export function FriendRoomModal({
                         {/* Custom Time Control Input Drawer */}
                         {isCustomRoom && (
                           <div className={`mt-2 p-2.5 rounded-xl border flex items-center gap-2 animate-fade-in ${theme.innerBox}`}>
-                            <span className="text-xs font-bold text-amber-500">Minutes:</span>
+                            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">Minutes:</span>
                             <input
                               type="number"
                               min="1"
@@ -1197,7 +1494,7 @@ export function FriendRoomModal({
 
                       <button
                         onClick={handleCreateRoomAction}
-                        className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-xs transition-all cursor-pointer active:scale-98 flex items-center justify-center gap-1.5"
+                        className="w-full py-2.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-white font-black text-xs sm:text-sm rounded-xl shadow-lg shadow-emerald-500/25 transition-all cursor-pointer active:scale-98 flex items-center justify-center gap-2"
                       >
                         <Swords className="w-3.5 h-3.5" />
                         <span>Generate Room & Link ({isCustomRoom ? customRoomMinutes : selectedRoomMinutes}m)</span>
@@ -1215,12 +1512,12 @@ export function FriendRoomModal({
                           value={roomCode}
                           onChange={e => setRoomCode(e.target.value)}
                           placeholder="Enter Room Code (e.g. ARENA_XYZ)..."
-                          className={`flex-1 border rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-amber-500 font-mono ${theme.input}`}
+                          className={`flex-1 border rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 font-mono ${theme.input}`}
                         />
                         <button
                           onClick={() => onJoinRoom(roomCode.trim())}
                           disabled={!roomCode.trim()}
-                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-black text-xs rounded-xl shadow-xs cursor-pointer active:scale-95"
+                          className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 disabled:opacity-40 text-white font-black text-xs rounded-xl shadow-xs cursor-pointer active:scale-95"
                         >
                           Join
                         </button>

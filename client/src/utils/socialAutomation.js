@@ -117,16 +117,38 @@ export const GENERAL_CHALLENGERS = [
   ...ANIME_FEMALE_CHARACTERS
 ];
 
-const NOTIFICATIONS_STORAGE_KEY = 'chess_arena_notifications_v2';
+const NOTIFICATIONS_STORAGE_KEY = 'chess_arena_notifications_v3';
+const INITIAL_SEEDED_KEY = 'chess_arena_initial_notifs_seeded_v3';
+const DISMISSED_NOTIFS_KEY = 'chess_arena_dismissed_notifs_v3';
 const APP_OPEN_COUNT_KEY = 'chess_arena_app_open_count';
-const DAILY_FRIEND_DATE_KEY = 'chess_arena_daily_friends_date';
-const DAILY_FRIEND_COUNT_KEY = 'chess_arena_daily_friends_count';
+const LAST_NOTIF_TIME_KEY = 'chess_arena_last_notif_time_v3';
+const NEXT_OPEN_TARGET_KEY = 'chess_arena_next_open_target_v3';
 const FRIENDS_STORAGE_KEY = 'chess_arena_friends_v3';
 const BLOCKED_STORAGE_KEY = 'chess_arena_blocked_friends_v3';
 
-function getTodayString() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+/**
+ * Reads list of dismissed/handled notification IDs and usernames
+ */
+export function getDismissedNotifications() {
+  try {
+    const raw = safeStorage.getItem(DISMISSED_NOTIFS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return [];
+}
+
+/**
+ * Permanently marks a notification as dismissed/accepted/declined so it NEVER returns
+ */
+export function markNotificationDismissed(notifOrId) {
+  if (!notifOrId) return;
+  const id = typeof notifOrId === 'string' ? notifOrId : notifOrId?.id;
+  const username = typeof notifOrId === 'object' ? notifOrId?.fromUser?.username : null;
+  const current = getDismissedNotifications();
+  const set = new Set(current);
+  if (id) set.add(id);
+  if (username) set.add(`user_${username.toLowerCase()}`);
+  safeStorage.setItem(DISMISSED_NOTIFS_KEY, JSON.stringify([...set]));
 }
 
 /**
@@ -134,14 +156,21 @@ function getTodayString() {
  * 1. Hikaru 3m Blitz challenge
  * 2. Magnus 5m Blitz challenge
  * 3. Nezuko Kamado (Anime Girl) friend request
+ * Never includes items already in friends or dismissed.
  */
 export function getInitialNotifications() {
+  const friends = getStoredFriends();
+  const friendUsernames = new Set(friends.map(f => f.username?.toLowerCase()));
+  const dismissed = new Set(getDismissedNotifications());
+
   const nezuko = ANIME_FEMALE_CHARACTERS[0]; // Nezuko Kamado
   const hikaru = GENERAL_CHALLENGERS[0];    // Hikaru
   const magnus = GENERAL_CHALLENGERS[1];    // Magnus
 
-  return [
-    {
+  const list = [];
+
+  if (!dismissed.has('notif_hikaru_init') && !dismissed.has(`user_${hikaru.username.toLowerCase()}`)) {
+    list.push({
       id: 'notif_hikaru_init',
       type: 'challenge',
       fromUser: {
@@ -158,8 +187,11 @@ export function getInitialNotifications() {
         timeControl: { baseMinutes: 3, incrementSeconds: 0 },
         colorPreference: 'random'
       }
-    },
-    {
+    });
+  }
+
+  if (!dismissed.has('notif_magnus_init') && !dismissed.has(`user_${magnus.username.toLowerCase()}`)) {
+    list.push({
       id: 'notif_magnus_init',
       type: 'challenge',
       fromUser: {
@@ -176,8 +208,14 @@ export function getInitialNotifications() {
         timeControl: { baseMinutes: 5, incrementSeconds: 0 },
         colorPreference: 'random'
       }
-    },
-    {
+    });
+  }
+
+  // Only include Nezuko if not already added to friends and not dismissed!
+  if (!friendUsernames.has(nezuko.username.toLowerCase()) &&
+      !dismissed.has('notif_nezuko_init') &&
+      !dismissed.has(`user_${nezuko.username.toLowerCase()}`)) {
+    list.push({
       id: 'notif_nezuko_init',
       type: 'friend_request',
       fromUser: {
@@ -192,22 +230,29 @@ export function getInitialNotifications() {
       },
       message: '🌸 Nezuko Kamado sent you a friend request to connect & play chess!',
       time: 'Just now'
-    }
-  ];
+    });
+  }
+
+  return list;
 }
 
 /**
  * Creates a random 3-10 minute match challenge from an exciting opponent
  */
 export function generateRandomChallenge(existingNotifs = []) {
-  // Select candidate who doesn't currently have an active pending notification
-  const existingUsernames = new Set(existingNotifs.map(n => n.fromUser?.username));
-  const available = GENERAL_CHALLENGERS.filter(c => !existingUsernames.has(c.username));
+  const friends = getStoredFriends();
+  const dismissed = new Set(getDismissedNotifications());
+  const existingUsernames = new Set([
+    ...existingNotifs.map(n => n.fromUser?.username?.toLowerCase()),
+    ...friends.map(f => f.username?.toLowerCase()),
+    ...[...dismissed].filter(d => d.startsWith('user_')).map(d => d.replace('user_', '').toLowerCase())
+  ]);
+
+  const available = GENERAL_CHALLENGERS.filter(c => !existingUsernames.has(c.username.toLowerCase()));
   const candidate = available.length > 0
     ? available[Math.floor(Math.random() * available.length)]
     : GENERAL_CHALLENGERS[Math.floor(Math.random() * GENERAL_CHALLENGERS.length)];
 
-  // Time controls between 3 and 10 minutes: 3, 5, or 10 min
   const timeOptions = [3, 5, 10];
   const minutes = timeOptions[Math.floor(Math.random() * timeOptions.length)];
   const formatName = minutes <= 5 ? 'Blitz' : 'Rapid';
@@ -236,55 +281,114 @@ export function generateRandomChallenge(existingNotifs = []) {
 /**
  * Process App Open:
  * 1. Checks open count
- * 2. If 1st open: delivers initial 2 match challenges + 1 anime girl friend request
- * 3. Every 3-4 opens: adds 1 new match challenge + 2-3 daily friend requests
+ * 2. If 1st open: delivers initial 2 match challenges + 1 anime girl friend request (EXACTLY ONCE)
+ * 3. Subsequent notifications: delivered ONLY after opening the app 5-7 times AND after several hours have passed
  */
 export function processAppOpenNotifications(currentNotifs = []) {
   let openCount = parseInt(safeStorage.getItem(APP_OPEN_COUNT_KEY) || '0', 10);
   openCount += 1;
   safeStorage.setItem(APP_OPEN_COUNT_KEY, String(openCount));
 
-  let notifs = Array.isArray(currentNotifs) ? [...currentNotifs] : [];
+  const dismissed = new Set(getDismissedNotifications());
+  const friends = getStoredFriends();
+  const friendUsernames = new Set(friends.map(f => f.username?.toLowerCase()));
 
-  // First time launch: Initialize with the 2 play requests + 1 anime girl request
-  if (openCount === 1 || notifs.length === 0) {
+  // Filter current notifications to permanently exclude any dismissed or already friended items
+  let notifs = Array.isArray(currentNotifs)
+    ? currentNotifs.filter(n => {
+        if (!n || dismissed.has(n.id)) return false;
+        const lowerName = n.fromUser?.username?.toLowerCase();
+        if (lowerName && dismissed.has(`user_${lowerName}`)) return false;
+        if (n.type === 'friend_request' && lowerName && friendUsernames.has(lowerName)) return false;
+        return true;
+      })
+    : [];
+
+  const isInitialSeeded = safeStorage.getItem(INITIAL_SEEDED_KEY) === 'true';
+
+  // First time launch: Initialize with the 3 notifications once and set target 5-7 opens in future
+  if (!isInitialSeeded) {
+    safeStorage.setItem(INITIAL_SEEDED_KEY, 'true');
     const initial = getInitialNotifications();
     notifs = initial;
+    safeStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifs));
+    // Set next notification target: 5 to 7 opens in future
+    const nextTarget = openCount + Math.floor(5 + Math.random() * 3);
+    safeStorage.setItem(NEXT_OPEN_TARGET_KEY, String(nextTarget));
+    safeStorage.setItem(LAST_NOTIF_TIME_KEY, String(Date.now()));
+    return notifs;
+  }
+
+  // Subsequent opens:
+  // ONLY generate another notification after opening the app 5-7 times AND after several hours/days have passed
+  const targetOpen = parseInt(safeStorage.getItem(NEXT_OPEN_TARGET_KEY) || '0', 10);
+  const lastTime = parseInt(safeStorage.getItem(LAST_NOTIF_TIME_KEY) || '0', 10);
+  const now = Date.now();
+  const hoursSinceLast = lastTime > 0 ? (now - lastTime) / (1000 * 60 * 60) : 999;
+
+  // Initialize targetOpen if missing
+  if (targetOpen === 0) {
+    const nextTarget = openCount + Math.floor(5 + Math.random() * 3);
+    safeStorage.setItem(NEXT_OPEN_TARGET_KEY, String(nextTarget));
+    safeStorage.setItem(LAST_NOTIF_TIME_KEY, String(now));
     safeStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifs));
     return notifs;
   }
 
-  // After every 3-4 opens of the app
-  if (openCount % 3 === 0 || openCount % 4 === 0) {
-    // 1. Add new notification to play
-    const newChallenge = generateRandomChallenge(notifs);
-    notifs.unshift(newChallenge);
+  const reachedOpens = openCount >= targetOpen;
+  const reachedHours = hoursSinceLast >= 3; // at least 3-4 hours or days
 
-    // 2. Check 2-3 friend requests per day limit
-    const today = getTodayString();
-    const lastDate = safeStorage.getItem(DAILY_FRIEND_DATE_KEY);
-    let dailyCount = 0;
+  if (reachedOpens && reachedHours) {
+    // Schedule next target: 5 to 7 opens in future
+    const nextTarget = openCount + Math.floor(5 + Math.random() * 3);
+    safeStorage.setItem(NEXT_OPEN_TARGET_KEY, String(nextTarget));
+    safeStorage.setItem(LAST_NOTIF_TIME_KEY, String(now));
 
-    if (lastDate === today) {
-      dailyCount = parseInt(safeStorage.getItem(DAILY_FRIEND_COUNT_KEY) || '0', 10);
+    const blocked = getBlockedFriends();
+    const existingUsernames = new Set([
+      ...notifs.map(n => n.fromUser?.username?.toLowerCase()),
+      ...friends.map(f => f.username?.toLowerCase()),
+      ...blocked.map(b => (typeof b === 'string' ? b.toLowerCase() : '')),
+      ...[...dismissed].filter(d => d.startsWith('user_')).map(d => d.replace('user_', '').toLowerCase())
+    ]);
+
+    // 50/50 chance of match challenge vs friend request
+    const isChallenge = Math.random() < 0.5;
+
+    if (isChallenge) {
+      const available = GENERAL_CHALLENGERS.filter(c => !existingUsernames.has(c.username.toLowerCase()));
+      const candidate = available.length > 0
+        ? available[Math.floor(Math.random() * available.length)]
+        : GENERAL_CHALLENGERS[Math.floor(Math.random() * GENERAL_CHALLENGERS.length)];
+
+      const timeOptions = [3, 5, 10];
+      const minutes = timeOptions[Math.floor(Math.random() * timeOptions.length)];
+      const formatName = minutes <= 5 ? 'Blitz' : 'Rapid';
+
+      notifs.unshift({
+        id: `challenge_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        type: 'challenge',
+        fromUser: {
+          id: candidate.id,
+          username: candidate.username,
+          avatar: candidate.avatar,
+          elo: candidate.elo,
+          country: candidate.country,
+          title: candidate.title,
+          bio: candidate.bio
+        },
+        message: `Challenged you to a ${minutes}-minute ${formatName} match! ⚔️`,
+        time: 'Just now',
+        config: {
+          timeControl: { baseMinutes: minutes, incrementSeconds: 0 },
+          colorPreference: 'random'
+        }
+      });
     } else {
-      safeStorage.setItem(DAILY_FRIEND_DATE_KEY, today);
-      safeStorage.setItem(DAILY_FRIEND_COUNT_KEY, '0');
-    }
-
-    if (dailyCount < 3) {
-      // Pick an anime girl or master not already in friends or pending notifications
-      const friends = getStoredFriends();
-      const blocked = getBlockedFriends();
-      const existingUsernames = new Set([
-        ...notifs.map(n => n.fromUser?.username),
-        ...friends.map(f => f.username),
-        ...blocked
-      ]);
-
-      const availableFriends = GENERAL_CHALLENGERS.filter(c => !existingUsernames.has(c.username));
-      if (availableFriends.length > 0) {
-        const candidate = availableFriends[Math.floor(Math.random() * availableFriends.length)];
+      // Friend request from anime girl or master
+      const available = GENERAL_CHALLENGERS.filter(c => !existingUsernames.has(c.username.toLowerCase()));
+      if (available.length > 0) {
+        const candidate = available[Math.floor(Math.random() * available.length)];
         const isAnime = Boolean(candidate.anime);
 
         notifs.unshift({
@@ -303,20 +407,15 @@ export function processAppOpenNotifications(currentNotifs = []) {
           message: `${isAnime ? '🌸' : '👥'} ${candidate.username} sent you a friend request to connect & play!`,
           time: 'Just now'
         });
-
-        dailyCount += 1;
-        safeStorage.setItem(DAILY_FRIEND_COUNT_KEY, String(dailyCount));
       }
     }
 
-    // Keep at most 25 notifications
     if (notifs.length > 25) {
       notifs = notifs.slice(0, 25);
     }
-
-    safeStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifs));
   }
 
+  safeStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifs));
   return notifs;
 }
 
