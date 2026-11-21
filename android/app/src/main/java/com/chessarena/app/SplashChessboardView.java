@@ -35,6 +35,7 @@ public class SplashChessboardView extends View {
     private static final int PIECE_KING = 6;
 
     // Piece colors
+    private static final int COLOR_NONE = 0;
     private static final int COLOR_WHITE = 1;
     private static final int COLOR_BLACK = 2;
 
@@ -80,7 +81,6 @@ public class SplashChessboardView extends View {
         { COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_NONE,  COLOR_WHITE, COLOR_WHITE, COLOR_WHITE },
         { COLOR_WHITE, COLOR_WHITE, COLOR_NONE,  COLOR_WHITE, COLOR_WHITE, COLOR_NONE,  COLOR_NONE,  COLOR_WHITE }
     };
-    private static final int COLOR_NONE = 0;
 
     // Drawing paints
     private final Paint boardBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
