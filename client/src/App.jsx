@@ -45,6 +45,8 @@ import { calculateEloDelta, getFormatFromTimeControl } from './utils/elo.js';
 import { getStreakInfo } from './utils/streak.js';
 import { firebaseRoomService } from './services/firebaseRoomService.js';
 import { getRandomAnimeAvatar, FAMOUS_AVATARS } from './data/avatarData.js';
+
+export const DEFAULT_APP_AVATAR = FAMOUS_AVATARS[0]?.url || 'https://api.dicebear.com/7.x/adventurer/svg?seed=LuffyGear5&radius=50';
 import {
   processAppOpenNotifications,
   generateRandomChallenge,
@@ -177,22 +179,51 @@ export default function App() {
 
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 
-  // Authentication State
+  // Authentication State with rock-solid, permanent avatar stability
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const saved = safeStorage.getItem('chess_arena_user');
+      const savedAvatar = safeStorage.getItem('chess_arena_selected_avatar');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed) {
-          if (!parsed.avatar || parsed.avatar.includes('seed=Guest_') || parsed.avatar.includes('seed=Player') || parsed.avatar.includes('bottts')) {
-            parsed.avatar = getRandomAnimeAvatar();
-            safeStorage.setItem('chess_arena_user', JSON.stringify(parsed));
+          // If user already has an avatar or selected avatar, preserve it permanently!
+          if (savedAvatar) {
+            parsed.avatar = savedAvatar;
+          } else if (!parsed.avatar || parsed.avatar.includes('seed=Guest_') || parsed.avatar.includes('seed=Player') || parsed.avatar.includes('bottts')) {
+            parsed.avatar = DEFAULT_APP_AVATAR;
+            safeStorage.setItem('chess_arena_selected_avatar', DEFAULT_APP_AVATAR);
+          } else {
+            safeStorage.setItem('chess_arena_selected_avatar', parsed.avatar);
           }
           return parsed;
         }
       }
-    } catch (e) {}
-    return null;
+      // If no saved user exists on initial visit, establish stable persistent guest user ONCE
+      const initialChosen = safeStorage.getItem('chess_arena_initial_elo_chosen');
+      const baseElo = initialChosen ? (parseInt(initialChosen, 10) || 1200) : 1200;
+      const guestNum = Math.floor(1000 + Math.random() * 9000);
+      const chosenAvatar = savedAvatar || DEFAULT_APP_AVATAR;
+      const initialGuest = {
+        id: `guest_${Date.now()}_${guestNum}`,
+        username: `Guest_${guestNum}`,
+        role: 'guest',
+        elo: baseElo,
+        initialElo: baseElo,
+        initialEloSelected: Boolean(initialChosen),
+        ratings: { bullet: baseElo, blitz: baseElo, rapid: baseElo, classical: baseElo },
+        country: 'IN',
+        countryName: 'India',
+        countryFlag: '🇮🇳',
+        avatar: chosenAvatar
+      };
+      safeStorage.setItem('chess_arena_user', JSON.stringify(initialGuest));
+      safeStorage.setItem('chess_arena_selected_avatar', chosenAvatar);
+      safeStorage.setItem('token', `mock_guest_token_${Date.now()}`);
+      return initialGuest;
+    } catch (e) {
+      return null;
+    }
   });
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -222,10 +253,12 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && parsed.id) {
-          // If avatar is missing, blank, bottts, or old generic guest seed, give a nice random anime avatar
-          if (!parsed.avatar || parsed.avatar.includes('seed=Guest_') || parsed.avatar.includes('seed=Player') || parsed.avatar.includes('bottts')) {
-            parsed.avatar = getRandomAnimeAvatar();
-            safeStorage.setItem('chess_arena_user', JSON.stringify(parsed));
+          const savedAvatar = safeStorage.getItem('chess_arena_selected_avatar');
+          if (savedAvatar) {
+            parsed.avatar = savedAvatar;
+          } else if (!parsed.avatar || parsed.avatar.includes('seed=Guest_') || parsed.avatar.includes('seed=Player') || parsed.avatar.includes('bottts')) {
+            parsed.avatar = DEFAULT_APP_AVATAR;
+            safeStorage.setItem('chess_arena_selected_avatar', DEFAULT_APP_AVATAR);
           }
           setCurrentUser(parsed);
           return parsed;
@@ -234,7 +267,7 @@ export default function App() {
     } catch (e) {}
     const initialChosen = safeStorage.getItem('chess_arena_initial_elo_chosen');
     const baseElo = initialChosen ? (parseInt(initialChosen, 10) || 1200) : 1200;
-    const hasInitialChosen = Boolean(initialChosen);
+    const chosenAvatar = safeStorage.getItem('chess_arena_selected_avatar') || DEFAULT_APP_AVATAR;
     const guestNum = Math.floor(1000 + Math.random() * 9000);
     const guest = {
       id: `guest_${Date.now()}_${guestNum}`,
@@ -242,15 +275,16 @@ export default function App() {
       role: 'guest',
       elo: baseElo,
       initialElo: baseElo,
-      initialEloSelected: hasInitialChosen,
+      initialEloSelected: Boolean(initialChosen),
       ratings: { bullet: baseElo, blitz: baseElo, rapid: baseElo, classical: baseElo },
       country: 'IN',
       countryName: 'India',
       countryFlag: '🇮🇳',
-      avatar: getRandomAnimeAvatar()
+      avatar: chosenAvatar
     };
     setCurrentUser(guest);
     safeStorage.setItem('chess_arena_user', JSON.stringify(guest));
+    safeStorage.setItem('chess_arena_selected_avatar', chosenAvatar);
     safeStorage.setItem('token', `mock_guest_token_${Date.now()}`);
     return guest;
   };
@@ -408,16 +442,19 @@ export default function App() {
       addFriendPermanently(notif.fromUser);
     }
     const token = safeStorage.getItem('token');
-    if (token && notif.fromUser?.id && !notif.fromUser?.id?.startsWith('anime_') && !notif.fromUser?.id?.startsWith('f_') && !notif.fromUser?.id?.startsWith('sug_')) {
-      fetch('/api/friends/respond', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ fromUserId: notif.fromUser.id, accept: true })
-      }).catch(() => {});
-    }
+    fetch('/api/friends/respond', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token || ''}`
+      },
+      body: JSON.stringify({
+        fromUserId: notif.fromUser?.id,
+        fromUsername: notif.fromUser?.username,
+        targetUsername: currentUser?.username,
+        accept: true
+      })
+    }).catch(() => {});
   };
 
   const handleDeclineNotificationFriendRequest = (id) => {
@@ -425,7 +462,60 @@ export default function App() {
     markNotificationDismissed(target || id);
     setNotifications(prev => prev.filter(n => n.id !== id));
     sound.playClick();
+    const token = safeStorage.getItem('token');
+    fetch('/api/friends/respond', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token || ''}`
+      },
+      body: JSON.stringify({
+        fromUserId: target?.fromUser?.id,
+        fromUsername: target?.fromUser?.username,
+        targetUsername: currentUser?.username,
+        accept: false
+      })
+    }).catch(() => {});
   };
+
+  // Remote notifications synchronization (delivers genuine friend requests across users & devices via Firestore)
+  useEffect(() => {
+    const userToSync = currentUser?.username;
+    if (!userToSync) return;
+
+    let isMounted = true;
+    const fetchRemoteNotifs = async () => {
+      try {
+        const token = safeStorage.getItem('token') || '';
+        const res = await fetch(`/api/notifications?username=${encodeURIComponent(userToSync)}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (isMounted && data?.notifications && Array.isArray(data.notifications) && data.notifications.length > 0) {
+          const dismissedRaw = safeStorage.getItem('chess_arena_dismissed_notifications_v3');
+          let dismissedSet = new Set();
+          try {
+            if (dismissedRaw) dismissedSet = new Set(JSON.parse(dismissedRaw));
+          } catch {}
+
+          setNotifications(prev => {
+            const existingIds = new Set(prev.map(n => n.id));
+            const fresh = data.notifications.filter(n => !existingIds.has(n.id) && !dismissedSet.has(n.id));
+            if (fresh.length === 0) return prev;
+            return [...fresh, ...prev];
+          });
+        }
+      } catch {}
+    };
+
+    fetchRemoteNotifs();
+    const syncInterval = setInterval(fetchRemoteNotifs, 8000);
+    return () => {
+      isMounted = false;
+      clearInterval(syncInterval);
+    };
+  }, [currentUser?.username]);
 
   // Active Game State
   const [gameSession, setGameSession] = useState(null); // Full gameState from server
@@ -2016,11 +2106,11 @@ export default function App() {
               aria-label="View Profile"
             >
               <img
-                src={currentUser?.avatar || getRandomAnimeAvatar()}
+                src={currentUser?.avatar || safeStorage.getItem('chess_arena_selected_avatar') || DEFAULT_APP_AVATAR}
                 alt={currentUser?.username || 'Player'}
                 className="w-8 h-8 rounded-full object-cover bg-amber-500/20 shadow-xs"
                 onError={(e) => {
-                  e.currentTarget.src = FAMOUS_AVATARS[0].url;
+                  e.currentTarget.src = DEFAULT_APP_AVATAR;
                 }}
               />
               {(currentUser?.role === 'admin' || currentUser?.email?.toLowerCase().trim() === 'op21plus@gmail.com') && (
