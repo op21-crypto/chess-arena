@@ -48,7 +48,7 @@ export function LessonView({ onBack, isLight, isOled }) {
   const isLightMode = isLight !== undefined
     ? isLight
     : (typeof window !== 'undefined' && window.matchMedia && !window.matchMedia('(prefers-color-scheme: dark)').matches);
-  const [boardTheme] = useState(() => (Math.random() < 0.5 ? 'gold' : 'emerald'));
+  const [boardTheme] = useState(() => 'greenwich');
   const [lessons] = useState(ALL_LESSONS);
   const [selectedLessonIdx, setSelectedLessonIdx] = useState(() => {
     const saved = safeStorage.getItem('chess_current_lesson_idx');

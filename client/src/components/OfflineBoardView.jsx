@@ -68,12 +68,12 @@ const OFFLINE_THEMES = [
   },
   {
     id: "amoled",
-    name: "AMOLED Black",
-    light: "#1e293b",
-    dark: "#000000",
+    name: "Midnight Slate",
+    light: "#526682",
+    dark: "#223147",
     border: "#f59e0b",
-    previewLight: "#1e293b",
-    previewDark: "#000000"
+    previewLight: "#526682",
+    previewDark: "#223147"
   },
   {
     id: "dark_marble",
@@ -98,9 +98,9 @@ export function OfflineBoardView({ onBack, isLight = false }) {
   const [showRestartConfirm, setShowRestartConfirm] = useState(false);
   const [showGameOverModal, setShowGameOverModal] = useState(false);
 
-  // Offline Settings State: Default to randomly selected Gold or Emerald theme
+  // Offline Settings State: Default to Greenwich tournament board
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
-  const [themeId, setThemeId] = useState(() => (Math.random() < 0.5 ? 'gold' : 'emerald'));
+  const [themeId, setThemeId] = useState(() => 'greenwich');
   const [viewMode, setViewMode] = useState('face-to-face'); // 'face-to-face' | 'auto-flip' | '2d'
   const [playAs, setPlayAs] = useState('by_turns'); // 'white' | 'black' | 'by_turns'
   const [soundEnabled, setSoundEnabled] = useState(true);

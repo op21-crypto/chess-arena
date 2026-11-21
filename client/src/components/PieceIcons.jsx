@@ -126,9 +126,17 @@ export const PIECE_THEMES = {
   }
 };
 
-export const getRandomDefaultBoardTheme = () => (Math.random() < 0.5 ? 'gold' : 'emerald');
+export const getRandomDefaultBoardTheme = () => 'greenwich';
 
 export const BOARD_THEMES = {
+  greenwich: {
+    name: 'Greenwich Tournament',
+    light: '#ebecd0',
+    dark: '#759858',
+    border: '#45612c',
+    highlight: 'rgba(250, 204, 21, 0.45)',
+    check: 'rgba(239, 68, 68, 0.75)'
+  },
   gold: {
     name: 'Gilded Royal Gold',
     light: '#fbf5df',
@@ -146,9 +154,9 @@ export const BOARD_THEMES = {
     check: 'rgba(239, 68, 68, 0.85)'
   },
   amoled: {
-    name: "AMOLED Pure Black",
-    light: "#1e293b",
-    dark: "#000000",
+    name: "Midnight Slate",
+    light: "#475569",
+    dark: "#1e293b",
     border: "#f59e0b",
     highlight: "rgba(245, 158, 11, 0.55)",
     check: "rgba(239, 68, 68, 0.85)"
@@ -159,14 +167,6 @@ export const BOARD_THEMES = {
     dark: '#a87a51',
     border: '#7c5432',
     highlight: 'rgba(234, 179, 8, 0.45)',
-    check: 'rgba(239, 68, 68, 0.75)'
-  },
-  greenwich: {
-    name: 'Greenwich',
-    light: '#ebecd0',
-    dark: '#759858',
-    border: '#45612c',
-    highlight: 'rgba(250, 204, 21, 0.45)',
     check: 'rgba(239, 68, 68, 0.75)'
   },
   riviera: {

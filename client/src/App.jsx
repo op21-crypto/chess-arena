@@ -39,6 +39,8 @@ import { getOpeningName } from './utils/openings.js';
 import { safeStorage } from './utils/storage.js';
 import { getLocalAIMove, getAIMoveAsync, getCapturedPieces } from './utils/aiEngine.js';
 import { calculateUserRanking } from './data/leaderboardData.js';
+import { calculateEloDelta, getFormatFromTimeControl } from './utils/elo.js';
+import { getStreakInfo } from './utils/streak.js';
 
 const DEFAULT_SETTINGS = {
   appTheme: 'system', // Defaults dynamically to device / phone system mode
@@ -53,7 +55,7 @@ const DEFAULT_SETTINGS = {
   vibrations: true,
   voiceCommentary: false,
   voiceCommentaryOnlyOpponent: true,
-  boardTheme: (typeof Math !== 'undefined' && Math.random() < 0.5) ? 'gold' : 'emerald',
+  boardTheme: 'greenwich',
   pieceTheme: 'alexander',
   showLegalMoves: true,
   highlightLastMove: true,
@@ -110,12 +112,11 @@ export default function App() {
       const saved = safeStorage.getItem('chess_arena_settings');
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Ensure default board theme is randomly selected between Gold and Emerald
-        const goldEmeraldMigrated = safeStorage.getItem('chess_arena_gold_emerald_default_v1');
-        if (!goldEmeraldMigrated) {
-          safeStorage.setItem('chess_arena_gold_emerald_default_v1', 'true');
-          const randomTheme = Math.random() < 0.5 ? 'gold' : 'emerald';
-          parsed.boardTheme = randomTheme;
+        // Ensure default board theme is Greenwich tournament board (never black AMOLED)
+        const greenwichMigrated = safeStorage.getItem('chess_arena_greenwich_board_v1');
+        if (!greenwichMigrated || parsed.boardTheme === 'amoled') {
+          safeStorage.setItem('chess_arena_greenwich_board_v1', 'true');
+          parsed.boardTheme = 'greenwich';
         }
         const themeMigrated = safeStorage.getItem('chess_arena_system_theme_default_v1');
         if (!themeMigrated) {
@@ -138,7 +139,7 @@ export default function App() {
         safeStorage.setItem('chess_arena_system_theme_default_v1', 'true');
       }
     } catch (e) {}
-    return { ...DEFAULT_SETTINGS, boardTheme: Math.random() < 0.5 ? 'gold' : 'emerald', appTheme: 'system', musicEnabled: true };
+    return { ...DEFAULT_SETTINGS, boardTheme: 'greenwich', appTheme: 'system', musicEnabled: true };
   });
 
   const handleUpdateSettings = (newSettings) => {
@@ -191,12 +192,18 @@ export default function App() {
         }
       }
     } catch (e) {}
+    const initialChosen = safeStorage.getItem('chess_arena_initial_elo_chosen');
+    const baseElo = initialChosen ? (parseInt(initialChosen, 10) || 1200) : 1200;
+    const hasInitialChosen = Boolean(initialChosen);
     const guestNum = Math.floor(1000 + Math.random() * 9000);
     const guest = {
       id: `guest_${Date.now()}_${guestNum}`,
       username: `Guest_${guestNum}`,
       role: 'guest',
-      ratings: { bullet: 1200, blitz: 1200, rapid: 1200, classical: 1200 },
+      elo: baseElo,
+      initialElo: baseElo,
+      initialEloSelected: hasInitialChosen,
+      ratings: { bullet: baseElo, blitz: baseElo, rapid: baseElo, classical: baseElo },
       country: 'IN',
       countryName: 'India',
       countryFlag: '🇮🇳',
@@ -313,6 +320,107 @@ export default function App() {
   const [inGameNotice, setInGameNotice] = useState(null);
   const [showInGameDesignModal, setShowInGameDesignModal] = useState(false);
   const [voiceCallTrigger, setVoiceCallTrigger] = useState(0);
+
+  // Match rating and stats tracking reference (prevents duplicate calculation)
+  const processedMatchIdsRef = useRef(new Set());
+
+  const handleMatchFinished = ({ winner, status, winReason, currentSession }) => {
+    const session = currentSession || gameSession;
+    if (!session) return;
+    const matchId = session.id || `${session.fen}_${session.moveHistory?.length || 0}_${status}`;
+    if (processedMatchIdsRef.current.has(matchId)) {
+      return;
+    }
+    processedMatchIdsRef.current.add(matchId);
+
+    const isWhite = playerColor === 'w';
+    const isWinner = (winner === 'white' && isWhite) || (winner === 'black' && !isWhite);
+    const isDraw = winner === 'draw' || winner === null || status === 'stalemate' || status === 'draw';
+    const isDefeat = !isWinner && !isDraw;
+    const resultType = isWinner ? 'win' : (isDefeat ? 'loss' : 'draw');
+
+    const format = getFormatFromTimeControl(session.timeControl);
+    const user = currentUser || getOrCreateUser();
+    const userCurrentElo = user.ratings?.[format] || user.elo || 1200;
+
+    let oppElo = 1200;
+    if (isAIGame) {
+      oppElo = currentAIOpponent?.elo || (700 + (aiLevel || 1) * 180);
+    } else {
+      const opp = isWhite ? session.blackPlayer : session.whitePlayer;
+      oppElo = opp?.ratings?.[format] || opp?.elo || 1200;
+    }
+
+    const delta = calculateEloDelta(userCurrentElo, oppElo, resultType);
+    const newElo = Math.max(100, userCurrentElo + delta);
+
+    const currentStats = user.stats || { played: 0, won: 0, lost: 0, drawn: 0, winStreak: 0 };
+    const updatedStats = {
+      played: (currentStats.played || 0) + 1,
+      won: (currentStats.won || 0) + (isWinner ? 1 : 0),
+      lost: (currentStats.lost || 0) + (isDefeat ? 1 : 0),
+      drawn: (currentStats.drawn || 0) + (isDraw ? 1 : 0),
+      winStreak: isWinner ? ((currentStats.winStreak || 0) + 1) : 0
+    };
+
+    const baseRatings = {
+      bullet: 1200,
+      blitz: 1200,
+      rapid: 1200,
+      classical: 1200,
+      puzzle: 1200,
+      ...(user.ratings || {})
+    };
+    baseRatings[format] = newElo;
+    if (format === 'rapid') {
+      baseRatings.rapid = newElo;
+    }
+    const updatedRatings = baseRatings;
+
+    const updatedUser = {
+      ...user,
+      elo: newElo,
+      ratings: updatedRatings,
+      stats: updatedStats
+    };
+
+    setCurrentUser(updatedUser);
+    safeStorage.setItem('chess_arena_user', JSON.stringify(updatedUser));
+    safeStorage.setItem('chess_arena_user_profile', JSON.stringify(updatedUser));
+
+    const userEloChange = delta;
+    const oppEloChange = -delta;
+    const whiteEloChange = isWhite ? userEloChange : oppEloChange;
+    const blackEloChange = isWhite ? oppEloChange : userEloChange;
+
+    setGameSession(prev => prev ? {
+      ...prev,
+      isGameOver: true,
+      status,
+      winner,
+      winReason,
+      whiteEloChange,
+      blackEloChange
+    } : null);
+
+    // Keep streak alive and updated
+    getStreakInfo();
+
+    if (user?.id) {
+      fetch(`/api/users/${user.id}/update`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${safeStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          elo: newElo,
+          ratings: updatedRatings,
+          stats: updatedStats
+        })
+      }).catch(() => {});
+    }
+  };
 
   // Socket reference
   const socketRef = useRef(null);
@@ -529,15 +637,11 @@ export default function App() {
     });
 
     socket.on('game_over', (data) => {
-      setGameSession(prev => prev ? {
-        ...prev,
-        status: data.status,
+      handleMatchFinished({
         winner: data.winner,
-        winReason: data.winReason,
-        whiteEloChange: data.whiteEloChange || 0,
-        blackEloChange: data.blackEloChange || 0,
-        isGameOver: true
-      } : null);
+        status: data.status,
+        winReason: data.winReason
+      });
 
       setShowGameOverModal(true);
 
@@ -844,6 +948,12 @@ export default function App() {
           } else {
             sound.playGameOver();
           }
+          handleMatchFinished({
+            winner,
+            status: 'timeout',
+            winReason: 'timeout',
+            currentSession: { ...prev, whiteTime: newWhiteTime, blackTime: newBlackTime }
+          });
           return {
             ...prev,
             whiteTime: newWhiteTime,
@@ -943,6 +1053,12 @@ export default function App() {
           } else {
             sound.playGameOver();
           }
+          handleMatchFinished({
+            winner,
+            status,
+            winReason,
+            currentSession: { ...(session || gameSession), moveHistory: updatedMoves }
+          });
         }
 
         const captured = getCapturedPieces(chess.fen());
@@ -1022,6 +1138,12 @@ export default function App() {
           } else {
             sound.playGameOver();
           }
+          handleMatchFinished({
+            winner,
+            status,
+            winReason,
+            currentSession: { ...(session || gameSession), moveHistory: updatedMoves }
+          });
         }
 
         const captured = getCapturedPieces(chess.fen());
@@ -1096,6 +1218,12 @@ export default function App() {
             const isWinner = (winner === 'white' && playerColor === 'w') || (winner === 'black' && playerColor === 'b');
             if (isWinner) sound.playVictory();
             else sound.playGameOver();
+            handleMatchFinished({
+              winner,
+              status,
+              winReason,
+              currentSession: { ...gameSession, moveHistory: updatedHistory }
+            });
           }
 
           const captured = getCapturedPieces(chess.fen());
@@ -1160,6 +1288,11 @@ export default function App() {
       }));
       setShowGameOverModal(true);
       sound.playGameOver();
+      handleMatchFinished({
+        winner: oppWinner,
+        status: 'resigned',
+        winReason: 'resignation'
+      });
     } else {
       socketRef.current?.emit('resign_game', { gameId: gameSession.id });
     }
@@ -1196,6 +1329,11 @@ export default function App() {
         }));
         setShowGameOverModal(true);
         sound.playVictory();
+        handleMatchFinished({
+          winner: null,
+          status: 'draw',
+          winReason: 'agreement'
+        });
       } else {
         const reaction = currentAIOpponent?.drawReaction || "A true grandmaster fights until the final move!";
         setInGameNotice(reaction);
@@ -2375,8 +2513,8 @@ export default function App() {
         playerColor={playerColor}
         whitePlayer={gameSession?.whitePlayer}
         blackPlayer={gameSession?.blackPlayer}
-        whiteEloChange={gameSession?.whiteEloChange || (isAIGame ? (gameSession?.winner === 'white' ? 16 : -16) : 0)}
-        blackEloChange={gameSession?.blackEloChange || (isAIGame ? (gameSession?.winner === 'black' ? 16 : -16) : 0)}
+        whiteEloChange={gameSession?.whiteEloChange !== undefined ? gameSession.whiteEloChange : (isAIGame ? (gameSession?.winner === 'white' ? 16 : -16) : 0)}
+        blackEloChange={gameSession?.blackEloChange !== undefined ? gameSession.blackEloChange : (isAIGame ? (gameSession?.winner === 'black' ? 16 : -16) : 0)}
         moveHistory={gameSession?.moveHistory}
         pgn={gameSession?.pgn}
         onRematch={handleRequestRematch}

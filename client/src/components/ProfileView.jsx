@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   User, Trophy, Settings, Award, Shield, Flame, Sparkles,
   Edit2, Check, ArrowRight, LogOut, LogIn, ChevronRight, ChevronDown, Globe,
-  BarChart3, Sun, Moon, SunMoon, Contrast, Monitor, Crown, Search, X
+  BarChart3, Sun, Moon, SunMoon, Contrast, Monitor, Crown, Search, X, Lock, Zap
 } from 'lucide-react';
 import { calculateUserRanking } from '../data/leaderboardData.js';
 import { WORLD_COUNTRIES, getCountryByCode, getCountryFlag } from '../data/countries.js';
@@ -13,6 +13,9 @@ import { ACHIEVEMENTS_DATA } from './ProfileModal.jsx';
 import { FAMOUS_AVATARS, AVATAR_CATEGORIES } from '../data/avatarData.js';
 import { triggerHaptic } from '../utils/device.js';
 import { sound } from '../utils/audio.js';
+import { STARTING_ELO_OPTIONS, getRankTier } from '../utils/elo.js';
+import { getStreakInfo } from '../utils/streak.js';
+import { EloSelectionModal } from './EloSelectionModal.jsx';
 
 export function ProfileView({
   user,
@@ -149,6 +152,57 @@ export function ProfileView({
     [userElo, user?.country]
   );
 
+  const rankTier = useMemo(() => getRankTier(userElo), [userElo]);
+  const [streakInfo, setStreakInfo] = useState(() => getStreakInfo());
+  const [isEloModalOpen, setIsEloModalOpen] = useState(false);
+
+  useEffect(() => {
+    setStreakInfo(getStreakInfo());
+  }, []);
+
+  const hasSelectedInitialElo = Boolean(
+    user?.initialEloSelected ||
+    safeStorage.getItem('chess_arena_initial_elo_chosen')
+  );
+
+  const handleSelectInitialElo = (chosenElo) => {
+    sound.playClick();
+    triggerHaptic('success');
+    const updatedUser = {
+      ...user,
+      elo: chosenElo,
+      initialElo: chosenElo,
+      initialEloSelected: true,
+      ratings: {
+        bullet: chosenElo,
+        blitz: chosenElo,
+        rapid: chosenElo,
+        classical: chosenElo,
+        puzzle: user?.ratings?.puzzle || chosenElo
+      }
+    };
+    safeStorage.setItem('chess_arena_initial_elo_chosen', String(chosenElo));
+    safeStorage.setItem('chess_arena_user', JSON.stringify(updatedUser));
+    safeStorage.setItem('chess_arena_user_profile', JSON.stringify(updatedUser));
+    if (onUpdateUser) onUpdateUser(updatedUser);
+
+    if (user?.id) {
+      fetch(`/api/users/${user.id}/update`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${safeStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          elo: chosenElo,
+          initialElo: chosenElo,
+          initialEloSelected: true,
+          ratings: updatedUser.ratings
+        })
+      }).catch(() => {});
+    }
+  };
+
   const unlockedSet = useMemo(() => new Set(user?.achievements || []), [user?.achievements]);
 
   const handleSaveAvatar = () => {
@@ -209,7 +263,7 @@ export function ProfileView({
 
         <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-3 relative z-10">
           {/* Avatar & User Details */}
-          <div className="flex flex-col sm:flex-row items-center gap-3.5 text-center sm:text-left">
+          <div className="flex flex-col sm:flex-row items-center gap-3.5 text-center sm:text-left w-full sm:w-auto">
             <div className="relative group shrink-0">
               <img
                 src={selectedAvatar || user?.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=Player'}
@@ -234,27 +288,32 @@ export function ProfileView({
               </button>
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-2 flex-1">
               <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
                 <h1 className={`text-xl sm:text-2xl font-black tracking-tight ${
                   isLightMode ? 'text-slate-950' : 'text-white'
                 }`}>
                   {user?.username || 'Guest Player'}
                 </h1>
-                <span className={`px-2.5 py-0.5 rounded-full border text-[11px] font-bold ${
-                  isLightMode
-                    ? 'bg-amber-100 text-amber-800 border-amber-300'
-                    : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
-                }`}>
-                  {user?.role === 'admin' ? '🛡️ Arena Admin' : '⚔️ Arena Competitor'}
+                {user?.role === 'admin' && (
+                  <span className={`px-2.5 py-0.5 rounded-full border text-[11px] font-bold ${
+                    isLightMode
+                      ? 'bg-purple-100 text-purple-900 border-purple-300'
+                      : 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                  }`}>
+                    🛡️ Arena Admin
+                  </span>
+                )}
+                {/* Prestige Rank Tier Pill */}
+                <span className={`px-2.5 py-0.5 rounded-full border text-[11px] font-bold flex items-center gap-1 shadow-2xs ${rankTier.badgeClass}`}>
+                  <span>{rankTier.icon}</span>
+                  <span>{rankTier.name}</span>
                 </span>
               </div>
 
-              {/* Fully Interactive Country Picker Trigger */}
-              <div className="flex items-center justify-center sm:justify-start gap-1.5 flex-wrap">
-                <span className={`text-xs font-semibold ${isLightMode ? 'text-slate-600' : 'text-slate-400'}`}>
-                  Country:
-                </span>
+              {/* Country & Streak Options Row */}
+              <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
+                {/* Interactive Country Picker Trigger */}
                 <button
                   type="button"
                   onClick={() => {
@@ -273,9 +332,8 @@ export function ProfileView({
                   <span className="font-extrabold">{user?.countryName || currentCountry.name}</span>
                   <Edit2 className="w-3 h-3 text-amber-500 ml-0.5" />
                 </button>
-              </div>
 
-              <div className="flex items-center justify-center sm:justify-start gap-2 pt-0.5 flex-wrap">
+                {/* Genuine Daily Streak Trigger (Starts at 1) */}
                 <button
                   type="button"
                   onClick={() => {
@@ -288,24 +346,76 @@ export function ProfileView({
                       ? 'bg-orange-50 hover:bg-orange-100 border-orange-200 text-orange-800'
                       : 'bg-orange-500/20 hover:bg-orange-500/30 border-orange-500/40 text-orange-400'
                   }`}
-                  title="View Daily Login Streak Rewards"
+                  title="View Daily Login Streak Rewards (Starts at Day 1)"
                 >
                   <Flame className="w-3.5 h-3.5 fill-orange-500 animate-pulse text-orange-500" />
-                  <span>7 Day Streak</span>
+                  <span>{streakInfo.streak} Day Streak</span>
                 </button>
+              </div>
 
-                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
+              {/* Dynamic Live Elo Rating & Starting Tier Row */}
+              <div className="flex items-center justify-center sm:justify-start gap-2 pt-0.5 flex-wrap">
+                {hasSelectedInitialElo ? (
+                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold shadow-2xs ${
+                    isLightMode
+                      ? 'bg-amber-50 border-amber-300 text-amber-950'
+                      : 'bg-amber-500/15 border-amber-500/40 text-amber-300'
+                  }`}>
+                    <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                    <span className="font-mono font-black text-sm">{userElo}</span>
+                    <span>Elo</span>
+                    <span className="text-[10px] opacity-75 flex items-center gap-0.5 ml-1 border-l pl-1.5 border-amber-500/30">
+                      <Lock className="w-2.5 h-2.5 text-amber-500" />
+                      <span>Permanent Rating</span>
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 flex-wrap justify-center sm:justify-start">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        sound.playClick();
+                        triggerHaptic('move');
+                        setIsEloModalOpen(true);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 active:scale-95 cursor-pointer animate-pulse"
+                      title="Select your starting Elo rating tier (800, 1200, 1600, 2000, 2500)"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-slate-950" />
+                      <span>Choose Elo Level</span>
+                    </button>
+                    <div className="flex items-center gap-1">
+                      {[800, 1200, 1600, 2000, 2500].map(tierElo => (
+                        <button
+                          key={tierElo}
+                          type="button"
+                          onClick={() => handleSelectInitialElo(tierElo)}
+                          className={`px-2 py-0.5 rounded-lg text-[10px] font-black border transition-all hover:scale-105 active:scale-95 cursor-pointer ${
+                            isLightMode
+                              ? 'bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900'
+                              : 'bg-slate-800 hover:bg-amber-500/20 border-slate-700 hover:border-amber-500/40 text-amber-400'
+                          }`}
+                          title={`Permanently lock starting Elo at ${tierElo}`}
+                        >
+                          {tierElo}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${
                   isLightMode
                     ? 'text-emerald-900 bg-emerald-50 border-emerald-300'
                     : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
                 }`}>
-                  {totalMatches === 0 ? 'Starting 1200 Rating' : `Better than ${percentile}% of players`}
+                  {totalMatches === 0 ? 'Live Rating Enabled' : `Better than ${percentile}% of players`}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Quick Right Actions (Sign out / Sign In / Admin trigger) */}
+          {/* Quick Right Actions (Admin Hub trigger if admin, NO Sign Out button in box!) */}
           <div className="flex items-center gap-2 self-center sm:self-start">
             {(user?.email?.toLowerCase().trim() === 'op21plus@gmail.com' || user?.role === 'admin') && onOpenAdmin && (
               <button
@@ -326,40 +436,48 @@ export function ProfileView({
                 <span className="hidden sm:inline">Admin Hub</span>
               </button>
             )}
+          </div>
+        </div>
 
-            {user ? (
-              <button
-                type="button"
-                onClick={() => {
-                  sound.playClick();
-                  triggerHaptic('move');
-                  if (onSignOut) onSignOut();
-                }}
-                className={`px-3.5 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 ${
-                  isLightMode
-                    ? 'bg-slate-100 hover:bg-rose-50 border-slate-300 hover:border-rose-300 text-slate-700 hover:text-rose-600'
-                    : 'bg-slate-800 hover:bg-red-500/20 border-slate-700 hover:border-red-500/40 text-slate-300 hover:text-red-400'
-                }`}
-                title="Sign Out"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>Sign Out</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  sound.playClick();
-                  triggerHaptic('move');
-                  if (onSignIn) onSignIn();
-                }}
-                className="px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs transition-all flex items-center gap-1.5 shadow-md active:scale-95 cursor-pointer"
-                title="Sign In with Google / Gmail"
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>Sign In</span>
-              </button>
-            )}
+        {/* Professional Quick Stats Strip (Premium, Compact & Meaningful) */}
+        <div className={`mt-4 pt-3 border-t grid grid-cols-3 gap-2 text-center relative z-10 ${
+          isLightMode ? 'border-slate-200/80' : 'border-slate-800/80'
+        }`}>
+          <div className={`p-2 rounded-2xl border transition-colors ${
+            isLightMode ? 'bg-slate-50/80 border-slate-200/80' : 'bg-slate-950/60 border-slate-800'
+          }`}>
+            <div className={`text-[10px] font-bold uppercase tracking-wider ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
+              Matches
+            </div>
+            <div className={`text-sm sm:text-base font-black ${isLightMode ? 'text-slate-950' : 'text-white'}`}>
+              {totalMatches}
+            </div>
+          </div>
+
+          <div className={`p-2 rounded-2xl border transition-colors ${
+            isLightMode ? 'bg-slate-50/80 border-slate-200/80' : 'bg-slate-950/60 border-slate-800'
+          }`}>
+            <div className={`text-[10px] font-bold uppercase tracking-wider ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
+              Record (W-L-D)
+            </div>
+            <div className={`text-sm sm:text-base font-black font-mono ${isLightMode ? 'text-slate-950' : 'text-white'}`}>
+              <span className="text-emerald-500">{wonMatches}</span>
+              <span className="text-slate-400 mx-0.5">-</span>
+              <span className="text-rose-500">{lostMatches}</span>
+              <span className="text-slate-400 mx-0.5">-</span>
+              <span className="text-amber-500">{drawnMatches}</span>
+            </div>
+          </div>
+
+          <div className={`p-2 rounded-2xl border transition-colors ${
+            isLightMode ? 'bg-slate-50/80 border-slate-200/80' : 'bg-slate-950/60 border-slate-800'
+          }`}>
+            <div className={`text-[10px] font-bold uppercase tracking-wider ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
+              Win Rate
+            </div>
+            <div className="text-sm sm:text-base font-black text-amber-500">
+              {winRate}%
+            </div>
           </div>
         </div>
 
@@ -693,6 +811,14 @@ export function ProfileView({
           </div>
         </div>
       )}
+
+      {/* ================= PERMANENT ELO SELECTION MODAL ================= */}
+      <EloSelectionModal
+        isOpen={isEloModalOpen}
+        onClose={() => setIsEloModalOpen(false)}
+        onSelectElo={handleSelectInitialElo}
+        isLight={isLightMode}
+      />
 
       {/* ================= ACHIEVEMENT DETAILS MODAL ================= */}
       {selectedAchievement && (

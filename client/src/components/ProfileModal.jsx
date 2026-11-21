@@ -3,6 +3,8 @@ import { Award, Trophy, Zap, Shield, Flame, X, Check, Edit2, Crown, Globe, Arrow
 import { safeStorage } from '../utils/storage.js';
 import { calculateUserRanking } from '../data/leaderboardData.js';
 import { FAMOUS_AVATARS, AVATAR_CATEGORIES, ANIME_AVATARS } from '../data/avatarData.js';
+import { getStreakInfo } from '../utils/streak.js';
+import { getRankTier } from '../utils/elo.js';
 
 export { ANIME_AVATARS, FAMOUS_AVATARS, AVATAR_CATEGORIES };
 
@@ -32,6 +34,8 @@ export function ProfileModal({ user, isOpen, onClose, onUpdateUser, onNavigateTo
 
   // Current ranking calculation
   const userElo = user?.ratings?.rapid || user?.elo || 1200;
+  const rankTier = useMemo(() => getRankTier(userElo), [userElo]);
+  const streakInfo = useMemo(() => getStreakInfo(), [isOpen]);
   const { rank: userRank, totalPlayers, percentile, countryRank } = useMemo(
     () => calculateUserRanking(userElo, 1042040, user?.country || 'IN'),
     [userElo, user?.country]
@@ -98,9 +102,15 @@ export function ProfileModal({ user, isOpen, onClose, onUpdateUser, onNavigateTo
           <div className="text-center sm:text-left space-y-1">
             <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
               <h2 className="text-xl font-extrabold text-white">{user.username}</h2>
-              <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[11px] font-bold">
-                {user.role === 'admin' ? 'Arena Admin' : 'Arena Competitor'}
-              </span>
+              {user.role === 'admin' ? (
+                <span className="px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30 text-[11px] font-bold">
+                  🛡️ Arena Admin
+                </span>
+              ) : (
+                <span className={`px-2.5 py-0.5 rounded-full border text-[11px] font-bold ${rankTier.badgeClass}`}>
+                  {rankTier.icon} {rankTier.name}
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-400">
               Country: <span className="font-semibold text-slate-200">{user.countryName || user.country || 'India 🇮🇳'}</span>
@@ -110,10 +120,10 @@ export function ProfileModal({ user, isOpen, onClose, onUpdateUser, onNavigateTo
                 onClick={() => {
                   if (onOpenStreak) onOpenStreak();
                 }}
-                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-orange-500/20 border border-orange-500/40 text-orange-400 text-[11px] font-bold hover:bg-orange-500/30 transition-colors"
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-orange-500/20 border border-orange-500/40 text-orange-400 text-[11px] font-bold hover:bg-orange-500/30 transition-colors cursor-pointer"
               >
                 <Flame className="w-3.5 h-3.5 fill-orange-400" />
-                <span>7 Day Streak</span>
+                <span>{streakInfo.streak} Day Streak</span>
               </button>
               <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
                 Better than {percentile}%
