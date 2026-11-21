@@ -1,10 +1,25 @@
 // Web Audio API Synthesizer for high-fidelity chess audio
-// Zero external assets or network dependencies - guaranteed instant and reliable.
+// Zero external assets or network dependencies - guaranteed instant, tactile, and reliable.
 
 class ChessAudio {
   constructor() {
     this.ctx = null;
     this.enabled = true;
+    this.setupAutoUnlock();
+  }
+
+  setupAutoUnlock() {
+    if (typeof window !== 'undefined') {
+      const unlock = () => {
+        this.initContext();
+        window.removeEventListener('click', unlock);
+        window.removeEventListener('touchstart', unlock);
+        window.removeEventListener('keydown', unlock);
+      };
+      window.addEventListener('click', unlock, { passive: true });
+      window.addEventListener('touchstart', unlock, { passive: true });
+      window.addEventListener('keydown', unlock, { passive: true });
+    }
   }
 
   initContext() {
@@ -15,10 +30,14 @@ class ChessAudio {
       }
     }
     if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      this.ctx.resume().catch(() => {});
     }
   }
 
+  /**
+   * Authentic wooden board piece placement ("thock")
+   * Modeled after real weighted Staunton piece placed onto a hardwood chessboard.
+   */
   playMove() {
     if (!this.enabled) return;
     this.initContext();
@@ -26,43 +45,93 @@ class ChessAudio {
 
     try {
       const now = this.ctx.currentTime;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      const filter = this.ctx.createBiquadFilter();
 
-      // Warm acoustic wood knock
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(290, now);
-      osc.frequency.exponentialRampToValueAtTime(115, now + 0.075);
+      // 1. Felt-on-hardwood contact transient (crisp organic texture)
+      const bufferSize = Math.floor(this.ctx.sampleRate * 0.015);
+      const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.003));
+      }
 
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(850, now);
+      const noiseSource = this.ctx.createBufferSource();
+      noiseSource.buffer = noiseBuffer;
 
-      gain.gain.setValueAtTime(0.42, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      const feltFilter = this.ctx.createBiquadFilter();
+      feltFilter.type = 'bandpass';
+      feltFilter.frequency.setValueAtTime(2200, now);
+      feltFilter.Q.setValueAtTime(2.0, now);
 
-      osc.connect(filter);
-      filter.connect(gain);
-      gain.connect(this.ctx.destination);
+      const feltGain = this.ctx.createGain();
+      feltGain.gain.setValueAtTime(0.38, now);
+      feltGain.gain.exponentialRampToValueAtTime(0.001, now + 0.014);
 
-      osc.start(now);
-      osc.stop(now + 0.08);
+      noiseSource.connect(feltFilter);
+      feltFilter.connect(feltGain);
+      feltGain.connect(this.ctx.destination);
+      noiseSource.start(now);
 
-      // Subtle soft wood tap transient
-      const tapOsc = this.ctx.createOscillator();
-      const tapGain = this.ctx.createGain();
-      tapOsc.type = 'sine';
-      tapOsc.frequency.setValueAtTime(750, now);
-      tapOsc.frequency.exponentialRampToValueAtTime(280, now + 0.02);
-      tapGain.gain.setValueAtTime(0.14, now);
-      tapGain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
-      tapOsc.connect(tapGain);
-      tapGain.connect(this.ctx.destination);
-      tapOsc.start(now);
-      tapOsc.stop(now + 0.025);
+      // 2. Solid weighted wooden piece body knock
+      const woodOsc = this.ctx.createOscillator();
+      const woodGain = this.ctx.createGain();
+      const woodFilter = this.ctx.createBiquadFilter();
+
+      woodOsc.type = 'triangle';
+      woodOsc.frequency.setValueAtTime(285, now);
+      woodOsc.frequency.exponentialRampToValueAtTime(115, now + 0.045);
+
+      woodFilter.type = 'lowpass';
+      woodFilter.frequency.setValueAtTime(680, now);
+
+      woodGain.gain.setValueAtTime(0.65, now);
+      woodGain.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
+
+      woodOsc.connect(woodFilter);
+      woodFilter.connect(woodGain);
+      woodGain.connect(this.ctx.destination);
+
+      woodOsc.start(now);
+      woodOsc.stop(now + 0.055);
+
+      // 3. Resonant wooden board acoustic chamber thump (hollow hardwood body)
+      const chamberOsc = this.ctx.createOscillator();
+      const chamberGain = this.ctx.createGain();
+
+      chamberOsc.type = 'sine';
+      chamberOsc.frequency.setValueAtTime(168, now);
+      chamberOsc.frequency.exponentialRampToValueAtTime(75, now + 0.04);
+
+      chamberGain.gain.setValueAtTime(0.48, now);
+      chamberGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+
+      chamberOsc.connect(chamberGain);
+      chamberGain.connect(this.ctx.destination);
+
+      chamberOsc.start(now);
+      chamberOsc.stop(now + 0.05);
+
+      // 4. Subtle wood click overtone for high-end definition
+      const clickOsc = this.ctx.createOscillator();
+      const clickGain = this.ctx.createGain();
+
+      clickOsc.type = 'triangle';
+      clickOsc.frequency.setValueAtTime(640, now);
+      clickOsc.frequency.exponentialRampToValueAtTime(240, now + 0.018);
+
+      clickGain.gain.setValueAtTime(0.25, now);
+      clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
+
+      clickOsc.connect(clickGain);
+      clickGain.connect(this.ctx.destination);
+
+      clickOsc.start(now);
+      clickOsc.stop(now + 0.02);
     } catch (e) {}
   }
 
+  /**
+   * Crunchy wooden piece capture collision (piece knocking opponent off the square)
+   */
   playCapture() {
     if (!this.enabled) return;
     this.initContext();
@@ -71,12 +140,12 @@ class ChessAudio {
     try {
       const now = this.ctx.currentTime;
 
-      // 1. High-frequency wood snap / crack transient (0.025s noise burst)
-      const bufferSize = Math.floor(this.ctx.sampleRate * 0.025);
+      // 1. Initial wood-on-wood strike crack (the two pieces colliding)
+      const bufferSize = Math.floor(this.ctx.sampleRate * 0.022);
       const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
       const output = noiseBuffer.getChannelData(0);
       for (let i = 0; i < bufferSize; i++) {
-        output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.005));
+        output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.004));
       }
 
       const noiseSource = this.ctx.createBufferSource();
@@ -84,12 +153,12 @@ class ChessAudio {
 
       const snapFilter = this.ctx.createBiquadFilter();
       snapFilter.type = 'bandpass';
-      snapFilter.frequency.setValueAtTime(1800, now);
-      snapFilter.Q.setValueAtTime(2.2, now);
+      snapFilter.frequency.setValueAtTime(2400, now);
+      snapFilter.Q.setValueAtTime(2.5, now);
 
       const snapGain = this.ctx.createGain();
-      snapGain.gain.setValueAtTime(0.48, now);
-      snapGain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+      snapGain.gain.setValueAtTime(0.55, now);
+      snapGain.gain.exponentialRampToValueAtTime(0.001, now + 0.022);
 
       noiseSource.connect(snapFilter);
       snapFilter.connect(snapGain);
@@ -102,103 +171,173 @@ class ChessAudio {
       const bodyFilter = this.ctx.createBiquadFilter();
 
       bodyOsc.type = 'triangle';
-      bodyOsc.frequency.setValueAtTime(340, now);
-      bodyOsc.frequency.exponentialRampToValueAtTime(80, now + 0.08);
+      bodyOsc.frequency.setValueAtTime(360, now);
+      bodyOsc.frequency.exponentialRampToValueAtTime(95, now + 0.065);
 
       bodyFilter.type = 'lowpass';
-      bodyFilter.frequency.setValueAtTime(950, now);
+      bodyFilter.frequency.setValueAtTime(900, now);
 
-      bodyGain.gain.setValueAtTime(0.55, now);
-      bodyGain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+      bodyGain.gain.setValueAtTime(0.72, now);
+      bodyGain.gain.exponentialRampToValueAtTime(0.001, now + 0.075);
 
       bodyOsc.connect(bodyFilter);
       bodyFilter.connect(bodyGain);
       bodyGain.connect(this.ctx.destination);
 
       bodyOsc.start(now);
-      bodyOsc.stop(now + 0.09);
+      bodyOsc.stop(now + 0.075);
 
-      // 3. Sub-thud for punchy acoustic weight on phone speakers
+      // 3. Heavy board cabinet impact (displacing piece slamming down)
       const subOsc = this.ctx.createOscillator();
       const subGain = this.ctx.createGain();
       subOsc.type = 'sine';
-      subOsc.frequency.setValueAtTime(130, now);
-      subOsc.frequency.exponentialRampToValueAtTime(45, now + 0.07);
+      subOsc.frequency.setValueAtTime(145, now);
+      subOsc.frequency.exponentialRampToValueAtTime(50, now + 0.055);
 
-      subGain.gain.setValueAtTime(0.42, now);
-      subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.075);
+      subGain.gain.setValueAtTime(0.55, now);
+      subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
 
       subOsc.connect(subGain);
       subGain.connect(this.ctx.destination);
       subOsc.start(now);
-      subOsc.stop(now + 0.075);
+      subOsc.stop(now + 0.065);
 
-      // 4. Subtle secondary wood rebound tap at +26ms
+      // 4. Secondary tumbling piece rebound tap at +24ms
       const reboundOsc = this.ctx.createOscillator();
       const reboundGain = this.ctx.createGain();
-      reboundOsc.type = 'sine';
-      reboundOsc.frequency.setValueAtTime(460, now + 0.026);
-      reboundOsc.frequency.exponentialRampToValueAtTime(200, now + 0.06);
+      reboundOsc.type = 'triangle';
+      reboundOsc.frequency.setValueAtTime(420, now + 0.024);
+      reboundOsc.frequency.exponentialRampToValueAtTime(180, now + 0.055);
 
-      reboundGain.gain.setValueAtTime(0.2, now + 0.026);
-      reboundGain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+      reboundGain.gain.setValueAtTime(0.28, now + 0.024);
+      reboundGain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
 
       reboundOsc.connect(reboundGain);
       reboundGain.connect(this.ctx.destination);
-      reboundOsc.start(now + 0.026);
-      reboundOsc.stop(now + 0.065);
+      reboundOsc.start(now + 0.024);
+      reboundOsc.stop(now + 0.06);
     } catch (e) {}
   }
 
+  /**
+   * Premier King In Check Alert Sound
+   * Combines an authoritative tactile wood impact with a dramatic, urgent, crystal-clear warning resonance.
+   * Completely replaces the old double-chime with a prestigious tournament alert sound.
+   */
   playCheck() {
-    if (!this.enabled) return;
-    this.initContext();
-    if (!this.ctx) return;
-
-    // Resonant alerting double chime
-    const playChime = (freq, delay) => {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, this.ctx.currentTime + delay);
-      gain.gain.setValueAtTime(0.35, this.ctx.currentTime + delay);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + delay + 0.25);
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(this.ctx.currentTime + delay);
-      osc.stop(this.ctx.currentTime + delay + 0.25);
-    };
-
-    playChime(660, 0);
-    playChime(880, 0.08);
-  }
-
-  playCastle() {
     if (!this.enabled) return;
     this.initContext();
     if (!this.ctx) return;
 
     try {
       const now = this.ctx.currentTime;
+
+      // 1. Authoritative wooden check strike (piece slams down with purpose)
+      const strikeOsc = this.ctx.createOscillator();
+      const strikeGain = this.ctx.createGain();
+      const strikeFilter = this.ctx.createBiquadFilter();
+
+      strikeOsc.type = 'triangle';
+      strikeOsc.frequency.setValueAtTime(320, now);
+      strikeOsc.frequency.exponentialRampToValueAtTime(120, now + 0.05);
+
+      strikeFilter.type = 'lowpass';
+      strikeFilter.frequency.setValueAtTime(750, now);
+
+      strikeGain.gain.setValueAtTime(0.70, now);
+      strikeGain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+
+      strikeOsc.connect(strikeFilter);
+      strikeFilter.connect(strikeGain);
+      strikeGain.connect(this.ctx.destination);
+
+      strikeOsc.start(now);
+      strikeOsc.stop(now + 0.06);
+
+      // 2. Urgent dramatic alert bell chord (Root: D5 587.33Hz + Major 6th: B5 987.77Hz + Tension 9th: E6 1318.51Hz)
+      // Crystal clear, suspenseful, and immediately alerts the player that king is under attack!
+      const alertHarmonics = [
+        { freq: 587.33, gainVal: 0.42, dur: 0.28 },  // D5 core tone
+        { freq: 880.00, gainVal: 0.32, dur: 0.26 },  // A5 fifth harmonic
+        { freq: 1174.66, gainVal: 0.18, dur: 0.22 }  // D6 bright overtone
+      ];
+
+      alertHarmonics.forEach(({ freq, gainVal, dur }) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + 0.008);
+
+        gain.gain.setValueAtTime(0.001, now + 0.008);
+        gain.gain.linearRampToValueAtTime(gainVal, now + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now + 0.008);
+        osc.stop(now + dur);
+      });
+
+      // 3. Deep resonant tension undercurrent (gives weight to the check)
+      const tensionOsc = this.ctx.createOscillator();
+      const tensionGain = this.ctx.createGain();
+
+      tensionOsc.type = 'triangle';
+      tensionOsc.frequency.setValueAtTime(140, now);
+      tensionOsc.frequency.exponentialRampToValueAtTime(60, now + 0.18);
+
+      tensionGain.gain.setValueAtTime(0.40, now);
+      tensionGain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+
+      tensionOsc.connect(tensionGain);
+      tensionGain.connect(this.ctx.destination);
+
+      tensionOsc.start(now);
+      tensionOsc.stop(now + 0.2);
+    } catch (e) {}
+  }
+
+  /**
+   * Castling sound: King move wood knock followed swiftly by Rook latching in
+   */
+  playCastle() {
+    if (!this.enabled) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    try {
       // Step 1: King step knock
       this.playMove();
 
-      // Step 2: Rook swift latch into place at +95ms
+      // Step 2: Rook swift latch into place at +75ms
       setTimeout(() => {
         if (!this.ctx) return;
-        const t = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(320, t);
-        osc.frequency.exponentialRampToValueAtTime(140, t + 0.07);
-        gain.gain.setValueAtTime(0.38, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.075);
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start(t);
-        osc.stop(t + 0.075);
-      }, 95);
+        try {
+          const t = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          const filter = this.ctx.createBiquadFilter();
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(310, t);
+          osc.frequency.exponentialRampToValueAtTime(130, t + 0.045);
+
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(720, t);
+
+          gain.gain.setValueAtTime(0.55, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+
+          osc.connect(filter);
+          filter.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(t);
+          osc.stop(t + 0.05);
+        } catch (_) {}
+      }, 75);
     } catch (e) {}
   }
 

@@ -7,11 +7,13 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Message;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
@@ -178,6 +180,15 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         settings.setSupportZoom(false);
         settings.setBuiltInZoomControls(false);
 
+        // Enable popup and multi-window support for Google Sign-In & OAuth
+        settings.setJavaScriptCanOpenWindowsAutomatically(true);
+        settings.setSupportMultipleWindows(true);
+
+        // Cookies and cross-site cookies for OAuth
+        CookieManager cookieManager = CookieManager.getInstance();
+        cookieManager.setAcceptCookie(true);
+        cookieManager.setAcceptThirdPartyCookies(webView, true);
+
         // Expose Native Android Text-To-Speech bridge to JavaScript
         webView.addJavascriptInterface(new AndroidTTSBridge(), "AndroidTTS");
 
@@ -190,8 +201,12 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
                 if (url.startsWith("http://") || url.startsWith("https://")) {
-                    // Stay inside WebView if on the app domain
-                    if (url.contains("chess-arena-three-indol.vercel.app") || url.contains("localhost")) {
+                    // Stay inside WebView for app and Firebase OAuth authentication domains
+                    if (url.contains("chess-arena-three-indol.vercel.app") ||
+                        url.contains("localhost") ||
+                        url.contains("arena-e49f1.firebaseapp.com") ||
+                        url.contains("accounts.google.com") ||
+                        url.contains("firebaseapp.com")) {
                         return false;
                     }
                 }
@@ -208,6 +223,35 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         });
 
         webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
+                WebView newWebView = new WebView(view.getContext());
+                WebSettings newSettings = newWebView.getSettings();
+                newSettings.setJavaScriptEnabled(true);
+                newSettings.setDomStorageEnabled(true);
+                newSettings.setSupportMultipleWindows(true);
+                newSettings.setJavaScriptCanOpenWindowsAutomatically(true);
+
+                CookieManager.getInstance().setAcceptThirdPartyCookies(newWebView, true);
+
+                newWebView.setWebViewClient(new WebViewClient() {
+                    @Override
+                    public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest req) {
+                        String u = req.getUrl().toString();
+                        if (u.contains("chess-arena-three-indol.vercel.app") ||
+                            u.contains("accounts.google.com") ||
+                            u.contains("firebaseapp.com")) {
+                            return false;
+                        }
+                        return false;
+                    }
+                });
+
+                ((WebView.WebViewTransport) resultMsg.obj).setWebView(newWebView);
+                resultMsg.sendToTarget();
+                return true;
+            }
+
             @Override
             public void onPermissionRequest(final PermissionRequest request) {
                 // Grant microphone and audio capture for WebRTC voice calls

@@ -705,11 +705,27 @@ export default function App() {
         turn: new Chess(data.fen).turn()
       } : null);
 
-      // Voice Commentary & Haptics
+      // Sounds, Haptics & Voice Commentary for Opponent's Move
       const lastMoveObj = data.moveHistory?.[data.moveHistory.length - 1];
       if (lastMoveObj) {
+        const isOpponentMove = lastMoveObj.color !== playerColor;
+        if (isOpponentMove) {
+          if (data.inCheck || lastMoveObj.san?.includes('+')) {
+            sound.playCheck();
+            triggerHaptic('check');
+          } else if (lastMoveObj.san?.includes('x') || lastMoveObj.captured) {
+            sound.playCapture();
+            triggerHaptic('capture');
+          } else if (lastMoveObj.san?.includes('O-O')) {
+            sound.playCastle();
+            triggerHaptic('move');
+          } else {
+            sound.playMove();
+            triggerHaptic('move');
+          }
+        }
+
         if (settings.voiceCommentary) {
-          const isOpponentMove = lastMoveObj.color !== playerColor;
           if (!settings.voiceCommentaryOnlyOpponent || isOpponentMove) {
             speakMove(lastMoveObj.san);
           }
@@ -1155,10 +1171,18 @@ export default function App() {
       });
 
       if (moveRes) {
-        if (moveRes.captured) {
+        if (chess.inCheck() || moveRes.san?.includes('+')) {
+          sound.playCheck();
+          triggerHaptic('check');
+        } else if (moveRes.captured) {
           sound.playCapture();
+          triggerHaptic('capture');
+        } else if (moveRes.san?.includes('O-O')) {
+          sound.playCastle();
+          triggerHaptic('move');
         } else {
           sound.playMove();
+          triggerHaptic('move');
         }
         if (settings.voiceCommentary) {
           speakMove(moveRes.san);
