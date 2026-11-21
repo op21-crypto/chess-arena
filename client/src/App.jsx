@@ -2210,7 +2210,7 @@ export default function App() {
                   </div>
 
                   {/* 4 Game Mode Buttons (Clean, Sleek, Highlighted & Non-Bulky) */}
-                  <div className="space-y-2.5 pt-1">
+                  <div className="space-y-3.5 sm:space-y-4 pt-1.5">
                     {/* 1st: Play with Stockfish (AI Bot) */}
                     {isButtonVisible('homePlayAi') && (
                     <button
@@ -2219,7 +2219,7 @@ export default function App() {
                         triggerHaptic('move');
                         setShowAIModal(true);
                       }}
-                      className={`w-full text-left p-3 sm:p-3.5 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
+                      className={`w-full text-left p-3.5 sm:p-4 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
                         isLight
                           ? 'bg-gradient-to-r from-indigo-50/90 via-white to-purple-50/70 hover:from-indigo-100/90 hover:to-purple-100/80 border-2 border-indigo-200/90 hover:border-indigo-400 shadow-sm hover:shadow-md'
                           : 'bg-gradient-to-r from-indigo-950/70 via-slate-900/90 to-purple-950/50 hover:from-indigo-900/80 hover:via-purple-900/60 hover:to-indigo-850/80 border border-indigo-500/35 hover:border-indigo-400/70 shadow-md shadow-indigo-950/30'
@@ -2227,43 +2227,33 @@ export default function App() {
                     >
                       <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-indigo-500/25 transition-all duration-300" />
                       <div className="flex items-center justify-between gap-3 relative z-10">
-                        <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
+                        <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                           {/* Stockfish AI Neural Bot Avatar */}
-                          <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl border p-1 shadow-sm flex flex-col items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 relative overflow-hidden ${
+                          <div className={`w-12 h-12 sm:w-13 sm:h-13 rounded-2xl border flex items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 relative shadow-xs overflow-hidden ${
                             isLight
                               ? 'bg-gradient-to-br from-indigo-100 via-white to-purple-100 border-indigo-200 group-hover:border-indigo-400'
                               : 'bg-gradient-to-br from-indigo-900/80 via-slate-950 to-purple-950/90 border-indigo-400/50 group-hover:border-indigo-300'
                           }`}>
-                            <div className="relative z-10 flex flex-col items-center">
-                              <Bot className={`w-5 h-5 transition-colors ${
-                                isLight
-                                  ? 'text-indigo-600 group-hover:text-indigo-700'
-                                  : 'text-indigo-300 drop-shadow-[0_0_6px_rgba(99,102,241,0.7)] group-hover:text-indigo-200'
-                              }`} />
-                            </div>
-                            {/* Little name strip */}
-                            <div className={`absolute bottom-0 inset-x-0 border-t py-0.5 flex justify-center items-center ${
+                            <Bot className={`w-6 h-6 transition-colors ${
                               isLight
-                                ? 'bg-indigo-100/95 border-indigo-200 text-indigo-700'
-                                : 'bg-indigo-950/95 border-indigo-500/40 text-indigo-300'
-                            }`}>
-                              <span className="text-[7.5px] font-black tracking-widest uppercase">AI BOT</span>
-                            </div>
+                                ? 'text-indigo-600 group-hover:text-indigo-700'
+                                : 'text-indigo-300 drop-shadow-[0_0_8px_rgba(99,102,241,0.7)] group-hover:text-indigo-200'
+                            }`} />
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className={`text-sm sm:text-base font-black transition-colors leading-tight ${
+                            <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+                              <h3 className={`text-base sm:text-lg font-black tracking-tight transition-colors leading-tight ${
                                 isLight
                                   ? 'text-slate-900 group-hover:text-indigo-700'
                                   : 'text-white group-hover:text-indigo-200'
                               }`}>
                                 {getButtonLabel('homePlayAi', 'Play with Stockfish')}
                               </h3>
-                              <span className={`px-2 py-0.5 rounded-full border text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider shrink-0 shadow-xs flex items-center gap-1 ${
+                              <span className={`px-2.5 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-black uppercase tracking-wider shrink-0 shadow-xs flex items-center gap-1 ${
                                 isLight
-                                  ? 'bg-indigo-100 text-indigo-800 border-indigo-300'
-                                  : 'bg-indigo-500/25 text-indigo-300 border-indigo-400/40'
+                                  ? 'bg-indigo-100 text-indigo-800 border-indigo-300 shadow-indigo-100'
+                                  : 'bg-indigo-500/25 text-indigo-300 border-indigo-400/40 shadow-indigo-950/50'
                               }`}>
                                 <span>AI BOT</span>
                                 <span className="text-xs">🤖</span>
@@ -2287,7 +2277,7 @@ export default function App() {
                         setFriendRoomTab('room');
                         setShowFriendRoomModal(true);
                       }}
-                      className={`w-full text-left p-3 sm:p-3.5 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
+                      className={`w-full text-left p-3.5 sm:p-4 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
                         isLight
                           ? 'bg-gradient-to-r from-emerald-50/90 via-white to-teal-50/70 hover:from-emerald-100/90 hover:to-teal-100/80 border-2 border-emerald-200/90 hover:border-emerald-400 shadow-sm hover:shadow-md'
                           : 'bg-gradient-to-r from-emerald-950/70 via-slate-900/90 to-teal-950/50 hover:from-emerald-900/80 hover:via-teal-900/60 hover:to-emerald-850/80 border border-emerald-500/35 hover:border-emerald-400/70 shadow-md shadow-emerald-950/30'
@@ -2295,54 +2285,43 @@ export default function App() {
                     >
                       <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-emerald-500/25 transition-all duration-300" />
                       <div className="flex items-center justify-between gap-3 relative z-10">
-                        <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
+                        <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                           {/* Friends & Live Voice Avatar */}
-                          <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl border p-1 shadow-sm flex flex-col items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 relative overflow-hidden ${
+                          <div className={`w-12 h-12 sm:w-13 sm:h-13 rounded-2xl border flex items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 relative shadow-xs overflow-hidden ${
                             isLight
                               ? 'bg-gradient-to-br from-emerald-100 via-white to-teal-100 border-emerald-200 group-hover:border-emerald-400'
                               : 'bg-gradient-to-br from-emerald-900/80 via-slate-950 to-teal-950/90 border-emerald-400/50 group-hover:border-emerald-300'
                           }`}>
-                            <div className="relative z-10 flex flex-col items-center">
-                              <div className="flex items-center justify-center -space-x-1">
-                                <div className="w-3.5 h-3.5 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 border border-emerald-200/50 flex items-center justify-center text-[7.5px] font-black text-white shadow-xs">
+                            <div className="relative flex items-center justify-center">
+                              <div className="flex items-center -space-x-1">
+                                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 border border-emerald-200/50 flex items-center justify-center text-[10px] font-black text-white shadow-xs">
                                   ♔
                                 </div>
-                                <div className="w-3.5 h-3.5 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 border border-amber-200/50 flex items-center justify-center text-[7.5px] font-black text-white shadow-xs">
+                                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-teal-500 to-emerald-700 border border-teal-200/50 flex items-center justify-center text-[10px] font-black text-white shadow-xs">
                                   ♚
                                 </div>
                               </div>
-                              {/* Audio Soundwave Equalizer */}
-                              <div className="flex items-end gap-0.5 justify-center mt-0.5">
-                                <span className="w-0.5 h-1.5 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                <span className="w-0.5 h-2.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                <span className="w-0.5 h-1 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                              </div>
-                            </div>
-                            {/* Little name strip */}
-                            <div className={`absolute bottom-0 inset-x-0 border-t py-0.5 flex justify-center items-center ${
-                              isLight
-                                ? 'bg-emerald-100/95 border-emerald-200 text-emerald-700'
-                                : 'bg-emerald-950/95 border-emerald-500/40 text-emerald-300'
-                            }`}>
-                              <span className="text-[6.5px] font-black tracking-wider uppercase">CHAT VOICE</span>
+                              <span className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-emerald-500 border border-white dark:border-slate-900 flex items-center justify-center text-[7px] text-white">
+                                🎙️
+                              </span>
                             </div>
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className={`text-sm sm:text-base font-black transition-colors leading-tight ${
+                            <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+                              <h3 className={`text-base sm:text-lg font-black tracking-tight transition-colors leading-tight ${
                                 isLight
                                   ? 'text-slate-900 group-hover:text-emerald-700'
                                   : 'text-white group-hover:text-emerald-200'
                               }`}>
                                 {getButtonLabel('homePlayFriends', 'Play with Friends')}
                               </h3>
-                              <span className={`px-2 py-0.5 rounded-full border text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider shrink-0 shadow-xs flex items-center gap-1 ${
+                              <span className={`px-2.5 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-black uppercase tracking-wider shrink-0 shadow-xs flex items-center gap-1 ${
                                 isLight
-                                  ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                                  : 'bg-emerald-500/25 text-emerald-300 border-emerald-400/40'
+                                  ? 'bg-emerald-100 text-emerald-800 border-emerald-300 shadow-emerald-100'
+                                  : 'bg-emerald-500/25 text-emerald-300 border-emerald-400/40 shadow-emerald-950/50'
                               }`}>
-                                <span>CHAT & VOICE</span>
+                                <span>VOICE CHAT</span>
                                 <span className="text-xs">🎙️</span>
                               </span>
                             </div>
@@ -2363,7 +2342,7 @@ export default function App() {
                         triggerHaptic('move');
                         setShowMatchmakingModal(true);
                       }}
-                      className={`w-full text-left p-3 sm:p-3.5 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
+                      className={`w-full text-left p-3.5 sm:p-4 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
                         isLight
                           ? 'bg-gradient-to-r from-rose-50/90 via-white to-red-50/80 hover:from-rose-100/90 hover:to-red-100/80 border-2 border-rose-200/90 hover:border-rose-400 shadow-sm hover:shadow-md'
                           : 'bg-gradient-to-r from-rose-950/70 via-slate-900/90 to-red-950/50 hover:from-rose-900/80 hover:via-red-900/60 hover:to-rose-850/80 border border-rose-500/35 hover:border-rose-400/70 shadow-md shadow-rose-950/30'
@@ -2371,43 +2350,33 @@ export default function App() {
                     >
                       <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-rose-500/25 transition-all duration-300" />
                       <div className="flex items-center justify-between gap-3 relative z-10">
-                        <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
+                        <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                           {/* Global Arena Crossed Swords Avatar */}
-                          <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl border p-1 shadow-sm flex flex-col items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 relative overflow-hidden ${
+                          <div className={`w-12 h-12 sm:w-13 sm:h-13 rounded-2xl border flex items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 relative shadow-xs overflow-hidden ${
                             isLight
                               ? 'bg-gradient-to-br from-rose-100 via-white to-red-100 border-rose-300 group-hover:border-rose-400'
                               : 'bg-gradient-to-br from-rose-900/80 via-slate-950 to-red-950/90 border-rose-500/50 group-hover:border-rose-300'
                           }`}>
-                            <div className="relative z-10 flex flex-col items-center">
-                              <Swords className={`w-5 h-5 group-hover:rotate-12 transition-transform duration-300 ${
-                                isLight
-                                  ? 'text-rose-600'
-                                  : 'text-rose-400 drop-shadow-[0_0_6px_rgba(244,63,94,0.7)]'
-                              }`} />
-                            </div>
-                            {/* Little name strip */}
-                            <div className={`absolute bottom-0 inset-x-0 border-t py-0.5 flex justify-center items-center ${
+                            <Swords className={`w-6 h-6 group-hover:rotate-12 transition-transform duration-300 ${
                               isLight
-                                ? 'bg-rose-100/95 border-rose-200 text-rose-800'
-                                : 'bg-rose-950/95 border-rose-500/40 text-rose-300'
-                            }`}>
-                              <span className="text-[7.5px] font-black tracking-widest uppercase">ONLINE</span>
-                            </div>
+                                ? 'text-rose-600'
+                                : 'text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.7)]'
+                            }`} />
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className={`text-sm sm:text-base font-black transition-colors leading-tight ${
+                            <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+                              <h3 className={`text-base sm:text-lg font-black tracking-tight transition-colors leading-tight ${
                                 isLight
                                   ? 'text-slate-900 group-hover:text-rose-700'
                                   : 'text-white group-hover:text-rose-200'
                               }`}>
                                 {getButtonLabel('homePlayOnline', 'Play Online')}
                               </h3>
-                              <span className={`px-2 py-0.5 rounded-full border text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider shrink-0 shadow-xs flex items-center gap-1 ${
+                              <span className={`px-2.5 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-black uppercase tracking-wider shrink-0 shadow-xs flex items-center gap-1 ${
                                 isLight
-                                  ? 'bg-rose-100 text-rose-800 border-rose-300'
-                                  : 'bg-rose-500/25 text-rose-300 border-rose-400/40'
+                                  ? 'bg-rose-100 text-rose-800 border-rose-300 shadow-rose-100'
+                                  : 'bg-rose-500/25 text-rose-300 border-rose-400/40 shadow-rose-950/50'
                               }`}>
                                 <span>RATED FIDE</span>
                                 <span className="text-xs">⚔️</span>
@@ -2422,7 +2391,7 @@ export default function App() {
                     </button>
                     )}
 
-                    {/* 4th: Offline Chess Board (Pass & Play) */}
+                    {/* 4th: Offline Chess Board (Electric Cyan / Ocean Azure) */}
                     {isButtonVisible('homeOfflineBoard') && (
                     <button
                       onClick={() => {
@@ -2430,107 +2399,99 @@ export default function App() {
                         triggerHaptic('move');
                         setActiveTab('offline');
                       }}
-                      className={`w-full text-left p-3 sm:p-3.5 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
+                      className={`w-full text-left p-3.5 sm:p-4 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
                         isLight
-                          ? 'bg-gradient-to-r from-amber-50/90 via-white to-yellow-50/70 hover:from-amber-100/90 hover:to-yellow-100/80 border-2 border-amber-300/90 hover:border-amber-500 shadow-sm hover:shadow-md'
-                          : 'bg-gradient-to-r from-amber-950/70 via-slate-900/90 to-yellow-950/50 hover:from-amber-900/80 hover:via-yellow-900/60 hover:to-amber-850/80 border border-amber-500/40 hover:border-amber-400/80 shadow-md shadow-amber-950/35'
+                          ? 'bg-gradient-to-r from-cyan-50/90 via-white to-sky-50/80 hover:from-cyan-100/90 hover:to-sky-100/80 border-2 border-cyan-200/90 hover:border-cyan-400 shadow-sm hover:shadow-md'
+                          : 'bg-gradient-to-r from-cyan-950/70 via-slate-900/90 to-sky-950/50 hover:from-cyan-900/80 hover:via-sky-900/60 hover:to-cyan-850/80 border border-cyan-500/35 hover:border-cyan-400/70 shadow-md shadow-cyan-950/30'
                       }`}
                     >
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-500/25 transition-all duration-300" />
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-cyan-500/25 transition-all duration-300" />
                       <div className="flex items-center justify-between gap-3 relative z-10">
-                        <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
-                          {/* 3D Luxury Chessboard Icon */}
-                          <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl border p-1 shadow-sm flex flex-col items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 relative overflow-hidden ${
+                        <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                          {/* 3D Cyan Jewel Chessboard Icon */}
+                          <div className={`w-12 h-12 sm:w-13 sm:h-13 rounded-2xl border flex items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 relative shadow-xs overflow-hidden ${
                             isLight
-                              ? 'bg-gradient-to-br from-amber-100 via-white to-yellow-100 border-amber-300 group-hover:border-amber-400'
-                              : 'bg-gradient-to-br from-amber-900/80 via-slate-950 to-yellow-950/90 border-amber-500/50 group-hover:border-amber-300'
+                              ? 'bg-gradient-to-br from-cyan-100 via-white to-sky-100 border-cyan-200 group-hover:border-cyan-400'
+                              : 'bg-gradient-to-br from-cyan-900/80 via-slate-950 to-sky-950/90 border-cyan-400/50 group-hover:border-cyan-300'
                           }`}>
                             <svg className="w-8 h-8 drop-shadow-xs transition-transform duration-300 group-hover:scale-110" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <defs>
-                                <linearGradient id="boardBaseWood" x1="0%" y1="0%" x2="100%" y2="100%">
-                                  <stop offset="0%" stopColor="#92400e" />
-                                  <stop offset="60%" stopColor="#78350f" />
-                                  <stop offset="100%" stopColor="#451a03" />
+                                <linearGradient id="boardBaseCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+                                  <stop offset="0%" stopColor="#0891b2" />
+                                  <stop offset="60%" stopColor="#0e7490" />
+                                  <stop offset="100%" stopColor="#155e75" />
                                 </linearGradient>
-                                <linearGradient id="goldBoardTrim" x1="0%" y1="0%" x2="100%" y2="0%">
-                                  <stop offset="0%" stopColor="#fef08a" />
-                                  <stop offset="50%" stopColor="#eab308" />
-                                  <stop offset="100%" stopColor="#ca8a04" />
+                                <linearGradient id="cyanBoardTrim" x1="0%" y1="0%" x2="100%" y2="0%">
+                                  <stop offset="0%" stopColor="#a5f3fc" />
+                                  <stop offset="50%" stopColor="#38bdf8" />
+                                  <stop offset="100%" stopColor="#0284c7" />
                                 </linearGradient>
-                                <linearGradient id="sqLight" x1="0%" y1="0%" x2="100%" y2="100%">
-                                  <stop offset="0%" stopColor="#fef3c7" />
-                                  <stop offset="100%" stopColor="#fde68a" />
+                                <linearGradient id="sqLightCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+                                  <stop offset="0%" stopColor="#ecfeff" />
+                                  <stop offset="100%" stopColor="#cffafe" />
                                 </linearGradient>
-                                <linearGradient id="sqDark" x1="0%" y1="0%" x2="100%" y2="100%">
-                                  <stop offset="0%" stopColor="#b45309" />
-                                  <stop offset="100%" stopColor="#78350f" />
+                                <linearGradient id="sqDarkCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+                                  <stop offset="0%" stopColor="#0891b2" />
+                                  <stop offset="100%" stopColor="#0e7490" />
                                 </linearGradient>
-                                <linearGradient id="knightGold" x1="0%" y1="0%" x2="100%" y2="100%">
-                                  <stop offset="0%" stopColor="#fffbeb" />
-                                  <stop offset="40%" stopColor="#fcd34d" />
-                                  <stop offset="100%" stopColor="#d97706" />
+                                <linearGradient id="knightCyanGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+                                  <stop offset="0%" stopColor="#ffffff" />
+                                  <stop offset="40%" stopColor="#67e8f9" />
+                                  <stop offset="100%" stopColor="#06b6d4" />
                                 </linearGradient>
-                                <linearGradient id="kingObsidian" x1="0%" y1="0%" x2="100%" y2="100%">
-                                  <stop offset="0%" stopColor="#475569" />
+                                <linearGradient id="kingObsidianCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+                                  <stop offset="0%" stopColor="#334155" />
                                   <stop offset="60%" stopColor="#1e293b" />
                                   <stop offset="100%" stopColor="#0f172a" />
                                 </linearGradient>
                               </defs>
-                              <rect x="5" y="7" width="54" height="52" rx="7" fill="#451a03" />
-                              <rect x="5" y="5" width="54" height="52" rx="7" fill="url(#boardBaseWood)" stroke="url(#goldBoardTrim)" strokeWidth="1.2" />
-                              <rect x="9" y="9" width="46" height="44" rx="3.5" fill="#451a03" stroke="#fde047" strokeWidth="0.8" />
+                              <rect x="5" y="7" width="54" height="52" rx="7" fill="#0e7490" />
+                              <rect x="5" y="5" width="54" height="52" rx="7" fill="url(#boardBaseCyan)" stroke="url(#cyanBoardTrim)" strokeWidth="1.2" />
+                              <rect x="9" y="9" width="46" height="44" rx="3.5" fill="#155e75" stroke="#38bdf8" strokeWidth="0.8" />
                               <g transform="translate(10, 10)">
-                                <rect x="0" y="0" width="11" height="10.5" fill="url(#sqLight)" rx="1" />
-                                <rect x="11" y="0" width="11" height="10.5" fill="url(#sqDark)" rx="1" />
-                                <rect x="22" y="0" width="11" height="10.5" fill="url(#sqLight)" rx="1" />
-                                <rect x="33" y="0" width="11" height="10.5" fill="url(#sqDark)" rx="1" />
-                                <rect x="0" y="10.5" width="11" height="10.5" fill="url(#sqDark)" rx="1" />
-                                <rect x="11" y="10.5" width="11" height="10.5" fill="url(#sqLight)" rx="1" />
-                                <rect x="22" y="10.5" width="11" height="10.5" fill="url(#sqDark)" rx="1" />
-                                <rect x="33" y="10.5" width="11" height="10.5" fill="url(#sqLight)" rx="1" />
-                                <rect x="0" y="21" width="11" height="10.5" fill="url(#sqLight)" rx="1" />
-                                <rect x="11" y="21" width="11" height="10.5" fill="url(#sqDark)" rx="1" />
-                                <rect x="22" y="21" width="11" height="10.5" fill="url(#sqLight)" rx="1" />
-                                <rect x="33" y="21" width="11" height="10.5" fill="url(#sqDark)" rx="1" />
-                                <rect x="0" y="31.5" width="11" height="10.5" fill="url(#sqDark)" rx="1" />
-                                <rect x="11" y="31.5" width="11" height="10.5" fill="url(#sqLight)" rx="1" />
-                                <rect x="22" y="31.5" width="11" height="10.5" fill="url(#sqDark)" rx="1" />
-                                <rect x="33" y="31.5" width="11" height="10.5" fill="url(#sqLight)" rx="1" />
+                                <rect x="0" y="0" width="11" height="10.5" fill="url(#sqLightCyan)" rx="1" />
+                                <rect x="11" y="0" width="11" height="10.5" fill="url(#sqDarkCyan)" rx="1" />
+                                <rect x="22" y="0" width="11" height="10.5" fill="url(#sqLightCyan)" rx="1" />
+                                <rect x="33" y="0" width="11" height="10.5" fill="url(#sqDarkCyan)" rx="1" />
+                                <rect x="0" y="10.5" width="11" height="10.5" fill="url(#sqDarkCyan)" rx="1" />
+                                <rect x="11" y="10.5" width="11" height="10.5" fill="url(#sqLightCyan)" rx="1" />
+                                <rect x="22" y="10.5" width="11" height="10.5" fill="url(#sqDarkCyan)" rx="1" />
+                                <rect x="33" y="10.5" width="11" height="10.5" fill="url(#sqLightCyan)" rx="1" />
+                                <rect x="0" y="21" width="11" height="10.5" fill="url(#sqLightCyan)" rx="1" />
+                                <rect x="11" y="21" width="11" height="10.5" fill="url(#sqDarkCyan)" rx="1" />
+                                <rect x="22" y="21" width="11" height="10.5" fill="url(#sqLightCyan)" rx="1" />
+                                <rect x="33" y="21" width="11" height="10.5" fill="url(#sqDarkCyan)" rx="1" />
+                                <rect x="0" y="31.5" width="11" height="10.5" fill="url(#sqDarkCyan)" rx="1" />
+                                <rect x="11" y="31.5" width="11" height="10.5" fill="url(#sqLightCyan)" rx="1" />
+                                <rect x="22" y="31.5" width="11" height="10.5" fill="url(#sqDarkCyan)" rx="1" />
+                                <rect x="33" y="31.5" width="11" height="10.5" fill="url(#sqLightCyan)" rx="1" />
                               </g>
                               <g transform="translate(13, 24)">
-                                <path d="M12 2C9.5 2 7 3.5 6 6.5C5.5 8 5.8 10 5 11.5C4.2 13 2.5 14 2 15.5C1.5 17 2.2 18.2 3.5 18.5C5 18.8 6.5 17.5 7 16.5C7.2 18 8 19 9.5 19.5C8.8 20 8 20.8 8 22H16C16 20.5 15.5 18.5 15.5 16.5C16.8 15 17.5 12.8 17.2 10.5C16.8 6 15 2 12 2Z" fill="url(#knightGold)" stroke="#b45309" strokeWidth="0.8" />
-                                <circle cx="8" cy="8" r="0.9" fill="#78350f" />
+                                <path d="M12 2C9.5 2 7 3.5 6 6.5C5.5 8 5.8 10 5 11.5C4.2 13 2.5 14 2 15.5C1.5 17 2.2 18.2 3.5 18.5C5 18.8 6.5 17.5 7 16.5C7.2 18 8 19 9.5 19.5C8.8 20 8 20.8 8 22H16C16 20.5 15.5 18.5 15.5 16.5C16.8 15 17.5 12.8 17.2 10.5C16.8 6 15 2 12 2Z" fill="url(#knightCyanGlow)" stroke="#0e7490" strokeWidth="0.8" />
+                                <circle cx="8" cy="8" r="0.9" fill="#0891b2" />
                               </g>
                               <g transform="translate(34, 11)">
-                                <path d="M10 3V1H8V3H6V5H8V6H10V5H12V3H10Z" fill="#fbbf24" />
-                                <path d="M4 8L5.5 13H12.5L14 8L11 10L9 6.5L7 10L4 8Z" fill="url(#kingObsidian)" stroke="#64748b" strokeWidth="0.7" />
-                                <rect x="5" y="13" width="8" height="5" rx="1" fill="url(#kingObsidian)" stroke="#475569" strokeWidth="0.7" />
-                                <rect x="4" y="18" width="10" height="2.5" rx="1.2" fill="#0f172a" stroke="#f59e0b" strokeWidth="0.6" />
+                                <path d="M10 3V1H8V3H6V5H8V6H10V5H12V3H10Z" fill="#38bdf8" />
+                                <path d="M4 8L5.5 13H12.5L14 8L11 10L9 6.5L7 10L4 8Z" fill="url(#kingObsidianCyan)" stroke="#38bdf8" strokeWidth="0.7" />
+                                <rect x="5" y="13" width="8" height="5" rx="1" fill="url(#kingObsidianCyan)" stroke="#0e7490" strokeWidth="0.7" />
+                                <rect x="4" y="18" width="10" height="2.5" rx="1.2" fill="#0f172a" stroke="#38bdf8" strokeWidth="0.6" />
                               </g>
                             </svg>
-                            {/* Little name strip */}
-                            <div className={`absolute bottom-0 inset-x-0 border-t py-0.5 flex justify-center items-center ${
-                              isLight
-                                ? 'bg-amber-100/95 border-amber-200 text-amber-800'
-                                : 'bg-amber-950/95 border-amber-600/40 text-amber-300'
-                            }`}>
-                              <span className="text-[7.5px] font-black tracking-widest uppercase">PASS & PLAY</span>
-                            </div>
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className={`text-sm sm:text-base font-black transition-colors leading-tight ${
+                            <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+                              <h3 className={`text-base sm:text-lg font-black tracking-tight transition-colors leading-tight ${
                                 isLight
-                                  ? 'text-slate-900 group-hover:text-amber-800'
-                                  : 'text-white group-hover:text-amber-200'
+                                  ? 'text-slate-900 group-hover:text-cyan-800'
+                                  : 'text-white group-hover:text-cyan-200'
                               }`}>
                                 {getButtonLabel('homeOfflineBoard', 'Offline Chess Board')}
                               </h3>
-                              <span className={`px-2 py-0.5 rounded-full border text-[9.5px] sm:text-[10.5px] font-black uppercase tracking-wider shrink-0 shadow-xs flex items-center gap-1 ${
+                              <span className={`px-2.5 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-black uppercase tracking-wider shrink-0 shadow-xs flex items-center gap-1 ${
                                 isLight
-                                  ? 'bg-amber-100 text-amber-800 border-amber-300'
-                                  : 'bg-amber-500/25 text-amber-300 border-amber-400/40'
+                                  ? 'bg-cyan-100 text-cyan-800 border-cyan-300 shadow-cyan-100'
+                                  : 'bg-cyan-500/25 text-cyan-300 border-cyan-400/40 shadow-cyan-950/50'
                               }`}>
                                 <span>PASS & PLAY</span>
                                 <span className="text-xs">👥</span>
@@ -2539,7 +2500,7 @@ export default function App() {
                           </div>
                         </div>
                         <ChevronRight className={`w-5 h-5 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all shrink-0 ${
-                          isLight ? 'text-amber-600' : 'text-amber-400'
+                          isLight ? 'text-cyan-600' : 'text-cyan-400'
                         }`} />
                       </div>
                     </button>
@@ -2873,8 +2834,10 @@ export default function App() {
           if (user) {
             const isOp = user.email?.toLowerCase().trim() === 'op21plus@gmail.com';
             user.role = isOp ? 'admin' : (user.role === 'guest' ? 'guest' : 'user');
-            // Change avatar to another fresh random anime picture upon login
-            user.avatar = getRandomAnimeAvatar();
+            // Preserve user's avatar permanently; never randomize upon login!
+            const savedAvatar = safeStorage.getItem('chess_arena_selected_avatar');
+            user.avatar = user.avatar || savedAvatar || DEFAULT_APP_AVATAR;
+            safeStorage.setItem('chess_arena_selected_avatar', user.avatar);
             safeStorage.setItem('chess_arena_user', JSON.stringify(user));
           }
           setCurrentUser(user);
@@ -2890,6 +2853,10 @@ export default function App() {
           if (user) {
             const isOp = user.email?.toLowerCase().trim() === 'op21plus@gmail.com';
             user.role = isOp ? 'admin' : (user.role === 'guest' ? 'guest' : 'user');
+            if (user.avatar) {
+              safeStorage.setItem('chess_arena_selected_avatar', user.avatar);
+            }
+            safeStorage.setItem('chess_arena_user', JSON.stringify(user));
           }
           setCurrentUser(user);
         }}

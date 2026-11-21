@@ -51,6 +51,10 @@ export function ProfileModal({ user, isOpen, onClose, onUpdateUser, onNavigateTo
   const handleSaveAvatar = () => {
     // Immediate local optimistic update
     const updatedUser = { ...user, avatar: selectedAvatar };
+    try {
+      safeStorage.setItem('chess_arena_selected_avatar', selectedAvatar);
+      safeStorage.setItem('chess_arena_user', JSON.stringify(updatedUser));
+    } catch {}
     if (onUpdateUser) onUpdateUser(updatedUser);
     setIsEditing(false);
 

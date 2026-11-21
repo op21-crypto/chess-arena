@@ -59,7 +59,7 @@ export function ProfileView({
   };
 
   // Avatar Drawer State
-  const [selectedAvatar, setSelectedAvatar] = useState(user?.avatar || getRandomAnimeAvatar());
+  const [selectedAvatar, setSelectedAvatar] = useState(() => user?.avatar || safeStorage.getItem('chess_arena_selected_avatar') || FAMOUS_AVATARS[0].url);
   const [isEditingAvatar, setIsEditingAvatar] = useState(false);
   const [avatarCategory, setAvatarCategory] = useState('all');
 
@@ -273,7 +273,7 @@ export function ProfileView({
           <div className="flex flex-col sm:flex-row items-center gap-3.5 text-center sm:text-left w-full sm:w-auto">
             <div className="relative group shrink-0">
               <img
-                src={selectedAvatar || user?.avatar || getRandomAnimeAvatar()}
+                src={selectedAvatar || user?.avatar || safeStorage.getItem('chess_arena_selected_avatar') || FAMOUS_AVATARS[0].url}
                 alt={user?.username || 'Player'}
                 className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 sm:border-3 shadow-md ${
                   isLightMode ? 'bg-slate-100 border-slate-200' : 'bg-slate-900 border-slate-750'
@@ -536,6 +536,7 @@ export function ProfileView({
                       sound.playClick();
                       triggerHaptic('move');
                       setSelectedAvatar(av.url);
+                      safeStorage.setItem('chess_arena_selected_avatar', av.url);
                       const updatedUser = { ...user, avatar: av.url };
                       onUpdateUser(updatedUser);
                       safeStorage.setItem('chess_arena_user', JSON.stringify(updatedUser));

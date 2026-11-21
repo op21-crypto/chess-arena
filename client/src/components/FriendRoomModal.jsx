@@ -726,15 +726,15 @@ export function FriendRoomModal({
       !blockedSet.has(candidate.username.toLowerCase())
   );
 
-  // Maintain at least 4 active online candidates dynamically so the list is NEVER empty
+  // Maintain strictly 3 active online candidates dynamically so the list is NEVER empty and always 2-3
   const unaddedCandidates = [...staticUnadded];
-  if (unaddedCandidates.length < 4) {
+  if (unaddedCandidates.length < 3) {
     const existing = new Set([
       ...friendUsernamesSet,
       ...blockedSet,
       ...unaddedCandidates.map(c => c.username.toLowerCase())
     ]);
-    const need = 4 - unaddedCandidates.length;
+    const need = 3 - unaddedCandidates.length;
     for (let i = 0; i < need; i++) {
       const cand = generateUniqueArenaCandidate(existing);
       existing.add(cand.username.toLowerCase());
@@ -769,7 +769,18 @@ export function FriendRoomModal({
     return INITIAL_DIRECT_MESSAGES;
   });
 
-  // Track sent friend requests (so requests aren't immediately added to friends)
+  // Track sent friend requests (both username array for fast check and object array for UI card display)
+  const [pendingSentRequests, setPendingSentRequests] = useState(() => {
+    try {
+      const saved = safeStorage.getItem('chess_arena_sent_requests_v3_detailed');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    return [];
+  });
+
   const [sentRequests, setSentRequests] = useState(() => {
     try {
       const saved = safeStorage.getItem('chess_arena_sent_requests_v3');
