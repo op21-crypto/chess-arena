@@ -4265,6 +4265,53 @@
       "createdAt": "2026-01-01T00:00:00.000Z",
       "isOnline": false,
       "banned": false
+    },
+    "user_op_test": {
+      "role": "admin",
+      "country": "IN",
+      "countryName": "India",
+      "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=OpMaster",
+      "ratings": {
+        "bullet": 2520,
+        "blitz": 2550,
+        "rapid": 2580,
+        "classical": 2600,
+        "puzzle": 2700
+      },
+      "highestRating": 2600,
+      "stats": {
+        "played": 480,
+        "won": 370,
+        "lost": 65,
+        "drawn": 45,
+        "winStreak": 16,
+        "currentStreak": 6
+      },
+      "ratingHistory": [
+        {
+          "date": "2026-11-21",
+          "rating": 2580,
+          "format": "rapid"
+        }
+      ],
+      "achievements": [
+        "first_win",
+        "checkmate_pro",
+        "wins_10",
+        "games_100",
+        "streak_master",
+        "tactical_genius",
+        "blitz_master",
+        "rapid_master",
+        "king_badge",
+        "queen_badge"
+      ],
+      "createdAt": "2026-11-21T06:55:43.958Z",
+      "isOnline": false,
+      "banned": false,
+      "id": "user_op_test",
+      "username": "OpMaster",
+      "email": "op21plus@gmail.com"
     }
   },
   "games": {},
@@ -4329,5 +4376,53 @@
   },
   "friendships": [],
   "notifications": {},
-  "reports": []
+  "reports": [],
+  "appConfig": {
+    "defaultTheme": "system",
+    "defaultBoardTheme": "cappuccino",
+    "defaultPieceTheme": "alexander",
+    "defaultPieceColorPalette": "classic",
+    "defaultTimeControl": "3m",
+    "defaultMusicEnabled": true,
+    "defaultMusicTrackIndex": 0,
+    "announcement": "Arena Championship 2026",
+    "maintenanceMode": false,
+    "customBots": [
+      {
+        "level": 1,
+        "name": "Beginner",
+        "elo": "800 ELO",
+        "icon": "🐣",
+        "style": "Fundamentals"
+      },
+      {
+        "level": 2,
+        "name": "Casual",
+        "elo": "1200 ELO",
+        "icon": "🛡️",
+        "style": "Opening Play"
+      },
+      {
+        "level": 3,
+        "name": "Master",
+        "elo": "1600 ELO",
+        "icon": "⚔️",
+        "style": "Tactics"
+      },
+      {
+        "level": 4,
+        "name": "FIDE Master",
+        "elo": "2000 ELO",
+        "icon": "💎",
+        "style": "Positional"
+      },
+      {
+        "level": 5,
+        "name": "Grandmaster",
+        "elo": "2500+ ELO",
+        "icon": "👑",
+        "style": "Stockfish 19 NNUE"
+      }
+    ]
+  }
 }

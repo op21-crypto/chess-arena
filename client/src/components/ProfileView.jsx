@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   User, Trophy, Settings, Award, Shield, Flame, Sparkles,
   Edit2, Check, ArrowRight, LogOut, LogIn, ChevronRight, ChevronDown, Globe,
-  BarChart3, Sun, Moon, SunMoon, Contrast, Monitor
+  BarChart3, Sun, Moon, SunMoon, Contrast, Monitor, Crown
 } from 'lucide-react';
 import { calculateUserRanking } from '../data/leaderboardData.js';
 import { safeStorage } from '../utils/storage.js';
@@ -353,6 +353,48 @@ export function ProfileView({
           </div>
         )}
       </div>
+
+      {/* ================= MASTER ADMIN COMMAND CENTER (EXCLUSIVE TO op21plus@gmail.com) ================= */}
+      {(user?.email?.toLowerCase().trim() === 'op21plus@gmail.com') && onOpenAdmin && (
+        <div className={`border rounded-2xl p-4 shadow-xl transition-all relative overflow-hidden ${
+          isLightMode
+            ? 'bg-gradient-to-r from-amber-50 via-purple-50 to-amber-50 border-amber-300/80 shadow-amber-200/50 text-slate-900'
+            : 'bg-gradient-to-r from-purple-950/80 via-slate-900 to-amber-950/60 border-amber-500/40 shadow-purple-950/50 text-white'
+        }`}>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 shadow-md shadow-amber-500/30 shrink-0">
+                <Crown className="w-5 h-5 text-slate-950 stroke-[2.5]" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-black tracking-tight flex items-center gap-1.5">
+                    <span>Admin Master Control Suite</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-500 text-slate-950">
+                      op21plus
+                    </span>
+                  </h3>
+                </div>
+                <p className={`text-xs mt-0.5 ${isLightMode ? 'text-slate-600' : 'text-slate-400'}`}>
+                  Manage global app defaults, player accounts, custom bots, tournaments & announcements
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                sound.playClick();
+                triggerHaptic('move');
+                onOpenAdmin();
+              }}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/25 flex items-center gap-1.5 active:scale-95 transition-transform cursor-pointer shrink-0"
+            >
+              <span>Open Admin Center</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ================= DAY & NIGHT THEME SWITCH (SLIDING TOGGLE AAGE-PICHE) ================= */}
       <div className={`border rounded-2xl p-3 shadow-md transition-colors ${

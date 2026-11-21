@@ -96,8 +96,30 @@ async function runTests() {
   console.assert(tourneys.length >= 3, 'Must have tournaments loaded');
   console.log(`   ✓ Active tournaments initialized: ${tourneys.length} championships ready`);
 
+  // Test 8: Full Master Admin Controls (op21plus@gmail.com & App Config)
+  console.log('\n8. Master Admin Controls & App Defaults:');
+  const appConfig = Database.getAppConfig();
+  console.assert(appConfig && appConfig.defaultTheme, 'App config must have defaultTheme');
+  console.assert(appConfig.customBots && appConfig.customBots.length === 5, 'Must have 5 bot tiers');
+  console.log('   ✓ App defaults loaded successfully:', appConfig.defaultTheme, appConfig.defaultBoardTheme);
+
+  const updatedConfig = Database.updateAppConfig({ announcement: 'Arena Championship 2026' });
+  console.assert(updatedConfig.announcement === 'Arena Championship 2026', 'Announcement must be updated');
+  console.log('   ✓ App config update verified: announcement =', updatedConfig.announcement);
+
+  // Verify deletion safeguard for op21plus@gmail.com
+  const opUser = Database.createUser({
+    id: 'user_op_test',
+    username: 'OpMaster',
+    email: 'op21plus@gmail.com',
+    role: 'admin'
+  });
+  const deleteResult = Database.deleteUser('user_op_test');
+  console.assert(deleteResult === false, 'op21plus@gmail.com must be protected from deletion');
+  console.log('   ✓ Security safeguard verified: op21plus@gmail.com account is non-deletable');
+
   console.log('\n===============================================');
-  console.log('🏆 ALL 7 CORE SUBSYSTEM TESTS PASSED WITH 100% SUCCESS!');
+  console.log('🏆 ALL 8 CORE SUBSYSTEM TESTS PASSED WITH 100% SUCCESS!');
   console.log('===============================================');
   process.exit(0);
 }

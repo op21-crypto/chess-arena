@@ -70,36 +70,19 @@ export const HOME_TIME_CONTROLS = [
   { id: '30m', label: '30 min', type: 'Classical', icon: '🏛️', format: 'classical', baseMinutes: 30, incrementSeconds: 0 }
 ];
 
-function KnightNavIcon({ className = 'w-4 h-4' }) {
-  return (
-    <svg
-      viewBox="0 0 45 45"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="3.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M22 10c10.5 1 16.5 8 16 29H15c0-9 10-6.5 8-21" />
-      <path d="M24 18c.38 2.91-5.55 7.37-8 9-3 2-2.82 4.34-5 4-1.042-.94 1.41-3.04 0-3-1 0-.95 1.23-1.5 1.5-1 0-2.06 1.15-2.5-.5-.45-1.69 1-3.69 2.5-4.5 2-1 3.5-3.5 3.5-6.5 0-2.8 1.5-5.5 3.5-7 2.5-2 5.5-2 7.5-1.5z" />
-      <circle cx="15.5" cy="19.5" r="1.5" fill="currentColor" />
-    </svg>
-  );
-}
-
 const PRIMARY_NAV_TABS = [
-  { id: 'home', label: 'Play', icon: KnightNavIcon },
+  { id: 'home', label: 'Home', icon: Home },
+  { id: 'puzzles', label: 'Puzzles', icon: Puzzle },
   { id: 'lessons', label: 'Learn', icon: GraduationCap },
-  { id: 'puzzles', label: 'Puzzle', icon: Puzzle },
   { id: 'profile', label: 'Profile', icon: CircleUserRound }
 ];
 
 export default function App() {
-  // Navigation & View State (5 Primary: Home, Play Online, Puzzles, Learn, Profile)
+  // Navigation & View State (4 Primary: Home, Puzzles, Learn, Profile)
   const [activeTab, setActiveTab] = useState('home'); // 'home' | 'game' | 'puzzles' | 'lessons' | 'profile' | 'admin'
   const [selectedHomeTime, setSelectedHomeTime] = useState(HOME_TIME_CONTROLS[1]); // Default 3 min Blitz
   const [incomingChallenge, setIncomingChallenge] = useState(null);
+  const [globalConfig, setGlobalConfig] = useState(null);
   const [settings, setSettings] = useState(() => {
     try {
       const saved = safeStorage.getItem('chess_arena_settings');
@@ -283,6 +266,29 @@ export default function App() {
   }, [activeTab]);
 
   useEffect(() => {
+    // 0. Fetch global server configuration & defaults
+    fetch('/api/config')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.config) {
+          setGlobalConfig(data.config);
+          // If user hasn't explicitly set preferences, seed with global admin defaults
+          const saved = safeStorage.getItem('chess_arena_settings');
+          if (!saved) {
+            setSettings(prev => ({
+              ...prev,
+              appTheme: data.config.defaultTheme || 'system',
+              boardTheme: data.config.defaultBoardTheme || 'cappuccino',
+              pieceTheme: data.config.defaultPieceTheme || 'alexander',
+              pieceColorPalette: data.config.defaultPieceColorPalette || 'classic',
+              musicEnabled: data.config.defaultMusicEnabled !== undefined ? data.config.defaultMusicEnabled : true,
+              musicTrackIndex: data.config.defaultMusicTrackIndex || 0
+            }));
+          }
+        }
+      })
+      .catch(() => {});
+
     // 1. Check existing auth token
     const token = safeStorage.getItem('token');
     if (token) {
@@ -1354,6 +1360,21 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Live Admin Announcement Banner */}
+              {globalConfig?.announcement && (
+                <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border shadow-md text-xs font-semibold backdrop-blur-md transition-colors overflow-hidden ${
+                  isLight
+                    ? 'bg-amber-50/95 border-amber-300 text-amber-900 shadow-amber-100'
+                    : 'bg-amber-500/10 border-amber-500/30 text-amber-300 shadow-amber-950/40'
+                }`}>
+                  <span className="text-amber-500 text-sm animate-bounce shrink-0">📢</span>
+                  <span className="font-black uppercase tracking-wider text-[9px] bg-amber-500/20 text-amber-500 px-2 py-0.5 rounded-full shrink-0">
+                    ANNOUNCEMENT
+                  </span>
+                  <span className="truncate flex-1">{globalConfig.announcement}</span>
+                </div>
+              )}
+
               {/* Grandmaster Arena Game Modes Hub */}
               <div className={`relative rounded-3xl p-4 sm:p-7 md:p-8 border shadow-2xl overflow-hidden backdrop-blur-xl transition-colors ${
                 isLight
@@ -1935,6 +1956,7 @@ export default function App() {
           <AdminView
             onBack={() => setActiveTab('profile')}
             currentUser={currentUser}
+            isLight={isLight}
           />
         )}
       </main>
