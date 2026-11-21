@@ -69,11 +69,11 @@ const OFFLINE_THEMES = [
   {
     id: "amoled",
     name: "Midnight Slate",
-    light: "#526682",
-    dark: "#223147",
-    border: "#f59e0b",
-    previewLight: "#526682",
-    previewDark: "#223147"
+    light: "#dee5ed",
+    dark: "#627d98",
+    border: "#334e68",
+    previewLight: "#dee5ed",
+    previewDark: "#627d98"
   },
   {
     id: "dark_marble",

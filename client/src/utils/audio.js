@@ -376,6 +376,11 @@ class ChessAudio {
     } catch (e) {}
   }
 
+  // Alias for defeat sound (delegates smoothly to full harmonic playGameOver)
+  playDefeat() {
+    this.playGameOver();
+  }
+
   // Harmonic match-drawn sound (peaceful, balanced conclusion)
   playGameDraw() {
     if (!this.enabled) return;

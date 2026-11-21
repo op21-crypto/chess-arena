@@ -66,7 +66,7 @@ const DEFAULT_SETTINGS = {
   vibrations: true,
   voiceCommentary: false,
   voiceCommentaryOnlyOpponent: true,
-  boardTheme: (typeof Math !== 'undefined' && Math.random() < 0.5) ? 'gold' : 'emerald',
+  boardTheme: 'greenwich',
   pieceTheme: 'alexander',
   showLegalMoves: true,
   highlightLastMove: true,
@@ -123,11 +123,9 @@ export default function App() {
       const saved = safeStorage.getItem('chess_arena_settings');
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Ensure default board theme is randomly selected between Gold and Emerald
-        const goldEmeraldMigrated = safeStorage.getItem('chess_arena_gold_emerald_default_v2');
-        if (!goldEmeraldMigrated || parsed.boardTheme === 'amoled' || parsed.boardTheme === 'greenwich') {
-          safeStorage.setItem('chess_arena_gold_emerald_default_v2', 'true');
-          parsed.boardTheme = Math.random() < 0.5 ? 'gold' : 'emerald';
+        // Sanitize legacy amoled board theme to Greenwich tournament standard
+        if (parsed.boardTheme === 'amoled') {
+          parsed.boardTheme = 'greenwich';
         }
         const themeMigrated = safeStorage.getItem('chess_arena_system_theme_default_v1');
         if (!themeMigrated) {
@@ -150,7 +148,7 @@ export default function App() {
         safeStorage.setItem('chess_arena_system_theme_default_v1', 'true');
       }
     } catch (e) {}
-    return { ...DEFAULT_SETTINGS, boardTheme: Math.random() < 0.5 ? 'gold' : 'emerald', appTheme: 'system', musicEnabled: true };
+    return { ...DEFAULT_SETTINGS, boardTheme: 'greenwich', appTheme: 'system', musicEnabled: true };
   });
 
   const handleUpdateSettings = (newSettings) => {
@@ -2335,6 +2333,8 @@ export default function App() {
             isLight={isLight}
             isOled={isOled}
             currentUser={currentUser}
+            boardTheme={settings.boardTheme}
+            pieceTheme={settings.pieceTheme}
             onUpdateRating={(newRating) => {
               if (currentUser) {
                 setCurrentUser({
@@ -2348,7 +2348,13 @@ export default function App() {
 
         {/* Lessons Tab */}
         {(activeTab === 'lessons' || activeTab === 'learn') && (
-          <LessonView isLight={isLight} isOled={isOled} onBack={() => setActiveTab('home')} />
+          <LessonView
+            isLight={isLight}
+            isOled={isOled}
+            boardTheme={settings.boardTheme}
+            pieceTheme={settings.pieceTheme}
+            onBack={() => setActiveTab('home')}
+          />
         )}
 
         {/* Profile Tab (Full-Page View: Overview, Rankings & Settings) */}

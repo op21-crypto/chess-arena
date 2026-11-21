@@ -695,10 +695,97 @@ Core Rules:
         }
       }
     } catch (err) {
-      // Fall through to fallback signal
+      // Fall through to smart server generator
     }
 
-    return res.json({ reply: null, source: 'fallback' });
+    // Dynamic Contextual Human-like Response Generator
+    const lower = (message || '').toLowerCase().trim();
+    const isRematch = /\b(rematch|again|revenge|run it back|one more|another|phir se|dobara|round 2|badla)\b/i.test(lower);
+    const isReady = /\b(ready|chal|lets go|let's go|aaja|start|khelte|khel|play now|game on|ready to play)\b/i.test(lower);
+    const isBotQuery = /\b(bot|ai|robot|machine|human|real person|real|fake|computer|kya tum bot ho|insaan)\b/i.test(lower);
+    const isGreeting = /^(hi|hello|hey|yo|sup|wassup|hii+|heyy+|namaste|kya haal|hola|greetings|gm|ge)\b/i.test(lower);
+    const isStatusQuery = /\b(how are you|how r u|kya kar rahe|what are you doing|whats up|what's up|how's it going|kaise ho|what doing)\b/i.test(lower);
+    const isTrashTalk = /\b(beat you|defeat|lose|loss|noob|easy|loser|weak|bad|haroge|harenge|crush you|destroy you|bache ho)\b/i.test(lower);
+    const isMatchQuery = /\b(play|match|game|khel|challenge|duel|fight|board|bhejo)\b/i.test(lower);
+    const isOpenings = /\b(opening|sicilian|e4|d4|gambit|french|caro|london|bongcloud|theory|tactic|blunder|fork|pin|queen|rook)\b/i.test(lower);
+    const isLaugh = /\b(haha|lol|lmao|rofl|hehe|xd|😂|🤣|funny)\b/i.test(lower);
+
+    const mins = detectedMinutes || (Math.random() < 0.5 ? 5 : 3);
+    const isElena = /elena|rostova/i.test(username);
+
+    let replies = [];
+    if (isRematch) {
+      replies = isElena ? [
+        `You want revenge already? 😉 I love the spirit! Let's do ${mins}m blitz right now. Hit Challenge above! ⚔️`,
+        `A rematch?! My Siberian knights never back down from a duel. Click that Challenge button above and let's roll! ♟️`,
+        `Oh you're definitely not walking away that easily! ${mins} minutes on the clock—send the challenge above and let's go! 🔥`,
+        `Round two?! Bring your best opening this time, because I'm not going easy on you! Click Challenge above! 🏆`,
+        `Haha rematch accepted! Let's see if you can crack my defense this time. Hit Challenge above and let's find out! ⚡`
+      ] : [
+        `Rematch on! ⚔️ I was literally just waiting for you to say that. Click that Challenge button above and let's battle!`,
+        `Oh it's on now! ${mins} minutes on the clock—hit Challenge above and let's see who takes this one! 🏆`,
+        `You've got courage, I'll give you that! Rematch accepted. Hit Challenge above right now! 🔥`,
+        `Round two! Best 2 out of 3? Drop the challenge above and let's get those pieces moving! ♟️`
+      ];
+    } else if (isReady) {
+      replies = isElena ? [
+        `Pieces are set and the clock is waiting! Hit the Challenge button right above and make your first move! ♟️`,
+        `Born ready! Let's do a ${mins}-minute match. Click Challenge above and show me what you got! ⚔️`,
+        `Always ready for battle! Hit Challenge above right now and let's see who controls the center! 🚀`,
+        `Board is clean, clock is ticking in my head! Tap Challenge above and let's make this game legendary! 🏆`
+      ] : [
+        `Let's do this! ⚔️ ${mins} minutes on the clock. Hit that Challenge button above and let's go!`,
+        `Board is set and ready! Click Challenge above right now and let's get those pawns flying! 🚀`,
+        `Say less! Hit Challenge above and let's find out who's taking home the Elo points today! 🏆`
+      ];
+    } else if (isBotQuery) {
+      replies = [
+        `Bro, if I were an AI, I wouldn't be chilling here talking chess with you at this hour! 😂 But my tactical moves might feel suspiciously calculated. Send the challenge and see!`,
+        `Shhh, don't let Stockfish hear you or he'll claim copyright over my brain cells! 🧠 I'm 100% human with 200% tactical instincts. Let's play!`,
+        `Haha, is it because my profile pic looks too cool or because you're already worried about my moves? 😉 Don't worry, I make human mistakes too... sometimes!`,
+        `Me, a bot?! Haha! Could an AI banter like this and then queen-trap you in 12 moves? Let's hit the board and find out! ♟️`
+      ];
+    } else if (isGreeting) {
+      replies = [
+        `Hey there! Great to see you in the Arena! What's the plan today—fun blitz or serious battle? ♟️`,
+        `Yo! Just the person I was hoping to see online. How's your chess day going? Ready to push some pawns? 😉`,
+        `Hey! Welcome to the lobby! I was just warming up my tactical vision. Up for a quick 3m or 5m game? 🔥`,
+        `Yooo! Perfect timing, I just finished analyzing an endgame study. You looking for a match? ⚡`
+      ];
+    } else if (isStatusQuery) {
+      replies = [
+        `Doing awesome! Just had a hot coffee and solved a 2300-rated tactical puzzle. How are things on your side? ☕`,
+        `Alive and kicking! Looking for a worthy opponent to test my new opening trap on. Are you volunteering? 😏`,
+        `Can't complain, though my Elo rating could definitely use a boost from playing you! 😂 How are you doing?`,
+        `Just chilling in the lobby reviewing Sicilian lines! Ready to roll whenever you send that challenge! ♟️`
+      ];
+    } else if (isTrashTalk) {
+      replies = [
+        `Ooh, bold words! But remember, the louder the talk, the harder the king falls 😉 Click Challenge above and put your rating on the line!`,
+        `Haha I love the confidence! Let's see if your pieces move as fast as your keyboard! Send that challenge! 🔥`,
+        `I'm screenshotting this chat so I can frame it right after I checkmate you 📸 Let's go!`
+      ];
+    } else if (isOpenings) {
+      replies = [
+        `Ah, a student of chess theory! I love sharp, chaotic gambits—give me an open center and let the pieces fly 🎆 What opening are you bringing to the table?`,
+        `Careful with your prep—I've got a surprise response ready for 1. e4 and 1. d4! Send the challenge and test my prep! ⚔️`
+      ];
+    } else if (isLaugh) {
+      replies = [
+        `Haha see, we're having fun already! Now let's see if you're still smiling after my surprise knight fork 😉 Click Challenge above and let's duel!`,
+        `😂 That cracked me up! Now let's translate that good mood onto the board. Hit Challenge above!`
+      ];
+    } else {
+      replies = [
+        `Haha you're fun to talk to! But chess glory is decided on the board, not in chat. How about a quick ${mins}-minute blitz right now? Challenge me above! ⚔️`,
+        `I hear you! My pieces are already restless on their starting squares. Click the Challenge button above and let's get rolling! 🚀`,
+        `Words are cheap, pawns are cheaper! Let's settle this with a quick game. Drop a 3m or 5m challenge above! ♟️`,
+        `The 64 squares are calling our names! Send the challenge above and let's see who's crowned champion! 🏆`
+      ];
+    }
+
+    const randomPick = replies[Math.floor(Math.random() * replies.length)];
+    return res.json({ reply: randomPick, source: 'smart_generator' });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
