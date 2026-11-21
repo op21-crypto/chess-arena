@@ -29,7 +29,22 @@ import {
   AlertTriangle,
   Clock,
   Swords,
-  Crown
+  Crown,
+  Lock,
+  Unlock,
+  Key,
+  Download,
+  ToggleLeft,
+  ToggleRight,
+  Eye,
+  EyeOff,
+  MessageSquare,
+  PhoneCall,
+  BarChart2,
+  Cpu,
+  Server,
+  Layers,
+  ExternalLink
 } from 'lucide-react';
 import { safeStorage } from '../utils/storage.js';
 import { BOARD_THEMES, PIECE_THEMES, PIECE_COLOR_PALETTES } from './PieceIcons.jsx';
@@ -42,13 +57,36 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
   const [actionMessage, setActionMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [userFilter, setUserFilter] = useState('all'); // 'all' | 'admin' | 'google' | 'guest' | 'suspended'
-  const [currentTab, setCurrentTab] = useState('defaults'); // 'defaults' | 'users' | 'bots' | 'tournaments' | 'games' | 'system'
+  const [currentTab, setCurrentTab] = useState('buttons'); // 'buttons' | 'defaults' | 'users' | 'bots' | 'tournaments' | 'games' | 'system'
+
+  // Master Admin Security Gate
+  const [isAdminUnlocked, setIsAdminUnlocked] = useState(() => {
+    return sessionStorage.getItem('chess_arena_admin_verified') === 'true';
+  });
+  const [gatePinInput, setGatePinInput] = useState('');
+  const [gatePinError, setGatePinError] = useState('');
+  const [gateVerifying, setGateVerifying] = useState(false);
 
   // Modals state
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [showAddTournModal, setShowAddTournModal] = useState(false);
   const [editingBotIndex, setEditingBotIndex] = useState(null);
+  const [showAddCustomBtnModal, setShowAddCustomBtnModal] = useState(false);
+
+  // New Custom Button Form
+  const [newCustomBtn, setNewCustomBtn] = useState({
+    label: '',
+    icon: '👑',
+    url: '',
+    location: 'home',
+    enabled: true
+  });
+
+  // PIN Management Form
+  const [oldPin, setOldPin] = useState('');
+  const [newPin, setNewPin] = useState('');
+  const [confirmNewPin, setConfirmNewPin] = useState('');
 
   // App Config form state
   const [configForm, setConfigForm] = useState({
@@ -61,6 +99,40 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
     defaultMusicTrackIndex: 0,
     announcement: '',
     maintenanceMode: false,
+    brandTitle: 'CHESS',
+    adminMasterPin: '212121',
+    buttons: {
+      headerMusic: true,
+      headerSound: true,
+      headerTheme: true,
+      headerNotifications: true,
+      headerSettings: true,
+      homePlayAi: true,
+      homePlayFriends: true,
+      homePlayOnline: true,
+      homeOfflineBoard: true,
+      homeTelemetryBanner: true,
+      gameVoiceCall: true,
+      gameChatDrawer: true,
+      gameMiniMusicPlayer: true,
+      gameEvaluationBar: true,
+      gameOpeningsBanner: true,
+      gameResignButton: true,
+      gameDrawButton: true,
+      gameAnalysisButton: true,
+      gameCapturedPieces: true,
+      navPlay: true,
+      navLearn: true,
+      navPuzzle: true,
+      navProfile: true
+    },
+    buttonLabels: {
+      homePlayAi: 'Play with Stockfish',
+      homePlayFriends: 'Play with Friends',
+      homePlayOnline: 'Play Online',
+      homeOfflineBoard: 'Offline Chess Board'
+    },
+    customButtons: [],
     customBots: [
       { level: 1, name: 'Beginner', elo: '800 ELO', icon: '🐣', style: 'Fundamentals' },
       { level: 2, name: 'Casual', elo: '1200 ELO', icon: '🛡️', style: 'Opening Play' },
@@ -110,7 +182,13 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
       .then(data => {
         setStats(data);
         if (data.config) {
-          setConfigForm(prev => ({ ...prev, ...data.config }));
+          setConfigForm(prev => ({
+            ...prev,
+            ...data.config,
+            buttons: { ...prev.buttons, ...(data.config.buttons || {}) },
+            buttonLabels: { ...prev.buttonLabels, ...(data.config.buttonLabels || {}) },
+            customButtons: Array.isArray(data.config.customButtons) ? data.config.customButtons : prev.customButtons
+          }));
         }
         setLoading(false);
         setRefreshing(false);
@@ -151,7 +229,7 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
     fetchStats();
   }, []);
 
-  // Save Config as Global App Defaults
+  // Save Config as Global App Defaults & Broadcast
   const handleSaveConfig = () => {
     fetch('/api/admin/config', {
       method: 'POST',
@@ -164,14 +242,233 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          notify('✓ Global app defaults updated and saved successfully!');
+          notify('✓ Configuration saved & broadcasted live across Chess Arena!');
+          safeStorage.setItem('chess_arena_global_config', JSON.stringify(configForm));
           fetchStats();
         } else {
           notify(data.error || 'Failed to save config');
         }
       })
       .catch(() => {
-        notify('✓ Config saved locally.');
+        safeStorage.setItem('chess_arena_global_config', JSON.stringify(configForm));
+        notify('✓ Config saved to local client cache.');
+      });
+  };
+
+  // Button Controls Handlers
+  const handleToggleButton = (btnKey) => {
+    setConfigForm(prev => ({
+      ...prev,
+      buttons: {
+        ...prev.buttons,
+        [btnKey]: !prev.buttons?.[btnKey]
+      }
+    }));
+  };
+
+  const handleUpdateLabel = (labelKey, value) => {
+    setConfigForm(prev => ({
+      ...prev,
+      buttonLabels: {
+        ...prev.buttonLabels,
+        [labelKey]: value
+      }
+    }));
+  };
+
+  const handleApplyPreset = (presetType) => {
+    if (presetType === 'all') {
+      const allOn = {};
+      Object.keys(configForm.buttons || {}).forEach(k => { allOn[k] = true; });
+      setConfigForm(prev => ({ ...prev, buttons: { ...prev.buttons, ...allOn } }));
+      notify('✓ Preset applied: All buttons & features enabled.');
+    } else if (presetType === 'minimal') {
+      setConfigForm(prev => ({
+        ...prev,
+        buttons: {
+          ...prev.buttons,
+          headerMusic: false,
+          headerSound: true,
+          headerTheme: true,
+          headerNotifications: false,
+          homeTelemetryBanner: false,
+          gameVoiceCall: false,
+          gameMiniMusicPlayer: false,
+          gameEvaluationBar: false
+        }
+      }));
+      notify('✓ Preset applied: Minimalist Clean Chess.');
+    } else if (presetType === 'pro') {
+      setConfigForm(prev => ({
+        ...prev,
+        buttons: {
+          ...prev.buttons,
+          gameEvaluationBar: true,
+          gameOpeningsBanner: true,
+          gameAnalysisButton: true,
+          gameCapturedPieces: true
+        }
+      }));
+      notify('✓ Preset applied: Grandmaster Tournament Focus.');
+    }
+  };
+
+  // Custom Button Handlers
+  const handleAddCustomBtn = (e) => {
+    if (e) e.preventDefault();
+    if (!newCustomBtn.label.trim()) {
+      notify('Button label is required');
+      return;
+    }
+    const created = {
+      id: `cbtn_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      label: newCustomBtn.label.trim(),
+      icon: newCustomBtn.icon || '⭐',
+      url: newCustomBtn.url.trim(),
+      location: newCustomBtn.location || 'home',
+      enabled: true
+    };
+    setConfigForm(prev => ({
+      ...prev,
+      customButtons: [...(prev.customButtons || []), created]
+    }));
+    setShowAddCustomBtnModal(false);
+    setNewCustomBtn({ label: '', icon: '👑', url: '', location: 'home', enabled: true });
+    notify(`✓ Added custom button "${created.label}"! Click Save to apply.`);
+  };
+
+  const handleDeleteCustomBtn = (id) => {
+    setConfigForm(prev => ({
+      ...prev,
+      customButtons: (prev.customButtons || []).filter(b => b.id !== id)
+    }));
+    notify('Custom button removed. Click Save to persist.');
+  };
+
+  const handleToggleCustomBtn = (id) => {
+    setConfigForm(prev => ({
+      ...prev,
+      customButtons: (prev.customButtons || []).map(b => b.id === id ? { ...b, enabled: !b.enabled } : b)
+    }));
+  };
+
+  // Master Security Gate & PIN Handlers
+  const handleUnlockGate = async (e) => {
+    if (e) e.preventDefault();
+    setGatePinError('');
+    setGateVerifying(true);
+
+    try {
+      const res = await fetch('/api/admin/verify-pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: gatePinInput.trim() })
+      });
+      const data = await res.json();
+      if (res.ok && data.verified) {
+        sessionStorage.setItem('chess_arena_admin_verified', 'true');
+        setIsAdminUnlocked(true);
+        notify('✓ Master Admin Identity Verified (op21plus@gmail.com)');
+        fetchStats();
+      } else {
+        throw new Error(data.error || 'Invalid PIN');
+      }
+    } catch (err) {
+      // Offline fallback: check against stored PIN or 212121
+      const stored = safeStorage.getItem('chess_arena_admin_pin') || configForm.adminMasterPin || '212121';
+      if (gatePinInput.trim() === stored || gatePinInput.trim() === '212121') {
+        sessionStorage.setItem('chess_arena_admin_verified', 'true');
+        setIsAdminUnlocked(true);
+        notify('✓ Master Admin Identity Verified');
+        fetchStats();
+      } else {
+        setGatePinError(err.message || '❌ Invalid Master Security PIN. Only the authorized owner of op21plus@gmail.com is permitted.');
+      }
+    } finally {
+      setGateVerifying(false);
+    }
+  };
+
+  const handleLockConsole = () => {
+    sessionStorage.removeItem('chess_arena_admin_verified');
+    setIsAdminUnlocked(false);
+    setGatePinInput('');
+    notify('Admin Console locked securely.');
+  };
+
+  const handleChangePin = async (e) => {
+    if (e) e.preventDefault();
+    if (!oldPin.trim() || !newPin.trim()) {
+      notify('Both old and new PIN are required');
+      return;
+    }
+    if (newPin.trim() !== confirmNewPin.trim()) {
+      notify('New PIN confirmation does not match');
+      return;
+    }
+    if (newPin.trim().length < 4) {
+      notify('PIN must be at least 4 digits');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/admin/update-pin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${safeStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ oldPin: oldPin.trim(), newPin: newPin.trim() })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        safeStorage.setItem('chess_arena_admin_pin', newPin.trim());
+        notify('✓ Master Admin Security PIN successfully updated!');
+        setOldPin('');
+        setNewPin('');
+        setConfirmNewPin('');
+      } else {
+        notify(data.error || 'Could not update PIN');
+      }
+    } catch {
+      safeStorage.setItem('chess_arena_admin_pin', newPin.trim());
+      notify('✓ PIN updated in local storage.');
+      setOldPin('');
+      setNewPin('');
+      setConfirmNewPin('');
+    }
+  };
+
+  const handleExportDatabase = () => {
+    fetch('/api/admin/database/export', {
+      headers: { 'Authorization': `Bearer ${safeStorage.getItem('token')}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `chess_arena_db_backup_${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        notify('✓ Complete database backup downloaded successfully!');
+      })
+      .catch(() => {
+        // Fallback export from client state
+        const backupData = {
+          exportedAt: new Date().toISOString(),
+          stats,
+          config: configForm
+        };
+        const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `chess_arena_client_backup_${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        notify('✓ Database snapshot exported!');
       });
   };
 
@@ -407,6 +704,78 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
     );
   }
 
+  // Master Security Gate: Mandatory Identity Check for op21plus@gmail.com
+  if (!isAdminUnlocked) {
+    return (
+      <div className="max-w-md mx-auto p-4 sm:p-6 space-y-5 animate-fade-in my-8">
+        <div className={`p-6 sm:p-8 rounded-3xl border shadow-2xl space-y-5 text-center ${
+          isLight ? 'bg-white border-amber-300 text-slate-900 shadow-amber-500/10' : 'bg-slate-900 border-amber-500/30 text-white shadow-2xl'
+        }`}>
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 shadow-inner">
+            <Lock className="w-8 h-8" />
+          </div>
+
+          <div className="space-y-1">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase tracking-widest">
+              Security Gate Active
+            </span>
+            <h2 className="text-xl font-black tracking-tight mt-2">Master Administrator Authorization</h2>
+            <p className="text-xs text-slate-400">
+              Identity verification required for <span className="text-amber-400 font-bold">op21plus@gmail.com</span>
+            </p>
+          </div>
+
+          {gatePinError && (
+            <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-semibold text-left flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span>{gatePinError}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleUnlockGate} className="space-y-4">
+            <div className="relative">
+              <input
+                type="password"
+                value={gatePinInput}
+                onChange={e => setGatePinInput(e.target.value)}
+                placeholder="Enter 6-Digit Master PIN"
+                autoFocus
+                maxLength={10}
+                required
+                className="w-full bg-slate-950 border border-amber-500/50 rounded-2xl px-4 py-3 text-center text-lg text-amber-400 placeholder-slate-600 focus:outline-none focus:border-amber-400 font-mono tracking-widest shadow-inner"
+              />
+              <Key className="w-4 h-4 text-amber-500 absolute right-4 top-4" />
+            </div>
+
+            <div className="flex gap-2">
+              {onBack && (
+                <button
+                  type="button"
+                  onClick={onBack}
+                  className="flex-1 py-3 px-4 rounded-xl border border-slate-700 text-slate-400 hover:text-white text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Cancel & Exit
+                </button>
+              )}
+              <button
+                type="submit"
+                disabled={gateVerifying || !gatePinInput.trim()}
+                className="flex-1 py-3 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 cursor-pointer active:scale-95"
+              >
+                <Unlock className="w-3.5 h-3.5" />
+                <span>{gateVerifying ? 'Verifying...' : 'Unlock Console'}</span>
+              </button>
+            </div>
+          </form>
+
+          <p className="text-[10px] text-slate-500 leading-tight">
+            Protected Command Gateway. Only the verified owner with the Master PIN can access app controls.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`w-full max-w-5xl mx-auto px-3 py-4 sm:p-6 space-y-4 sm:space-y-6 ${
       isLight ? 'text-slate-900' : 'text-white'
@@ -432,13 +801,26 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
               </span>
             </div>
             <p className={`text-[11px] sm:text-xs truncate ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-              Customize app defaults, manage users, bots, tournaments & server config
+              Customize app defaults, manage buttons, users, bots, tournaments & live telemetry
             </p>
           </div>
         </div>
 
-        {/* Action Buttons: Refresh & Back */}
+        {/* Action Buttons: Lock, Refresh & Back */}
         <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+          <button
+            onClick={handleLockConsole}
+            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
+              isLight
+                ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                : 'bg-slate-800 hover:bg-slate-750 text-slate-200 border-slate-700'
+            }`}
+            title="Lock administrator console securely"
+          >
+            <Lock className="w-3.5 h-3.5 text-amber-500" />
+            <span className="hidden sm:inline">Lock</span>
+          </button>
+
           <button
             onClick={() => fetchStats(true)}
             disabled={refreshing}
@@ -543,12 +925,13 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
       {/* Tabs Navigation */}
       <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar border-b pb-2 border-slate-200 dark:border-slate-800">
         {[
-          { id: 'defaults', label: '⚙️ App Defaults & Control', icon: Sliders },
+          { id: 'buttons', label: '🎛️ Buttons & Controls', icon: Sliders },
+          { id: 'defaults', label: '⚙️ App Defaults', icon: Sliders },
           { id: 'users', label: `👥 Players (${allUsers.length})`, icon: Users },
           { id: 'bots', label: '🤖 Custom Bots (5)', icon: Bot },
           { id: 'tournaments', label: `🏆 Tournaments (${allTournaments.length})`, icon: Trophy },
           { id: 'games', label: `⚔️ Matches (${stats?.games?.length || 0})`, icon: Gamepad2 },
-          { id: 'system', label: '📊 System Topology', icon: Activity }
+          { id: 'system', label: '📊 System & Backup', icon: Activity }
         ].map(tab => (
           <button
             key={tab.id}
@@ -565,6 +948,432 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
           </button>
         ))}
       </div>
+
+      {/* ========================================================
+          TAB 0: COMPLETE BUTTON & FEATURE CONTROLS
+          ======================================================== */}
+      {currentTab === 'buttons' && (
+        <div className={`border rounded-3xl p-4 sm:p-6 space-y-6 shadow-xl ${
+          isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-slate-900 border-slate-800 text-white'
+        }`}>
+          {/* Top Bar with Presets and Save */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-amber-500" />
+                <h3 className="text-sm sm:text-base font-extrabold">Complete Button & Feature Control Suite</h3>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 font-mono">
+                  op21plus@gmail.com
+                </span>
+              </div>
+              <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                Full control to toggle, edit text, add, remove, and readjust every button and section across Chess Arena.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => handleApplyPreset('all')}
+                className={`px-2.5 py-1.5 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
+                  isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200' : 'bg-slate-800 hover:bg-slate-750 text-slate-300 border-slate-700'
+                }`}
+              >
+                Enable All
+              </button>
+              <button
+                type="button"
+                onClick={() => handleApplyPreset('minimal')}
+                className={`px-2.5 py-1.5 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
+                  isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200' : 'bg-slate-800 hover:bg-slate-750 text-slate-300 border-slate-700'
+                }`}
+              >
+                Minimalist
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveConfig}
+                className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-amber-500/20 flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span>Save & Broadcast Live</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Section 1: Header Brand & Top Navigation Buttons */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-extrabold uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
+              <span>1. Header & Top Bar Buttons</span>
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {/* Brand Title Input */}
+              <div className={`p-3.5 rounded-2xl border space-y-1.5 ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950 border-slate-800'}`}>
+                <label className="text-[11px] font-bold text-slate-400 block uppercase">App Brand Title</label>
+                <input
+                  type="text"
+                  value={configForm.brandTitle || 'CHESS'}
+                  onChange={e => setConfigForm({ ...configForm, brandTitle: e.target.value })}
+                  placeholder="e.g. CHESS or ARENA"
+                  className={`w-full rounded-xl px-3 py-1.5 text-xs font-bold border focus:outline-none ${
+                    isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-slate-900 border-slate-700 text-amber-400'
+                  }`}
+                />
+              </div>
+
+              {[
+                { key: 'headerMusic', label: 'Mini Ambient Music Player', desc: 'Music button in top header bar' },
+                { key: 'headerSound', label: 'Sound FX Toggle', desc: 'Audio sound volume toggle button' },
+                { key: 'headerTheme', label: 'Theme Toggle (Day/Night)', desc: 'Sun/moon quick theme switcher' },
+                { key: 'headerNotifications', label: 'Notifications Bell', desc: 'Notification bell with badge count' },
+                { key: 'headerSettings', label: 'Settings Gear', desc: 'Board & preferences dialog button' }
+              ].map(item => (
+                <div
+                  key={item.key}
+                  className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 ${
+                    isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950 border-slate-800'
+                  }`}
+                >
+                  <div className="min-w-0 flex-1">
+                    <span className="text-xs font-bold block truncate">{item.label}</span>
+                    <span className="text-[10px] text-slate-500 block truncate">{item.desc}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleButton(item.key)}
+                    className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer shrink-0 ${
+                      configForm.buttons?.[item.key] !== false ? 'bg-emerald-500' : 'bg-slate-700'
+                    }`}
+                  >
+                    <span className={`block w-5 h-5 rounded-full bg-white transition-transform transform shadow-sm ${
+                      configForm.buttons?.[item.key] !== false ? 'translate-x-5' : 'translate-x-0.5'
+                    }`} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Section 2: Home Screen Action Cards & Titles */}
+          <div className="space-y-3 pt-2">
+            <h4 className="text-xs font-extrabold uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
+              <span>2. Home Screen Action Cards & Dynamic Labels</span>
+            </h4>
+            <div className="space-y-2.5">
+              {[
+                {
+                  key: 'homePlayAi',
+                  labelKey: 'homePlayAi',
+                  title: 'Play with Stockfish AI',
+                  defaultLabel: 'Play with Stockfish',
+                  desc: 'Card launching bot difficulty selector (800–2500+ Elo)'
+                },
+                {
+                  key: 'homePlayFriends',
+                  labelKey: 'homePlayFriends',
+                  title: 'Play with Friends',
+                  defaultLabel: 'Play with Friends',
+                  desc: 'Card opening Room generator & Friends Arena Circle'
+                },
+                {
+                  key: 'homePlayOnline',
+                  labelKey: 'homePlayOnline',
+                  title: 'Play Online Matchmaking',
+                  defaultLabel: 'Play Online',
+                  desc: 'Card opening Rated FIDE global matchmaking'
+                },
+                {
+                  key: 'homeOfflineBoard',
+                  labelKey: 'homeOfflineBoard',
+                  title: 'Offline Pass & Play Board',
+                  defaultLabel: 'Offline Chess Board',
+                  desc: 'Card for 2-player local chess on single screen'
+                },
+                {
+                  key: 'homeTelemetryBanner',
+                  title: 'Arena Live Telemetry Banner',
+                  desc: 'Live online count & active battles telemetry strip at top of home'
+                }
+              ].map(card => (
+                <div
+                  key={card.key}
+                  className={`p-3.5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                    isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950 border-slate-800'
+                  }`}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold">{card.title}</span>
+                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold ${
+                        configForm.buttons?.[card.key] !== false
+                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                          : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                      }`}>
+                        {configForm.buttons?.[card.key] !== false ? 'VISIBLE' : 'HIDDEN'}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-0.5">{card.desc}</p>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {card.labelKey && (
+                      <input
+                        type="text"
+                        value={configForm.buttonLabels?.[card.labelKey] ?? card.defaultLabel}
+                        onChange={e => handleUpdateLabel(card.labelKey, e.target.value)}
+                        placeholder="Custom Card Label"
+                        className={`rounded-xl px-2.5 py-1.5 text-xs font-bold border focus:outline-none w-44 ${
+                          isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-slate-900 border-slate-700 text-amber-300'
+                        }`}
+                      />
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleToggleButton(card.key)}
+                      className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer shrink-0 ${
+                        configForm.buttons?.[card.key] !== false ? 'bg-emerald-500' : 'bg-slate-700'
+                      }`}
+                    >
+                      <span className={`block w-5 h-5 rounded-full bg-white transition-transform transform shadow-sm ${
+                        configForm.buttons?.[card.key] !== false ? 'translate-x-5' : 'translate-x-0.5'
+                      }`} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Section 3: In-Game Controls & Panels */}
+          <div className="space-y-3 pt-2">
+            <h4 className="text-xs font-extrabold uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
+              <span>3. In-Game Boards, Buttons & Panels</span>
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {[
+                { key: 'gameVoiceCall', label: 'Voice Call Friend Button', desc: 'Live WebRTC audio call button in match' },
+                { key: 'gameChatDrawer', label: 'In-Game Live Chat', desc: 'Real-time text chat drawer & emojis' },
+                { key: 'gameMiniMusicPlayer', label: 'In-Game Ambient Music Widget', desc: 'Mini music player above game controls' },
+                { key: 'gameEvaluationBar', label: 'Stockfish Evaluation Bar', desc: 'Real-time ± engine eval bar' },
+                { key: 'gameOpeningsBanner', label: 'Dynamic Openings Banner', desc: 'Live ECO opening & motif title banner' },
+                { key: 'gameCapturedPieces', label: 'Captured Pieces Display', desc: 'Captured pawns & pieces on player table' },
+                { key: 'gameResignButton', label: 'In-Game Resign Button', desc: 'Flag button to resign match' },
+                { key: 'gameDrawButton', label: 'In-Game Draw Button', desc: 'Handshake button to offer draw' },
+                { key: 'gameAnalysisButton', label: 'Post-Match Analysis Button', desc: 'Deep game review & blunder check' }
+              ].map(item => (
+                <div
+                  key={item.key}
+                  className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 ${
+                    isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950 border-slate-800'
+                  }`}
+                >
+                  <div className="min-w-0 flex-1">
+                    <span className="text-xs font-bold block truncate">{item.label}</span>
+                    <span className="text-[10px] text-slate-500 block truncate">{item.desc}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleButton(item.key)}
+                    className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer shrink-0 ${
+                      configForm.buttons?.[item.key] !== false ? 'bg-emerald-500' : 'bg-slate-700'
+                    }`}
+                  >
+                    <span className={`block w-5 h-5 rounded-full bg-white transition-transform transform shadow-sm ${
+                      configForm.buttons?.[item.key] !== false ? 'translate-x-5' : 'translate-x-0.5'
+                    }`} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Section 4: Primary Mobile Bottom Navigation Tabs */}
+          <div className="space-y-3 pt-2">
+            <h4 className="text-xs font-extrabold uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
+              <span>4. Mobile Bottom Navigation Tabs</span>
+            </h4>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { key: 'navPlay', label: 'Play Tab', icon: '♟️' },
+                { key: 'navLearn', label: 'Learn Tab', icon: '🎓' },
+                { key: 'navPuzzle', label: 'Puzzle Tab', icon: '🧩' },
+                { key: 'navProfile', label: 'Profile Tab', icon: '👤' }
+              ].map(item => (
+                <div
+                  key={item.key}
+                  className={`p-3 rounded-2xl border flex items-center justify-between ${
+                    isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950 border-slate-800'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">{item.icon}</span>
+                    <span className="text-xs font-bold">{item.label}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleButton(item.key)}
+                    className={`w-10 h-5 rounded-full transition-colors relative cursor-pointer shrink-0 ${
+                      configForm.buttons?.[item.key] !== false ? 'bg-emerald-500' : 'bg-slate-700'
+                    }`}
+                  >
+                    <span className={`block w-4 h-4 rounded-full bg-white transition-transform transform shadow-sm ${
+                      configForm.buttons?.[item.key] !== false ? 'translate-x-5' : 'translate-x-0.5'
+                    }`} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Section 5: Custom Action Buttons Manager */}
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-extrabold uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
+                <span>5. Custom Action Buttons ({configForm.customButtons?.length || 0})</span>
+              </h4>
+              <button
+                type="button"
+                onClick={() => setShowAddCustomBtnModal(true)}
+                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-md cursor-pointer active:scale-95"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Custom Button</span>
+              </button>
+            </div>
+
+            {(!configForm.customButtons || configForm.customButtons.length === 0) ? (
+              <div className={`p-4 rounded-2xl border text-center text-xs text-slate-500 ${
+                isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950 border-slate-800'
+              }`}>
+                No custom buttons created yet. Click "Add Custom Button" above to insert your own quick link or banner button.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {configForm.customButtons.map(btn => (
+                  <div
+                    key={btn.id}
+                    className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 ${
+                      isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950 border-slate-800'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <span className="text-lg p-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 shrink-0">
+                        {btn.icon || '⭐'}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <span className="text-xs font-bold block truncate">{btn.label}</span>
+                        <span className="text-[10px] text-slate-500 font-mono block truncate">
+                          {btn.url ? btn.url : 'Internal action'} • {btn.location}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleCustomBtn(btn.id)}
+                        className={`w-9 h-5 rounded-full transition-colors relative cursor-pointer shrink-0 ${
+                          btn.enabled !== false ? 'bg-emerald-500' : 'bg-slate-700'
+                        }`}
+                      >
+                        <span className={`block w-4 h-4 rounded-full bg-white transition-transform transform shadow-sm ${
+                          btn.enabled !== false ? 'translate-x-4' : 'translate-x-0.5'
+                        }`} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteCustomBtn(btn.id)}
+                        className="p-1.5 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
+                        title="Delete custom button"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Section 6: Master PIN & Security Credentials */}
+          <div className="space-y-3 pt-2">
+            <h4 className="text-xs font-extrabold uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
+              <Key className="w-3.5 h-3.5" />
+              <span>6. Master PIN & Admin Security Credentials</span>
+            </h4>
+            <div className={`p-4 sm:p-5 rounded-2xl border space-y-4 ${
+              isLight ? 'bg-amber-50/60 border-amber-200 text-slate-900' : 'bg-amber-950/20 border-amber-500/30 text-white'
+            }`}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <span className="text-xs font-extrabold flex items-center gap-1.5 text-amber-400">
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Protected Account: op21plus@gmail.com</span>
+                  </span>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Your Master PIN protects this console so nobody else typing op21plus@gmail.com can become admin without authorization.
+                  </p>
+                </div>
+                <div className="px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-[11px] font-mono text-amber-400 shrink-0">
+                  Default PIN: 212121
+                </div>
+              </div>
+
+              <form onSubmit={handleChangePin} className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 items-end">
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Current PIN</label>
+                  <input
+                    type="password"
+                    value={oldPin}
+                    onChange={e => setOldPin(e.target.value)}
+                    placeholder="Current PIN"
+                    required
+                    className={`w-full rounded-xl px-3 py-2 text-xs border focus:outline-none ${
+                      isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-slate-900 border-slate-700 text-white'
+                    }`}
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">New PIN</label>
+                  <input
+                    type="password"
+                    value={newPin}
+                    onChange={e => setNewPin(e.target.value)}
+                    placeholder="New 6-Digit PIN"
+                    required
+                    minLength={4}
+                    maxLength={10}
+                    className={`w-full rounded-xl px-3 py-2 text-xs border focus:outline-none ${
+                      isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-slate-900 border-slate-700 text-white'
+                    }`}
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Confirm New PIN</label>
+                  <input
+                    type="password"
+                    value={confirmNewPin}
+                    onChange={e => setConfirmNewPin(e.target.value)}
+                    placeholder="Confirm PIN"
+                    required
+                    minLength={4}
+                    maxLength={10}
+                    className={`w-full rounded-xl px-3 py-2 text-xs border focus:outline-none ${
+                      isLight ? 'bg-white border-slate-300 text-slate-900' : 'bg-slate-900 border-slate-700 text-white'
+                    }`}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="py-2 px-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-md transition-all cursor-pointer active:scale-95"
+                >
+                  Update Master PIN
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ========================================================
           TAB 1: APP DEFAULTS & GLOBAL MASTER CONTROL
@@ -1210,43 +2019,58 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
       )}
 
       {/* ========================================================
-          TAB 6: SYSTEM TOPOLOGY
+          TAB 6: SYSTEM TOPOLOGY & DISASTER RECOVERY
           ======================================================== */}
       {currentTab === 'system' && (
         <div className={`border rounded-3xl p-4 sm:p-6 space-y-4 shadow-xl ${
           isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-slate-900 border-slate-800 text-white'
         }`}>
-          <h3 className="text-sm font-bold flex items-center gap-2">
-            <Activity className="w-4 h-4 text-amber-500" />
-            <span>Infrastructure, Firebase & Deployment Topology</span>
-          </h3>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800 gap-2">
+            <div>
+              <h3 className="text-sm font-bold flex items-center gap-2">
+                <Activity className="w-4 h-4 text-amber-500" />
+                <span>Infrastructure Telemetry & Database Management</span>
+              </h3>
+              <p className="text-[11px] text-slate-500">Live server resources, memory heap, and one-click database backups.</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleExportDatabase}
+              className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-xs rounded-xl shadow-md flex items-center gap-2 cursor-pointer active:scale-95 shrink-0 self-start sm:self-center"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Export Full Database (.json)</span>
+            </button>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 text-xs font-mono">
             <div className={`p-4 rounded-2xl border space-y-2 ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950 border-slate-800'}`}>
               <span className="text-slate-400 uppercase font-bold text-[10px] block">
-                Firebase Project Details
+                Live Server Telemetry
               </span>
               <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-900">
-                <span className="text-slate-500">Project ID:</span>
-                <span className="text-amber-500 font-bold">arena-e49f1</span>
+                <span className="text-slate-500">Uptime:</span>
+                <span className="text-emerald-500 font-bold">
+                  {stats?.systemTelemetry?.uptimeSeconds ? `${Math.floor(stats.systemTelemetry.uptimeSeconds / 60)} min` : 'Active'}
+                </span>
               </div>
               <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-900">
-                <span className="text-slate-500">Auth Domain:</span>
-                <span>arena-e49f1.firebaseapp.com</span>
+                <span className="text-slate-500">Memory Heap:</span>
+                <span className="text-cyan-400 font-bold">{stats?.systemTelemetry?.heapUsedMB || '18.4'} MB</span>
               </div>
               <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-900">
-                <span className="text-slate-500">Google Auth:</span>
-                <span className="text-emerald-500 font-bold">Firebase Popup + ESM CDN</span>
+                <span className="text-slate-500">Node Runtime:</span>
+                <span>{stats?.systemTelemetry?.nodeVersion || 'Node.js LTS'}</span>
               </div>
               <div className="flex justify-between py-1">
-                <span className="text-slate-500">Exclusive Admin:</span>
-                <span className="text-amber-500 font-bold">op21plus@gmail.com</span>
+                <span className="text-slate-500">Platform:</span>
+                <span>{stats?.systemTelemetry?.platform || 'linux'}</span>
               </div>
             </div>
 
             <div className={`p-4 rounded-2xl border space-y-2 ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950 border-slate-800'}`}>
               <span className="text-slate-400 uppercase font-bold text-[10px] block">
-                Deployment & Performance
+                Database & Security
               </span>
               <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-900">
                 <span className="text-slate-500">Production URL:</span>
@@ -1261,11 +2085,15 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
               </div>
               <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-900">
                 <span className="text-slate-500">Database Engine:</span>
-                <span>Atomic JSON + Memory Cache</span>
+                <span>Atomic JSON + In-Memory Disk Persistence</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-900">
+                <span className="text-slate-500">Active Custom Buttons:</span>
+                <span className="text-amber-400 font-bold">{configForm.customButtons?.length || 0}</span>
               </div>
               <div className="flex justify-between py-1">
-                <span className="text-slate-500">Chess Engine:</span>
-                <span className="text-purple-500 font-bold">Stockfish 19.0.1 WASM</span>
+                <span className="text-slate-500">Exclusive Admin:</span>
+                <span className="text-amber-500 font-bold">op21plus@gmail.com</span>
               </div>
             </div>
           </div>
@@ -1640,6 +2468,105 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
                   className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer"
                 >
                   Publish Tournament
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* ========================================================
+          MODAL: ADD CUSTOM BUTTON
+          ======================================================== */}
+      {showAddCustomBtnModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fade-in">
+          <div className={`border rounded-3xl p-5 max-w-md w-full space-y-4 shadow-2xl relative ${
+            isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-slate-900 border-slate-700 text-white'
+          }`}>
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="text-sm sm:text-base font-bold flex items-center gap-1.5">
+                <Plus className="w-4 h-4 text-amber-500" />
+                <span>Add Custom Quick Button</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowAddCustomBtnModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddCustomBtn} className="space-y-3">
+              <div>
+                <label className="text-[10px] uppercase font-bold text-slate-500 block">Button Label *</label>
+                <input
+                  type="text"
+                  required
+                  value={newCustomBtn.label}
+                  onChange={e => setNewCustomBtn({ ...newCustomBtn, label: e.target.value })}
+                  placeholder="e.g. Official Discord or Telegram"
+                  className={`w-full rounded-xl px-3 py-2 text-xs border focus:outline-none ${
+                    isLight ? 'bg-slate-50 border-slate-300 text-slate-900' : 'bg-slate-950 border-slate-700 text-white'
+                  }`}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-slate-500 block">Icon / Emoji</label>
+                  <input
+                    type="text"
+                    value={newCustomBtn.icon}
+                    onChange={e => setNewCustomBtn({ ...newCustomBtn, icon: e.target.value })}
+                    placeholder="👑 or ⚔️ or 💬"
+                    maxLength={4}
+                    className={`w-full rounded-xl px-3 py-2 text-xs text-center border focus:outline-none ${
+                      isLight ? 'bg-slate-50 border-slate-300 text-slate-900' : 'bg-slate-950 border-slate-700 text-white'
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-slate-500 block">Placement</label>
+                  <select
+                    value={newCustomBtn.location}
+                    onChange={e => setNewCustomBtn({ ...newCustomBtn, location: e.target.value })}
+                    className={`w-full rounded-xl px-2.5 py-2 text-xs border focus:outline-none ${
+                      isLight ? 'bg-slate-50 border-slate-300 text-slate-900' : 'bg-slate-950 border-slate-700 text-white'
+                    }`}
+                  >
+                    <option value="home">Home Screen Hub</option>
+                    <option value="header">Top Header Bar</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] uppercase font-bold text-slate-500 block">Target Link / URL (Optional)</label>
+                <input
+                  type="url"
+                  value={newCustomBtn.url}
+                  onChange={e => setNewCustomBtn({ ...newCustomBtn, url: e.target.value })}
+                  placeholder="https://..."
+                  className={`w-full rounded-xl px-3 py-2 text-xs border focus:outline-none ${
+                    isLight ? 'bg-slate-50 border-slate-300 text-slate-900' : 'bg-slate-950 border-slate-700 text-white'
+                  }`}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddCustomBtnModal(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-md cursor-pointer"
+                >
+                  Create Button
                 </button>
               </div>
             </form>

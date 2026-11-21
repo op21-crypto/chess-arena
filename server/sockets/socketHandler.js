@@ -414,30 +414,52 @@ export function setupSocketHandler(io) {
     });
 
     // 5. In-Game Chat & Quick Messages
-    socket.on('send_chat_message', ({ gameId, text, emoji }) => {
-      if (!currentUser || (!text && !emoji)) return;
-      io.to(`game:${gameId}`).emit('new_chat_message', {
-        id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`,
-        sender: currentUser,
+    socket.on('send_chat_message', ({ gameId, text, emoji, sender }) => {
+      const activeSender = sender || currentUser || { username: 'Player', id: socket.id };
+      if (!text && !emoji) return;
+      const msg = {
+        id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        sender: activeSender,
         text,
         emoji,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      io.to(`game:${gameId}`).emit('new_chat_message', msg);
+
+      // Persist in room database if room exists
+      const room = Database.getGameById(gameId);
+      if (room) {
+        if (!room.chatMessages) room.chatMessages = [];
+        room.chatMessages.push(msg);
+        if (room.chatMessages.length > 100) room.chatMessages = room.chatMessages.slice(-100);
+        room.lastUpdated = Date.now();
+        Database.saveGame(room);
+      }
+    });
+
+    // Real-time Opponent Typing Indicator
+    socket.on('game_chat_typing', ({ gameId, user, isTyping }) => {
+      const typingUser = user || currentUser;
+      if (!typingUser) return;
+      socket.to(`game:${gameId}`).emit('game_chat_typing', {
+        user: typingUser,
+        isTyping: Boolean(isTyping)
       });
     });
 
     // 6. WebRTC Voice Chat Signaling with Mutual Consent
-    socket.on('request_voice_chat', ({ gameId }) => {
-      if (!currentUser) return;
+    socket.on('request_voice_chat', ({ gameId, from }) => {
+      const caller = from || currentUser;
       socket.to(`game:${gameId}`).emit('voice_chat_invitation', {
-        from: currentUser
+        from: caller
       });
     });
 
-    socket.on('respond_voice_chat', ({ gameId, accept }) => {
-      if (!currentUser) return;
+    socket.on('respond_voice_chat', ({ gameId, accept, by }) => {
+      const responder = by || currentUser;
       io.to(`game:${gameId}`).emit('voice_chat_response', {
-        accepted: accept,
-        by: currentUser
+        accepted: Boolean(accept),
+        by: responder
       });
     });
 

@@ -353,6 +353,10 @@ router.post('/rooms/create', (req, res) => {
     status: 'waiting',
     moveHistory: [],
     capturedPieces: { white: [], black: [] },
+    chatMessages: [],
+    typingUsers: {},
+    voiceCall: null,
+    voiceSignals: [],
     createdAt: new Date().toISOString(),
     lastUpdated: Date.now()
   };
@@ -378,10 +382,19 @@ router.get(['/rooms/get', '/rooms/:id'], (req, res) => {
       status: 'waiting',
       moveHistory: [],
       capturedPieces: { white: [], black: [] },
+      chatMessages: [],
+      typingUsers: {},
+      voiceCall: null,
+      voiceSignals: [],
       createdAt: new Date().toISOString(),
       lastUpdated: Date.now()
     };
     Database.saveGame(room);
+  } else {
+    // Ensure room fields are initialized
+    if (!room.chatMessages) room.chatMessages = [];
+    if (!room.typingUsers) room.typingUsers = {};
+    if (!room.voiceSignals) room.voiceSignals = [];
   }
   res.json({ room });
 });
@@ -411,12 +424,20 @@ router.post(['/rooms/join', '/rooms/:id/join'], (req, res) => {
       status: 'active',
       moveHistory: [],
       capturedPieces: { white: [], black: [] },
+      chatMessages: [],
+      typingUsers: {},
+      voiceCall: null,
+      voiceSignals: [],
       createdAt: new Date().toISOString(),
       lastUpdated: Date.now()
     };
     Database.saveGame(room);
     return res.json({ success: true, room });
   }
+
+  if (!room.chatMessages) room.chatMessages = [];
+  if (!room.typingUsers) room.typingUsers = {};
+  if (!room.voiceSignals) room.voiceSignals = [];
 
   if (!room.whitePlayer) {
     room.whitePlayer = joiningPlayer;
@@ -429,6 +450,98 @@ router.post(['/rooms/join', '/rooms/:id/join'], (req, res) => {
   room.lastUpdated = Date.now();
   Database.saveGame(room);
   res.json({ success: true, room });
+});
+
+// Universal Room Chat (supports both POST /rooms/chat and POST /rooms/:id/chat)
+router.post(['/rooms/chat', '/rooms/:id/chat'], (req, res) => {
+  const roomId = req.body.roomId || req.body.gameId || req.params.id;
+  const { text, emoji, sender } = req.body;
+  if (!roomId || (!text && !emoji)) return res.status(400).json({ error: 'Room ID and message required' });
+  let room = Database.getGameById(roomId);
+  if (!room) {
+    room = {
+      id: roomId,
+      whitePlayer: null,
+      blackPlayer: null,
+      fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+      status: 'active',
+      moveHistory: [],
+      capturedPieces: { white: [], black: [] },
+      chatMessages: [],
+      typingUsers: {},
+      voiceCall: null,
+      voiceSignals: [],
+      createdAt: new Date().toISOString(),
+      lastUpdated: Date.now()
+    };
+  }
+  if (!room.chatMessages) room.chatMessages = [];
+  const newMsg = {
+    id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+    sender: sender || { username: 'Guest' },
+    text,
+    emoji,
+    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  };
+  room.chatMessages.push(newMsg);
+  if (room.chatMessages.length > 100) room.chatMessages = room.chatMessages.slice(-100);
+  room.lastUpdated = Date.now();
+  Database.saveGame(room);
+  res.json({ success: true, message: newMsg, chatMessages: room.chatMessages });
+});
+
+// Universal Room Typing status
+router.post(['/rooms/typing', '/rooms/:id/typing'], (req, res) => {
+  const roomId = req.body.roomId || req.body.gameId || req.params.id;
+  const { user, isTyping } = req.body;
+  if (!roomId || !user) return res.status(400).json({ error: 'Room ID and user required' });
+  let room = Database.getGameById(roomId);
+  if (room) {
+    if (!room.typingUsers) room.typingUsers = {};
+    const userId = user.id || user.username;
+    if (isTyping) {
+      room.typingUsers[userId] = {
+        id: userId,
+        username: user.username,
+        timestamp: Date.now()
+      };
+    } else {
+      delete room.typingUsers[userId];
+    }
+    // Clean expired typing (> 4 seconds)
+    const now = Date.now();
+    Object.keys(room.typingUsers).forEach(k => {
+      if (now - (room.typingUsers[k]?.timestamp || 0) > 4000) delete room.typingUsers[k];
+    });
+    room.lastUpdated = Date.now();
+    Database.saveGame(room);
+  }
+  res.json({ success: true });
+});
+
+// Universal Room Voice Signaling Fallback
+router.post(['/rooms/voice', '/rooms/:id/voice'], (req, res) => {
+  const roomId = req.body.roomId || req.body.gameId || req.params.id;
+  const { action, from, by, accept, signal } = req.body;
+  if (!roomId) return res.status(400).json({ error: 'Room ID required' });
+  let room = Database.getGameById(roomId);
+  if (room) {
+    if (action === 'request') {
+      room.voiceCall = { status: 'requesting', from, requestedAt: Date.now() };
+    } else if (action === 'respond') {
+      room.voiceCall = { status: accept ? 'connected' : 'declined', by: by || from, respondedAt: Date.now() };
+    } else if (action === 'end') {
+      room.voiceCall = null;
+      room.voiceSignals = [];
+    } else if (action === 'signal' && signal) {
+      if (!room.voiceSignals) room.voiceSignals = [];
+      room.voiceSignals.push({ from: from?.id || from?.username, signal, timestamp: Date.now() });
+      if (room.voiceSignals.length > 20) room.voiceSignals = room.voiceSignals.slice(-20);
+    }
+    room.lastUpdated = Date.now();
+    Database.saveGame(room);
+  }
+  res.json({ success: true, voiceCall: room?.voiceCall, voiceSignals: room?.voiceSignals || [] });
 });
 
 // Universal Move in Room (supports both POST /rooms/move with body.roomId and POST /rooms/:id/move)

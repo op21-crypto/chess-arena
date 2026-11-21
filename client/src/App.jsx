@@ -117,7 +117,22 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home'); // 'home' | 'game' | 'puzzles' | 'lessons' | 'profile' | 'admin'
   const [selectedHomeTime, setSelectedHomeTime] = useState(HOME_TIME_CONTROLS[1]); // Default 3 min Blitz
   const [incomingChallenge, setIncomingChallenge] = useState(null);
-  const [globalConfig, setGlobalConfig] = useState(null);
+  const [globalConfig, setGlobalConfig] = useState(() => {
+    try {
+      const cached = safeStorage.getItem('chess_arena_global_config');
+      if (cached) return JSON.parse(cached);
+    } catch {}
+    return null;
+  });
+
+  const isButtonVisible = (btnKey, defaultValue = true) => {
+    if (!globalConfig?.buttons) return defaultValue;
+    return globalConfig.buttons[btnKey] !== false;
+  };
+
+  const getButtonLabel = (key, fallback) => {
+    return globalConfig?.buttonLabels?.[key] || fallback;
+  };
   const [settings, setSettings] = useState(() => {
     try {
       const saved = safeStorage.getItem('chess_arena_settings');
@@ -353,6 +368,7 @@ export default function App() {
   const [playerColor, setPlayerColor] = useState('w'); // 'w' | 'b' | 'spectator'
   const [boardFlipped, setBoardFlipped] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
+  const [opponentIsTyping, setOpponentIsTyping] = useState(false);
   const [isAIGame, setIsAIGame] = useState(false);
   const [aiLevel, setAiLevel] = useState(2);
   const [aiThinking, setAiThinking] = useState(false);
@@ -718,7 +734,19 @@ export default function App() {
     });
 
     socket.on('new_chat_message', (msg) => {
-      setChatMessages(prev => [...prev, msg]);
+      setChatMessages(prev => {
+        if (prev.some(m => m.id === msg.id)) return prev;
+        if (msg.sender?.id !== currentUser?.id && msg.sender?.username !== currentUser?.username) {
+          sound.playChat();
+        }
+        return [...prev, msg];
+      });
+    });
+
+    socket.on('game_chat_typing', ({ user, isTyping }) => {
+      if (user?.id !== currentUser?.id && user?.username !== currentUser?.username) {
+        setOpponentIsTyping(Boolean(isTyping));
+      }
     });
 
     socket.on('draw_offered', ({ fromPlayer }) => {
@@ -769,7 +797,7 @@ export default function App() {
     };
   }, []);
 
-  // Room synchronization polling (ensures moves & player joins stay synced even if WebSocket is disconnected)
+  // Room synchronization polling (ensures moves, chat & player joins stay synced even if WebSocket is disconnected)
   useEffect(() => {
     if (!gameSession?.id || isAIGame || gameSession.isGameOver) return;
 
@@ -784,6 +812,34 @@ export default function App() {
           const fenDiffers = r.fen && r.fen !== gameSession.fen;
           const statusDiffers = r.status && r.status !== gameSession.status;
           const opponentJoined = (!gameSession.blackPlayer && r.blackPlayer) || (!gameSession.whitePlayer && r.whitePlayer);
+
+          // Synchronize room chat messages
+          if (Array.isArray(r.chatMessages) && r.chatMessages.length > 0) {
+            setChatMessages(prev => {
+              const prevIds = new Set(prev.map(m => m.id));
+              const newIncoming = r.chatMessages.filter(m => !prevIds.has(m.id));
+              if (newIncoming.length > 0) {
+                const fromOpponent = newIncoming.some(
+                  m => m.sender?.id !== currentUser?.id && m.sender?.username !== currentUser?.username
+                );
+                if (fromOpponent) {
+                  sound.playChat();
+                }
+                return [...prev, ...newIncoming];
+              }
+              return prev;
+            });
+          }
+
+          // Synchronize live opponent typing status
+          if (r.typingUsers) {
+            const now = Date.now();
+            const isTyping = Object.values(r.typingUsers).some(u => {
+              const isOther = u.id !== currentUser?.id && u.username !== currentUser?.username;
+              return isOther && (now - (u.timestamp || 0) < 3500);
+            });
+            setOpponentIsTyping(isTyping);
+          }
 
           if (movesDiffer || fenDiffers || statusDiffers || opponentJoined) {
             const captured = getCapturedPieces(r.fen || prev.fen);
@@ -810,10 +866,10 @@ export default function App() {
       } catch {
         // Silent poll fallback
       }
-    }, 2000);
+    }, 1500);
 
     return () => clearInterval(interval);
-  }, [gameSession?.id, gameSession?.fen, gameSession?.moveHistory?.length, gameSession?.status, isAIGame]);
+  }, [gameSession?.id, gameSession?.fen, gameSession?.moveHistory?.length, gameSession?.status, isAIGame, currentUser?.id, currentUser?.username]);
 
   // Update socket authentication when user changes
   useEffect(() => {
@@ -1440,18 +1496,66 @@ export default function App() {
   };
 
   const handleSendMessage = ({ text, emoji }) => {
-    if (!isAIGame) {
-      socketRef.current?.emit('send_chat_message', { gameId: gameSession.id, text, emoji });
-    } else {
-      // Local chat in AI game
-      const newMsg = {
-        id: `msg_${Date.now()}`,
-        sender: currentUser || { username: 'You' },
+    if (!text && !emoji) return;
+
+    const newMsg = {
+      id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      sender: currentUser || { id: 'me', username: 'You' },
+      text,
+      emoji,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    // 1. Optimistic instant display in chat
+    setChatMessages(prev => {
+      if (prev.some(m => m.id === newMsg.id)) return prev;
+      return [...prev, newMsg];
+    });
+    sound.playChat();
+
+    // 2. Emit to WebSocket if live
+    if (socketRef.current && gameSession?.id) {
+      socketRef.current.emit('send_chat_message', {
+        gameId: gameSession.id,
         text,
         emoji,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      setChatMessages(prev => [...prev, newMsg]);
+        sender: currentUser
+      });
+    }
+
+    // 3. Persist and broadcast via HTTP room endpoint for resilient delivery
+    if (gameSession?.id) {
+      fetch('/api/rooms/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomId: gameSession.id,
+          text,
+          emoji,
+          sender: currentUser
+        })
+      }).catch(() => {});
+    }
+  };
+
+  const handleSendTyping = (isTyping) => {
+    if (socketRef.current && gameSession?.id) {
+      socketRef.current.emit('game_chat_typing', {
+        gameId: gameSession.id,
+        user: currentUser,
+        isTyping
+      });
+    }
+    if (gameSession?.id) {
+      fetch('/api/rooms/typing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomId: gameSession.id,
+          user: currentUser,
+          isTyping
+        })
+      }).catch(() => {});
     }
   };
 
@@ -1739,21 +1843,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Live Admin Announcement Banner */}
-              {globalConfig?.announcement && (
-                <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border shadow-md text-xs font-semibold backdrop-blur-md transition-colors overflow-hidden ${
-                  isLight
-                    ? 'bg-amber-50/95 border-amber-300 text-amber-900 shadow-amber-100'
-                    : 'bg-amber-500/10 border-amber-500/30 text-amber-300 shadow-amber-950/40'
-                }`}>
-                  <span className="text-amber-500 text-sm animate-bounce shrink-0">📢</span>
-                  <span className="font-black uppercase tracking-wider text-[9px] bg-amber-500/20 text-amber-500 px-2 py-0.5 rounded-full shrink-0">
-                    ANNOUNCEMENT
-                  </span>
-                  <span className="truncate flex-1">{globalConfig.announcement}</span>
-                </div>
-              )}
-
               {/* Grandmaster Arena Game Modes Hub */}
               <div className={`relative rounded-3xl p-4 sm:p-7 md:p-8 border shadow-2xl overflow-hidden backdrop-blur-xl transition-colors ${
                 isLight
@@ -1776,13 +1865,6 @@ export default function App() {
                         isLight ? 'text-slate-900' : 'text-white'
                       }`}>
                         <span>Play Chess</span>
-                        <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                          isLight
-                            ? 'bg-amber-100 border-amber-300 text-amber-800'
-                            : 'bg-amber-500/15 border-amber-500/30 text-amber-400'
-                        }`}>
-                          Season 2026
-                        </span>
                       </h2>
                       <p className={`text-xs font-medium mt-0.5 ${
                         isLight ? 'text-slate-600' : 'text-slate-400'
@@ -1982,34 +2064,34 @@ export default function App() {
                       }}
                       className={`w-full text-left p-3 sm:p-4 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
                         isLight
-                          ? 'bg-gradient-to-r from-amber-50/90 via-white to-orange-50/70 hover:from-amber-100/90 hover:to-orange-100/80 border-amber-200/90 hover:border-amber-400 shadow-md shadow-amber-100'
-                          : 'bg-gradient-to-r from-amber-950/70 via-slate-900/90 to-orange-950/50 hover:from-amber-900/80 hover:via-orange-900/60 hover:to-amber-850/80 active:from-amber-900/95 active:to-orange-900/90 border-amber-500/35 hover:border-amber-400/70 shadow-lg shadow-amber-950/30'
+                          ? 'bg-gradient-to-r from-rose-50/90 via-white to-red-50/80 hover:from-rose-100/90 hover:to-red-100/80 border-rose-200/90 hover:border-rose-400 shadow-md shadow-rose-100'
+                          : 'bg-gradient-to-r from-rose-950/70 via-slate-900/90 to-red-950/50 hover:from-rose-900/80 hover:via-red-900/60 hover:to-rose-850/80 active:from-rose-900/95 active:to-red-900/90 border-rose-500/35 hover:border-rose-400/70 shadow-lg shadow-rose-950/30'
                       }`}
                     >
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-500/25 transition-all duration-300" />
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-rose-500/25 transition-all duration-300" />
                       <div className="flex items-center justify-between gap-3 relative z-10">
                         <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
                           {/* Global Arena Matchmaking Profile Picture with Crossed Swords */}
                           <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl border p-1.5 shadow-md flex flex-col items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 relative overflow-hidden ${
                             isLight
-                              ? 'bg-gradient-to-br from-amber-100 via-white to-orange-100 border-amber-300 group-hover:border-amber-400 group-hover:shadow-[0_0_15px_rgba(245,158,11,0.25)]'
-                              : 'bg-gradient-to-br from-amber-900/80 via-slate-950 to-orange-950/90 border-amber-500/50 group-hover:border-amber-300 group-hover:shadow-[0_0_15px_rgba(245,158,11,0.35)]'
+                              ? 'bg-gradient-to-br from-rose-100 via-white to-red-100 border-rose-300 group-hover:border-rose-400 group-hover:shadow-[0_0_15px_rgba(244,63,94,0.25)]'
+                              : 'bg-gradient-to-br from-rose-900/80 via-slate-950 to-red-950/90 border-rose-500/50 group-hover:border-rose-300 group-hover:shadow-[0_0_15px_rgba(244,63,94,0.35)]'
                           }`}>
-                            {/* Green live radar pulse in corner */}
-                            <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_#34d399] animate-pulse" />
-                            {/* Crossed Swords with golden flare */}
+                            {/* Live radar pulse in corner */}
+                            <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-rose-500 shadow-[0_0_6px_#f43f5e] animate-pulse" />
+                            {/* Crossed Swords with crimson flare */}
                             <div className="relative z-10 flex flex-col items-center">
                               <Swords className={`w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-12 transition-transform duration-300 ${
                                 isLight
-                                  ? 'text-amber-600'
-                                  : 'text-amber-400 drop-shadow-[0_0_6px_rgba(245,158,11,0.7)]'
+                                  ? 'text-rose-600'
+                                  : 'text-rose-400 drop-shadow-[0_0_6px_rgba(244,63,94,0.7)]'
                               }`} />
                             </div>
                             {/* Bottom tag strip */}
                             <div className={`absolute bottom-0 inset-x-0 border-t py-0.5 flex justify-center items-center ${
                               isLight
-                                ? 'bg-amber-100/95 border-amber-200 text-amber-800'
-                                : 'bg-amber-950/95 border-amber-500/40 text-amber-300'
+                                ? 'bg-rose-100/95 border-rose-200 text-rose-800'
+                                : 'bg-rose-950/95 border-rose-500/40 text-rose-300'
                             }`}>
                               <span className="text-[7px] sm:text-[8px] font-black tracking-widest uppercase">ONLINE</span>
                             </div>
@@ -2020,15 +2102,15 @@ export default function App() {
                             <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                               <h3 className={`text-sm sm:text-base font-black transition-colors leading-tight ${
                                 isLight
-                                  ? 'text-slate-900 group-hover:text-amber-800'
-                                  : 'text-white group-hover:text-amber-200'
+                                  ? 'text-slate-900 group-hover:text-rose-700'
+                                  : 'text-white group-hover:text-rose-200'
                               }`}>
                                 Play Online
                               </h3>
                               <span className={`px-1.5 sm:px-2 py-0.5 rounded-full border text-[9px] sm:text-[10px] font-black uppercase tracking-wider shrink-0 shadow-sm ${
                                 isLight
-                                  ? 'bg-amber-100 text-amber-800 border-amber-300'
-                                  : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                                  ? 'bg-rose-100 text-rose-800 border-rose-300'
+                                  : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
                               }`}>
                                 Rated FIDE ⚔️
                               </span>
@@ -2041,17 +2123,17 @@ export default function App() {
                           </div>
                         </div>
                         <div className={`flex items-center gap-1 text-xs font-bold shrink-0 ${
-                          isLight ? 'text-amber-600' : 'text-amber-400'
+                          isLight ? 'text-rose-600' : 'text-rose-400'
                         }`}>
                           <span className="hidden md:inline">Choose Time</span>
                           <ChevronRight className={`w-5 h-5 group-hover:translate-x-1 transition-all ${
-                            isLight ? 'group-hover:text-amber-800' : 'group-hover:text-amber-300'
+                            isLight ? 'group-hover:text-rose-800' : 'group-hover:text-rose-300'
                           }`} />
                         </div>
                       </div>
                     </button>
 
-                    {/* 4th: Offline Chess Board (With 4x4 Mini Chessboard Picture Graphic) */}
+                    {/* 4th: Offline Chess Board (High-Definition 3D Wooden Chessboard Vector Artwork) */}
                     <button
                       onClick={() => {
                         sound.playClick();
@@ -2060,49 +2142,92 @@ export default function App() {
                       }}
                       className={`w-full text-left p-3 sm:p-4 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
                         isLight
-                          ? 'bg-gradient-to-r from-amber-50/70 via-white to-stone-50/70 hover:from-amber-100/80 hover:to-stone-100/80 border-amber-200/80 hover:border-amber-400 shadow-md shadow-amber-100'
-                          : 'bg-gradient-to-r from-slate-900/90 via-amber-950/25 to-slate-950/90 hover:from-slate-850 hover:via-amber-950/40 hover:to-amber-900/30 active:from-amber-950/60 active:to-slate-900/95 border-amber-500/30 hover:border-amber-400/60 shadow-lg shadow-slate-950/30'
+                          ? 'bg-gradient-to-r from-amber-50/90 via-white to-yellow-50/70 hover:from-amber-100/90 hover:to-yellow-100/80 border-amber-300/90 hover:border-amber-500 shadow-md shadow-amber-100'
+                          : 'bg-gradient-to-r from-amber-950/70 via-slate-900/90 to-yellow-950/50 hover:from-amber-900/80 hover:via-yellow-900/60 hover:to-amber-850/80 active:from-amber-900/95 active:to-yellow-900/90 border-amber-500/40 hover:border-amber-400/80 shadow-lg shadow-amber-950/35'
                       }`}
                     >
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-500/20 transition-all duration-300" />
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-500/25 transition-all duration-300" />
                       <div className="flex items-center justify-between gap-3 relative z-10">
                         <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
-                          {/* 4x4 Mini Chessboard Picture */}
+                          {/* Premium 3D Luxury Chessboard Illustration */}
                           <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl border p-1 shadow-md flex flex-col items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 relative overflow-hidden ${
                             isLight
-                              ? 'bg-amber-100 border-amber-300 group-hover:border-amber-400 group-hover:shadow-[0_0_15px_rgba(245,158,11,0.25)]'
-                              : 'bg-amber-950/90 border-amber-500/50 group-hover:border-amber-300 group-hover:shadow-[0_0_15px_rgba(245,158,11,0.35)]'
+                              ? 'bg-gradient-to-br from-amber-100 via-white to-yellow-100 border-amber-300 group-hover:border-amber-400 group-hover:shadow-[0_0_15px_rgba(245,158,11,0.25)]'
+                              : 'bg-gradient-to-br from-amber-900/80 via-slate-950 to-yellow-950/90 border-amber-500/50 group-hover:border-amber-300 group-hover:shadow-[0_0_15px_rgba(245,158,11,0.35)]'
                           }`}>
-                            <div className="w-full h-[32px] sm:h-[36px] grid grid-cols-4 grid-rows-4 rounded-sm overflow-hidden border border-amber-900/40 shadow-inner">
-                              {[
-                                0, 1, 0, 1,
-                                1, 0, 1, 0,
-                                0, 1, 0, 1,
-                                1, 0, 1, 0
-                              ].map((val, idx) => {
-                                const isDark = val === 1;
-                                return (
-                                  <div
-                                    key={idx}
-                                    className={`w-full h-full flex items-center justify-center ${
-                                      isDark ? 'bg-amber-800' : 'bg-amber-100'
-                                    }`}
-                                  >
-                                    {idx === 9 && (
-                                      <span className="text-[7px] leading-none select-none text-slate-900 font-bold">♟</span>
-                                    )}
-                                    {idx === 6 && (
-                                      <span className="text-[7px] leading-none select-none text-amber-950 font-bold">♙</span>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
+                            <svg className="w-9 h-9 sm:w-10 sm:h-10 drop-shadow-md transition-transform duration-300 group-hover:scale-110" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <defs>
+                                <linearGradient id="boardBaseWood" x1="0%" y1="0%" x2="100%" y2="100%">
+                                  <stop offset="0%" stopColor="#92400e" />
+                                  <stop offset="60%" stopColor="#78350f" />
+                                  <stop offset="100%" stopColor="#451a03" />
+                                </linearGradient>
+                                <linearGradient id="goldBoardTrim" x1="0%" y1="0%" x2="100%" y2="0%">
+                                  <stop offset="0%" stopColor="#fef08a" />
+                                  <stop offset="50%" stopColor="#eab308" />
+                                  <stop offset="100%" stopColor="#ca8a04" />
+                                </linearGradient>
+                                <linearGradient id="sqLight" x1="0%" y1="0%" x2="100%" y2="100%">
+                                  <stop offset="0%" stopColor="#fef3c7" />
+                                  <stop offset="100%" stopColor="#fde68a" />
+                                </linearGradient>
+                                <linearGradient id="sqDark" x1="0%" y1="0%" x2="100%" y2="100%">
+                                  <stop offset="0%" stopColor="#b45309" />
+                                  <stop offset="100%" stopColor="#78350f" />
+                                </linearGradient>
+                                <linearGradient id="knightGold" x1="0%" y1="0%" x2="100%" y2="100%">
+                                  <stop offset="0%" stopColor="#fffbeb" />
+                                  <stop offset="40%" stopColor="#fcd34d" />
+                                  <stop offset="100%" stopColor="#d97706" />
+                                </linearGradient>
+                                <linearGradient id="kingObsidian" x1="0%" y1="0%" x2="100%" y2="100%">
+                                  <stop offset="0%" stopColor="#475569" />
+                                  <stop offset="60%" stopColor="#1e293b" />
+                                  <stop offset="100%" stopColor="#0f172a" />
+                                </linearGradient>
+                              </defs>
+                              {/* 3D Board Base with Walnut Depth */}
+                              <rect x="5" y="7" width="54" height="52" rx="7" fill="#451a03" />
+                              <rect x="5" y="5" width="54" height="52" rx="7" fill="url(#boardBaseWood)" stroke="url(#goldBoardTrim)" strokeWidth="1.2" />
+                              {/* Inner Playing Field with Bevel */}
+                              <rect x="9" y="9" width="46" height="44" rx="3.5" fill="#451a03" stroke="#fde047" strokeWidth="0.8" />
+                              {/* 4x4 Grid Squares */}
+                              <g transform="translate(10, 10)">
+                                <rect x="0" y="0" width="11" height="10.5" fill="url(#sqLight)" rx="1" />
+                                <rect x="11" y="0" width="11" height="10.5" fill="url(#sqDark)" rx="1" />
+                                <rect x="22" y="0" width="11" height="10.5" fill="url(#sqLight)" rx="1" />
+                                <rect x="33" y="0" width="11" height="10.5" fill="url(#sqDark)" rx="1" />
+                                <rect x="0" y="10.5" width="11" height="10.5" fill="url(#sqDark)" rx="1" />
+                                <rect x="11" y="10.5" width="11" height="10.5" fill="url(#sqLight)" rx="1" />
+                                <rect x="22" y="10.5" width="11" height="10.5" fill="url(#sqDark)" rx="1" />
+                                <rect x="33" y="10.5" width="11" height="10.5" fill="url(#sqLight)" rx="1" />
+                                <rect x="0" y="21" width="11" height="10.5" fill="url(#sqLight)" rx="1" />
+                                <rect x="11" y="21" width="11" height="10.5" fill="url(#sqDark)" rx="1" />
+                                <rect x="22" y="21" width="11" height="10.5" fill="url(#sqLight)" rx="1" />
+                                <rect x="33" y="21" width="11" height="10.5" fill="url(#sqDark)" rx="1" />
+                                <rect x="0" y="31.5" width="11" height="10.5" fill="url(#sqDark)" rx="1" />
+                                <rect x="11" y="31.5" width="11" height="10.5" fill="url(#sqLight)" rx="1" />
+                                <rect x="22" y="31.5" width="11" height="10.5" fill="url(#sqDark)" rx="1" />
+                                <rect x="33" y="31.5" width="11" height="10.5" fill="url(#sqLight)" rx="1" />
+                              </g>
+                              {/* Polished Gold Knight (White piece) */}
+                              <g transform="translate(13, 24)">
+                                <path d="M12 2C9.5 2 7 3.5 6 6.5C5.5 8 5.8 10 5 11.5C4.2 13 2.5 14 2 15.5C1.5 17 2.2 18.2 3.5 18.5C5 18.8 6.5 17.5 7 16.5C7.2 18 8 19 9.5 19.5C8.8 20 8 20.8 8 22H16C16 20.5 15.5 18.5 15.5 16.5C16.8 15 17.5 12.8 17.2 10.5C16.8 6 15 2 12 2Z" fill="url(#knightGold)" stroke="#b45309" strokeWidth="0.8" />
+                                <circle cx="8" cy="8" r="0.9" fill="#78350f" />
+                              </g>
+                              {/* Obsidian King with Gold Crown (Black piece) */}
+                              <g transform="translate(34, 11)">
+                                <path d="M10 3V1H8V3H6V5H8V6H10V5H12V3H10Z" fill="#fbbf24" />
+                                <path d="M4 8L5.5 13H12.5L14 8L11 10L9 6.5L7 10L4 8Z" fill="url(#kingObsidian)" stroke="#64748b" strokeWidth="0.7" />
+                                <rect x="5" y="13" width="8" height="5" rx="1" fill="url(#kingObsidian)" stroke="#475569" strokeWidth="0.7" />
+                                <rect x="4" y="18" width="10" height="2.5" rx="1.2" fill="#0f172a" stroke="#f59e0b" strokeWidth="0.6" />
+                              </g>
+                            </svg>
                             {/* Bottom tag strip */}
                             <div className={`absolute bottom-0 inset-x-0 border-t py-0.5 flex justify-center items-center ${
                               isLight
                                 ? 'bg-amber-100/95 border-amber-200 text-amber-800'
-                                : 'bg-stone-950/95 border-amber-600/40 text-amber-300'
+                                : 'bg-amber-950/95 border-amber-600/40 text-amber-300'
                             }`}>
                               <span className="text-[7px] sm:text-[8px] font-black tracking-widest uppercase">BOARD</span>
                             </div>
@@ -2121,7 +2246,7 @@ export default function App() {
                               <span className={`px-1.5 sm:px-2 py-0.5 rounded-full border text-[9px] sm:text-[10px] font-black uppercase tracking-wider shrink-0 shadow-sm ${
                                 isLight
                                   ? 'bg-amber-100 text-amber-800 border-amber-300'
-                                  : 'bg-slate-800 text-slate-300 border-slate-700'
+                                  : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
                               }`}>
                                 Pass & Play 👥
                               </span>
@@ -2300,6 +2425,8 @@ export default function App() {
                       gameId={gameSession.id}
                       isPlayer={playerColor === 'w' || playerColor === 'b'}
                       triggerVoiceCall={voiceCallTrigger}
+                      isOpponentTyping={opponentIsTyping}
+                      onTyping={handleSendTyping}
                     />
                   ) : (
                     <div className={`p-3 border rounded-xl text-center text-xs italic ${

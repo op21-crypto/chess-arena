@@ -34,11 +34,15 @@ export function GameChat({
   gameId,
   isPlayer = false,
   triggerVoiceCall = 0,
-  isLight = false
+  isLight = false,
+  isOpponentTyping = false,
+  onTyping
 }) {
   const [inputText, setInputText] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [socketOpponentTyping, setSocketOpponentTyping] = useState(false);
   const chatContainerRef = useRef(null);
+  const typingTimerRef = useRef(null);
 
   // Voice Chat State
   const [voiceStatus, setVoiceStatus] = useState('idle'); // 'idle' | 'requesting' | 'invited' | 'connected'
@@ -122,16 +126,24 @@ export function GameChat({
       setIsSpeaking(peerSpeaking);
     };
 
+    const handleOpponentTyping = ({ user, isTyping }) => {
+      if (user?.id !== currentUser?.id && user?.username !== currentUser?.username) {
+        setSocketOpponentTyping(Boolean(isTyping));
+      }
+    };
+
     socket.on('voice_chat_invitation', handleInvitation);
     socket.on('voice_chat_response', handleResponse);
     socket.on('webrtc_signal', handleSignal);
     socket.on('voice_peer_status', handlePeerStatus);
+    socket.on('game_chat_typing', handleOpponentTyping);
 
     return () => {
       socket.off('voice_chat_invitation', handleInvitation);
       socket.off('voice_chat_response', handleResponse);
       socket.off('webrtc_signal', handleSignal);
       socket.off('voice_peer_status', handlePeerStatus);
+      socket.off('game_chat_typing', handleOpponentTyping);
       cleanupVoice();
     };
   }, [socket, gameId]);
@@ -246,15 +258,41 @@ export function GameChat({
   };
 
   const handleRequestVoice = () => {
-    if (!socket || !isPlayer) return;
+    if (!isPlayer) {
+      setVoiceError('Only active players in this game can initiate voice calls.');
+      setTimeout(() => setVoiceError(''), 4000);
+      return;
+    }
+    if (!opponentUser) {
+      setVoiceError('Waiting for your friend to enter the room before starting voice call 🎧');
+      setTimeout(() => setVoiceError(''), 4000);
+      return;
+    }
     setVoiceStatus('requesting');
-    socket.emit('request_voice_chat', { gameId });
+    if (socket) {
+      socket.emit('request_voice_chat', { gameId, from: currentUser });
+    }
+    if (gameId) {
+      fetch('/api/rooms/voice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomId: gameId, action: 'request', from: currentUser })
+      }).catch(() => {});
+    }
   };
 
   const handleRespondInvitation = (accept) => {
-    if (!socket) return;
     setVoiceStatus(accept ? 'connected' : 'idle');
-    socket.emit('respond_voice_chat', { gameId, accept });
+    if (socket) {
+      socket.emit('respond_voice_chat', { gameId, accept, by: currentUser });
+    }
+    if (gameId) {
+      fetch('/api/rooms/voice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomId: gameId, action: 'respond', accept, by: currentUser })
+      }).catch(() => {});
+    }
     if (accept) {
       startWebRTC(false);
     }
@@ -284,14 +322,46 @@ export function GameChat({
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  const handleInputChange = (e) => {
+    const text = e.target.value;
+    setInputText(text);
+
+    // Broadcast typing status
+    if (onTyping) onTyping(true);
+    if (socket && gameId) {
+      socket.emit('game_chat_typing', { gameId, user: currentUser, isTyping: true });
+    }
+
+    // Auto-expire typing indicator after 2.5s of no keypress
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    typingTimerRef.current = setTimeout(() => {
+      if (onTyping) onTyping(false);
+      if (socket && gameId) {
+        socket.emit('game_chat_typing', { gameId, user: currentUser, isTyping: false });
+      }
+    }, 2500);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!inputText.trim()) return;
+
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    if (onTyping) onTyping(false);
+    if (socket && gameId) {
+      socket.emit('game_chat_typing', { gameId, user: currentUser, isTyping: false });
+    }
+
     onSendMessage({ text: inputText.trim() });
     setInputText('');
   };
 
   const sendEmoji = (emoji) => {
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    if (onTyping) onTyping(false);
+    if (socket && gameId) {
+      socket.emit('game_chat_typing', { gameId, user: currentUser, isTyping: false });
+    }
     onSendMessage({ emoji });
     setShowEmojiPicker(false);
   };
@@ -478,6 +548,24 @@ export function GameChat({
             );
           })
         )}
+
+        {/* Live Typing Indicator */}
+        {(isOpponentTyping || socketOpponentTyping) && (
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-2xl max-w-[85%] animate-fade-in self-start shadow-xs border ${
+            isLight
+              ? 'bg-amber-50 border-amber-300 text-amber-900'
+              : 'bg-amber-950/60 border-amber-500/40 text-amber-300'
+          }`}>
+            <span className="text-[11px] font-semibold">
+              ✍️ {opponentUser?.username || 'Opponent'} is typing
+            </span>
+            <span className="flex items-center gap-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: '0ms' }} />
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: '150ms' }} />
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: '300ms' }} />
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Quick canned phrases */}
@@ -534,7 +622,7 @@ export function GameChat({
         <input
           type="text"
           value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
+          onChange={handleInputChange}
           placeholder="Type message..."
           className={`flex-1 rounded-xl px-3 py-1.5 text-xs focus:outline-hidden ${
             isLight

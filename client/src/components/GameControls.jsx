@@ -17,7 +17,8 @@ export function GameControls({
   onViewResult,
   onVoiceCall,
   isAIGame = false,
-  isLight = false
+  isLight = false,
+  buttonConfig = null
 }) {
   const [showResignModal, setShowResignModal] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
@@ -135,18 +136,20 @@ export function GameControls({
             </button>
 
             {/* 2. Review (Analysis) */}
-            <button
-              onClick={onAnalyze}
-              className={`flex flex-col items-center justify-center p-2.5 rounded-2xl border transition-all text-xs font-bold gap-1 shadow-sm cursor-pointer ${
-                isLight
-                  ? 'bg-indigo-50 hover:bg-indigo-100 border-indigo-200 text-indigo-900'
-                  : 'bg-indigo-500/15 hover:bg-indigo-500/25 border-indigo-500/40 text-indigo-300 hover:text-indigo-200'
-              }`}
-              title="Stockfish 19 Game Review"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>Review</span>
-            </button>
+            {buttonConfig?.gameAnalysisButton !== false && (
+              <button
+                onClick={onAnalyze}
+                className={`flex flex-col items-center justify-center p-2.5 rounded-2xl border transition-all text-xs font-bold gap-1 shadow-sm cursor-pointer ${
+                  isLight
+                    ? 'bg-indigo-50 hover:bg-indigo-100 border-indigo-200 text-indigo-900'
+                    : 'bg-indigo-500/15 hover:bg-indigo-500/25 border-indigo-500/40 text-indigo-300 hover:text-indigo-200'
+                }`}
+                title="Stockfish 19 Game Review"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Review</span>
+              </button>
+            )}
 
             {/* 3. Design (Customizer) */}
             <button
@@ -196,15 +199,17 @@ export function GameControls({
             </button>
 
             {/* 2. Draw Button */}
-            <button
-              onClick={onOfferDraw}
-              disabled={Boolean(drawOfferedBy)}
-              className={`flex flex-col items-center justify-center p-2.5 rounded-2xl disabled:opacity-40 transition-all text-xs font-semibold gap-1 cursor-pointer ${btnBaseClass}`}
-              title="Offer or propose a draw"
-            >
-              <Handshake className="w-4 h-4 text-amber-500" />
-              <span>Draw</span>
-            </button>
+            {buttonConfig?.gameDrawButton !== false && (
+              <button
+                onClick={onOfferDraw}
+                disabled={Boolean(drawOfferedBy)}
+                className={`flex flex-col items-center justify-center p-2.5 rounded-2xl disabled:opacity-40 transition-all text-xs font-semibold gap-1 cursor-pointer ${btnBaseClass}`}
+                title="Offer or propose a draw"
+              >
+                <Handshake className="w-4 h-4 text-amber-500" />
+                <span>Draw</span>
+              </button>
+            )}
 
             {/* 3. Design Studio Button */}
             <button
@@ -221,7 +226,7 @@ export function GameControls({
             </button>
 
             {/* 4. Resign Button */}
-            {isPlayer && (
+            {buttonConfig?.gameResignButton !== false && isPlayer && (
               <button
                 onClick={() => setShowResignModal(true)}
                 className={`flex flex-col items-center justify-center p-2.5 rounded-2xl transition-all text-xs font-semibold gap-1 cursor-pointer ${
@@ -238,7 +243,7 @@ export function GameControls({
           </div>
 
           {/* Voice Call Quick Connect Banner — PvP only (onVoiceCall is null for AI) */}
-          {onVoiceCall && !isGameOver && !isAIGame && (
+          {buttonConfig?.gameVoiceCall !== false && onVoiceCall && !isGameOver && !isAIGame && (
             <button
               onClick={onVoiceCall}
               className={`w-full py-2.5 px-4 rounded-2xl font-bold text-xs flex items-center justify-between transition-all group shadow-sm border animate-fade-in cursor-pointer ${

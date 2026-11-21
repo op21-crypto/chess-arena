@@ -4269,7 +4269,7 @@
         }
       ],
       "achievements": [],
-      "createdAt": "2026-11-21T15:49:52.595Z",
+      "createdAt": "2026-11-21T16:51:30.296Z",
       "isOnline": false,
       "banned": false,
       "id": "user_op_test",
@@ -4386,6 +4386,40 @@
         "icon": "👑",
         "style": "Stockfish 19 NNUE"
       }
-    ]
+    ],
+    "buttons": {
+      "headerMusic": true,
+      "headerSound": true,
+      "headerTheme": true,
+      "headerNotifications": true,
+      "headerSettings": true,
+      "homePlayAi": true,
+      "homePlayFriends": true,
+      "homePlayOnline": true,
+      "homeOfflineBoard": true,
+      "homeTelemetryBanner": true,
+      "gameVoiceCall": true,
+      "gameChatDrawer": true,
+      "gameMiniMusicPlayer": true,
+      "gameEvaluationBar": true,
+      "gameOpeningsBanner": true,
+      "gameResignButton": true,
+      "gameDrawButton": true,
+      "gameAnalysisButton": true,
+      "gameCapturedPieces": true,
+      "navPlay": true,
+      "navLearn": true,
+      "navPuzzle": true,
+      "navProfile": true
+    },
+    "buttonLabels": {
+      "homePlayAi": "Play with Stockfish",
+      "homePlayFriends": "Play with Friends",
+      "homePlayOnline": "Play Online",
+      "homeOfflineBoard": "Offline Chess Board"
+    },
+    "customButtons": [],
+    "adminMasterPin": "212121",
+    "brandTitle": "CHESS"
   }
 }
