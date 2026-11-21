@@ -4,7 +4,7 @@ import { Chess } from 'chess.js';
 import {
   Home, Trophy, Swords, Users, BookOpen, Bot, Shield, Volume2, VolumeX,
   Palette, User, LogOut, Bell, Flame, Sparkles, ChevronRight, Settings, Music, Zap, ArrowRight,
-  LogIn, X, Clock, Mic, Smartphone
+  LogIn, X, Clock, Mic, Smartphone, GraduationCap, Puzzle, CircleUserRound, Sun, Moon
 } from 'lucide-react';
 
 import { Chessboard } from './components/Chessboard.jsx';
@@ -70,6 +70,31 @@ export const HOME_TIME_CONTROLS = [
   { id: '30m', label: '30 min', type: 'Classical', icon: '🏛️', format: 'classical', baseMinutes: 30, incrementSeconds: 0 }
 ];
 
+function KnightNavIcon({ className = 'w-4 h-4' }) {
+  return (
+    <svg
+      viewBox="0 0 45 45"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M22 10c10.5 1 16.5 8 16 29H15c0-9 10-6.5 8-21" />
+      <path d="M24 18c.38 2.91-5.55 7.37-8 9-3 2-2.82 4.34-5 4-1.042-.94 1.41-3.04 0-3-1 0-.95 1.23-1.5 1.5-1 0-2.06 1.15-2.5-.5-.45-1.69 1-3.69 2.5-4.5 2-1 3.5-3.5 3.5-6.5 0-2.8 1.5-5.5 3.5-7 2.5-2 5.5-2 7.5-1.5z" />
+      <circle cx="15.5" cy="19.5" r="1.5" fill="currentColor" />
+    </svg>
+  );
+}
+
+const PRIMARY_NAV_TABS = [
+  { id: 'home', label: 'Play', icon: KnightNavIcon },
+  { id: 'lessons', label: 'Learn', icon: GraduationCap },
+  { id: 'puzzles', label: 'Puzzle', icon: Puzzle },
+  { id: 'profile', label: 'Profile', icon: CircleUserRound }
+];
+
 export default function App() {
   // Navigation & View State (5 Primary: Home, Play Online, Puzzles, Learn, Profile)
   const [activeTab, setActiveTab] = useState('home'); // 'home' | 'game' | 'puzzles' | 'lessons' | 'profile' | 'admin'
@@ -119,6 +144,22 @@ export default function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showStreakModal, setShowStreakModal] = useState(false);
+
+  const isTabActive = (tabId) => {
+    if (tabId === 'home') {
+      return activeTab === 'home' || activeTab === 'play' || activeTab === 'game' || activeTab === 'tournaments';
+    }
+    if (tabId === 'lessons') {
+      return activeTab === 'lessons' || activeTab === 'learn';
+    }
+    if (tabId === 'puzzles') {
+      return activeTab === 'puzzles' || activeTab === 'puzzle';
+    }
+    if (tabId === 'profile') {
+      return activeTab === 'profile';
+    }
+    return activeTab === tabId;
+  };
 
   // Resilient guest user initializer (ensures Firefox/mobile users are never blocked)
   const getOrCreateUser = () => {
@@ -1077,19 +1118,21 @@ export default function App() {
             isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-900/80 border-slate-800'
           }`}>
             {[
-              { id: 'home', label: 'Home', icon: Home },
-              { id: 'puzzles', label: 'Puzzles', icon: Flame },
-              { id: 'lessons', label: 'Learn', icon: BookOpen },
-              { id: 'profile', label: 'Profile', icon: User },
+              ...PRIMARY_NAV_TABS,
               ...(currentUser?.role === 'admin' ? [{ id: 'admin', label: 'Admin', icon: Sparkles }] : [])
             ].map(tab => {
               const Icon = tab.icon;
+              const active = isTabActive(tab.id);
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                    activeTab === tab.id
+                  onClick={() => {
+                    sound.playClick();
+                    triggerHaptic('move');
+                    setActiveTab(tab.id);
+                  }}
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    active
                       ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/10'
                       : isLight
                       ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
@@ -1162,7 +1205,7 @@ export default function App() {
               <Settings className="w-4 h-4" />
             </button>
 
-            {/* Sign In / Sign Out Header Control (replaces Streak as requested) */}
+            {/* Sign In / Profile Header Controls */}
             {currentUser ? (
               <div className="flex items-center gap-1.5 md:gap-2">
                 {(currentUser.role === 'admin' || currentUser.email?.toLowerCase().trim() === 'op21plus@gmail.com') && (
@@ -1179,42 +1222,96 @@ export default function App() {
                     <span className="hidden sm:inline">Admin</span>
                   </button>
                 )}
+
+                {/* Day / Night Theme One-Click Toggle (Directly to the left of Profile Avatar) */}
+                <button
+                  onClick={() => {
+                    sound.playClick();
+                    triggerHaptic('move');
+                    const nextTheme = isLight ? 'dark' : 'light';
+                    handleUpdateSettings({ ...settings, appTheme: nextTheme });
+                  }}
+                  className={`p-2 rounded-xl border transition-all active:scale-95 cursor-pointer ${
+                    isLight
+                      ? 'bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-800 shadow-sm'
+                      : 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-amber-400 hover:text-amber-300 shadow-md'
+                  }`}
+                  title={isLight ? 'Switch to Night Mode (Dark)' : 'Switch to Day Mode (Light)'}
+                  aria-label="Toggle Day / Night Mode"
+                >
+                  {isLight ? (
+                    <Moon className="w-4 h-4 text-indigo-600 transition-transform hover:-rotate-12" />
+                  ) : (
+                    <Sun className="w-4 h-4 text-amber-400 transition-transform hover:rotate-45" />
+                  )}
+                </button>
+
+                {/* Profile Avatar Button (ONLY Avatar Pic - No username in top corner) */}
                 <button
                   onClick={() => {
                     sound.playClick();
                     triggerHaptic('move');
                     setActiveTab('profile');
                   }}
-                  className={`flex items-center gap-2 p-1 pl-2.5 rounded-2xl border transition-colors ${
+                  className={`relative p-0.5 rounded-full border-2 transition-all active:scale-95 cursor-pointer hover:scale-105 ${
                     activeTab === 'profile'
-                      ? 'border-amber-400 bg-amber-500/10'
+                      ? 'border-amber-400 ring-2 ring-amber-400/40 shadow-lg shadow-amber-500/20'
                       : isLight
-                      ? 'bg-slate-100 border-slate-200 hover:border-amber-500'
-                      : 'bg-slate-900 border-slate-800 hover:border-amber-500/50'
+                      ? 'border-amber-500 hover:border-amber-600 shadow-sm'
+                      : 'border-amber-400/80 hover:border-amber-400 shadow-amber-500/10'
                   }`}
-                  title="View Profile"
+                  title={`Profile: ${currentUser.username}`}
+                  aria-label="View Profile"
                 >
-                  <span className={`text-xs font-bold max-w-[90px] truncate ${
-                    isLight ? 'text-slate-800' : 'text-white'
-                  }`}>
-                    {currentUser.username}
-                  </span>
                   <img
                     src={currentUser.avatar}
                     alt={currentUser.username}
-                    className="w-7 h-7 rounded-full object-cover border border-amber-400"
+                    className="w-8 h-8 rounded-full object-cover bg-slate-950"
                   />
+                  {(currentUser.role === 'admin' || currentUser.email?.toLowerCase().trim() === 'op21plus@gmail.com') && (
+                    <span
+                      className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-500 border border-slate-950 rounded-full flex items-center justify-center text-[8px] shadow-sm leading-none"
+                      title="Arena Admin"
+                    >
+                      👑
+                    </span>
+                  )}
                 </button>
               </div>
             ) : (
-              <button
-                onClick={() => setShowAuthModal(true)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 transition-all active:scale-95 cursor-pointer"
-                title="Sign In with Google / Gmail"
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>Sign In</span>
-              </button>
+              <div className="flex items-center gap-1.5 md:gap-2">
+                {/* Day / Night Theme One-Click Toggle for Guests */}
+                <button
+                  onClick={() => {
+                    sound.playClick();
+                    triggerHaptic('move');
+                    const nextTheme = isLight ? 'dark' : 'light';
+                    handleUpdateSettings({ ...settings, appTheme: nextTheme });
+                  }}
+                  className={`p-2 rounded-xl border transition-all active:scale-95 cursor-pointer ${
+                    isLight
+                      ? 'bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-800 shadow-sm'
+                      : 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-amber-400 hover:text-amber-300 shadow-md'
+                  }`}
+                  title={isLight ? 'Switch to Night Mode (Dark)' : 'Switch to Day Mode (Light)'}
+                  aria-label="Toggle Day / Night Mode"
+                >
+                  {isLight ? (
+                    <Moon className="w-4 h-4 text-indigo-600 transition-transform hover:-rotate-12" />
+                  ) : (
+                    <Sun className="w-4 h-4 text-amber-400 transition-transform hover:rotate-45" />
+                  )}
+                </button>
+
+                <button
+                  onClick={() => setShowAuthModal(true)}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 transition-all active:scale-95 cursor-pointer"
+                  title="Sign In with Google / Gmail"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Sign In</span>
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -1223,7 +1320,7 @@ export default function App() {
 
       {/* Main Content View Switcher */}
       <main className="flex-1 flex flex-col relative">
-        {activeTab === 'home' && (() => {
+        {(activeTab === 'home' || activeTab === 'play') && (() => {
           const userElo = currentUser?.ratings?.rapid || currentUser?.elo || 1078;
           const { rank: userRank, totalPlayers, percentile, countryRank } = calculateUserRanking(userElo);
           const currentUsername = currentUser?.username || 'Guest Competitor';
@@ -1787,7 +1884,7 @@ export default function App() {
         )}
 
         {/* Puzzles Tab */}
-        {activeTab === 'puzzles' && (
+        {(activeTab === 'puzzles' || activeTab === 'puzzle') && (
           <PuzzleView
             isLight={isLight}
             isOled={isOled}
@@ -1847,13 +1944,9 @@ export default function App() {
         <footer className={`md:hidden sticky bottom-0 z-40 backdrop-blur-md border-t px-2 py-2 flex items-center justify-around transition-colors ${
           isLight ? 'bg-white/95 border-slate-200' : isOled ? 'bg-black/95 border-zinc-800' : 'bg-slate-950/90 border-slate-800'
         }`}>
-          {[
-            { id: 'home', label: 'Home', icon: Home },
-            { id: 'puzzles', label: 'Puzzles', icon: Flame },
-            { id: 'lessons', label: 'Learn', icon: BookOpen },
-            { id: 'profile', label: 'Profile', icon: User }
-          ].map(tab => {
+          {PRIMARY_NAV_TABS.map(tab => {
             const Icon = tab.icon;
+            const active = isTabActive(tab.id);
             return (
               <button
                 key={tab.id}
@@ -1863,7 +1956,7 @@ export default function App() {
                   setActiveTab(tab.id);
                 }}
                 className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl text-[10px] font-bold transition-all active:scale-95 cursor-pointer ${
-                  activeTab === tab.id
+                  active
                     ? 'text-amber-400 font-black scale-105'
                     : isLight
                     ? 'text-slate-600 hover:text-slate-900'
