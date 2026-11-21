@@ -25,7 +25,8 @@ import {
   ChevronUp,
   Trophy,
   Flame,
-  Compass
+  Compass,
+  Headphones
 } from 'lucide-react';
 import { ALL_LESSONS, LESSON_CATEGORIES, getPracticeDrills } from '../data/lessonsData.js';
 import { tts } from '../utils/universalTTS.js';
@@ -473,41 +474,8 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
               </h1>
             </div>
 
-            {/* Quick Actions (Choose Lesson, Browse All, Voice Toggle, Music) */}
+            {/* Quick Audio Controls (Sensei Voice Toggle & Ambient Music Toggle) */}
             <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => openLessonModal()}
-                className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 ${
-                  isLightMode
-                    ? 'bg-sky-50 border border-sky-200 text-sky-800 hover:bg-sky-100'
-                    : 'bg-sky-500/15 border border-sky-500/30 text-sky-300 hover:bg-sky-500/25'
-                }`}
-                title="Choose a lesson modal"
-              >
-                <GraduationCap className="w-3.5 h-3.5" />
-                <span className="hidden xs:inline">Choose Lesson</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  triggerHaptic('move');
-                  setShowAllChapters(prev => !prev);
-                }}
-                className={`p-2 rounded-xl transition-all shadow-xs cursor-pointer active:scale-95 ${
-                  showAllChapters
-                    ? isLightMode
-                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                      : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
-                    : isLightMode
-                    ? 'bg-slate-100 border border-slate-200 text-slate-700 hover:text-emerald-700'
-                    : 'bg-slate-900 border border-slate-800 text-slate-300 hover:text-emerald-400'
-                }`}
-                title="Toggle chapters list"
-              >
-                <List className="w-5 h-5" />
-              </button>
-
               <button
                 onClick={toggleVoice}
                 className={`p-2 rounded-xl transition-all cursor-pointer active:scale-95 ${
@@ -541,7 +509,7 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
 
         {/* Academy Hub Main Body */}
         <main className="flex-1 max-w-md w-full mx-auto px-3.5 py-4 space-y-4">
-          {/* Professional Academic Mastery Tracker Card (Single Premium Progress Line) */}
+          {/* Professional Academic Mastery Tracker Card */}
           <div className={`border rounded-2xl p-4 shadow-md backdrop-blur-xl space-y-3 relative overflow-hidden transition-colors ${
             isLightMode
               ? 'bg-white border-slate-200/90 shadow-slate-200/40 text-slate-900'
@@ -564,14 +532,6 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
                     Structured FIDE Curriculum • 64 Master Lessons
                   </p>
                 </div>
-              </div>
-
-              <div className={`px-2.5 py-0.5 rounded-full border text-[10px] font-extrabold flex items-center gap-1 shadow-xs shrink-0 ${
-                isLightMode
-                  ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                  : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
-              }`}>
-                <span>{academicTier.badge}</span>
               </div>
             </div>
 
@@ -602,8 +562,8 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
             </div>
           </div>
 
-          {/* Featured Resume Lesson Card with Anime Sensei Mentor */}
-          <div className={`border rounded-3xl p-4 sm:p-5 shadow-lg backdrop-blur-xl space-y-3.5 transition-colors ${
+          {/* Current Lesson Spotlight Card */}
+          <div className={`border rounded-3xl p-4 sm:p-5 shadow-lg backdrop-blur-xl space-y-3 transition-colors ${
             isLightMode
               ? 'bg-white border-slate-200/90 shadow-slate-200/40 text-slate-900'
               : 'bg-gradient-to-br from-slate-900/95 via-slate-900/85 to-slate-950/95 border-slate-800/90 text-white'
@@ -643,7 +603,7 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
                 onClick={handleManualSpeak}
                 title="Tap Anime Sensei to speak"
               >
-                <MentorAvatar size={52} isSpeaking={isSpeaking} />
+                <MentorAvatar size={50} isSpeaking={isSpeaking} />
               </div>
 
               <div className="flex-1 min-w-0">
@@ -673,154 +633,244 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
                 </button>
               </div>
             </div>
-
-            {/* Quick Steps & Duration Strip */}
-            <div className="flex items-center justify-between text-xs font-bold px-1">
-              <span className={`flex items-center gap-1.5 ${isLightMode ? 'text-slate-800' : 'text-white'}`}>
-                <BookOpen className="w-3.5 h-3.5 text-emerald-500" />
-                <span>{currentLesson.steps.length} Steps</span>
-              </span>
-              <span className={`flex items-center gap-1.5 ${isLightMode ? 'text-slate-800' : 'text-white'}`}>
-                <Target className="w-3.5 h-3.5 text-amber-500" />
-                <span>{practiceDrills.length} Drills</span>
-              </span>
-              <span className={`flex items-center gap-1.5 ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                <Clock className="w-3.5 h-3.5 text-teal-500" />
-                <span>~2 Mins</span>
-              </span>
-            </div>
-
-            {/* Primary Action Button */}
-            <div className="space-y-2 pt-1">
-              <button
-                type="button"
-                onClick={() => handleSelectLesson(currentLesson.num, true)}
-                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-amber-500 hover:from-emerald-400 hover:to-amber-400 text-slate-950 font-black text-sm sm:text-base shadow-xl shadow-emerald-500/25 flex items-center justify-center gap-2.5 transition-all transform active:scale-[0.98] cursor-pointer"
-              >
-                <Play className="w-4 h-4 fill-current text-slate-950" />
-                <span>Start Lesson {currentLesson.num}: {currentLesson.title}</span>
-              </button>
-
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => openLessonModal()}
-                  className={`w-full py-2.5 px-3 rounded-xl font-black text-xs border flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-98 cursor-pointer ${
-                    isLightMode
-                      ? 'bg-sky-50 hover:bg-sky-100 text-[#1e6091] border-sky-200'
-                      : 'bg-sky-950/80 hover:bg-sky-900 text-sky-300 border-sky-500/40'
-                  }`}
-                >
-                  <GraduationCap className="w-4 h-4 text-sky-600 dark:text-sky-400" />
-                  <span>Choose a lesson</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    sound.playClick();
-                    triggerHaptic('move');
-                    setShowAllChapters(prev => !prev);
-                  }}
-                  className={`w-full py-2.5 px-3 rounded-xl font-black text-xs border flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-98 cursor-pointer ${
-                    isLightMode
-                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200'
-                      : 'bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white border-slate-700/80 hover:border-emerald-500/50'
-                  }`}
-                >
-                  <List className="w-4 h-4 text-emerald-500" />
-                  <span>{showAllChapters ? 'Hide Chapters' : 'All Chapters'}</span>
-                </button>
-              </div>
-            </div>
           </div>
 
-          {/* Curriculum Chapters (Collapsible & Closed by Default) */}
-          <div className="space-y-2 pt-1">
-            {/* Master Toggle Button: Closed by Default */}
+          {/* 4 Professional Premium Learn Navigation Options (Clean, Highlighted & Sleek) */}
+          <div className="space-y-3.5 sm:space-y-4 pt-1">
+            {/* 1st: Continue Lesson (Emerald / Jade) */}
             <button
-              type="button"
+              onClick={() => {
+                sound.playClick();
+                triggerHaptic('move');
+                handleSelectLesson(currentLesson.num, true);
+              }}
+              className={`w-full text-left p-3.5 sm:p-4 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
+                isLightMode
+                  ? 'bg-gradient-to-r from-emerald-50/90 via-white to-teal-50/70 hover:from-emerald-100/90 hover:to-teal-100/80 border-2 border-emerald-200/90 hover:border-emerald-400 shadow-sm hover:shadow-md'
+                  : 'bg-gradient-to-r from-emerald-950/70 via-slate-900/90 to-teal-950/50 hover:from-emerald-900/80 hover:via-teal-900/60 hover:to-emerald-850/80 border border-emerald-500/35 hover:border-emerald-400/70 shadow-md shadow-emerald-950/30'
+              }`}
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-emerald-500/25 transition-all duration-300" />
+              <div className="flex items-center justify-between gap-3 relative z-10">
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                  {/* Clean Emerald Play Avatar */}
+                  <div className={`w-12 h-12 sm:w-13 sm:h-13 rounded-2xl border flex items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 relative shadow-xs overflow-hidden ${
+                    isLightMode
+                      ? 'bg-gradient-to-br from-emerald-100 via-white to-teal-100 border-emerald-200 group-hover:border-emerald-400'
+                      : 'bg-gradient-to-br from-emerald-900/80 via-slate-950 to-teal-950/90 border-emerald-400/50 group-hover:border-emerald-300'
+                  }`}>
+                    <Play className={`w-6 h-6 fill-current transition-colors ml-0.5 ${
+                      isLightMode
+                        ? 'text-emerald-600 group-hover:text-emerald-700'
+                        : 'text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.7)] group-hover:text-emerald-300'
+                    }`} />
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+                      <h3 className={`text-base sm:text-lg font-black tracking-tight transition-colors leading-tight ${
+                        isLightMode
+                          ? 'text-slate-900 group-hover:text-emerald-700'
+                          : 'text-white group-hover:text-emerald-200'
+                      }`}>
+                        Continue Lesson {currentLesson.num}
+                      </h3>
+                      <span className={`px-2.5 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-black uppercase tracking-wider shrink-0 shadow-xs flex items-center gap-1 ${
+                        isLightMode
+                          ? 'bg-emerald-100 text-emerald-800 border-emerald-300 shadow-emerald-100'
+                          : 'bg-emerald-500/25 text-emerald-300 border-emerald-400/40 shadow-emerald-950/50'
+                      }`}>
+                        <span>RESUME</span>
+                        <span className="text-xs">▶️</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <ChevronRight className={`w-5 h-5 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all shrink-0 ${
+                  isLightMode ? 'text-emerald-600' : 'text-emerald-400'
+                }`} />
+              </div>
+            </button>
+
+            {/* 2nd: Choose a Lesson (Sky / Cyan) */}
+            <button
+              onClick={() => {
+                sound.playClick();
+                triggerHaptic('move');
+                openLessonModal();
+              }}
+              className={`w-full text-left p-3.5 sm:p-4 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
+                isLightMode
+                  ? 'bg-gradient-to-r from-sky-50/90 via-white to-cyan-50/70 hover:from-sky-100/90 hover:to-cyan-100/80 border-2 border-sky-200/90 hover:border-sky-400 shadow-sm hover:shadow-md'
+                  : 'bg-gradient-to-r from-sky-950/70 via-slate-900/90 to-cyan-950/50 hover:from-sky-900/80 hover:via-cyan-900/60 hover:to-sky-850/80 border border-sky-500/35 hover:border-sky-400/70 shadow-md shadow-sky-950/30'
+              }`}
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-sky-500/25 transition-all duration-300" />
+              <div className="flex items-center justify-between gap-3 relative z-10">
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                  {/* Clean Sky Graduation Avatar */}
+                  <div className={`w-12 h-12 sm:w-13 sm:h-13 rounded-2xl border flex items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 relative shadow-xs overflow-hidden ${
+                    isLightMode
+                      ? 'bg-gradient-to-br from-sky-100 via-white to-cyan-100 border-sky-200 group-hover:border-sky-400'
+                      : 'bg-gradient-to-br from-sky-900/80 via-slate-950 to-cyan-950/90 border-sky-400/50 group-hover:border-sky-300'
+                  }`}>
+                    <GraduationCap className={`w-6 h-6 transition-colors ${
+                      isLightMode
+                        ? 'text-sky-600 group-hover:text-sky-700'
+                        : 'text-sky-300 drop-shadow-[0_0_8px_rgba(56,189,248,0.7)] group-hover:text-sky-200'
+                    }`} />
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+                      <h3 className={`text-base sm:text-lg font-black tracking-tight transition-colors leading-tight ${
+                        isLightMode
+                          ? 'text-slate-900 group-hover:text-sky-700'
+                          : 'text-white group-hover:text-sky-200'
+                      }`}>
+                        Choose a Lesson
+                      </h3>
+                      <span className={`px-2.5 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-black uppercase tracking-wider shrink-0 shadow-xs flex items-center gap-1 ${
+                        isLightMode
+                          ? 'bg-sky-100 text-sky-800 border-sky-300 shadow-sky-100'
+                          : 'bg-sky-500/25 text-sky-300 border-sky-400/40 shadow-sky-950/50'
+                      }`}>
+                        <span>64 LESSONS</span>
+                        <span className="text-xs">🎓</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <ChevronRight className={`w-5 h-5 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all shrink-0 ${
+                  isLightMode ? 'text-sky-600' : 'text-sky-400'
+                }`} />
+              </div>
+            </button>
+
+            {/* 3rd: Curriculum Chapters (Indigo / Purple) */}
+            <button
               onClick={() => {
                 sound.playClick();
                 triggerHaptic('move');
                 setShowAllChapters(prev => !prev);
               }}
-              className={`w-full p-3.5 sm:p-4 rounded-2xl border shadow-md transition-all duration-200 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden text-left ${
+              className={`w-full text-left p-3.5 sm:p-4 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
                 isLightMode
-                  ? 'bg-white hover:bg-slate-50 border-slate-200 shadow-slate-200/40 text-slate-900'
-                  : 'bg-gradient-to-r from-slate-900/90 via-slate-900/95 to-slate-950/90 hover:from-slate-850 hover:to-slate-900 border-slate-800 hover:border-emerald-500/40 shadow-slate-950/30 text-white'
+                  ? 'bg-gradient-to-r from-indigo-50/90 via-white to-purple-50/70 hover:from-indigo-100/90 hover:to-purple-100/80 border-2 border-indigo-200/90 hover:border-indigo-400 shadow-sm hover:shadow-md'
+                  : 'bg-gradient-to-r from-indigo-950/70 via-slate-900/90 to-purple-950/50 hover:from-indigo-900/80 hover:via-purple-900/60 hover:to-indigo-850/80 border border-indigo-500/35 hover:border-indigo-400/70 shadow-md shadow-indigo-950/30'
               }`}
             >
-              <div className="absolute top-0 right-0 w-28 h-28 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-indigo-500/25 transition-all duration-300" />
               <div className="flex items-center justify-between gap-3 relative z-10">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className={`w-11 h-11 rounded-2xl border flex items-center justify-center shadow-md group-hover:scale-105 transition-transform shrink-0 ${
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                  {/* Clean Indigo Layers Avatar */}
+                  <div className={`w-12 h-12 sm:w-13 sm:h-13 rounded-2xl border flex items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 relative shadow-xs overflow-hidden ${
                     isLightMode
-                      ? 'bg-emerald-100 border-emerald-300 text-emerald-700'
-                      : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+                      ? 'bg-gradient-to-br from-indigo-100 via-white to-purple-100 border-indigo-200 group-hover:border-indigo-400'
+                      : 'bg-gradient-to-br from-indigo-900/80 via-slate-950 to-purple-950/90 border-indigo-400/50 group-hover:border-indigo-300'
                   }`}>
-                    <Layers className="w-5 h-5" />
+                    <Layers className={`w-6 h-6 transition-colors ${
+                      isLightMode
+                        ? 'text-indigo-600 group-hover:text-indigo-700'
+                        : 'text-indigo-300 drop-shadow-[0_0_8px_rgba(99,102,241,0.7)] group-hover:text-indigo-200'
+                    }`} />
                   </div>
-                  <div className="text-left min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-sm font-black transition-colors truncate ${
-                        isLightMode ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-300'
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+                      <h3 className={`text-base sm:text-lg font-black tracking-tight transition-colors leading-tight ${
+                        isLightMode
+                          ? 'text-slate-900 group-hover:text-indigo-700'
+                          : 'text-white group-hover:text-indigo-200'
                       }`}>
                         Curriculum Chapters
-                      </span>
-                      <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider shrink-0 ${
+                      </h3>
+                      <span className={`px-2.5 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-black uppercase tracking-wider shrink-0 shadow-xs flex items-center gap-1 ${
                         isLightMode
-                          ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                          : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                          ? 'bg-indigo-100 text-indigo-800 border-indigo-300 shadow-indigo-100'
+                          : 'bg-indigo-500/25 text-indigo-300 border-indigo-400/40 shadow-indigo-950/50'
                       }`}>
-                        8 Chapters
+                        <span>8 CHAPTERS</span>
+                        <span className="text-xs">📚</span>
                       </span>
                     </div>
-                    <p className={`text-xs mt-0.5 font-medium truncate ${
-                      isLightMode ? 'text-slate-500' : 'text-slate-400'
-                    }`}>
-                      {showAllChapters
-                        ? 'Tap to collapse chapter curriculum'
-                        : 'Tap to view full 64-lesson chapter list'}
-                    </p>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <div className={`w-8 h-8 rounded-xl border flex items-center justify-center transition-all ${
-                    isLightMode
-                      ? 'bg-slate-100 border-slate-200 text-slate-600 group-hover:text-emerald-700'
-                      : 'bg-slate-800/80 border-slate-700/80 text-slate-300 group-hover:text-emerald-400'
-                  }`}>
-                    {showAllChapters ? (
-                      <ChevronUp className="w-4 h-4 text-emerald-600" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-emerald-600" />
-                    )}
-                  </div>
-                </div>
+                {showAllChapters ? (
+                  <ChevronUp className={`w-5 h-5 transition-transform shrink-0 ${isLightMode ? 'text-indigo-600' : 'text-indigo-400'}`} />
+                ) : (
+                  <ChevronDown className={`w-5 h-5 opacity-60 group-hover:opacity-100 transition-all shrink-0 ${isLightMode ? 'text-indigo-600' : 'text-indigo-400'}`} />
+                )}
               </div>
             </button>
 
-            {/* Chapters List: Revealed on click */}
-            {showAllChapters && (
-              <div className="space-y-2 pt-1 animate-fade-in">
-                <div className="flex items-center justify-between px-1">
-                  <span className={`text-[11px] font-bold uppercase tracking-wider ${
-                    isLightMode ? 'text-slate-500' : 'text-slate-400'
+            {/* 4th: Sensei Audio Coach (Amber / Golden Honey) */}
+            <button
+              onClick={() => {
+                sound.playClick();
+                triggerHaptic('move');
+                if (!voiceEnabled) toggleVoice();
+                handleManualSpeak();
+              }}
+              className={`w-full text-left p-3.5 sm:p-4 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden ${
+                isLightMode
+                  ? 'bg-gradient-to-r from-amber-50/90 via-white to-yellow-50/70 hover:from-amber-100/90 hover:to-yellow-100/80 border-2 border-amber-300/90 hover:border-amber-500 shadow-sm hover:shadow-md'
+                  : 'bg-gradient-to-r from-amber-950/70 via-slate-900/90 to-yellow-950/50 hover:from-amber-900/80 hover:via-yellow-900/60 hover:to-amber-850/80 border border-amber-500/35 hover:border-amber-400/70 shadow-md shadow-amber-950/30'
+              }`}
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-500/25 transition-all duration-300" />
+              <div className="flex items-center justify-between gap-3 relative z-10">
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                  {/* Clean Amber Headphones Avatar */}
+                  <div className={`w-12 h-12 sm:w-13 sm:h-13 rounded-2xl border flex items-center justify-center shrink-0 group-hover:scale-105 transition-all duration-300 relative shadow-xs overflow-hidden ${
+                    isLightMode
+                      ? 'bg-gradient-to-br from-amber-100 via-white to-yellow-100 border-amber-300 group-hover:border-amber-400'
+                      : 'bg-gradient-to-br from-amber-900/80 via-slate-950 to-yellow-950/90 border-amber-400/50 group-hover:border-amber-300'
                   }`}>
-                    All 8 Chapters • Tap to expand lessons
-                  </span>
-                  <button
-                    onClick={() => openLessonModal()}
-                    className={`text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 ${
-                      isLightMode ? 'text-sky-700 hover:text-sky-850' : 'text-sky-400 hover:text-sky-300'
-                    }`}
-                  >
-                    <GraduationCap className="w-3.5 h-3.5" />
-                    <span>Choose a lesson &rarr;</span>
-                  </button>
+                    <Headphones className={`w-6 h-6 transition-colors ${
+                      isLightMode
+                        ? 'text-amber-600 group-hover:text-amber-700'
+                        : 'text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.7)] group-hover:text-amber-300'
+                    }`} />
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+                      <h3 className={`text-base sm:text-lg font-black tracking-tight transition-colors leading-tight ${
+                        isLightMode
+                          ? 'text-slate-900 group-hover:text-amber-800'
+                          : 'text-white group-hover:text-amber-200'
+                      }`}>
+                        Sensei Audio Coach
+                      </h3>
+                      <span className={`px-2.5 py-0.5 rounded-full border text-[10px] sm:text-[11px] font-black uppercase tracking-wider shrink-0 shadow-xs flex items-center gap-1 ${
+                        isLightMode
+                          ? 'bg-amber-100 text-amber-800 border-amber-300 shadow-amber-100'
+                          : 'bg-amber-500/25 text-amber-300 border-amber-400/40 shadow-amber-950/50'
+                      }`}>
+                        <span>{isSpeaking ? 'SPEAKING' : 'AUDIO COACH'}</span>
+                        <span className="text-xs">🎙️</span>
+                      </span>
+                    </div>
+                  </div>
                 </div>
+                <ChevronRight className={`w-5 h-5 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all shrink-0 ${
+                  isLightMode ? 'text-amber-600' : 'text-amber-400'
+                }`} />
+              </div>
+            </button>
+          </div>
+
+          {/* Curriculum Chapters Accordion (Revealed by Button 3) */}
+          {showAllChapters && (
+            <div className="space-y-2 pt-2 animate-fade-in">
+              <div className="flex items-center justify-between px-1">
+                <span className={`text-[11px] font-bold uppercase tracking-wider ${
+                  isLightMode ? 'text-slate-500' : 'text-slate-400'
+                }`}>
+                  All 8 Chapters • Tap to explore lessons
+                </span>
+              </div>
 
                 <div className="space-y-2">
                   {LESSON_CATEGORIES.map((cat, catIdx) => {
@@ -963,7 +1013,6 @@ export function LessonView({ onBack, isLight, isOled, boardTheme = 'greenwich', 
                 </div>
               </div>
             )}
-          </div>
         </main>
 
         {/* 64-Lesson Picker Modal */}
