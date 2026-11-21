@@ -25,6 +25,7 @@ import { AdminView } from './components/AdminView.jsx';
 import { GameOverModal } from './components/GameOverModal.jsx';
 import { SettingsModal } from './components/SettingsModal.jsx';
 import { DailyStreakModal } from './components/DailyStreakModal.jsx';
+import { NotificationsDropdown } from './components/NotificationsDropdown.jsx';
 import { MiniMusicPlayer } from './components/MiniMusicPlayer.jsx';
 import { InGameDesignModal } from './components/InGameDesignModal.jsx';
 import { AIBattleCard } from './components/AIBattleCard.jsx';
@@ -52,7 +53,7 @@ const DEFAULT_SETTINGS = {
   vibrations: true,
   voiceCommentary: false,
   voiceCommentaryOnlyOpponent: true,
-  boardTheme: 'amoled',
+  boardTheme: (typeof Math !== 'undefined' && Math.random() < 0.5) ? 'gold' : 'emerald',
   pieceTheme: 'alexander',
   showLegalMoves: true,
   highlightLastMove: true,
@@ -137,7 +138,7 @@ export default function App() {
         safeStorage.setItem('chess_arena_system_theme_default_v1', 'true');
       }
     } catch (e) {}
-    return { ...DEFAULT_SETTINGS, appTheme: 'system', musicEnabled: true };
+    return { ...DEFAULT_SETTINGS, boardTheme: Math.random() < 0.5 ? 'gold' : 'emerald', appTheme: 'system', musicEnabled: true };
   });
 
   const handleUpdateSettings = (newSettings) => {
@@ -215,6 +216,90 @@ export default function App() {
   const [showAIModal, setShowAIModal] = useState(false);
   const [analysisGame, setAnalysisGame] = useState(null);
   const [showGameOverModal, setShowGameOverModal] = useState(false);
+
+  // Notifications State & Handlers
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState(() => {
+    try {
+      const saved = safeStorage.getItem('chess_arena_notifications_v2');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [
+      {
+        id: 'notif_hikaru',
+        type: 'challenge',
+        fromUser: {
+          id: 'f_hikaru',
+          username: 'Hikaru_N',
+          avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=HikaruNakamura'
+        },
+        message: 'Challenged you to a 3-minute Blitz game! ⚔️',
+        time: 'Just now',
+        config: { timeControl: { baseMinutes: 3, incrementSeconds: 0 }, colorPreference: 'random' }
+      },
+      {
+        id: 'notif_elena',
+        type: 'friend_request',
+        fromUser: {
+          id: 'sug_elena',
+          username: 'Elena_Tactics',
+          avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=ElenaChess'
+        },
+        message: 'Sent you a friend request to connect & play! 👥',
+        time: '5m ago'
+      }
+    ];
+  });
+
+  useEffect(() => {
+    try {
+      safeStorage.setItem('chess_arena_notifications_v2', JSON.stringify(notifications));
+    } catch {}
+  }, [notifications]);
+
+  const handleAcceptNotificationChallenge = (notif) => {
+    setShowNotifications(false);
+    setNotifications(prev => prev.filter(n => n.id !== notif.id));
+    sound.playMatchStart();
+    triggerHaptic('move');
+    if (notif.fromUser?.id === 'f_hikaru' || notif.fromUser?.id?.startsWith('f_') || notif.fromUser?.id?.startsWith('sug_')) {
+      const level = notif.fromUser?.username === 'Hikaru_N' ? 5 : 3;
+      handleStartAIGame(level, notif.config?.timeControl?.baseMinutes || 3, 'w');
+    } else {
+      handleCreateFriendRoom(notif.config || { timeControl: { baseMinutes: 5, incrementSeconds: 0 }, colorPreference: 'random' });
+    }
+  };
+
+  const handleDeclineNotificationChallenge = (id) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+    sound.playClick();
+  };
+
+  const handleAcceptNotificationFriendRequest = (notif) => {
+    setNotifications(prev => prev.filter(n => n.id !== notif.id));
+    sound.playMove();
+    triggerHaptic('move');
+    try {
+      const cur = JSON.parse(safeStorage.getItem('chess_arena_friends_v3') || '[]');
+      if (!cur.some(f => f.username === notif.fromUser?.username)) {
+        cur.unshift({
+          id: notif.fromUser?.id || `f_${Date.now()}`,
+          username: notif.fromUser?.username,
+          avatar: notif.fromUser?.avatar,
+          country: 'UN',
+          elo: 1845,
+          isOnline: true,
+          statusText: 'Online • Mutual Friend'
+        });
+        safeStorage.setItem('chess_arena_friends_v3', JSON.stringify(cur));
+      }
+    } catch {}
+  };
+
+  const handleDeclineNotificationFriendRequest = (id) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+    sound.playClick();
+  };
 
   // Active Game State
   const [gameSession, setGameSession] = useState(null); // Full gameState from server
@@ -1283,19 +1368,28 @@ export default function App() {
               <Music className="w-4 h-4" />
             </button>
 
-            {/* Sound FX Toggle */}
+            {/* Notifications Bell Trigger (Replaces volume button) */}
             <button
               onClick={() => {
-                handleUpdateSettings({ ...settings, soundEnabled: !settings.soundEnabled });
+                sound.playClick();
+                triggerHaptic('move');
+                setShowNotifications(prev => !prev);
               }}
-              className={`p-2 rounded-xl border transition-colors ${
-                isLight
+              className={`p-2 rounded-xl border transition-all relative cursor-pointer ${
+                showNotifications
+                  ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/20'
+                  : isLight
                   ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-amber-600'
                   : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-amber-400'
               }`}
-              title={settings.soundEnabled ? 'Mute Sound FX' : 'Enable Sound FX'}
+              title="Notifications & Game Challenges"
             >
-              {settings.soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+              <Bell className="w-4 h-4" />
+              {notifications.length > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center animate-pulse shadow-sm">
+                  {notifications.length}
+                </span>
+              )}
             </button>
 
             {/* Global Settings Trigger */}
@@ -2179,6 +2273,7 @@ export default function App() {
       <FriendRoomModal
         isOpen={showFriendRoomModal}
         isLight={isLight}
+        initialTab="room"
         onClose={() => {
           setShowFriendRoomModal(false);
           setCreatedRoomInfo(null);
@@ -2199,7 +2294,21 @@ export default function App() {
             config: { timeControl: cfg.timeControl, format: cfg.timeControl?.baseMinutes <= 2 ? 'bullet' : (cfg.timeControl?.baseMinutes <= 5 ? 'blitz' : 'rapid') }
           });
         }}
+        onStartAIGame={handleStartAIGame}
         onOpenAuth={() => setShowAuthModal(true)}
+      />
+
+      {/* Global Notifications Dropdown */}
+      <NotificationsDropdown
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
+        notifications={notifications}
+        onAcceptChallenge={handleAcceptNotificationChallenge}
+        onDeclineChallenge={handleDeclineNotificationChallenge}
+        onAcceptFriendRequest={handleAcceptNotificationFriendRequest}
+        onDeclineFriendRequest={handleDeclineNotificationFriendRequest}
+        onClearAll={() => setNotifications([])}
+        isLight={isLight}
       />
 
       {/* Incoming Challenge Toast */}

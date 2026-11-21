@@ -511,8 +511,8 @@ export function PuzzleView({ currentUser, onUpdateRating, isLight = false, isOle
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  // Board theme resolution for light/dark
-  const activeBoardTheme = safeStorage.getItem('arena_board_theme') || (isLightMode ? 'greenwich' : 'amoled');
+  // Board theme resolution: default to randomly selected Gold or Emerald
+  const activeBoardTheme = safeStorage.getItem('arena_board_theme') || (Math.random() < 0.5 ? 'gold' : 'emerald');
 
   // ================= VIEW 1: THEMES DIRECTORY =================
   if (viewState === 'themes') {

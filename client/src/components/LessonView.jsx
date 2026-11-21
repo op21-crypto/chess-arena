@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LockOpen,
+  Lock,
   CheckCircle2,
   Sparkles,
   BookOpen,
@@ -47,7 +48,7 @@ export function LessonView({ onBack, isLight, isOled }) {
   const isLightMode = isLight !== undefined
     ? isLight
     : (typeof window !== 'undefined' && window.matchMedia && !window.matchMedia('(prefers-color-scheme: dark)').matches);
-  const [boardTheme] = useState('amoled');
+  const [boardTheme] = useState(() => (Math.random() < 0.5 ? 'gold' : 'emerald'));
   const [lessons] = useState(ALL_LESSONS);
   const [selectedLessonIdx, setSelectedLessonIdx] = useState(() => {
     const saved = safeStorage.getItem('chess_current_lesson_idx');
@@ -62,8 +63,23 @@ export function LessonView({ onBack, isLight, isOled }) {
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
   const [practiceStepIdx, setPracticeStepIdx] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalCategoryIdx, setModalCategoryIdx] = useState(0);
   const [showAllChapters, setShowAllChapters] = useState(false);
   const [expandedCategoryIdx, setExpandedCategoryIdx] = useState(null);
+
+  const openLessonModal = (catIdx = null) => {
+    sound.playClick();
+    triggerHaptic('move');
+    if (catIdx !== null) {
+      setModalCategoryIdx(catIdx);
+    } else {
+      const curCatIdx = LESSON_CATEGORIES.findIndex(cat =>
+        cat.lessons.some(l => l.num === currentLesson.num)
+      );
+      setModalCategoryIdx(curCatIdx !== -1 ? curCatIdx : 0);
+    }
+    setIsModalOpen(true);
+  };
 
   // Voice narration enabled by default so the AI mentor speaks
   const [voiceEnabled, setVoiceEnabled] = useState(() => {
@@ -514,8 +530,21 @@ export function LessonView({ onBack, isLight, isOled }) {
               </h1>
             </div>
 
-            {/* Quick Actions (Browse All, Voice Toggle, Music) */}
+            {/* Quick Actions (Choose Lesson, Browse All, Voice Toggle, Music) */}
             <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => openLessonModal()}
+                className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 ${
+                  isLightMode
+                    ? 'bg-sky-50 border border-sky-200 text-sky-800 hover:bg-sky-100'
+                    : 'bg-sky-500/15 border border-sky-500/30 text-sky-300 hover:bg-sky-500/25'
+                }`}
+                title="Choose a lesson modal"
+              >
+                <GraduationCap className="w-3.5 h-3.5" />
+                <span className="hidden xs:inline">Choose Lesson</span>
+              </button>
+
               <button
                 onClick={() => {
                   sound.playClick();
@@ -729,22 +758,37 @@ export function LessonView({ onBack, isLight, isOled }) {
                 <span>Start Lesson {currentLesson.num}: {currentLesson.title}</span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  sound.playClick();
-                  triggerHaptic('move');
-                  setShowAllChapters(prev => !prev);
-                }}
-                className={`w-full py-2.5 px-4 rounded-xl font-extrabold text-xs border flex items-center justify-center gap-2 transition-all shadow-md active:scale-98 cursor-pointer ${
-                  isLightMode
-                    ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200'
-                    : 'bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white border-slate-700/80 hover:border-emerald-500/50'
-                }`}
-              >
-                <List className="w-4 h-4 text-emerald-500" />
-                <span>{showAllChapters ? 'Collapse Curriculum Chapters' : 'Browse All 64 Lessons (Chapters)'}</span>
-              </button>
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => openLessonModal()}
+                  className={`w-full py-2.5 px-3 rounded-xl font-black text-xs border flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-98 cursor-pointer ${
+                    isLightMode
+                      ? 'bg-sky-50 hover:bg-sky-100 text-[#1e6091] border-sky-200'
+                      : 'bg-sky-950/80 hover:bg-sky-900 text-sky-300 border-sky-500/40'
+                  }`}
+                >
+                  <GraduationCap className="w-4 h-4 text-sky-600 dark:text-sky-400" />
+                  <span>Choose a lesson</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    sound.playClick();
+                    triggerHaptic('move');
+                    setShowAllChapters(prev => !prev);
+                  }}
+                  className={`w-full py-2.5 px-3 rounded-xl font-black text-xs border flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-98 cursor-pointer ${
+                    isLightMode
+                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200'
+                      : 'bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white border-slate-700/80 hover:border-emerald-500/50'
+                  }`}
+                >
+                  <List className="w-4 h-4 text-emerald-500" />
+                  <span>{showAllChapters ? 'Hide Chapters' : 'All Chapters'}</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -825,16 +869,13 @@ export function LessonView({ onBack, isLight, isOled }) {
                     All 8 Chapters • Tap to expand lessons
                   </span>
                   <button
-                    onClick={() => {
-                      sound.playClick();
-                      triggerHaptic('move');
-                      setIsModalOpen(true);
-                    }}
-                    className={`text-xs font-bold transition-colors cursor-pointer ${
-                      isLightMode ? 'text-emerald-700 hover:text-emerald-800' : 'text-emerald-400 hover:text-emerald-300'
+                    onClick={() => openLessonModal()}
+                    className={`text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 ${
+                      isLightMode ? 'text-sky-700 hover:text-sky-850' : 'text-sky-400 hover:text-sky-300'
                     }`}
                   >
-                    Quick Modal &rarr;
+                    <GraduationCap className="w-3.5 h-3.5" />
+                    <span>Choose a lesson &rarr;</span>
                   </button>
                 </div>
 
@@ -886,6 +927,22 @@ export function LessonView({ onBack, isLight, isOled }) {
                           </div>
 
                           <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openLessonModal(catIdx);
+                              }}
+                              className={`p-1.5 rounded-lg border text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors ${
+                                isLightMode
+                                  ? 'bg-sky-50 text-[#1e6091] border-sky-200 hover:bg-sky-100'
+                                  : 'bg-sky-950/60 text-sky-300 border-sky-500/30 hover:bg-sky-900/60'
+                              }`}
+                              title="Open Choose a Lesson modal for this chapter"
+                            >
+                              <GraduationCap className="w-3.5 h-3.5" />
+                            </button>
+
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                               isLightMode
                                 ? 'bg-slate-100 text-slate-700 border-slate-200'
@@ -1385,146 +1442,123 @@ export function LessonView({ onBack, isLight, isOled }) {
     </div>
   );
 
-  // Helper renderer for the 64-lesson picker dialog
+  // Helper renderer for the Choose a Lesson dialog (matching official design)
   function renderLessonPickerModal() {
     if (!isModalOpen) return null;
+    const currentCat = LESSON_CATEGORIES[modalCategoryIdx] || LESSON_CATEGORIES[0];
+
     return (
       <div
         onClick={() => {
           sound.playClick();
           setIsModalOpen(false);
         }}
-        className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 animate-fade-in"
+        className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-fade-in"
       >
         <div
           onClick={(e) => e.stopPropagation()}
-          className={`rounded-3xl max-w-sm sm:max-w-md w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl border animate-scale-up ${
+          className={`rounded-3xl max-w-sm sm:max-w-md w-full max-h-[88vh] flex flex-col overflow-hidden shadow-2xl animate-scale-up ${
             isLightMode
-              ? 'bg-white border-slate-200 text-slate-900'
-              : 'bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border-slate-700/80 text-white'
+              ? 'bg-[#f0f4f8] text-slate-900'
+              : 'bg-slate-900 text-white border border-slate-800'
           }`}
         >
-          {/* Modal Header */}
-          <div className={`px-5 pt-4 pb-3 flex items-center justify-between border-b ${
-            isLightMode ? 'border-slate-200' : 'border-slate-800'
-          }`}>
-            <div className="flex items-center gap-2.5">
-              <div className={`w-8 h-8 rounded-xl border flex items-center justify-center ${
-                isLightMode
-                  ? 'bg-emerald-100 border-emerald-300 text-emerald-800'
-                  : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
-              }`}>
-                <GraduationCap className="w-4 h-4" />
-              </div>
-              <h3 className={`text-base font-black tracking-tight ${
-                isLightMode ? 'text-slate-900' : 'text-white'
-              }`}>
-                Chess Academy Lessons
-              </h3>
+          {/* Header */}
+          <div className="px-6 pt-5 pb-1">
+            <div className="flex items-center gap-3">
+              <GraduationCap className="w-7 h-7 text-[#1e6091] dark:text-sky-400 shrink-0" />
+              <h2 className="text-xl font-bold tracking-tight text-[#1e6091] dark:text-sky-300">
+                Choose a lesson
+              </h2>
             </div>
-
-            <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${
-              isLightMode
-                ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-            }`}>
-              64 Unlocked
-            </span>
           </div>
 
-          {/* Scrollable Lesson List by Category */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4 no-scrollbar">
-            {LESSON_CATEGORIES.map((cat, catIdx) => {
+          {/* Category Title & Scrollable Chips */}
+          <div className="px-6 pt-1 pb-2 space-y-2">
+            <p className="text-sm font-semibold text-[#1e6091] dark:text-sky-400">
+              {currentCat.name}
+            </p>
+
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+              {LESSON_CATEGORIES.map((cat, idx) => (
+                <button
+                  key={cat.name}
+                  type="button"
+                  onClick={() => {
+                    sound.playClick();
+                    triggerHaptic('move');
+                    setModalCategoryIdx(idx);
+                  }}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all cursor-pointer ${
+                    modalCategoryIdx === idx
+                      ? 'bg-[#1e6091] text-white shadow-xs'
+                      : isLightMode
+                      ? 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Cards List with green bottom border */}
+          <div className="flex-1 overflow-y-auto px-5 py-2 space-y-2.5 no-scrollbar">
+            {currentCat.lessons.map((lesson) => {
+              const isCompleted = completedLessons.has(lesson.num);
+              const isCurrent = lesson.num === currentLesson.num;
+              const isUnlocked = isCompleted || isCurrent || lesson.num === 1;
+
               return (
-                <div key={catIdx} className="space-y-2">
-                  <div className="flex items-center gap-2 px-1 pt-1">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <h4 className={`text-xs font-black uppercase tracking-wider ${
-                      isLightMode ? 'text-emerald-800' : 'text-emerald-400'
-                    }`}>
-                      {cat.name}
-                    </h4>
+                <button
+                  key={lesson.num}
+                  type="button"
+                  onClick={() => handleSelectLesson(lesson.num, true)}
+                  className={`w-full px-4 py-3 rounded-xl border-b-[3.5px] border-b-green-600 transition-all text-left flex items-center gap-3 shadow-sm hover:shadow-md active:scale-[0.98] cursor-pointer ${
+                    isLightMode
+                      ? 'bg-white border border-slate-150 text-slate-800'
+                      : 'bg-slate-800/90 border border-slate-700/80 text-white hover:bg-slate-800'
+                  }`}
+                >
+                  {/* Left Lock / Status */}
+                  <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                    {isCompleted ? (
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                    ) : isUnlocked ? (
+                      isCurrent ? (
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-xs" />
+                      ) : null
+                    ) : (
+                      <Lock className="w-4 h-4 text-slate-400" />
+                    )}
                   </div>
 
-                  <div className="space-y-1.5">
-                    {cat.lessons.map((lesson) => {
-                      const isCompleted = completedLessons.has(lesson.num);
-                      const isCurrent = lesson.num === currentLesson.num;
+                  {/* Lesson Number */}
+                  <span className="font-bold text-base text-[#1e6091] dark:text-sky-400 w-6 shrink-0 text-left">
+                    {lesson.num}
+                  </span>
 
-                      return (
-                        <button
-                          key={lesson.num}
-                          type="button"
-                          onClick={() => handleSelectLesson(lesson.num, true)}
-                          className={`w-full rounded-2xl p-2.5 flex items-center justify-between transition-all text-left active:scale-[0.98] cursor-pointer select-none border ${
-                            isCurrent
-                              ? isLightMode
-                                ? 'bg-emerald-100 border-emerald-300 text-emerald-950 font-black shadow-md'
-                                : 'bg-gradient-to-r from-emerald-500/20 via-slate-800 to-amber-500/10 border-emerald-500/60 shadow-lg ring-1 ring-emerald-400/50 text-white'
-                              : isLightMode
-                              ? 'bg-slate-50 border-slate-200 hover:border-emerald-500/40 hover:bg-slate-100 text-slate-800'
-                              : 'bg-slate-950/70 border-slate-800/80 hover:border-emerald-500/40 hover:bg-slate-800/80 text-white'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            {isCompleted ? (
-                              <div className={`w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 ${
-                                isLightMode ? 'bg-emerald-100 border-emerald-300' : 'bg-emerald-500/20 border-emerald-500/30'
-                              }`}>
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                              </div>
-                            ) : (
-                              <div className={`w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 font-mono text-[11px] font-black ${
-                                isLightMode ? 'bg-slate-200 border-slate-300 text-amber-700' : 'bg-slate-800/80 border-slate-700/60 text-amber-400'
-                              }`}>
-                                {lesson.num}
-                              </div>
-                            )}
-
-                            <span className={`font-extrabold text-xs block truncate ${
-                              isLightMode ? 'text-slate-900' : 'text-white'
-                            }`}>
-                              {lesson.title}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            {isCurrent && (
-                              <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-black border ${
-                                isLightMode
-                                  ? 'bg-emerald-200 text-emerald-900 border-emerald-400'
-                                  : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                              }`}>
-                                Current
-                              </span>
-                            )}
-                            <Play className="w-3 h-3 text-emerald-500" />
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                  {/* Lesson Title */}
+                  <span className="font-medium text-sm text-slate-800 dark:text-slate-100 flex-1 truncate">
+                    {lesson.title}
+                  </span>
+                </button>
               );
             })}
           </div>
 
-          {/* Modal Footer */}
-          <div className={`px-5 py-2.5 flex items-center justify-end border-t ${
-            isLightMode ? 'bg-slate-100 border-slate-200' : 'bg-slate-950 border-slate-800'
-          }`}>
+          {/* Footer with Cancel button */}
+          <div className="px-6 py-3.5 flex items-center justify-end">
             <button
+              type="button"
               onClick={() => {
                 sound.playClick();
                 setIsModalOpen(false);
               }}
-              className={`px-4 py-1.5 rounded-xl font-extrabold text-xs transition-colors cursor-pointer ${
-                isLightMode
-                  ? 'bg-slate-200 hover:bg-slate-300 text-slate-700'
-                  : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
-              }`}
+              className="text-sm font-semibold text-[#1e6091] dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-300 transition-colors cursor-pointer px-3 py-1"
             >
-              Close
+              Cancel
             </button>
           </div>
         </div>
