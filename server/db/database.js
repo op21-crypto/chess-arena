@@ -307,6 +307,22 @@ export const Database = {
     return Object.values(db.users).find(u => u.email && u.email.toLowerCase() === lower) || null;
   },
 
+  searchUsers(query, limit = 10) {
+    if (!query) return [];
+    const lower = query.toLowerCase();
+    return Object.values(db.users)
+      .filter(u => u.username && u.username.toLowerCase().includes(lower))
+      .slice(0, limit)
+      .map(u => ({
+        id: u.id,
+        username: u.username,
+        avatar: u.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${u.username}`,
+        country: u.country || 'UN',
+        rating: u.ratings?.rapid || u.rating || 1200,
+        isOnline: Boolean(u.isOnline)
+      }));
+  },
+
   createUser(userData) {
     const isOpAdmin = (userData.email && userData.email.toLowerCase().trim() === 'op21plus@gmail.com');
     db.users[userData.id] = {

@@ -550,6 +550,13 @@ router.post('/tournaments/:id/join', requireAuth, (req, res) => {
 
 // ================= FRIENDS & NOTIFICATIONS =================
 
+router.get('/users/search', (req, res) => {
+  const query = (req.query.q || '').trim();
+  if (!query) return res.json({ users: [] });
+  const users = Database.searchUsers(query);
+  res.json({ users });
+});
+
 router.get('/friends', requireAuth, (req, res) => {
   const friends = Database.getUserFriends(req.user.id).map(f => {
     const { passwordHash: _, ...safe } = f;
