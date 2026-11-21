@@ -37,8 +37,8 @@ public class MainActivity extends AppCompatActivity {
         Window window = getWindow();
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.setStatusBarColor(Color.parseColor("#090d16"));
-        window.setNavigationBarColor(Color.parseColor("#090d16"));
+        window.setStatusBarColor(Color.parseColor("#0c1b3d"));
+        window.setNavigationBarColor(Color.parseColor("#0c1b3d"));
 
         webView = new WebView(this);
         setContentView(webView);

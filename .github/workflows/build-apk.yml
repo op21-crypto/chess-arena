@@ -41,14 +41,16 @@ jobs:
       - name: Prepare APK Output
         run: |
           mkdir -p release-output
-          cp android/app/build/outputs/apk/debug/app-debug.apk release-output/ChessWithFriends-v1.0.0.apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk release-output/CHESS.apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk release-output/ChessArena.apk
           cp android/app/build/outputs/apk/debug/app-debug.apk release-output/ChessArena-v1.0.0.apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk release-output/ChessWithFriends-v1.0.0.apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ChessWithFriends-Android-APK
-          path: release-output/ChessWithFriends-v1.0.0.apk
+          name: CHESS-Android-APK
+          path: release-output/CHESS.apk
           retention-days: 30
 
       - name: Create or Update GitHub Release with APK
@@ -56,26 +58,30 @@ jobs:
         if: github.ref == 'refs/heads/main'
         with:
           tag_name: apk-latest
-          name: "Chess with Friends Android App v1.0.0"
+          name: "CHESS Official Android App Release"
           body: |
-            ## ♟️ Chess with Friends Android APK (Latest)
+            ## ♟️ CHESS - Official Android App Release (Latest)
             
-            Welcome to the official Android build of **Chess with Friends**!
+            Welcome to the official Android build of **CHESS**!
             
-            ### ✨ Features Included in this Build:
-            - **Mobile-Optimized Chessboard**: Tap-to-move, drag-and-drop, King check indicators, and authentic piece sound effects.
-            - **Tactics Trainer & Puzzles**: Interactive puzzles, puzzle streak, puzzle storm, and on-board captured piece display.
-            - **Live Multiplayer**: Play with friends, shareable game links, and instant matchmaking.
-            - **Real-Time WebRTC Voice Chat**: Live voice communication with mutual consent in friends rooms.
-            - **Stockfish AI Analysis**: Engine evaluation, game review, accuracy ratings, and blunder detection.
-            - **Offline Pass-and-Play**: Full local 2-player board accessible without internet.
+            ### ✨ Features in this Build:
+            - **New Ultra-Lucid 3D Clash App Icon & CHESS launcher name**
+            - **Bright & Lucid Login / Sign In with Day & Night modes**
+            - **Mobile-Optimized Chessboard**: Tap-to-move, drag-and-drop, King check indicators, authentic audio.
+            - **Tactics Trainer & Puzzles**: Interactive puzzles, puzzle streak, puzzle storm, 60+ motifs & openings.
+            - **Live Multiplayer**: Play with friends, shareable room links, real-time matchmaking.
+            - **WebRTC Voice Chat & In-Game Chat**: Live voice communication with mutual consent in friends rooms.
+            - **Stockfish AI Analysis**: Engine evaluation, game review, accuracy ratings, blunder detection.
+            - **Universal Greenwich Tournament Board**: High-contrast slate ice & slate steel board theme across all modes.
             
             ### 📥 Download & Installation:
-            1. Download the attached **ChessWithFriends-v1.0.0.apk** below.
+            1. Download **CHESS.apk** (or **ChessArena.apk**) below.
             2. Open the downloaded file on your Android device.
             3. If prompted, allow "Install from unknown sources" and tap **Install**.
           files: |
-            release-output/ChessWithFriends-v1.0.0.apk
+            release-output/CHESS.apk
+            release-output/ChessArena.apk
             release-output/ChessArena-v1.0.0.apk
+            release-output/ChessWithFriends-v1.0.0.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

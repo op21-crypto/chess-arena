@@ -1922,6 +1922,7 @@ export default function App() {
                   {/* 4 Game Mode Buttons (Unified, Sleek & Non-Bulky) */}
                   <div className="space-y-2.5 pt-1">
                     {/* 1st: Play with Stockfish */}
+                    {isButtonVisible('homePlayAi') && (
                     <button
                       onClick={() => {
                         sound.playClick();
@@ -1975,7 +1976,7 @@ export default function App() {
                                   ? 'text-slate-900 group-hover:text-indigo-700'
                                   : 'text-white group-hover:text-indigo-200'
                               }`}>
-                                Play with Stockfish
+                                {getButtonLabel('homePlayAi', 'Play with Stockfish')}
                               </h3>
                               <span className={`px-1.5 sm:px-2 py-0.5 rounded-full border text-[9px] sm:text-[10px] font-black uppercase tracking-wider shrink-0 shadow-sm ${
                                 isLight
@@ -2002,8 +2003,10 @@ export default function App() {
                         </div>
                       </div>
                     </button>
+                    )}
 
                     {/* 2nd: Play with Friends (Chat & Voice Room) */}
+                    {isButtonVisible('homePlayFriends') && (
                     <button
                       onClick={() => {
                         sound.playClick();
@@ -2062,7 +2065,7 @@ export default function App() {
                                   ? 'text-slate-900 group-hover:text-emerald-700'
                                   : 'text-white group-hover:text-emerald-200'
                               }`}>
-                                Play with Friends
+                                {getButtonLabel('homePlayFriends', 'Play with Friends')}
                               </h3>
                               <span className={`px-1.5 sm:px-2 py-0.5 rounded-full border text-[9px] sm:text-[10px] font-black uppercase tracking-wider shrink-0 flex items-center gap-1 shadow-sm ${
                                 isLight
@@ -2090,8 +2093,10 @@ export default function App() {
                         </div>
                       </div>
                     </button>
+                    )}
 
                     {/* 3rd: Play Online (Opens Time Selection Modal) */}
+                    {isButtonVisible('homePlayOnline') && (
                     <button
                       onClick={() => {
                         sound.playClick();
@@ -2141,7 +2146,7 @@ export default function App() {
                                   ? 'text-slate-900 group-hover:text-rose-700'
                                   : 'text-white group-hover:text-rose-200'
                               }`}>
-                                Play Online
+                                {getButtonLabel('homePlayOnline', 'Play Online')}
                               </h3>
                               <span className={`px-1.5 sm:px-2 py-0.5 rounded-full border text-[9px] sm:text-[10px] font-black uppercase tracking-wider shrink-0 shadow-sm ${
                                 isLight
@@ -2168,8 +2173,10 @@ export default function App() {
                         </div>
                       </div>
                     </button>
+                    )}
 
                     {/* 4th: Offline Chess Board (High-Definition 3D Wooden Chessboard Vector Artwork) */}
+                    {isButtonVisible('homeOfflineBoard') && (
                     <button
                       onClick={() => {
                         sound.playClick();
@@ -2277,7 +2284,7 @@ export default function App() {
                                   ? 'text-slate-900 group-hover:text-amber-800'
                                   : 'text-white group-hover:text-amber-200'
                               }`}>
-                                Offline Chess Board
+                                {getButtonLabel('homeOfflineBoard', 'Offline Chess Board')}
                               </h3>
                               <span className={`px-1.5 sm:px-2 py-0.5 rounded-full border text-[9px] sm:text-[10px] font-black uppercase tracking-wider shrink-0 shadow-sm ${
                                 isLight
@@ -2304,6 +2311,35 @@ export default function App() {
                         </div>
                       </div>
                     </button>
+                    )}
+
+                    {/* Dynamic Admin Custom Buttons for Home Area */}
+                    {Array.isArray(globalConfig?.customButtons) && globalConfig.customButtons.filter(b => b.enabled && b.location === 'home').map(btn => (
+                      <a
+                        key={btn.id}
+                        href={btn.link || '#'}
+                        target={btn.link?.startsWith('http') ? '_blank' : '_self'}
+                        rel="noopener noreferrer"
+                        className={`w-full text-left p-3.5 sm:p-4 rounded-2xl border transition-all duration-300 transform hover:-translate-y-0.5 active:scale-[0.985] flex items-center justify-between gap-3 shadow-md ${
+                          isLight
+                            ? 'bg-gradient-to-r from-slate-50 via-white to-slate-100 hover:from-slate-100 hover:to-slate-200 border-slate-200 text-slate-800'
+                            : 'bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-850 hover:from-slate-850 hover:to-slate-800 border-slate-800 text-white shadow-slate-950/40'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className={`w-12 h-12 rounded-2xl border flex items-center justify-center text-xl shrink-0 ${
+                            isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-800 border-slate-700'
+                          }`}>
+                            {btn.icon || '⭐'}
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="font-extrabold text-sm sm:text-base truncate">{btn.label}</h3>
+                            {btn.link && <p className="text-[11px] opacity-60 truncate max-w-xs">{btn.link}</p>}
+                          </div>
+                        </div>
+                        <ChevronRight className="w-5 h-5 opacity-60 shrink-0" />
+                      </a>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -2332,7 +2368,7 @@ export default function App() {
                 </div>
 
                 {/* Opening Name Banner (Screenshot 6: Show Opening Names) */}
-                {settings.showOpenings && getOpeningName(gameSession.moveHistory) && (
+                {isButtonVisible('gameOpeningsBanner') && settings.showOpenings && getOpeningName(gameSession.moveHistory) && (
                   <div className={`w-full max-w-[520px] px-3.5 py-1.5 border rounded-xl flex items-center justify-between text-xs shadow-xs animate-fade-in ${
                     isLight ? "bg-white border-slate-200 text-amber-600 shadow-xs" : "bg-slate-900/90 border-slate-800 text-amber-300 shadow-sm"
                   }`}>
@@ -2412,12 +2448,14 @@ export default function App() {
               {/* Right Column: Mini Music Player, Game Controls, Live Chat with Embedded Voice Call */}
               <div className="lg:col-span-5 space-y-3 w-full max-w-md mx-auto lg:max-w-none">
                 {/* In-Game Mini Ambient Music Player & Settings Bar */}
-                <MiniMusicPlayer
-                  isLight={isLight}
-                  settings={settings}
-                  onUpdateSettings={handleUpdateSettings}
-                  onOpenSettings={() => setShowSettingsModal(true)}
-                />
+                {isButtonVisible('gameMiniMusicPlayer') && (
+                  <MiniMusicPlayer
+                    isLight={isLight}
+                    settings={settings}
+                    onUpdateSettings={handleUpdateSettings}
+                    onOpenSettings={() => setShowSettingsModal(true)}
+                  />
+                )}
 
                 {/* Game Controls: Exit, Draw, Design, Resign */}
                 <GameControls
@@ -2437,6 +2475,7 @@ export default function App() {
                   onViewResult={() => setShowGameOverModal(true)}
                   isAIGame={isAIGame}
                   onVoiceCall={!isAIGame ? () => setVoiceCallTrigger(c => c + 1) : null}
+                  buttonConfig={globalConfig?.buttons}
                 />
 
                 {/* AI Battle Card for AI Matches, or Live Chat with Voice Call for Multiplayer */}
