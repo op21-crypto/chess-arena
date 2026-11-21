@@ -32,6 +32,47 @@ export const DEFAULT_APP_CONFIG = {
   defaultMusicTrackIndex: 0,
   announcement: '', // Live marquee announcement
   maintenanceMode: false,
+  brandTitle: 'CHESS',
+  adminMasterPin: '212121', // Confidential Master PIN for op21plus@gmail.com verification
+  buttons: {
+    // Header & Navigation Controls
+    headerMusic: true,
+    headerSound: true,
+    headerTheme: true,
+    headerNotifications: true,
+    headerSettings: true,
+
+    // Home Screen Action Cards & Sections
+    homePlayAi: true,
+    homePlayFriends: true,
+    homePlayOnline: true,
+    homeOfflineBoard: true,
+    homeTelemetryBanner: true,
+
+    // In-Game Panels & Buttons
+    gameVoiceCall: true,
+    gameChatDrawer: true,
+    gameMiniMusicPlayer: true,
+    gameEvaluationBar: true,
+    gameOpeningsBanner: true,
+    gameResignButton: true,
+    gameDrawButton: true,
+    gameAnalysisButton: true,
+    gameCapturedPieces: true,
+
+    // Primary Bottom Navigation Tabs
+    navPlay: true,
+    navLearn: true,
+    navPuzzle: true,
+    navProfile: true
+  },
+  buttonLabels: {
+    homePlayAi: 'Play with Stockfish',
+    homePlayFriends: 'Play with Friends',
+    homePlayOnline: 'Play Online',
+    homeOfflineBoard: 'Offline Chess Board'
+  },
+  customButtons: [],
   customBots: [
     { level: 1, name: 'Beginner', elo: '800 ELO', icon: '🐣', style: 'Fundamentals' },
     { level: 2, name: 'Casual', elo: '1200 ELO', icon: '🛡️', style: 'Opening Play' },
@@ -542,6 +583,13 @@ export const Database = {
     if (!db.appConfig) {
       db.appConfig = { ...DEFAULT_APP_CONFIG };
       saveDb();
+    } else {
+      // Ensure any newly added button controls or labels exist
+      db.appConfig.buttons = { ...DEFAULT_APP_CONFIG.buttons, ...(db.appConfig.buttons || {}) };
+      db.appConfig.buttonLabels = { ...DEFAULT_APP_CONFIG.buttonLabels, ...(db.appConfig.buttonLabels || {}) };
+      if (!Array.isArray(db.appConfig.customButtons)) db.appConfig.customButtons = [];
+      if (!db.appConfig.adminMasterPin) db.appConfig.adminMasterPin = DEFAULT_APP_CONFIG.adminMasterPin;
+      if (!db.appConfig.brandTitle) db.appConfig.brandTitle = DEFAULT_APP_CONFIG.brandTitle;
     }
     return db.appConfig;
   },
@@ -550,15 +598,62 @@ export const Database = {
     if (!db.appConfig) {
       db.appConfig = { ...DEFAULT_APP_CONFIG };
     }
-    db.appConfig = { ...db.appConfig, ...updates };
+    const updatedButtons = updates.buttons
+      ? { ...(db.appConfig.buttons || DEFAULT_APP_CONFIG.buttons), ...updates.buttons }
+      : db.appConfig.buttons;
+    const updatedLabels = updates.buttonLabels
+      ? { ...(db.appConfig.buttonLabels || DEFAULT_APP_CONFIG.buttonLabels), ...updates.buttonLabels }
+      : db.appConfig.buttonLabels;
+
+    db.appConfig = {
+      ...db.appConfig,
+      ...updates,
+      buttons: updatedButtons,
+      buttonLabels: updatedLabels
+    };
     saveDb();
     return db.appConfig;
   },
 
   resetAppConfig() {
-    db.appConfig = { ...DEFAULT_APP_CONFIG };
+    const preservedPin = db.appConfig?.adminMasterPin || DEFAULT_APP_CONFIG.adminMasterPin;
+    db.appConfig = {
+      ...DEFAULT_APP_CONFIG,
+      adminMasterPin: preservedPin
+    };
     saveDb();
     return db.appConfig;
+  },
+
+  verifyAdminPin(pin) {
+    const config = this.getAppConfig();
+    const currentPin = String(config.adminMasterPin || process.env.ADMIN_MASTER_PIN || '212121').trim();
+    return String(pin).trim() === currentPin;
+  },
+
+  updateAdminPin(newPin) {
+    if (!newPin || String(newPin).trim().length < 4) return false;
+    if (!db.appConfig) db.appConfig = { ...DEFAULT_APP_CONFIG };
+    db.appConfig.adminMasterPin = String(newPin).trim();
+    saveDb();
+    return true;
+  },
+
+  exportFullDatabase() {
+    return {
+      exportedAt: new Date().toISOString(),
+      version: '1.0.0',
+      totalUsers: Object.keys(db.users || {}).length,
+      totalGames: Object.keys(db.games || {}).length,
+      totalTournaments: Object.keys(db.tournaments || {}).length,
+      appConfig: this.getAppConfig(),
+      users: Object.values(db.users || {}).map(u => {
+        const { passwordHash: _, ...safe } = u;
+        return safe;
+      }),
+      tournaments: Object.values(db.tournaments || {}),
+      reports: db.reports || []
+    };
   },
 
   deleteUser(id) {

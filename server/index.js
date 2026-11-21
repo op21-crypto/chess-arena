@@ -20,9 +20,6 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// API Routes
-app.use('/api', apiRouter);
-
 // Setup Socket.IO
 const io = new Server(server, {
   cors: {
@@ -32,6 +29,15 @@ const io = new Server(server, {
 });
 
 setupSocketHandler(io);
+
+// Attach io to requests for real-time broadcasts
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
+// API Routes
+app.use('/api', apiRouter);
 
 // Serve static frontend files built by Vite
 const publicDir = fs.existsSync(path.join(__dirname, 'public/index.html'))

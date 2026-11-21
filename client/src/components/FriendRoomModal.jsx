@@ -262,6 +262,78 @@ const QUICK_CHAT_SUGGESTIONS = [
   'Ready to play? ♟️'
 ];
 
+// Procedural components to generate thousands of unique online chess arena contenders
+const PROCEDURAL_FIRST = [
+  'Shadow', 'Valkyrie', 'Phoenix', 'Knight', 'Cyber', 'Thunder', 'Apex', 'Mystic',
+  'Nova', 'Silver', 'Golden', 'Viper', 'Samurai', 'Ronin', 'Blade', 'Falcon', 'Zenith',
+  'Phantom', 'Cosmic', 'Solar', 'Lunar', 'Dragon', 'Titan', 'Specter', 'Vortex', 'Echo',
+  'Drift', 'Pulse', 'Frost', 'Blaze', 'Aero', 'Astral', 'Zen', 'Rogue', 'Omega', 'Matrix'
+];
+
+const PROCEDURAL_LAST = [
+  'Tactics', 'Gambit', 'Master', 'Bishop', 'Queen', 'Knight', 'Checkmate', 'Strike',
+  'Hunter', 'King', 'Hero', 'Spark', 'Rook', 'Warrior', 'Sensei', 'Claw', 'Shield',
+  'Pawn', 'Wizard', 'Storm', 'Fury', 'Rider', 'Reign', 'Wolf', 'Hawk', 'Tiger', 'Shogun'
+];
+
+const PROCEDURAL_COUNTRIES = ['US', 'NO', 'IN', 'JP', 'DE', 'FR', 'GB', 'BR', 'ES', 'IT', 'CA'];
+
+const PROCEDURAL_TITLES = [
+  'Arena Tactician', 'Speed Chess Maestro', 'Rapid Specialist', 'Endgame Prodigy',
+  'Tactical Striker', 'Lobby Challenger', 'Fierce Competitor', 'Arena Contender',
+  'Sicilian Master', 'Attacking Maestro', 'Positional Wizard'
+];
+
+const PROCEDURAL_BIOS = [
+  'Always ready for a sharp blitz or rapid battle! ⚔️',
+  'Looking for worthy rivals in the Arena. Let\'s play! ♟️',
+  'Fast moves, sharp tactics, zero hesitation. 🔥',
+  'Coffee, chess, and king hunting. Challenge me! ☕',
+  'Testing new opening systems today. Ready when you are! 🏆',
+  'Lover of chaotic tactical positions and open lines. ⚡'
+];
+
+export function generateUniqueArenaCandidate(excludeSet = new Set()) {
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const first = PROCEDURAL_FIRST[Math.floor(Math.random() * PROCEDURAL_FIRST.length)];
+    const last = PROCEDURAL_LAST[Math.floor(Math.random() * PROCEDURAL_LAST.length)];
+    const suffix = attempt > 8 ? Math.floor(10 + Math.random() * 90) : '';
+    const username = `${first}_${last}${suffix}`;
+    if (!excludeSet.has(username.toLowerCase())) {
+      const country = PROCEDURAL_COUNTRIES[Math.floor(Math.random() * PROCEDURAL_COUNTRIES.length)];
+      const title = PROCEDURAL_TITLES[Math.floor(Math.random() * PROCEDURAL_TITLES.length)];
+      const bio = PROCEDURAL_BIOS[Math.floor(Math.random() * PROCEDURAL_BIOS.length)];
+      const elo = 1450 + Math.floor(Math.random() * 1150);
+      const seed = `${username}_${Date.now() % 10000}`;
+      return {
+        id: `sug_${username.toLowerCase()}_${Date.now()}`,
+        username,
+        avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${seed}`,
+        country,
+        elo,
+        title,
+        bio,
+        statusText: `Online • ${title}`,
+        isOnline: true,
+        isBot: true
+      };
+    }
+  }
+  const fallback = `Player_${Date.now() % 10000}`;
+  return {
+    id: `sug_${fallback.toLowerCase()}`,
+    username: fallback,
+    avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${fallback}`,
+    country: 'UN',
+    elo: 1800,
+    title: 'Arena Contender',
+    bio: 'Ready to connect and play chess!',
+    statusText: 'Online • In Arena',
+    isOnline: true,
+    isBot: true
+  };
+}
+
 /**
  * Parses user text for explicit time declarations (e.g. "5m", "10 minutes", "3 min", "20m")
  */
@@ -646,13 +718,29 @@ export function FriendRoomModal({
       .map(f => f.username.toLowerCase())
   );
 
-  // Filter out ANY candidate already in friends list or blocked safely
-  const unaddedCandidates = ANIME_GAMING_CANDIDATES.filter(
+  // Filter out ANY static candidate already in friends list or blocked safely
+  const staticUnadded = ANIME_GAMING_CANDIDATES.filter(
     candidate =>
       candidate?.username &&
       !friendUsernamesSet.has(candidate.username.toLowerCase()) &&
       !blockedSet.has(candidate.username.toLowerCase())
   );
+
+  // Maintain at least 4 active online candidates dynamically so the list is NEVER empty
+  const unaddedCandidates = [...staticUnadded];
+  if (unaddedCandidates.length < 4) {
+    const existing = new Set([
+      ...friendUsernamesSet,
+      ...blockedSet,
+      ...unaddedCandidates.map(c => c.username.toLowerCase())
+    ]);
+    const need = 4 - unaddedCandidates.length;
+    for (let i = 0; i < need; i++) {
+      const cand = generateUniqueArenaCandidate(existing);
+      existing.add(cand.username.toLowerCase());
+      unaddedCandidates.push(cand);
+    }
+  }
 
   // Tab items arranged contextually based on user entry point:
   // From Header Friends Button: 1st Friends, 2nd Search Friend by Username, 3rd Room
@@ -709,6 +797,9 @@ export function FriendRoomModal({
   const [searchedUser, setSearchedUser] = useState(null);
   const [searchNotFound, setSearchNotFound] = useState(false);
   const [suggestedOnlinePlayer, setSuggestedOnlinePlayer] = useState(null);
+  const [suggestProgress, setSuggestProgress] = useState(100);
+  const suggestTimerRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
   const [requestStatus, setRequestStatus] = useState(null);
 
   // Challenge time picker
@@ -773,6 +864,78 @@ export function FriendRoomModal({
     } catch {}
   }, [sentRequests]);
 
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (suggestTimerRef.current) clearInterval(suggestTimerRef.current);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    };
+  }, []);
+
+  // Reset typing when switching chat friend
+  useEffect(() => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+    setIsBotTyping(false);
+  }, [chattingFriend?.id]);
+
+  // Periodic 2-3 hour incoming friend requests / challenges upon opening Search Friend
+  useEffect(() => {
+    if (activeTab !== 'add') return;
+    try {
+      const lastTs = safeStorage.getItem('chess_arena_last_search_tab_requests_ts');
+      const now = Date.now();
+      const twoHoursMs = 2 * 60 * 60 * 1000;
+      if (!lastTs || (now - Number(lastTs)) >= twoHoursMs) {
+        safeStorage.setItem('chess_arena_last_search_tab_requests_ts', String(now));
+
+        const count = 2 + Math.floor(Math.random() * 2); // 2 or 3 requests
+        const existing = new Set([
+          ...safeFriends.filter(f => f?.username).map(f => f.username.toLowerCase()),
+          ...blockedFriends.filter(b => typeof b === 'string').map(b => b.toLowerCase())
+        ]);
+
+        const notifsRaw = safeStorage.getItem('chess_arena_notifications_v3');
+        let currentNotifs = notifsRaw ? JSON.parse(notifsRaw) : [];
+        if (!Array.isArray(currentNotifs)) currentNotifs = [];
+
+        for (let i = 0; i < count; i++) {
+          const candidate = generateUniqueArenaCandidate(existing);
+          existing.add(candidate.username.toLowerCase());
+          const isChallenge = Math.random() < 0.5;
+          const mins = Math.random() < 0.5 ? 3 : 5;
+
+          if (isChallenge) {
+            currentNotifs.unshift({
+              id: `challenge_${Date.now()}_${i}`,
+              type: 'challenge',
+              fromUser: candidate,
+              message: `Challenged you to a ${mins}-minute Blitz game! ⚔️`,
+              time: 'Just now',
+              config: {
+                timeControl: { baseMinutes: mins, incrementSeconds: 0 },
+                colorPreference: 'random'
+              }
+            });
+          } else {
+            currentNotifs.unshift({
+              id: `friend_req_${Date.now()}_${i}`,
+              type: 'friend_request',
+              fromUser: candidate,
+              message: `👥 ${candidate.username} sent you a friend request to connect & play chess!`,
+              time: 'Just now'
+            });
+          }
+        }
+
+        safeStorage.setItem('chess_arena_notifications_v3', JSON.stringify(currentNotifs.slice(0, 25)));
+        triggerHaptic('notification');
+      }
+    } catch {}
+  }, [activeTab]);
+
   // Scroll chat to bottom
   useEffect(() => {
     if (chattingFriend) {
@@ -829,11 +992,17 @@ export function FriendRoomModal({
     const query = searchUsername.trim();
     if (!query) return;
 
+    if (suggestTimerRef.current) {
+      clearInterval(suggestTimerRef.current);
+      suggestTimerRef.current = null;
+    }
+
     setIsSearching(true);
     setSearchedUser(null);
     setSearchNotFound(false);
     setRequestStatus(null);
     setSuggestedOnlinePlayer(null);
+    setSuggestProgress(100);
 
     // Self check
     if (currentUser && query.toLowerCase() === currentUser.username?.toLowerCase()) {
@@ -899,24 +1068,33 @@ export function FriendRoomModal({
     } else {
       // NOT FOUND: Dynamically suggest an online candidate ONLY from players not in friends list and not blocked
       setSearchNotFound(true);
-      if (unaddedCandidates.length > 0) {
-        const randomCandidate = unaddedCandidates[Math.floor(Math.random() * unaddedCandidates.length)];
-        const randomSeed = `${randomCandidate.seed}_${Date.now() % 1000}`;
-        setSuggestedOnlinePlayer({
-          id: `sug_${Date.now()}`,
-          username: randomCandidate.username,
-          avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${randomSeed}`,
-          country: randomCandidate.country,
-          elo: randomCandidate.elo,
-          title: randomCandidate.title,
-          statusText: '🔥 In Lobby • Looking for Match',
-          bio: randomCandidate.bio,
-          isBot: true
-        });
-        sound.playClick();
-      } else {
-        setSuggestedOnlinePlayer(null);
+      if (suggestTimerRef.current) {
+        clearInterval(suggestTimerRef.current);
+        suggestTimerRef.current = null;
       }
+
+      // Generate a truly unique online candidate every single time
+      const uniqueCandidate = generateUniqueArenaCandidate(new Set([...friendUsernamesSet, ...blockedSet]));
+      setSuggestedOnlinePlayer(uniqueCandidate);
+      setSuggestProgress(100);
+      sound.playClick();
+
+      // Countdown timer for 3.5 seconds
+      const startTime = Date.now();
+      const totalDuration = 3500;
+
+      suggestTimerRef.current = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, totalDuration - elapsed);
+        const percent = (remaining / totalDuration) * 100;
+        setSuggestProgress(percent);
+
+        if (remaining <= 0) {
+          clearInterval(suggestTimerRef.current);
+          suggestTimerRef.current = null;
+          setSuggestedOnlinePlayer(null);
+        }
+      }, 50);
     }
   };
 
@@ -977,6 +1155,10 @@ export function FriendRoomModal({
    */
   const handleAddSuggestedOnlinePlayer = (player) => {
     if (!player || !player.username) return;
+    if (suggestTimerRef.current) {
+      clearInterval(suggestTimerRef.current);
+      suggestTimerRef.current = null;
+    }
     const list = Array.isArray(friends) ? friends : [];
     if (list.some(f => f?.username && typeof f.username === 'string' && f.username.toLowerCase() === player.username.toLowerCase())) {
       setRequestStatus({ type: 'info', text: `@${player.username} is already in your friends list!` });
@@ -990,7 +1172,7 @@ export function FriendRoomModal({
     setSearchNotFound(false);
     setRequestStatus({
       type: 'success',
-      text: `Connected with @${player.username}! You can now chat and challenge them. 🎉`
+      text: `Connected with @${player.username}! Added to your friends list permanently. 🎉`
     });
     sound.playVictory();
     triggerHaptic('move');
@@ -1058,42 +1240,45 @@ export function FriendRoomModal({
     sound.playMove();
     triggerHaptic('move');
 
-    // Bot smart conversational response with authentic human typing delay
+    // Bot smart conversational response with authentic human typing delay (2.0s - 2.65s)
     if (targetId.startsWith('f_') || targetId.startsWith('sug_') || targetId.startsWith('anime_') || chattingFriend.isBot) {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+
       setIsBotTyping(true);
       const currentHistory = [...(directMessages[targetId] || []), newMsg];
-      const startTime = Date.now();
+      const typingDuration = 2000 + Math.floor(Math.random() * 650); // exactly 2.0s - 2.65s
 
       getSmartFriendReply({
         friend: chattingFriend,
         message: text,
         history: currentHistory,
         detectedMinutes: detected
-      }).then(async (replyText) => {
-        // Natural human typing duration: 1.8s - 3.2s so the user clearly sees typing
-        const textLen = (replyText || '').length;
-        const targetDuration = Math.min(3200, Math.max(1800, 1600 + textLen * 20));
-        const elapsed = Date.now() - startTime;
-        if (elapsed < targetDuration) {
-          await new Promise(r => setTimeout(r, targetDuration - elapsed));
-        }
-
-        const replyMsg = {
-          id: `reply_${Date.now()}`,
-          sender: 'them',
-          text: replyText,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-        setDirectMessages(p => ({
-          ...p,
-          [targetId]: [...(p[targetId] || []), replyMsg]
-        }));
-        setIsBotTyping(false);
-        sound.playMove();
-        triggerHaptic('move');
+      }).then((replyText) => {
+        typingTimeoutRef.current = setTimeout(() => {
+          const replyMsg = {
+            id: `reply_${Date.now()}`,
+            sender: 'them',
+            text: replyText,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          };
+          setDirectMessages(p => ({
+            ...p,
+            [targetId]: [...(p[targetId] || []), replyMsg]
+          }));
+          setIsBotTyping(false);
+          sound.playMove();
+          triggerHaptic('move');
+          typingTimeoutRef.current = null;
+        }, typingDuration);
       }).catch((err) => {
         console.warn('Friend reply error:', err);
-        setIsBotTyping(false);
+        typingTimeoutRef.current = setTimeout(() => {
+          setIsBotTyping(false);
+          typingTimeoutRef.current = null;
+        }, typingDuration);
       });
     }
   };
@@ -1798,6 +1983,10 @@ export function FriendRoomModal({
                         onChange={e => {
                           setSearchUsername(e.target.value);
                           setSearchNotFound(false);
+                          if (suggestTimerRef.current) {
+                            clearInterval(suggestTimerRef.current);
+                            suggestTimerRef.current = null;
+                          }
                           setSuggestedOnlinePlayer(null);
                           setRequestStatus(null);
                         }}
@@ -1881,61 +2070,71 @@ export function FriendRoomModal({
                     </div>
                   )}
 
-                  {/* CASE 2: USER NOT FOUND -> Display Message AND Suggest Random Online Anime/Game Player */}
-                  {searchNotFound && suggestedOnlinePlayer && (
+                  {/* CASE 2: USER NOT FOUND -> Display Message AND Suggest Random Online Candidate with 3-4s Auto-Disappear */}
+                  {searchNotFound && (
                     <div className="space-y-2.5 animate-fade-in pt-1">
                       <div className={`p-2.5 rounded-xl border text-xs flex items-center gap-2 ${
                         isLight ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-amber-950/30 border-amber-500/30 text-amber-300'
                       }`}>
                         <AlertCircle className="w-4 h-4 shrink-0 text-amber-500" />
-                        <span>No registered player found with that username.</span>
+                        <span>No friend found with username "{searchUsername.trim()}".</span>
                       </div>
 
-                      {/* Random Online Suggested Candidate */}
-                      <div className={`p-3.5 rounded-2xl border space-y-2.5 ${
-                        isLight ? 'bg-sky-50/70 border-sky-300' : 'bg-sky-950/30 border-sky-500/40'
-                      }`}>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-black uppercase tracking-wider text-sky-600 dark:text-sky-400 flex items-center gap-1">
-                            <Sparkles className="w-3.5 h-3.5" />
-                            <span>Player Online Now • Ready to Add</span>
-                          </span>
-                          <span className="text-[10px] font-mono text-emerald-500 font-bold flex items-center gap-1">
-                            <Circle className="w-2 h-2 fill-emerald-500" />
-                            Online
-                          </span>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <img
-                              src={suggestedOnlinePlayer.avatar}
-                              alt={suggestedOnlinePlayer.username}
-                              className="w-11 h-11 rounded-full border-2 border-sky-500/60 object-cover shrink-0"
+                      {/* Random Online Suggested Candidate with 3-4s Auto-Disappear Progress */}
+                      {suggestedOnlinePlayer && (
+                        <div className={`p-3.5 rounded-2xl border space-y-2.5 animate-fade-in relative overflow-hidden ${
+                          isLight ? 'bg-emerald-50/70 border-emerald-300' : 'bg-emerald-950/30 border-emerald-500/40'
+                        }`}>
+                          {/* Auto-Disappear Animated Progress Bar (3.5s) */}
+                          <div className="w-full h-1 bg-emerald-200/50 dark:bg-emerald-900/60 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-75"
+                              style={{ width: `${suggestProgress}%` }}
                             />
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-extrabold text-sm truncate">@{suggestedOnlinePlayer.username}</span>
-                                <span>{COUNTRY_FLAGS[suggestedOnlinePlayer.country] || '🌐'}</span>
-                                <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border ${theme.badge}`}>
-                                  {suggestedOnlinePlayer.elo}
-                                </span>
-                              </div>
-                              <span className="text-[11px] text-sky-700 dark:text-sky-300 font-medium block truncate mt-0.5">
-                                {suggestedOnlinePlayer.statusText}
-                              </span>
-                            </div>
                           </div>
 
-                          <button
-                            onClick={() => handleAddSuggestedOnlinePlayer(suggestedOnlinePlayer)}
-                            className="px-3.5 py-2 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-black text-xs rounded-xl shadow-xs transition-all cursor-pointer active:scale-95 flex items-center gap-1.5 shrink-0"
-                          >
-                            <UserPlus className="w-3.5 h-3.5" />
-                            <span>+ Add</span>
-                          </button>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                              <Sparkles className="w-3.5 h-3.5 text-emerald-500 animate-spin" />
+                              <span>Player Online Now • Ready to Connect & Play!</span>
+                            </span>
+                            <span className="text-[10px] font-mono font-bold text-amber-500 flex items-center gap-1 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30">
+                              <Clock className="w-3 h-3" />
+                              <span>{Math.max(1, Math.ceil((suggestProgress / 100) * 3.5))}s</span>
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <img
+                                src={suggestedOnlinePlayer.avatar}
+                                alt={suggestedOnlinePlayer.username}
+                                className="w-11 h-11 rounded-full border-2 border-emerald-500/60 object-cover shrink-0"
+                              />
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-extrabold text-sm truncate">@{suggestedOnlinePlayer.username}</span>
+                                  <span>{COUNTRY_FLAGS[suggestedOnlinePlayer.country] || '🌐'}</span>
+                                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border ${theme.badge}`}>
+                                    {suggestedOnlinePlayer.elo}
+                                  </span>
+                                </div>
+                                <span className="text-[11px] text-emerald-700 dark:text-emerald-300 font-medium block truncate mt-0.5">
+                                  {suggestedOnlinePlayer.statusText || '🔥 Online • Ready to Connect & Play'}
+                                </span>
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={() => handleAddSuggestedOnlinePlayer(suggestedOnlinePlayer)}
+                              className="px-3.5 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-xs rounded-xl shadow-xs transition-all cursor-pointer active:scale-95 flex items-center gap-1.5 shrink-0"
+                            >
+                              <UserPlus className="w-3.5 h-3.5" />
+                              <span>+ Connect & Play</span>
+                            </button>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   )}
                 </div>

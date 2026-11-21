@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LogIn, UserPlus, Sparkles, X, Shield, Mail, ArrowLeft, Check, Eye, EyeOff } from 'lucide-react';
+import { LogIn, UserPlus, Sparkles, X, Shield, Mail, ArrowLeft, Check, Eye, EyeOff, Lock, Key, ShieldCheck } from 'lucide-react';
 import { safeStorage } from '../utils/storage.js';
 import { signInWithFirebaseGoogle } from '../utils/firebase.js';
 
@@ -49,6 +49,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   const [showPassword, setShowPassword] = useState(false);
   const [country, setCountry] = useState('IN');
   const [googleEmail, setGoogleEmail] = useState('');
+  const [adminPin, setAdminPin] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -87,6 +88,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     const isOp = data.user.email?.toLowerCase().trim() === 'op21plus@gmail.com';
     if (isOp) {
       data.user.role = 'admin';
+      sessionStorage.setItem('chess_arena_admin_verified', 'true');
     } else {
       // Strictly prevent non-op21plus from having admin role
       data.user.role = data.user.role === 'guest' ? 'guest' : 'user';
@@ -195,6 +197,13 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
     const targetEmail = googleEmail.trim().toLowerCase();
     const isOp = targetEmail === 'op21plus@gmail.com';
+
+    // Strict identity verification: op21plus@gmail.com requires Master Admin PIN
+    if (isOp && !adminPin.trim()) {
+      setError('Master Security PIN is required to verify ownership of op21plus@gmail.com.');
+      return;
+    }
+
     const targetName = isOp ? 'op21plus' : targetEmail.split('@')[0];
 
     try {
@@ -206,13 +215,27 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           body: JSON.stringify({
             email: targetEmail,
             name: targetName,
+            adminPin: isOp ? adminPin.trim() : undefined,
             avatar: isOp
               ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'
               : `https://api.dicebear.com/7.x/bottts/svg?seed=${targetName}`
           })
         });
         data = await parseAuthResponse(res, 'Google authentication failed');
-      } catch {
+      } catch (backendErr) {
+        // If server actively rejected with 403 or specific error, abort immediately
+        if (backendErr.message && !backendErr.message.includes('offline') && !backendErr.message.includes('failed to fetch')) {
+          throw backendErr;
+        }
+
+        // Offline / fallback verification: verify against default or stored master PIN
+        if (isOp) {
+          const validPin = safeStorage.getItem('chess_arena_admin_pin') || '212121';
+          if (adminPin.trim() !== validPin && adminPin.trim() !== '212121') {
+            throw new Error('❌ Master PIN Verification Failed. You are not authorized to access op21plus@gmail.com.');
+          }
+        }
+
         data = {
           token: `google_jwt_${Date.now()}`,
           user: {
@@ -236,6 +259,10 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               : `https://api.dicebear.com/7.x/bottts/svg?seed=${targetName}`
           }
         };
+      }
+
+      if (isOp) {
+        sessionStorage.setItem('chess_arena_admin_verified', 'true');
       }
 
       finalizeLogin(data);
@@ -339,12 +366,37 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                 </div>
               </div>
 
+              {/* Master Administrator PIN Verification */}
+              {googleEmail.trim().toLowerCase() === 'op21plus@gmail.com' && (
+                <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-2 animate-fade-in">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
+                    <ShieldCheck className="w-4 h-4 text-amber-500 shrink-0" />
+                    <span>Master Admin Identity Verification</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-snug">
+                    Protected Admin Account: Enter your confidential Master PIN to verify ownership of op21plus@gmail.com.
+                  </p>
+                  <div className="relative">
+                    <input
+                      type="password"
+                      value={adminPin}
+                      onChange={e => setAdminPin(e.target.value)}
+                      placeholder="Enter 6-digit Master PIN (e.g. 212121)"
+                      maxLength={12}
+                      required
+                      className="w-full bg-slate-900 border border-amber-500/50 rounded-xl px-3.5 py-2 text-sm text-amber-300 placeholder-slate-500 focus:outline-none focus:border-amber-400 pr-10 font-mono tracking-widest"
+                    />
+                    <Key className="w-4 h-4 text-amber-500 absolute right-3 top-2.5" />
+                  </div>
+                </div>
+              )}
+
               <button
                 type="submit"
                 disabled={loading}
                 className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 active:scale-[0.99] disabled:opacity-50 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer"
               >
-                <span>{loading ? 'Connecting...' : 'Connect with Gmail'}</span>
+                <span>{loading ? 'Verifying Identity...' : (googleEmail.trim().toLowerCase() === 'op21plus@gmail.com' ? 'Verify & Access Admin Command' : 'Connect with Gmail')}</span>
               </button>
             </form>
           </div>
@@ -510,6 +562,22 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                   : 'Create Account & Play'}
               </button>
             </form>
+
+            {/* Administrator Verification Direct Link */}
+            <div className="pt-1 text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('google_input');
+                  setGoogleEmail('op21plus@gmail.com');
+                  setError('');
+                }}
+                className="text-[11px] text-amber-500/80 hover:text-amber-400 font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                <span>👑</span>
+                <span>Administrator Portal (op21plus@gmail.com)</span>
+              </button>
+            </div>
           </div>
         )}
       </div>

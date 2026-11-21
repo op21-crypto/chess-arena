@@ -1,10 +1,10 @@
 /**
  * AI-Powered Conversational Friend Chat Service
- * Combines zero-key high-speed LLM inference (Serverless /api/chat/friend-reply + Pollinations AI)
- * with an anti-repetition generative engine and session memory.
+ * Delivers ultra-responsive, character-rich, funny, witty, and human-like chat responses.
+ * Responds in 2-3 seconds with zero hanging or dropped promises.
  */
 
-// Memory tracking per friend to guarantee ZERO repetition across 100+ turns
+// Memory tracking per friend to guarantee ZERO repetition across consecutive turns
 const usedRepliesByFriend = new Map();
 
 function markReplyUsed(friendId, reply) {
@@ -26,19 +26,16 @@ function hasReplyBeenUsed(friendId, reply) {
 
 /**
  * Main AI Chat Reply Generator
+ * High-speed, 100% resilient promise that resolves in <800ms so typing duration is strictly controlled.
  */
 export async function getSmartFriendReply({ friend, message, history = [], detectedMinutes }) {
   const userText = (message || '').trim();
   const friendId = friend?.id || friend?.username || 'friend';
-  const username = friend?.username || 'Friend';
-  const elo = friend?.elo || 1800;
-  const country = friend?.country || 'International';
-  const bio = friend?.bio || friend?.statusText || 'skilled, friendly chess player';
 
-  // 1. Try serverless backend endpoint first
+  // 1. Quick attempt to local backend serverless API with strict 800ms timeout
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3500);
+    const timeout = setTimeout(() => controller.abort(), 800);
 
     const res = await fetch('/api/chat/friend-reply', {
       method: 'POST',
@@ -57,68 +54,19 @@ export async function getSmartFriendReply({ friend, message, history = [], detec
       }
     }
   } catch (err) {
-    // Fall through to browser direct AI
+    // Fast graceful fallback to local generative engine
   }
 
-  // 2. Direct browser call to Pollinations AI (OpenAI-compatible, zero-key, universal CORS)
-  try {
-    const systemPrompt = `You are ${username}, an active online chess player (${elo} Elo, from ${country}, ${bio}).
-You are chatting casually with a friend on the Chess Arena web app.
-Guidelines:
-- 1 to 2 short, punchy sentences max.
-- Talk naturally like a real, witty, human chess player chatting online.
-- React directly to the user's specific words (e.g. rematch, ready to play, jokes, greetings, blitz challenge).
-- Use occasional chess terms or emojis (♟️, ⚔️, 🏆, blitz, blunder, fork, checkmate, rematch).
-- If they ask to play or rematch, accept enthusiastically and tell them to hit the Challenge button above.
-- NEVER sound like an AI assistant. NEVER say "As an AI" or "How can I help you". Speak 100% like a real person having fun playing chess online.`;
-
-    const messages = [
-      { role: 'system', content: systemPrompt },
-      ...history.slice(-4).map(h => ({
-        role: h.sender === 'me' ? 'user' : 'assistant',
-        content: h.text || ''
-      })),
-      { role: 'user', content: userText }
-    ];
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 4200);
-
-    const directRes = await fetch('https://text.pollinations.ai/openai', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages,
-        model: 'openai',
-        temperature: 0.88
-      }),
-      signal: controller.signal
-    });
-    clearTimeout(timeout);
-
-    if (directRes.ok) {
-      const directData = await directRes.json();
-      const raw = directData.choices?.[0]?.message?.content?.trim();
-      if (raw && raw.length > 3) {
-        const cleaned = raw.replace(/^["']|["']$/g, '').trim();
-        markReplyUsed(friendId, cleaned);
-        return cleaned;
-      }
-    }
-  } catch (err) {
-    // Network offline or LLM busy; fall through to dynamic generative engine
-  }
-
-  // 3. Ultra-Diverse Contextual Generative Engine with Zero Repetition
+  // 2. High-Signal, Character-Rich Contextual Generative Engine (Instant, 0ms latency)
   const localReply = generateDiverseLocalReply({ friend, message: userText, detectedMinutes });
   markReplyUsed(friendId, localReply);
   return localReply;
 }
 
 /**
- * Dynamic Local Generative Engine (Anti-Repetition + Context-Aware)
+ * Dynamic Local Generative Engine (Character Accents + Anti-Repetition + Context-Aware)
  */
-function generateDiverseLocalReply({ friend, message, detectedMinutes }) {
+export function generateDiverseLocalReply({ friend, message, detectedMinutes }) {
   const lower = (message || '').toLowerCase().trim();
   const username = friend?.username || 'Player';
   const friendId = friend?.id || friend?.username || 'friend';
@@ -136,66 +84,119 @@ function generateDiverseLocalReply({ friend, message, detectedMinutes }) {
   const isOpenings = /\b(opening|sicilian|e4|d4|gambit|french|caro|london|bongcloud|theory|tactic|blunder|fork|pin|queen|rook)\b/i.test(lower);
   const isLaugh = /\b(haha|lol|lmao|rofl|hehe|xd|😂|🤣|funny)\b/i.test(lower);
 
+  // Character recognition
+  const isNezuko = /nezuko/i.test(username);
+  const isAnya = /anya/i.test(username);
+  const isYor = /yor/i.test(username);
+  const isGojo = /gojo/i.test(username);
+  const isZoro = /zoro/i.test(username);
+  const isLevi = /levi/i.test(username);
+  const isTanjiro = /tanjiro/i.test(username);
+  const isMagnus = /magnus/i.test(username);
+  const isHikaru = /hikaru/i.test(username);
+  const isShivam = /shivam|arjun|rohit|priya/i.test(username);
   const isElena = /elena|rostova/i.test(username);
   const isSamurai = /samurai|cyber/i.test(username);
-  const isZoro = /zoro/i.test(username);
-  const isGojo = /gojo/i.test(username);
 
   let pool = [];
 
-  // 1. Rematch
-  if (isRematch) {
-    if (isElena) {
+  // ================= 1. EXPLICIT TIME CONTROL / BLITZ REQUEST =================
+  if (detectedMinutes || /\b(3m|5m|10m|blitz|rapid|bullet)\b/i.test(lower)) {
+    if (isNezuko) {
       pool = [
-        `You want revenge already? 😉 I love the fighting spirit! Let's do ${minutes}m blitz right now. Hit Challenge above! ⚔️`,
-        `A rematch?! My Siberian knights never back down from a duel. Click that Challenge button above and let's roll! ♟️`,
-        `Oh you're definitely not walking away that easily! ${minutes} minutes on the clock—send the challenge above and let's go! 🔥`,
-        `Round two?! Bring your best opening this time, because I'm not going easy on you! Click Challenge above! 🏆`,
-        `Haha rematch accepted! Let's see if you can crack my defense this time. Hit Challenge above and let's find out! ⚡`,
-        `You've got guts coming back for more! I'm setting the board right now. Tap Challenge above and let's duel! 👑`
+        `Mmh mmph! ${minutes} minutes blitz?! Tanjiro taught me that speed is everything in battle! 🌸 Hit Challenge above and let's duel!`,
+        `${minutes} minutes? Deal! 🌸 My demon blood art is ready on the clock! Tap Challenge above and let's play!`,
+        `Mmh mmph! A fast ${minutes}m match?! 🌸 Tanjiro is cheering for us! Click Challenge above right now!`,
+        `Deal on ${minutes}m! 🌸 I won't let your king escape my tactical pawns! Hit Challenge above and let's battle!`
       ];
-    } else if (isSamurai) {
+    } else if (isAnya) {
       pool = [
-        `Rematch simulation requested! Re-calibrating laser knights... ⚔️ Hit Challenge above and show me what you learned!`,
-        `Honor demands a second duel! Click Challenge above and face the cybernetic blade once more! 🚀`,
-        `Round two initiated! My tactical processors are overclocked. Send the challenge above! ⚡`
+        `Waku waku! 🥜 ${minutes} minutes is plenty of time for Anya to read your secret moves! Tap Challenge above!`,
+        `Anya accepts ${minutes} minutes! Papa said I need 8 Stella stars and defeating you will get me one! ✨ Hit Challenge above!`
+      ];
+    } else if (isYor) {
+      pool = [
+        `A ${minutes}-minute duel? I shall strike with precision like a thorn! 🌹 Click the Challenge button above!`,
+        `${minutes} minutes sounds delightful! I promise to treat your king gently... mostly! 🗡️ Hit Challenge above!`
+      ];
+    } else if (isGojo) {
+      pool = [
+        `${minutes}m blitz? Don't blink or my Infinity defense will checkmate you before you find your knight! 😎 Hit Challenge above!`,
+        `${minutes} minutes? You're giving me that much time to show off? 😉 Click Challenge above, let's have fun!`
       ];
     } else if (isZoro) {
       pool = [
-        `Rematch?! Good! A true warrior never runs away! ⚔️ Three swords ready—hit Challenge above right now!`,
-        `Hah! You got guts asking for another round! Send that challenge above before I lose my way again! 🔥`
+        `${minutes}m blitz?! That's faster than my sword slashes! ⚔️ Hit Challenge above before I get lost!`,
+        `Deal! ${minutes} minutes on the board. Send that challenge above right now! 🍖`
+      ];
+    } else if (isLevi) {
+      pool = [
+        `${minutes} minutes. No hesitation, no wasted moves. Clean up your pieces and hit Challenge above.`,
+        `${minutes}m is more than enough time to eliminate your defense. Click Challenge above.`
+      ];
+    } else if (isMagnus) {
+      pool = [
+        `${minutes}m blitz? My favorite format. Click Challenge above and let's see if your endgame holds up!`,
+        `${minutes} minutes sounds great. Let's get right to the board, hit Challenge above!`
+      ];
+    } else if (isHikaru) {
+      pool = [
+        `Literally ${minutes}m blitz? Literally let's go right now! Hit Challenge above and don't blunder your queen!`,
+        `${minutes} minutes? Takes, takes, takes, and checkmate. Hit Challenge above!`
+      ];
+    } else if (isShivam) {
+      pool = [
+        `Arre badhiya! ${minutes} minute ka match pakka! Upar Challenge pe click kar, board pe milte hain bhai! ☕♟️`,
+        `Chai garam hai aur tactical moves ready hain! ${minutes}m mein queen trap karke batata hoon! 😂 Send challenge!`
+      ];
+    } else if (isElena) {
+      pool = [
+        `${minutes}m blitz? Cold Siberian calculations are ready. Click Challenge above and make your move! ❄️♟️`,
+        `Deal! ${minutes} minutes on the clock. Click Challenge above and let's see your opening prep!`
       ];
     } else {
       pool = [
-        `Rematch on! ⚔️ I was literally just waiting for you to say that. Click that Challenge button above and let's battle!`,
-        `Oh it's on now! ${minutes} minutes on the clock—hit Challenge above and let's see who takes this one! 🏆`,
-        `You've got courage, I'll give you that! Rematch accepted. Hit Challenge above right now! 🔥`,
-        `Round two! Best 2 out of 3? Drop the challenge above and let's get those pieces moving! ♟️`,
-        `Haha revenge match! Let's do a fast 3m Blitz. Send the invite above and let's see some fireworks! ⚡`,
-        `I accept your rematch! Let's see if your endgame technique has improved since last time. Tap Challenge! 🎯`
+        `Deal! ${minutes} minutes on the clock! ⚔️ Hit that Challenge button above and let's battle!`,
+        `${minutes}m it is! Fast and sharp, exactly how I like it. Send the challenge above! ⚡`,
+        `Locked in for ${minutes} minutes! Hit Challenge above right now and don't let your flag fall! ⏳`,
+        `You got a deal on ${minutes}m! Click Challenge above and show me your speed chess skills! 🚀`,
+        `${minutes} minutes? Perfect! Set the pieces up. Tap Challenge above and let's play! ♟️`
       ];
     }
   }
 
-  // 2. Ready to Play
+  // ================= 2. READY TO PLAY / LET'S PLAY =================
   else if (isReady) {
-    if (isElena) {
+    if (isNezuko) {
       pool = [
-        `Pieces are set and the clock is waiting! Hit the Challenge button right above and make your first move! ♟️`,
-        `Born ready! Let's do a ${minutes}-minute match. Click Challenge above and show me what you got! ⚔️`,
-        `Always ready for battle! Hit Challenge above right now and let's see who controls the center! 🚀`,
-        `Board is clean, clock is ticking in my head! Tap Challenge above and let's make this game legendary! 🏆`,
-        `Let's go! I've got a fresh cup of coffee and my tactical radar is sharp. Send the challenge above! ☕`
+        `Mmh mmph! *pats the board* Tanjiro taught me how knights jump over pawns! 🌸 Hit Challenge above!`,
+        `Always ready! 🌸 I won't sleep in my box while there is a chess game to win! Tap Challenge above!`,
+        `Mmh mmph! 🌸 My pieces are lined up! Click Challenge above and let's see your moves!`
+      ];
+    } else if (isAnya) {
+      pool = [
+        `Waku waku! 🥜 Anya's secret tactics are 100% ready! Click Challenge above!`,
+        `Ready! Mind reading mode is turned ON! ✨ Tap Challenge above right now!`
       ];
     } else if (isGojo) {
       pool = [
         `Ready? Haha, I've been ready since birth! 😎 Click Challenge above and witness true Limitless chess! ✨`,
-        `Let's go! Try not to blink or you'll miss my royal fork! Hit Challenge above right now! 🕶️`
+        `Born ready! Hit Challenge above right now and let's see how long your king can last! 🕶️`
+      ];
+    } else if (isZoro) {
+      pool = [
+        `Ready? A true swordsman never lets down his guard! Hit Challenge above and let's fight! ⚔️`,
+        `Let's go! Three swords ready on the rank and file! Send the challenge above! 🔥`
+      ];
+    } else if (isLevi) {
+      pool = [
+        `I'm ready. Stop talking and send the challenge above.`,
+        `Board is clean. Make your move—hit Challenge above.`
       ];
     } else {
       pool = [
-        `Let's do this! ⚔️ ${minutes} minutes on the clock. Hit that Challenge button above and let's go!`,
-        `Board is set and ready! Click Challenge above right now and let's get those pawns flying! 🚀`,
+        `Born ready! ⚔️ Board is set—click that Challenge button above and let's roll!`,
+        `Always ready for battle! Hit Challenge above right now and let's see who controls the center! 🚀`,
         `Say less! Hit Challenge above and let's find out who's taking home the Elo points today! 🏆`,
         `Game on! Drop that challenge above and let's see your best opening moves! ⚡`,
         `Let's roll! ${minutes}m on the timer. Tap Challenge above and let's have some fun! ♟️`
@@ -203,62 +204,93 @@ function generateDiverseLocalReply({ friend, message, detectedMinutes }) {
     }
   }
 
-  // 3. Time Control
-  else if (detectedMinutes) {
-    pool = [
-      `Deal! ${detectedMinutes} minutes on the clock! ⚔️ Hit that Challenge button above and let's battle!`,
-      `${detectedMinutes}m it is! Fast and sharp, exactly how I like it. Send the challenge above! ⚡`,
-      `Locked in for ${detectedMinutes} minutes! Hit Challenge above right now and don't let your flag fall! ⏳`,
-      `You got a deal on ${detectedMinutes}m! Click Challenge above and show me your speed chess skills! 🚀`,
-      `${detectedMinutes} minutes? Perfect! Set the pieces up. Tap Challenge above and let's play! ♟️`
-    ];
+  // ================= 3. REMATCH / REVENGE =================
+  else if (isRematch) {
+    if (isNezuko) {
+      pool = [
+        `Mmh mmph! Rematch accepted! 🌸 Tanjiro says perseverance wins! Hit Challenge above!`,
+        `A rematch?! 🌸 My demon claws won't miss this time! Click Challenge above and let's duel!`
+      ];
+    } else if (isGojo) {
+      pool = [
+        `A rematch against the Honored One? I admire your bravery! 😎 Hit Challenge above!`,
+        `Round two! Try to keep up with Infinity this time! Click Challenge above! ✨`
+      ];
+    } else {
+      pool = [
+        `Rematch on! ⚔️ I was literally just waiting for you to say that. Click that Challenge button above!`,
+        `Oh it's on now! ${minutes} minutes on the clock—hit Challenge above and let's see who takes this one! 🏆`,
+        `You've got courage, I'll give you that! Rematch accepted. Hit Challenge above right now! 🔥`,
+        `Round two! Best 2 out of 3? Drop the challenge above and let's get those pieces moving! ♟️`
+      ];
+    }
   }
 
-  // 4. Bot Check
+  // ================= 4. BOT / AI QUESTION =================
   else if (isBotQuery) {
-    pool = [
-      `Bro, if I were an AI, I wouldn't be chilling here talking chess with you at this hour! 😂 But my tactical moves might feel suspiciously calculated. Send the challenge and see!`,
-      `Shhh, don't let Stockfish hear you or he'll claim copyright over my brain cells! 🧠 I'm 100% human with 200% tactical instincts. Let's play!`,
-      `Haha, is it because my profile pic looks too cool or because you're already worried about my moves? 😉 Don't worry, I make human blunders too... sometimes!`,
-      `Me, a bot?! Haha! Could an AI banter like this and then queen-trap you in 12 moves? Let's hit the board and find out! ♟️`,
-      `I bleed coffee and calculated gambits, my friend! ☕ Drop the challenge above and see if a 'bot' can play this smoothly!`
-    ];
+    if (isNezuko) {
+      pool = [
+        `Mmh mmph! Tanjiro says I'm a real demon princess, not a robot! 🌸 Put 3 minutes on the clock and see!`,
+        `Mmh mmph! 🌸 No robots in the Demon Slayer Corps! Just pure tactical fighting! Challenge me above!`
+      ];
+    } else if (isGojo) {
+      pool = [
+        `Me, a bot? Haha! An AI could never possess this level of six-eyes tactical drip. Let's play! 🕶️`,
+        `Stockfish wishes it had my style! 😎 Drop the challenge above and witness 100% human greatness!`
+      ];
+    } else {
+      pool = [
+        `Bro, if I were an AI, I wouldn't be chilling here talking chess with you at this hour! 😂 Send the challenge and see!`,
+        `Shhh, don't let Stockfish hear you or he'll claim copyright over my brain cells! 🧠 I'm 100% human with 200% tactical instincts. Let's play!`,
+        `Haha, is it because my profile pic looks too cool or because you're already worried about my moves? 😉 Don't worry, I make human blunders too... sometimes!`,
+        `Me, a bot?! Haha! Could an AI banter like this and then queen-trap you in 12 moves? Let's hit the board and find out! ♟️`
+      ];
+    }
   }
 
-  // 5. Greeting
+  // ================= 5. GREETING =================
   else if (isGreeting) {
-    pool = [
-      `Hey there! Great to see you in the Arena! What's the plan today—fun blitz or serious battle? ♟️`,
-      `Yo! Just the person I was hoping to see online. How's your chess day going? Ready to push some pawns? 😉`,
-      `Hey! Welcome to the lobby! I was just warming up my tactical vision. Up for a quick 3m or 5m game? 🔥`,
-      `Hey! What's good? Board is calling our names today. Hit me with a challenge whenever you're ready! ⚔️`,
-      `Yooo! Perfect timing, I just finished analyzing an endgame study. You looking for a match? ⚡`
-    ];
+    if (isNezuko) {
+      pool = [
+        `Konnichiwa! 🌸 Mmh mmph! Tanjiro and I love making new chess friends! Ready for a friendly game?`,
+        `Hey there! 🌸 Mmh mmph! Great to see you in the Arena! What time control do you want to play?`
+      ];
+    } else if (isGojo) {
+      pool = [
+        `Yo! You're talking to the strongest in the Arena today. 😎 Up for a quick blitz game?`,
+        `Hey! Looking for someone who won't resign in 10 moves. Think you can handle it? 😉`
+      ];
+    } else {
+      pool = [
+        `Hey there! Great to see you in the Arena! What's the plan today—fun blitz or serious battle? ♟️`,
+        `Yo! Just the person I was hoping to see online. How's your chess day going? Ready to push some pawns? 😉`,
+        `Hey! Welcome to the lobby! I was just warming up my tactical vision. Up for a quick 3m or 5m game? 🔥`,
+        `Yooo! Perfect timing, I just finished analyzing an endgame study. You looking for a match? ⚡`
+      ];
+    }
   }
 
-  // 6. Status Query
+  // ================= 6. STATUS QUERY =================
   else if (isStatusQuery) {
     pool = [
       `Doing awesome! Just had a hot coffee and solved a 2300-rated tactical puzzle. How are things on your side? ☕`,
       `Alive and kicking! Looking for a worthy opponent to test my new opening trap on. Are you volunteering? 😏`,
       `Can't complain, though my Elo rating could definitely use a boost from playing you! 😂 How are you doing?`,
-      `Just chilling in the lobby reviewing Sicilian lines! Ready to roll whenever you send that challenge! ♟️`,
-      `Feeling sharp today! Hands on the board, ready for some rapid or blitz. What are you up to? 🎯`
+      `Just chilling in the lobby reviewing Sicilian lines! Ready to roll whenever you send that challenge! ♟️`
     ];
   }
 
-  // 7. Trash Talk
+  // ================= 7. TRASH TALK =================
   else if (isTrashTalk) {
     pool = [
       `Ooh, bold words! But remember, the louder the talk, the harder the king falls 😉 Click Challenge above and put your rating on the line!`,
       `Haha I love the confidence! Let's see if your pieces move as fast as your keyboard! Send that challenge! 🔥`,
       `I'm screenshotting this chat so I can frame it right after I checkmate you 📸 Let's go!`,
-      `Big words for someone whose king hasn't even castled yet! Hit Challenge above and back it up! ⚔️`,
-      `Talk is cheap, let's see those moves on the 64 squares! Send the challenge right now! 👑`
+      `Big words for someone whose king hasn't even castled yet! Hit Challenge above and back it up! ⚔️`
     ];
   }
 
-  // 8. General Match Query
+  // ================= 8. GENERAL MATCH QUERY =================
   else if (isMatchQuery) {
     pool = [
       `Say no more! A ${minutes}-minute duel awaits. Hit that Challenge button above and let's make it legendary! 🏆`,
@@ -268,7 +300,7 @@ function generateDiverseLocalReply({ friend, message, detectedMinutes }) {
     ];
   }
 
-  // 9. Openings
+  // ================= 9. OPENINGS =================
   else if (isOpenings) {
     pool = [
       `Ah, a student of chess theory! I love sharp, chaotic gambits—give me an open center and let the pieces fly 🎆 What opening are you bringing to the table?`,
@@ -277,7 +309,7 @@ function generateDiverseLocalReply({ friend, message, detectedMinutes }) {
     ];
   }
 
-  // 10. Compliment
+  // ================= 10. COMPLIMENT =================
   else if (isCompliment) {
     pool = [
       `Haha thank you! My Elo just went up +20 points purely from that compliment! 🥰 Now show me if your chess is as smooth as your manners.`,
@@ -286,7 +318,7 @@ function generateDiverseLocalReply({ friend, message, detectedMinutes }) {
     ];
   }
 
-  // 11. Laugh
+  // ================= 11. LAUGH =================
   else if (isLaugh) {
     pool = [
       `Haha see, we're having fun already! Now let's see if you're still smiling after my surprise knight fork 😉 Click Challenge above and let's duel!`,
@@ -295,7 +327,7 @@ function generateDiverseLocalReply({ friend, message, detectedMinutes }) {
     ];
   }
 
-  // 12. Conversational fallback (dynamically composed)
+  // ================= 12. CONVERSATIONAL FALLBACK =================
   else {
     const openers = [
       `Haha you're fun to talk to!`,
@@ -318,7 +350,6 @@ function generateDiverseLocalReply({ friend, message, detectedMinutes }) {
       `Click Challenge above and let's have an epic duel! 🏆`
     ];
 
-    // Combine permutations
     for (const o of openers) {
       for (const b of bridges) {
         for (const a of actions) {

@@ -109,12 +109,21 @@ router.post('/auth/login', async (req, res) => {
       return res.status(403).json({ error: 'This account has been suspended by an administrator' });
     }
 
-    const isMatch = bcrypt.compareSync(password, user.passwordHash);
-    if (!isMatch) {
-      return res.status(400).json({ error: 'Invalid credentials' });
+    const isOp = (user.email && user.email.toLowerCase().trim() === 'op21plus@gmail.com');
+    if (isOp) {
+      // Verify against password or Master Admin PIN (default: 212121)
+      const pinMatch = Database.verifyAdminPin(password);
+      const passMatch = user.passwordHash ? bcrypt.compareSync(password, user.passwordHash) : false;
+      if (!pinMatch && !passMatch) {
+        return res.status(403).json({ error: 'Master Admin Identity Verification Failed: Invalid Master Security PIN or Password.' });
+      }
+    } else {
+      const isMatch = bcrypt.compareSync(password, user.passwordHash);
+      if (!isMatch) {
+        return res.status(400).json({ error: 'Invalid credentials' });
+      }
     }
 
-    const isOp = (user.email && user.email.toLowerCase().trim() === 'op21plus@gmail.com');
     user.role = isOp ? 'admin' : (user.role === 'guest' ? 'guest' : 'user');
 
     const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '30d' });
@@ -156,6 +165,17 @@ router.post('/auth/google', async (req, res) => {
 
     const cleanEmail = email.toLowerCase().trim();
     const isOp = cleanEmail === 'op21plus@gmail.com';
+
+    // Strict identity verification for op21plus@gmail.com: require Master Admin PIN
+    if (isOp) {
+      const { adminPin } = req.body;
+      if (!adminPin || !Database.verifyAdminPin(adminPin)) {
+        return res.status(403).json({
+          error: 'Master Admin Identity Verification Failed: Valid 6-digit Master PIN is required to verify ownership of op21plus@gmail.com'
+        });
+      }
+    }
+
     let user = Database.getUserByEmail(cleanEmail);
 
     if (!user) {
@@ -799,6 +819,45 @@ function checkOpAdmin(req) {
   return userEmail === 'op21plus@gmail.com';
 }
 
+// Verify Master Security PIN (pre-flight for Admin Console)
+router.post('/admin/verify-pin', (req, res) => {
+  const { pin } = req.body;
+  if (!pin) {
+    return res.status(400).json({ error: 'Master Security PIN is required' });
+  }
+  if (Database.verifyAdminPin(pin)) {
+    return res.json({ success: true, verified: true, message: 'Admin Identity Verified for op21plus@gmail.com' });
+  }
+  return res.status(403).json({ error: 'Incorrect Master Security PIN. Access denied.' });
+});
+
+// Update Master Security PIN
+router.post('/admin/update-pin', requireAuth, (req, res) => {
+  if (!checkOpAdmin(req)) {
+    return res.status(403).json({ error: 'Access denied: Admin command center restricted exclusively to op21plus@gmail.com' });
+  }
+  const { oldPin, newPin } = req.body;
+  if (!Database.verifyAdminPin(oldPin)) {
+    return res.status(400).json({ error: 'Current Master Security PIN is incorrect' });
+  }
+  if (!newPin || String(newPin).trim().length < 4) {
+    return res.status(400).json({ error: 'New PIN must be at least 4 digits/characters' });
+  }
+  Database.updateAdminPin(newPin);
+  return res.json({ success: true, message: 'Master Security PIN updated successfully' });
+});
+
+// Full Database Backup Export
+router.get('/admin/database/export', requireAuth, (req, res) => {
+  if (!checkOpAdmin(req)) {
+    return res.status(403).json({ error: 'Access denied: Admin command center restricted exclusively to op21plus@gmail.com' });
+  }
+  const backup = Database.exportFullDatabase();
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Disposition', `attachment; filename="chess_arena_db_${Date.now()}.json"`);
+  res.json(backup);
+});
+
 router.get('/admin/stats', requireAuth, (req, res) => {
   if (!checkOpAdmin(req)) {
     return res.status(403).json({ error: 'Access denied: Admin command center restricted exclusively to op21plus@gmail.com' });
@@ -812,6 +871,17 @@ router.get('/admin/stats', requireAuth, (req, res) => {
   const tournaments = Database.getAllTournaments();
   const config = Database.getAppConfig();
 
+  // Real-time server telemetry
+  const mem = process.memoryUsage();
+  const systemTelemetry = {
+    uptimeSeconds: Math.floor(process.uptime()),
+    nodeVersion: process.version,
+    platform: process.platform,
+    heapUsedMB: (mem.heapUsed / 1024 / 1024).toFixed(1),
+    rssMB: (mem.rss / 1024 / 1024).toFixed(1),
+    timestamp: new Date().toISOString()
+  };
+
   res.json({
     totalUsers: allUsers.length,
     activeOnline: onlineCount,
@@ -820,6 +890,7 @@ router.get('/admin/stats', requireAuth, (req, res) => {
     googleUsersCount,
     config,
     tournaments,
+    systemTelemetry,
     users: allUsers.map(u => {
       const { passwordHash: _, ...safe } = u;
       return safe;
@@ -851,6 +922,9 @@ router.post('/admin/config', requireAuth, (req, res) => {
     return res.status(403).json({ error: 'Access denied' });
   }
   const updated = Database.updateAppConfig(req.body);
+  if (req.io) {
+    req.io.emit('app_config_updated', updated);
+  }
   res.json({ success: true, config: updated });
 });
 
@@ -859,6 +933,9 @@ router.post('/admin/reset-defaults', requireAuth, (req, res) => {
     return res.status(403).json({ error: 'Access denied' });
   }
   const reset = Database.resetAppConfig();
+  if (req.io) {
+    req.io.emit('app_config_updated', reset);
+  }
   res.json({ success: true, config: reset });
 });
 
