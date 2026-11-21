@@ -115,3 +115,19 @@ export const FAMOUS_AVATARS = [
 
 // Backward-compatible alias for existing imports
 export const ANIME_AVATARS = FAMOUS_AVATARS.filter(a => a.category === 'anime');
+
+/**
+ * Get a randomized high quality Anime avatar from the 32 anime legends
+ */
+export const getRandomAnimeAvatar = () => {
+  const anime = FAMOUS_AVATARS.filter(a => a.category === 'anime');
+  const pool = anime.length > 0 ? anime : FAMOUS_AVATARS;
+  return pool[Math.floor(Math.random() * pool.length)].url;
+};
+
+/**
+ * Get a random avatar across all 86 famous characters
+ */
+export const getRandomAvatar = () => {
+  return FAMOUS_AVATARS[Math.floor(Math.random() * FAMOUS_AVATARS.length)].url;
+};

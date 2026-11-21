@@ -10,7 +10,7 @@ import { safeStorage } from '../utils/storage.js';
 import { LeaderboardView } from './LeaderboardView.jsx';
 import { SettingsModal } from './SettingsModal.jsx';
 import { ACHIEVEMENTS_DATA } from './ProfileModal.jsx';
-import { FAMOUS_AVATARS, AVATAR_CATEGORIES } from '../data/avatarData.js';
+import { FAMOUS_AVATARS, AVATAR_CATEGORIES, getRandomAnimeAvatar } from '../data/avatarData.js';
 import { triggerHaptic } from '../utils/device.js';
 import { sound } from '../utils/audio.js';
 import { STARTING_ELO_OPTIONS, getRankTier } from '../utils/elo.js';
@@ -59,9 +59,16 @@ export function ProfileView({
   };
 
   // Avatar Drawer State
-  const [selectedAvatar, setSelectedAvatar] = useState(user?.avatar || '');
+  const [selectedAvatar, setSelectedAvatar] = useState(user?.avatar || getRandomAnimeAvatar());
   const [isEditingAvatar, setIsEditingAvatar] = useState(false);
   const [avatarCategory, setAvatarCategory] = useState('all');
+
+  // Keep selectedAvatar in sync with user.avatar
+  useEffect(() => {
+    if (user?.avatar) {
+      setSelectedAvatar(user.avatar);
+    }
+  }, [user?.avatar]);
 
   const filteredAvatars = useMemo(() => {
     if (avatarCategory === 'all') return FAMOUS_AVATARS;
@@ -266,11 +273,14 @@ export function ProfileView({
           <div className="flex flex-col sm:flex-row items-center gap-3.5 text-center sm:text-left w-full sm:w-auto">
             <div className="relative group shrink-0">
               <img
-                src={selectedAvatar || user?.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=Player'}
+                src={selectedAvatar || user?.avatar || getRandomAnimeAvatar()}
                 alt={user?.username || 'Player'}
                 className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 sm:border-3 border-amber-500 shadow-lg ${
-                  isLightMode ? 'bg-slate-100' : 'bg-slate-950'
+                  isLightMode ? 'bg-amber-100' : 'bg-slate-900'
                 }`}
+                onError={(e) => {
+                  e.currentTarget.src = FAMOUS_AVATARS[0].url;
+                }}
               />
               <button
                 type="button"
@@ -551,6 +561,17 @@ export function ProfileView({
                       sound.playClick();
                       triggerHaptic('move');
                       setSelectedAvatar(av.url);
+                      const updatedUser = { ...user, avatar: av.url };
+                      onUpdateUser(updatedUser);
+                      safeStorage.setItem('chess_arena_user', JSON.stringify(updatedUser));
+                      fetch('/api/users/profile', {
+                        method: 'PUT',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${safeStorage.getItem('token') || ''}`
+                        },
+                        body: JSON.stringify({ avatar: av.url })
+                      }).catch(() => {});
                     }}
                     className={`p-2 rounded-xl border flex flex-col items-center gap-1 cursor-pointer transition-all ${
                       isSelected

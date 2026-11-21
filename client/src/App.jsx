@@ -4,7 +4,7 @@ import { Chess } from 'chess.js';
 import {
   Home, Trophy, Swords, Users, BookOpen, Bot, Shield, Volume2, VolumeX,
   Palette, User, LogOut, Bell, Flame, Sparkles, ChevronRight, Settings, Music, Zap, ArrowRight,
-  LogIn, X, Clock, Mic, Smartphone, GraduationCap, Puzzle, CircleUserRound, Sun, Moon
+  LogIn, X, Clock, Mic, Smartphone, GraduationCap, Puzzle, CircleUserRound, Sun, Moon, Copy
 } from 'lucide-react';
 
 import { Chessboard } from './components/Chessboard.jsx';
@@ -926,13 +926,13 @@ export default function App() {
 
   // Local clock interval for AI matches
   useEffect(() => {
-    if (!isAIGame || !gameSession || gameSession.isGameOver) return;
+    if (!isAIGame || !gameSession || gameSession.isGameOver || gameSession.status === 'waiting') return;
     // Unlimited time / casual mode
     if (gameSession.timeControl?.baseMinutes === 0) return;
 
     const interval = setInterval(() => {
       setGameSession(prev => {
-        if (!prev || prev.isGameOver) return prev;
+        if (!prev || prev.isGameOver || prev.status === 'waiting') return prev;
         if (prev.timeControl?.baseMinutes === 0) return prev;
 
         const isWhiteTurn = prev.turn === 'w';
@@ -1085,7 +1085,7 @@ export default function App() {
 
   // In-Game Move Execution
   const handleMove = (moveObj) => {
-    if (!gameSession) return;
+    if (!gameSession || gameSession.status === 'waiting') return;
 
     if (isAIGame) {
       // Local AI match
@@ -2145,6 +2145,69 @@ export default function App() {
                   </div>
                 )}
 
+                {/* Private Room Waiting Lounge: Appears when creator enters board before friend joins */}
+                {gameSession?.status === 'waiting' && (
+                  <div className={`w-full max-w-[520px] p-4 rounded-2xl border mb-2 shadow-xl animate-fade-in ${
+                    isLight ? 'bg-amber-50/90 border-amber-300 text-slate-900' : 'bg-slate-900/95 border-amber-500/50 text-white'
+                  }`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping shrink-0" />
+                        <span className="font-black text-xs uppercase tracking-wider text-amber-500">
+                          Room Lounge • Waiting For Friend
+                        </span>
+                      </div>
+                      <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                        Code: {gameSession.roomId || createdRoomInfo?.roomId}
+                      </span>
+                    </div>
+
+                    <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300 mb-3">
+                      The board and clock are paused. The match begins automatically as soon as your friend joins via the link or room code!
+                    </p>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        onClick={() => {
+                          const shareUrl = `${window.location.origin}/?room=${gameSession.roomId || createdRoomInfo?.roomId}`;
+                          navigator.clipboard.writeText(shareUrl);
+                          sound.playClick();
+                          triggerHaptic('move');
+                        }}
+                        className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copy Invite Link</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          sound.playMatchStart();
+                          handleStartAIGame(3, gameSession.timeControl?.baseMinutes || 5, 'w');
+                        }}
+                        className="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
+                        title="Play with Stockfish bot instead if friend is delayed"
+                      >
+                        <Bot className="w-3.5 h-3.5" />
+                        <span>Play Stockfish Bot</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setGameSession(null);
+                          setActiveTab('home');
+                          sound.playClick();
+                        }}
+                        className={`px-3 py-1.5 rounded-xl border text-xs font-bold cursor-pointer transition-colors ${
+                          isLight ? 'bg-white hover:bg-slate-100 border-slate-300 text-slate-700' : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300'
+                        }`}
+                      >
+                        Exit Room
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Interactive Chessboard */}
                 <div className="w-full max-w-[520px]">
                   <Chessboard
@@ -2157,7 +2220,7 @@ export default function App() {
                     colorPalette={settings.pieceColorPalette || 'classic'}
                     inCheck={gameSession.inCheck}
                     lastMove={gameSession.moveHistory?.[gameSession.moveHistory.length - 1]}
-                    disabled={gameSession.isGameOver || (isAIGame && aiThinking)}
+                    disabled={gameSession.isGameOver || (isAIGame && aiThinking) || (gameSession.status === 'waiting')}
                     showLegalMoves={settings.showLegalMoves}
                     highlightLastMove={settings.highlightLastMove}
                     showCoordinates={settings.showCoordinates}

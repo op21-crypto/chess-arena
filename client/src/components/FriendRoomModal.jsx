@@ -3,7 +3,7 @@ import {
   Users, UserPlus, Search, Swords, Trash2, Send, Check, X,
   Copy, Share2, MessageCircle, ArrowLeft, Ban, ShieldCheck,
   Clock, Flame, Zap, Trophy, Circle, MoreVertical, Sparkles,
-  UserCheck, AlertCircle, RefreshCw, ChevronRight
+  UserCheck, AlertCircle, RefreshCw, ChevronRight, Sliders, Dices
 } from 'lucide-react';
 import { safeStorage } from '../utils/storage.js';
 import { triggerHaptic } from '../utils/device.js';
@@ -83,58 +83,213 @@ const DEFAULT_FRIENDS = [
   }
 ];
 
-const SUGGESTED_PLAYERS = [
+// Rich, cool anime & gaming opponents roster for dynamic suggestions
+const ANIME_GAMING_CANDIDATES = [
   {
-    id: 'sug_elena',
-    username: 'Elena_Tactics',
-    avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=ElenaChess',
-    country: 'IT',
-    elo: 1845,
-    isOnline: true,
-    statusText: 'Tactics Enthusiast • Online',
-    isBot: true
+    username: 'Zoro_Gambit',
+    title: 'Three-Blade Tactician',
+    elo: 2240,
+    country: 'JP',
+    seed: 'ZoroOnePiece',
+    bio: 'Looking for a direction... and an opponent! ⚔️'
   },
   {
-    id: 'sug_arjun',
-    username: 'Arjun_Knight',
-    avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=ArjunKnight',
-    country: 'IN',
-    elo: 2150,
-    isOnline: true,
-    statusText: 'Rapid Specialist • Online',
-    isBot: true
-  },
-  {
-    id: 'sug_alex',
-    username: 'GM_Alexander',
-    avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=AlexanderGM',
+    username: 'Levi_Captain',
+    title: 'Humanity\'s Strongest',
+    elo: 2480,
     country: 'DE',
-    elo: 2560,
-    isOnline: false,
-    statusText: 'Grandmaster • Offline',
-    isBot: true
+    seed: 'LeviAckermanAttack',
+    bio: 'No regrets on the board. Make your move.'
+  },
+  {
+    username: 'Gojo_Limitless',
+    title: 'Special Grade Master',
+    elo: 2600,
+    country: 'JP',
+    seed: 'GojoSatoruLimitless',
+    bio: 'Throughout heaven and earth, my chess is honored. 😎'
+  },
+  {
+    username: 'Killua_Godspeed',
+    title: 'Assassin Prodigy',
+    elo: 2190,
+    country: 'JP',
+    seed: 'KilluaZoldyckLightning',
+    bio: 'Lightning-fast 3m blitz only! ⚡'
+  },
+  {
+    username: 'Shadow_Monarch',
+    title: 'Solo Leveler',
+    elo: 2510,
+    country: 'UN',
+    seed: 'SungJinwooShadow',
+    bio: 'Arise! Let us battle in the Arena. 👑'
+  },
+  {
+    username: 'Cyber_Samurai',
+    title: 'Neon Ronin',
+    elo: 2080,
+    country: 'JP',
+    seed: 'CyberSamurai2077',
+    bio: 'Tactical algorithms sharp as a katana.'
+  },
+  {
+    username: 'Tanjiro_SunBlade',
+    title: 'Sun Breathing Demon Slayer',
+    elo: 1980,
+    country: 'JP',
+    seed: 'TanjiroKamadoSun',
+    bio: 'Never giving up until the king falls! 🗡️'
+  },
+  {
+    username: 'Kakashi_Copycat',
+    title: 'Sharingan Tactician',
+    elo: 2350,
+    country: 'JP',
+    seed: 'KakashiHatakeSensei',
+    bio: 'I can read your opening before you play it.'
+  },
+  {
+    username: 'Geralt_WhiteWolf',
+    title: 'Witcher of Rivia',
+    elo: 2290,
+    country: 'UN',
+    seed: 'GeraltOfRiviaWolf',
+    bio: 'Silver for monsters, pawns for kings. 🐺'
+  },
+  {
+    username: 'Cloud_Strife',
+    title: 'Ex-SOLDIER First Class',
+    elo: 2320,
+    country: 'US',
+    seed: 'CloudStrifeBuster',
+    bio: 'Buster sword tactics ready for blitz.'
+  },
+  {
+    username: 'Itachi_Uchiha',
+    title: 'Tsukuyomi Master',
+    elo: 2580,
+    country: 'JP',
+    seed: 'ItachiUchihaCrow',
+    bio: 'You are already trapped in my knight fork. 👁️'
+  },
+  {
+    username: 'Luffy_Gear5',
+    title: 'Warrior of Liberation',
+    elo: 2420,
+    country: 'BR',
+    seed: 'MonkeyDLuffyGear5',
+    bio: 'I\'m gonna be the Chess King! 🍖'
   }
 ];
 
 const INITIAL_DIRECT_MESSAGES = {
   f_magnus: [
     { id: 'm1', sender: 'them', text: 'Hey! Ready for some fast-paced chess in the Arena? ♟️', time: '10:14 AM' },
-    { id: 'm2', sender: 'them', text: 'Send me a 3-minute or 5-minute blitz challenge whenever you want!', time: '10:15 AM' }
+    { id: 'm2', sender: 'them', text: 'Let\'s play a 5-minute blitz game whenever you want!', time: '10:15 AM' }
   ],
   f_hikaru: [
-    { id: 'm1', sender: 'them', text: 'Literally let\'s play right now! Ready when you are 🔥', time: '11:30 AM' }
+    { id: 'm1', sender: 'them', text: 'Literally let\'s play right now! 3m or 5m blitz? Ready when you are 🔥', time: '11:30 AM' }
   ],
   f_gotham: [
-    { id: 'm1', sender: 'them', text: 'Welcome to the Arena! Watch out for tactical knight forks! ⚡', time: '12:00 PM' }
+    { id: 'm1', sender: 'them', text: 'Welcome to the Arena! Watch out for tactical knight forks and don\'t hang THE ROOOOOK! ⚡', time: '12:00 PM' }
   ]
 };
 
 const QUICK_CHAT_SUGGESTIONS = [
-  'Ready to play? ♟️',
-  'Let\'s play 3m Blitz! 🔥',
-  'Good game! Great tactics 👏',
-  'Want a rematch? ⚔️'
+  'Let\'s play 5 minutes! ⏱️',
+  'How about 3m Blitz? 🔥',
+  'Let\'s do 10m Rapid 🎯',
+  'Want a rematch? ⚔️',
+  'Ready to play? ♟️'
 ];
+
+/**
+ * Parses user text for explicit time declarations (e.g. "5m", "10 minutes", "3 min", "20m")
+ */
+function extractTimeFromText(text) {
+  if (!text) return null;
+  const match = text.match(/(?:^|\s)(\d{1,2})\s*(?:m|min|mins|minute|minutes)(?:$|\s|[.,!?])/i);
+  if (match) {
+    const mins = parseInt(match[1], 10);
+    if (mins >= 1 && mins <= 60) return mins;
+  }
+  if (/blitz/i.test(text)) return 3;
+  if (/rapid/i.test(text)) return 10;
+  if (/bullet/i.test(text)) return 1;
+  return null;
+}
+
+/**
+ * Generates witty, personality-driven bot responses that actively negotiate match time
+ */
+function generateBotReply(botId, botUsername, userText, detectedMinutes) {
+  const lower = userText.toLowerCase();
+  const minutesToUse = detectedMinutes || (Math.random() < 0.5 ? 5 : 3);
+
+  if (botId === 'f_magnus' || /magnus/i.test(botUsername)) {
+    if (detectedMinutes) {
+      return `Haha ${detectedMinutes} minutes? Deal! You think your opening can survive my endgame? 😉 Drop the challenge above and let's find out! 🏆`;
+    }
+    if (/hi|hello|hey|yo|sup|kya/i.test(lower)) {
+      return `Hey! I was just studying some world championship endgames. Ready to test your skills? Let's play a 5-minute blitz! ♟️`;
+    }
+    if (/ready|play|match|game|khel|aaja/i.test(lower)) {
+      return `I was born ready. Let's do 5m Blitz! Click the Challenge button above and make your first move! 🔥`;
+    }
+    if (/beat|win|defeat|lose|noob/i.test(lower)) {
+      return `Big words! Even grandmasters couldn't crack my defense. Send a 5m challenge and let's see if you can back up that talk! 😂`;
+    }
+    return `Nice one! But chess is played on the 64 squares, not just in chat. How about a 5-minute blitz match right now? Send the request! ♟️`;
+  }
+
+  if (botId === 'f_hikaru' || /hikaru/i.test(botUsername)) {
+    if (detectedMinutes) {
+      return `Literally ${detectedMinutes} minutes is perfection! Chat, he's challenging me! Hit Challenge above right now and let's go! ⚡🔥`;
+    }
+    if (/hi|hello|hey|yo/i.test(lower)) {
+      return `Hey what's up! Literally just finished a stream and looking to crush some blitz. Let's do 3m blitz right now! 🚀`;
+    }
+    if (/ready|play|match|game/i.test(lower)) {
+      return `Let's goooo! I take take take and it's completely winning! Send the 3-minute challenge right now! 💥`;
+    }
+    return `Literally let's see what you've got! I'm pre-moving already. Challenge me to a 3m or 5m game above! ⚡`;
+  }
+
+  if (botId === 'f_gotham' || /gotham/i.test(botUsername)) {
+    if (detectedMinutes) {
+      return `${detectedMinutes} minutes?! Okay, but if you hang your queen in the first 10 moves, I'm putting it in a video! 😂 Hit Challenge and let's play! 📹`;
+    }
+    if (/hi|hello|hey/i.test(lower)) {
+      return `Hello hello! Welcome to Gotham Arena! Ready to blunder your pieces or play some master chess today? Let's do 5m blitz! ☕`;
+    }
+    if (/ready|play|match|game/i.test(lower)) {
+      return `AND HE SACRIFICES THE ROOOOOOK! 💥 Send the challenge for 5m or 10m, I am waiting! ♟️`;
+    }
+    return `Danger Levels! Watch your f7 pawn and don't get trapped. Challenge me to a 5-minute battle right now! ⚔️`;
+  }
+
+  if (botId === 'f_viking' || /viking/i.test(botUsername)) {
+    if (detectedMinutes) {
+      return `A battle of ${detectedMinutes} minutes honors Odin! 🛡️ Send the duel challenge above and let steel clash on the 64 squares! ⚔️`;
+    }
+    return `The northern winds blow toward victory! Challenge me to a 10m rapid duel and prove your worth! 🛡️`;
+  }
+
+  // Friendly Indian / Desi friend (e.g. Shivam)
+  if (/shivam/i.test(botUsername) || /arjun/i.test(botUsername)) {
+    if (detectedMinutes) {
+      return `Arre badhiya! ${detectedMinutes} minute ka match set hai. Upar Challenge pe click kar, board pe milte hain bhai! 🏆`;
+    }
+    return `Bhai kya haal! Poora mood hai chess khelne ka. 5 minute ya 10 minute ka match lagate hain, bhej challenge! ♟️🔥`;
+  }
+
+  // Cool Anime / Gamer friends
+  if (detectedMinutes) {
+    return `Challenge accepted for ${detectedMinutes} minutes! My blade is sharp and my knights are ready. Hit Challenge above and let's duel! ⚔️`;
+  }
+  return `I see you're ready for battle! Let's play a ${minutesToUse}-minute game right now. Click Challenge above and let's go! 🚀`;
+}
 
 export function FriendRoomModal({
   isOpen,
@@ -147,32 +302,23 @@ export function FriendRoomModal({
   onChallengeFriend,
   onStartAIGame,
   onOpenAuth,
-  initialTab = 'room', // 1st by default: Room option as requested
+  initialTab = 'friends',
   isLight = false
 }) {
-  const [activeTab, setActiveTab] = useState('room'); // Default to room on open
+  // 3 tabs: 1. friends, 2. room, 3. add
+  const [activeTab, setActiveTab] = useState(initialTab || 'friends');
+
+  useEffect(() => {
+    if (isOpen && initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [isOpen, initialTab]);
   const [friends, setFriends] = useState(() => {
     try {
       const saved = safeStorage.getItem('chess_arena_friends_v3');
       if (saved) return JSON.parse(saved);
     } catch {}
     return DEFAULT_FRIENDS;
-  });
-
-  const [blockedUsers, setBlockedUsers] = useState(() => {
-    try {
-      const saved = safeStorage.getItem('chess_arena_blocked_v3');
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return [];
-  });
-
-  const [pendingRequests, setPendingRequests] = useState(() => {
-    try {
-      const saved = safeStorage.getItem('chess_arena_pending_requests_v3');
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return [];
   });
 
   const [directMessages, setDirectMessages] = useState(() => {
@@ -183,6 +329,15 @@ export function FriendRoomModal({
     return INITIAL_DIRECT_MESSAGES;
   });
 
+  // Track sent friend requests (so requests aren't immediately added to friends)
+  const [sentRequests, setSentRequests] = useState(() => {
+    try {
+      const saved = safeStorage.getItem('chess_arena_sent_requests_v3');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
+
   // Selected friend for detail action bar
   const [selectedFriend, setSelectedFriend] = useState(null);
 
@@ -190,20 +345,28 @@ export function FriendRoomModal({
   const [chattingFriend, setChattingFriend] = useState(null);
   const [chatInputText, setChatInputText] = useState('');
   const [showChatMenu, setShowChatMenu] = useState(false);
+  const [agreedChatMinutes, setAgreedChatMinutes] = useState(null);
   const chatMessagesEndRef = useRef(null);
 
   // Search & Add state
   const [searchUsername, setSearchUsername] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchedUser, setSearchedUser] = useState(null);
+  const [searchNotFound, setSearchNotFound] = useState(false);
+  const [suggestedOnlinePlayer, setSuggestedOnlinePlayer] = useState(null);
   const [requestStatus, setRequestStatus] = useState(null);
 
   // Challenge time picker
   const [challengeFriendTarget, setChallengeFriendTarget] = useState(null);
   const [challengeMinutes, setChallengeMinutes] = useState(5);
+  const [challengeCustomMinutes, setChallengeCustomMinutes] = useState('15');
+  const [isCustomChallenge, setIsCustomChallenge] = useState(false);
 
-  // Room state
+  // Room state (Starting Side removed; strictly random 50/50 automatically)
   const [roomCode, setRoomCode] = useState('');
-  const [selectedMinutes, setSelectedMinutes] = useState(10);
-  const [colorPref, setColorPref] = useState('random');
+  const [selectedRoomMinutes, setSelectedRoomMinutes] = useState(5); // 3, 5, 10, or custom
+  const [customRoomMinutes, setCustomRoomMinutes] = useState('15');
+  const [isCustomRoom, setIsCustomRoom] = useState(false);
   const [copied, setCopied] = useState(false);
 
   // Set default tab to 'room' on open
@@ -213,6 +376,9 @@ export function FriendRoomModal({
       setSelectedFriend(null);
       setChattingFriend(null);
       setShowChatMenu(false);
+      setSearchedUser(null);
+      setSearchNotFound(false);
+      setRequestStatus(null);
     }
   }, [isOpen, initialTab]);
 
@@ -225,50 +391,15 @@ export function FriendRoomModal({
 
   useEffect(() => {
     try {
-      safeStorage.setItem('chess_arena_blocked_v3', JSON.stringify(blockedUsers));
-    } catch {}
-  }, [blockedUsers]);
-
-  useEffect(() => {
-    try {
-      safeStorage.setItem('chess_arena_pending_requests_v3', JSON.stringify(pendingRequests));
-    } catch {}
-  }, [pendingRequests]);
-
-  useEffect(() => {
-    try {
       safeStorage.setItem('chess_arena_dms_v3', JSON.stringify(directMessages));
     } catch {}
   }, [directMessages]);
 
-  // Initial fetch from server API if authenticated
   useEffect(() => {
-    if (isOpen) {
-      const token = safeStorage.getItem('token');
-      if (token) {
-        fetch('/api/friends', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-          .then(res => res.json())
-          .then(data => {
-            if (data?.friends?.length) {
-              setFriends(prev => {
-                const existingIds = new Set(prev.map(f => f.id));
-                const merged = [...prev];
-                data.friends.forEach(f => {
-                  if (!existingIds.has(f.id)) merged.push(f);
-                });
-                return merged;
-              });
-            }
-            if (data?.pendingRequests) {
-              setPendingRequests(data.pendingRequests);
-            }
-          })
-          .catch(() => {});
-      }
-    }
-  }, [isOpen]);
+    try {
+      safeStorage.setItem('chess_arena_sent_requests_v3', JSON.stringify(sentRequests));
+    } catch {}
+  }, [sentRequests]);
 
   // Scroll chat to bottom
   useEffect(() => {
@@ -285,7 +416,6 @@ export function FriendRoomModal({
     triggerHaptic('move');
     setChallengeFriendTarget(null);
 
-    // If friend is an AI bot / community master, automatically accept and start match!
     const isBotFriend = friend.isBot || BOT_LEVEL_MAP[friend.id] || friend.id.startsWith('f_') || friend.id.startsWith('sug_');
     if (isBotFriend && onStartAIGame) {
       const level = BOT_LEVEL_MAP[friend.id] || 4;
@@ -295,10 +425,9 @@ export function FriendRoomModal({
       return;
     }
 
-    // Real multiplayer friend challenge
     const config = {
       timeControl: { baseMinutes: minutes, incrementSeconds: 0 },
-      colorPreference: 'random'
+      colorPreference: 'random' // Strictly random side assignment
     };
 
     if (onChallengeFriend) {
@@ -309,51 +438,154 @@ export function FriendRoomModal({
     }
   };
 
-  const handleSendFriendRequest = (e) => {
+  /**
+   * Search Player by Username
+   * Does NOT directly add them to friends. Searches first.
+   * If found -> presents card with "Send Friend Request" button.
+   * If not found -> shows not found and dynamically suggests a fresh random online anime/gaming player.
+   */
+  const handleSearchUser = async (e) => {
     if (e) e.preventDefault();
     const query = searchUsername.trim();
     if (!query) return;
 
+    setIsSearching(true);
+    setSearchedUser(null);
+    setSearchNotFound(false);
+    setRequestStatus(null);
+
+    // Self check
     if (currentUser && query.toLowerCase() === currentUser.username?.toLowerCase()) {
+      setIsSearching(false);
       setRequestStatus({ type: 'error', text: 'You cannot send a friend request to yourself.' });
       return;
     }
 
-    if (friends.some(f => f.username.toLowerCase() === query.toLowerCase())) {
-      setRequestStatus({ type: 'info', text: `@${query} is already in your Friends list!` });
+    // Check existing friends list
+    const existing = friends.find(f => f.username.toLowerCase() === query.toLowerCase());
+    if (existing) {
+      setIsSearching(false);
+      setSearchedUser(existing);
+      setRequestStatus({ type: 'info', text: `@${existing.username} is already in your Friends list!` });
       return;
     }
 
-    if (blockedUsers.some(b => b.username.toLowerCase() === query.toLowerCase())) {
-      setRequestStatus({ type: 'error', text: `@${query} is currently blocked. Unblock them first in the Blocked tab.` });
-      return;
+    // Check local masters roster & registered db users
+    let match = DEFAULT_FRIENDS.find(f => f.username.toLowerCase() === query.toLowerCase());
+    if (!match) {
+      match = ANIME_GAMING_CANDIDATES.find(c => c.username.toLowerCase() === query.toLowerCase());
+      if (match) {
+        match = {
+          id: `sug_${match.username.toLowerCase()}`,
+          username: match.username,
+          avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${match.seed}`,
+          country: match.country,
+          elo: match.elo,
+          isOnline: true,
+          statusText: `${match.title} • Online`,
+          bio: match.bio,
+          isBot: true
+        };
+      }
     }
 
-    const newFriend = {
-      id: `f_${Date.now()}`,
-      username: query,
-      avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${query}`,
-      country: 'UN',
-      elo: 1200,
-      isOnline: true,
-      statusText: 'Online • Mutual Friend',
-      bio: 'Arena Competitor'
-    };
+    // Try server search if available
+    if (!match) {
+      try {
+        const res = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        if (data?.users?.length) {
+          const u = data.users[0];
+          match = {
+            id: u.id,
+            username: u.username,
+            avatar: u.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${u.username}`,
+            country: u.country || 'UN',
+            elo: u.rating || 1200,
+            isOnline: Boolean(u.isOnline),
+            statusText: u.isOnline ? 'Online • In Arena' : 'Offline'
+          };
+        }
+      } catch {}
+    }
 
-    setFriends(prev => [newFriend, ...prev]);
-    setRequestStatus({
-      type: 'success',
-      text: `Friend request accepted! You are now connected with @${query}.`
-    });
-    setSearchUsername('');
-    sound.playMove();
-    triggerHaptic('move');
+    setIsSearching(false);
+
+    if (match) {
+      setSearchedUser(match);
+      setSearchNotFound(false);
+    } else {
+      // NOT FOUND: Dynamically generate a cool anime/gaming online candidate
+      setSearchNotFound(true);
+      const randomCandidate = ANIME_GAMING_CANDIDATES[Math.floor(Math.random() * ANIME_GAMING_CANDIDATES.length)];
+      const randomSeed = `${randomCandidate.seed}_${Date.now() % 1000}`;
+      setSuggestedOnlinePlayer({
+        id: `sug_${Date.now()}`,
+        username: randomCandidate.username,
+        avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${randomSeed}`,
+        country: randomCandidate.country,
+        elo: randomCandidate.elo,
+        title: randomCandidate.title,
+        statusText: '🔥 In Lobby • Looking for Match',
+        bio: randomCandidate.bio,
+        isBot: true
+      });
+      sound.playClick();
+    }
   };
 
-  const handleFollowSuggested = (player) => {
-    if (friends.some(f => f.id === player.id || f.username.toLowerCase() === player.username.toLowerCase())) return;
-    setFriends(prev => [player, ...prev]);
+  /**
+   * Send Friend Request to the found user
+   * Does NOT instantly add to friends; queues as pending friend request!
+   */
+  const handleSendFriendRequest = (userToSend) => {
+    if (!userToSend) return;
+    const targetUsername = userToSend.username;
+
+    // Check if request was already sent
+    if (sentRequests.includes(targetUsername)) {
+      setRequestStatus({ type: 'info', text: `Friend request to @${targetUsername} is already pending!` });
+      return;
+    }
+
+    setSentRequests(prev => [targetUsername, ...prev]);
+    setRequestStatus({
+      type: 'success',
+      text: `Friend request sent to @${targetUsername}! 📩 You'll be notified when they accept.`
+    });
     sound.playMove();
+    triggerHaptic('move');
+
+    // If target is a bot or community friend, simulate acceptance after a short delay!
+    if (userToSend.isBot || userToSend.id.startsWith('f_') || userToSend.id.startsWith('sug_')) {
+      setTimeout(() => {
+        setFriends(prev => {
+          if (prev.some(f => f.username.toLowerCase() === targetUsername.toLowerCase())) return prev;
+          return [userToSend, ...prev];
+        });
+        setSentRequests(prev => prev.filter(u => u !== targetUsername));
+        sound.playVictory();
+        triggerHaptic('success');
+      }, 3000);
+    }
+  };
+
+  /**
+   * Directly add / follow suggested online player
+   */
+  const handleAddSuggestedOnlinePlayer = (player) => {
+    if (friends.some(f => f.username.toLowerCase() === player.username.toLowerCase())) {
+      setRequestStatus({ type: 'info', text: `@${player.username} is already in your friends list!` });
+      return;
+    }
+    setFriends(prev => [player, ...prev]);
+    setSuggestedOnlinePlayer(null);
+    setSearchNotFound(false);
+    setRequestStatus({
+      type: 'success',
+      text: `Connected with @${player.username}! You can now chat and challenge them. 🎉`
+    });
+    sound.playVictory();
     triggerHaptic('move');
   };
 
@@ -368,16 +600,6 @@ export function FriendRoomModal({
 
   const handleBlockUser = (friend) => {
     setFriends(prev => prev.filter(f => f.id !== friend.id));
-    setBlockedUsers(prev => [
-      {
-        id: friend.id,
-        username: friend.username,
-        avatar: friend.avatar,
-        elo: friend.elo,
-        blockedAt: new Date().toLocaleDateString()
-      },
-      ...prev
-    ]);
     setSelectedFriend(null);
     if (chattingFriend?.id === friend.id) setChattingFriend(null);
     setShowChatMenu(false);
@@ -385,26 +607,18 @@ export function FriendRoomModal({
     triggerHaptic('move');
   };
 
-  const handleUnblockAndAdd = (blocked) => {
-    setBlockedUsers(prev => prev.filter(b => b.id !== blocked.id));
-    const restored = {
-      id: blocked.id,
-      username: blocked.username,
-      avatar: blocked.avatar,
-      country: 'UN',
-      elo: blocked.elo || 1200,
-      isOnline: true,
-      statusText: 'Online • Mutual Friend'
-    };
-    setFriends(prev => [restored, ...prev]);
-    sound.playMove();
-    triggerHaptic('move');
-  };
-
+  /**
+   * Send Chat Message & Trigger Witty, Contextual Bot Reply
+   */
   const handleSendChatMessage = (e) => {
     if (e) e.preventDefault();
     const text = chatInputText.trim();
     if (!text || !chattingFriend) return;
+
+    const detected = extractTimeFromText(text);
+    if (detected) {
+      setAgreedChatMinutes(detected);
+    }
 
     const newMsg = {
       id: `msg_${Date.now()}`,
@@ -422,16 +636,10 @@ export function FriendRoomModal({
     sound.playMove();
     triggerHaptic('move');
 
-    // Bot reply
-    if (targetId.startsWith('f_') || targetId.startsWith('sug_')) {
+    // Bot witty response
+    if (targetId.startsWith('f_') || targetId.startsWith('sug_') || chattingFriend.isBot) {
       setTimeout(() => {
-        const botReplies = [
-          `Great message! Let's play a 3m blitz match right now! ♟️`,
-          `I am ready! Click 'Challenge' above to start our live game. 🔥`,
-          `Good tactical insight! Looking forward to our next match! ⚔️`,
-          `Challenge accepted! Let's meet on the board. ♔`
-        ];
-        const replyText = botReplies[Math.floor(Math.random() * botReplies.length)];
+        const replyText = generateBotReply(targetId, chattingFriend.username, text, detected);
         const replyMsg = {
           id: `reply_${Date.now()}`,
           sender: 'them',
@@ -443,7 +651,7 @@ export function FriendRoomModal({
           [targetId]: [...(p[targetId] || []), replyMsg]
         }));
         sound.playMove();
-      }, 750);
+      }, 700);
     }
   };
 
@@ -471,14 +679,26 @@ export function FriendRoomModal({
     if (navigator?.share) {
       try {
         await navigator.share({
-          title: 'Chess Arena Match',
-          text: '♟️ Battle me in Chess Arena! Click to join my room:',
+          title: 'Chess Arena Match Room',
+          text: '♟️ Battle me in Chess Arena! Join my room here:',
           url: fullShareUrl
         });
         return;
       } catch {}
     }
     copyLink();
+  };
+
+  // Resolve room creation with strictly random side
+  const handleCreateRoomAction = () => {
+    const finalMinutes = isCustomRoom
+      ? Math.max(1, Math.min(60, parseInt(customRoomMinutes, 10) || 15))
+      : selectedRoomMinutes;
+
+    onCreateRoom({
+      timeControl: { baseMinutes: finalMinutes, incrementSeconds: 0 },
+      colorPreference: 'random' // Strictly random 50/50 starting side automatically
+    });
   };
 
   // Color Theme Tokens
@@ -529,7 +749,7 @@ export function FriendRoomModal({
         )}
 
         {/* ========================================================= */}
-        {/* TABS (1st: Room, 2nd: Friends, 3rd: Add, 4th: Blocked)    */}
+        {/* TABS (Only 3 Tabs: 1st Room, 2nd Friends, 3rd Add/Follow) */}
         {/* ========================================================= */}
         {!chattingFriend && (
           <div className={`flex p-1 rounded-2xl border shrink-0 text-xs gap-1 ${theme.tabContainer}`}>
@@ -572,25 +792,8 @@ export function FriendRoomModal({
             >
               <UserPlus className="w-3.5 h-3.5" />
               <span>Add / Follow</span>
-              {pendingRequests.length > 0 && (
-                <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-              )}
-            </button>
-
-            {/* 4th Tab: Blocked */}
-            <button
-              onClick={() => {
-                setActiveTab('blocked');
-                triggerHaptic('move');
-              }}
-              className={`py-2 px-2.5 rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                activeTab === 'blocked' ? theme.tabActive : theme.tabInactive
-              }`}
-              title="Blocked Players"
-            >
-              <Ban className="w-3.5 h-3.5" />
-              {blockedUsers.length > 0 && (
-                <span className="text-[10px] font-black">({blockedUsers.length})</span>
+              {sentRequests.length > 0 && (
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
               )}
             </button>
           </div>
@@ -646,7 +849,12 @@ export function FriendRoomModal({
               {/* Chat Actions: Challenge Button + 3-Dot Options in Corner */}
               <div className="flex items-center gap-1.5 shrink-0 relative">
                 <button
-                  onClick={() => setChallengeFriendTarget(chattingFriend)}
+                  onClick={() => {
+                    setChallengeFriendTarget(chattingFriend);
+                    if (agreedChatMinutes) {
+                      setChallengeMinutes(agreedChatMinutes);
+                    }
+                  }}
                   className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
                 >
                   <Swords className="w-3.5 h-3.5" />
@@ -698,7 +906,7 @@ export function FriendRoomModal({
                 <div className="py-12 text-center space-y-1">
                   <MessageCircle className="w-8 h-8 mx-auto text-amber-500/60" />
                   <p className="text-xs font-bold">Start a conversation with @{chattingFriend.username}</p>
-                  <p className={`text-[11px] ${theme.textMuted}`}>Say hi or send a match challenge!</p>
+                  <p className={`text-[11px] ${theme.textMuted}`}>Decide game time and challenge them to a match!</p>
                 </div>
               ) : (
                 directMessages[chattingFriend.id].map(msg => {
@@ -753,7 +961,7 @@ export function FriendRoomModal({
                 type="text"
                 value={chatInputText}
                 onChange={e => setChatInputText(e.target.value)}
-                placeholder={`Message @${chattingFriend.username}...`}
+                placeholder={`Message @${chattingFriend.username} (e.g. Let's play 5 minutes)...`}
                 className={`flex-1 border rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-amber-500 ${theme.input}`}
               />
               <button
@@ -819,7 +1027,7 @@ export function FriendRoomModal({
                           className="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                         >
                           <Swords className="w-3.5 h-3.5" />
-                          <span>Enter Board Now</span>
+                          <span>Enter Board Lounge</span>
                         </button>
                       )}
                     </div>
@@ -828,16 +1036,21 @@ export function FriendRoomModal({
                   <div className="space-y-3">
                     {/* Setup Room Parameters */}
                     <div className={`p-4 border rounded-2xl space-y-3 ${theme.innerBox}`}>
-                      <span className="text-xs font-black uppercase tracking-wider block text-amber-500">
-                        Create Private Room
-                      </span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black uppercase tracking-wider block text-amber-500">
+                          Create Private Room
+                        </span>
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center gap-1">
+                          <Dices className="w-3 h-3" />
+                          <span>Random Sides (50/50)</span>
+                        </span>
+                      </div>
 
-                      {/* Time Presets */}
+                      {/* Time Presets (3, 5, 10, and Custom) */}
                       <div>
-                        <label className={`text-[11px] font-bold block mb-1.5 ${theme.textMuted}`}>Time Control</label>
+                        <label className={`text-[11px] font-bold block mb-1.5 ${theme.textMuted}`}>Select Time Control</label>
                         <div className="grid grid-cols-4 gap-1.5">
                           {[
-                            { m: 1, label: '1m Bullet', icon: '⚡' },
                             { m: 3, label: '3m Blitz', icon: '🔥' },
                             { m: 5, label: '5m Blitz', icon: '⏱️' },
                             { m: 10, label: '10m Rapid', icon: '🎯' }
@@ -846,11 +1059,12 @@ export function FriendRoomModal({
                               key={t.m}
                               type="button"
                               onClick={() => {
-                                setSelectedMinutes(t.m);
+                                setSelectedRoomMinutes(t.m);
+                                setIsCustomRoom(false);
                                 triggerHaptic('move');
                               }}
                               className={`py-2 px-1 rounded-xl text-xs font-bold border transition-all text-center cursor-pointer ${
-                                selectedMinutes === t.m
+                                !isCustomRoom && selectedRoomMinutes === t.m
                                   ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-xs'
                                   : isLight
                                   ? 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
@@ -860,44 +1074,50 @@ export function FriendRoomModal({
                               <span>{t.icon} {t.m}m</span>
                             </button>
                           ))}
-                        </div>
-                      </div>
 
-                      {/* Side Preference */}
-                      <div>
-                        <label className={`text-[11px] font-bold block mb-1.5 ${theme.textMuted}`}>Starting Side</label>
-                        <div className="grid grid-cols-3 gap-1.5">
-                          {[
-                            { id: 'random', label: 'Random 🎲' },
-                            { id: 'white', label: 'White ♔' },
-                            { id: 'black', label: 'Black ♚' }
-                          ].map(side => (
-                            <button
-                              key={side.id}
-                              type="button"
-                              onClick={() => {
-                                setColorPref(side.id);
-                                triggerHaptic('move');
-                              }}
-                              className={`py-2 px-1 rounded-xl text-xs font-bold border transition-all text-center cursor-pointer ${
-                                colorPref === side.id
-                                  ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-xs'
-                                  : isLight
-                                  ? 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
-                                  : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
-                              }`}
-                            >
-                              {side.label}
-                            </button>
-                          ))}
+                          {/* Custom Time Button */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsCustomRoom(true);
+                              triggerHaptic('move');
+                            }}
+                            className={`py-2 px-1 rounded-xl text-xs font-bold border transition-all text-center cursor-pointer flex items-center justify-center gap-1 ${
+                              isCustomRoom
+                                ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-xs'
+                                : isLight
+                                ? 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
+                                : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
+                            }`}
+                          >
+                            <Sliders className="w-3 h-3" />
+                            <span>Custom</span>
+                          </button>
                         </div>
+
+                        {/* Custom Time Control Input Drawer */}
+                        {isCustomRoom && (
+                          <div className={`mt-2 p-2.5 rounded-xl border flex items-center gap-2 animate-fade-in ${theme.innerBox}`}>
+                            <span className="text-xs font-bold text-amber-500">Minutes:</span>
+                            <input
+                              type="number"
+                              min="1"
+                              max="60"
+                              value={customRoomMinutes}
+                              onChange={e => setCustomRoomMinutes(e.target.value)}
+                              className={`w-20 border rounded-lg px-2.5 py-1 text-xs font-mono font-bold text-center ${theme.input}`}
+                            />
+                            <span className={`text-[11px] ${theme.textMuted}`}>(1 to 60 mins per player)</span>
+                          </div>
+                        )}
                       </div>
 
                       <button
-                        onClick={() => onCreateRoom({ timeControl: { baseMinutes: selectedMinutes, incrementSeconds: 0 }, colorPreference: colorPref })}
-                        className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-xs transition-all cursor-pointer active:scale-98"
+                        onClick={handleCreateRoomAction}
+                        className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-xs transition-all cursor-pointer active:scale-98 flex items-center justify-center gap-1.5"
                       >
-                        Generate Room & Link
+                        <Swords className="w-3.5 h-3.5" />
+                        <span>Generate Room & Link ({isCustomRoom ? customRoomMinutes : selectedRoomMinutes}m)</span>
                       </button>
                     </div>
 
@@ -943,7 +1163,7 @@ export function FriendRoomModal({
                     <div>
                       <h4 className="text-sm font-black">No Friends in Your Arena Yet</h4>
                       <p className={`text-xs mt-1 max-w-xs mx-auto ${theme.textMuted}`}>
-                        Add opponents or follow featured masters below to chat and play!
+                        Search players or add online contenders in the Add / Follow tab!
                       </p>
                     </div>
                     <button
@@ -954,7 +1174,7 @@ export function FriendRoomModal({
                       className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-md inline-flex items-center gap-1.5 cursor-pointer"
                     >
                       <UserPlus className="w-4 h-4" />
-                      <span>Find & Add Friends</span>
+                      <span>Search & Add Friends</span>
                     </button>
                   </div>
                 ) : (
@@ -1059,44 +1279,45 @@ export function FriendRoomModal({
             )}
 
             {/* ========================================================= */}
-            {/* 3rd TAB: ADD / FOLLOW / DISCOVER                         */}
+            {/* 3rd TAB: ADD / FOLLOW / SEARCH BY USERNAME                */}
             {/* ========================================================= */}
             {activeTab === 'add' && (
               <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-                {/* Search & Follow Form */}
+                {/* Search Form */}
                 <div className={`p-4 rounded-2xl border space-y-3 ${theme.innerBox}`}>
                   <div className="flex items-center gap-2 text-amber-500">
                     <UserPlus className="w-4 h-4" />
                     <span className="text-xs font-black uppercase tracking-wider">
-                      Add Friend by Username
+                      Search Player to Add
                     </span>
                   </div>
                   <p className={`text-xs ${theme.textMuted}`}>
-                    Enter any player's username to connect, chat, and invite them to live matches.
+                    Enter an opponent's username to search for their account and send a friend request.
                   </p>
 
-                  <form onSubmit={handleSendFriendRequest} className="space-y-2">
+                  <form onSubmit={handleSearchUser} className="space-y-2">
                     <div className="relative">
                       <Search className={`w-4 h-4 absolute left-3 top-2.5 ${theme.textMuted}`} />
                       <input
                         type="text"
                         value={searchUsername}
                         onChange={e => setSearchUsername(e.target.value)}
-                        placeholder="e.g. Magnus, Hikaru, GM_Alex..."
+                        placeholder="Enter username (e.g. Magnus, Levi, Gojo)..."
                         className={`w-full border rounded-xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-amber-500 ${theme.input}`}
                       />
                     </div>
 
                     <button
                       type="submit"
-                      disabled={!searchUsername.trim()}
+                      disabled={!searchUsername.trim() || isSearching}
                       className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-40 text-slate-950 font-black text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
                     >
-                      <UserPlus className="w-3.5 h-3.5" />
-                      <span>Send Friend Request / Follow</span>
+                      <Search className="w-3.5 h-3.5" />
+                      <span>{isSearching ? 'Searching...' : 'Search Player'}</span>
                     </button>
                   </form>
 
+                  {/* Feedback Status Alert */}
                   {requestStatus && (
                     <div className={`p-2.5 rounded-xl text-xs flex items-center gap-2 animate-fade-in ${
                       requestStatus.type === 'success'
@@ -1113,32 +1334,147 @@ export function FriendRoomModal({
                       <span>{requestStatus.text}</span>
                     </div>
                   )}
+
+                  {/* CASE 1: USER IS FOUND -> Present Profile Card with 'Send Friend Request' Button */}
+                  {searchedUser && (
+                    <div className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 animate-fade-in ${
+                      isLight ? 'bg-emerald-50/60 border-emerald-300' : 'bg-emerald-950/30 border-emerald-500/40'
+                    }`}>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <img
+                          src={searchedUser.avatar}
+                          alt={searchedUser.username}
+                          className="w-10 h-10 rounded-full border-2 border-emerald-500/50 object-cover shrink-0"
+                        />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-xs truncate">@{searchedUser.username}</span>
+                            <span>{COUNTRY_FLAGS[searchedUser.country] || '🌐'}</span>
+                            <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border ${theme.badge}`}>
+                              {searchedUser.elo || 1200}
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold block mt-0.5">
+                            {searchedUser.statusText || 'Registered Arena Player'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {friends.some(f => f.username.toLowerCase() === searchedUser.username.toLowerCase()) ? (
+                        <span className="text-xs text-emerald-600 font-bold px-3 py-1 flex items-center gap-1 shrink-0">
+                          <UserCheck className="w-3.5 h-3.5" />
+                          <span>Friends</span>
+                        </span>
+                      ) : sentRequests.includes(searchedUser.username) ? (
+                        <span className="text-xs text-amber-600 font-bold px-3 py-1 flex items-center gap-1 shrink-0">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>Sent ✓</span>
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleSendFriendRequest(searchedUser)}
+                          className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs rounded-xl shadow-xs transition-all cursor-pointer active:scale-95 flex items-center gap-1.5 shrink-0"
+                        >
+                          <Send className="w-3.5 h-3.5" />
+                          <span>Send Request</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* CASE 2: USER NOT FOUND -> Display Message AND Suggest Random Online Anime/Game Player */}
+                  {searchNotFound && suggestedOnlinePlayer && (
+                    <div className="space-y-2.5 animate-fade-in pt-1">
+                      <div className={`p-2.5 rounded-xl border text-xs flex items-center gap-2 ${
+                        isLight ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-amber-950/30 border-amber-500/30 text-amber-300'
+                      }`}>
+                        <AlertCircle className="w-4 h-4 shrink-0 text-amber-500" />
+                        <span>No registered player found with that username.</span>
+                      </div>
+
+                      {/* Random Online Suggested Candidate */}
+                      <div className={`p-3.5 rounded-2xl border space-y-2.5 ${
+                        isLight ? 'bg-sky-50/70 border-sky-300' : 'bg-sky-950/30 border-sky-500/40'
+                      }`}>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-black uppercase tracking-wider text-sky-600 dark:text-sky-400 flex items-center gap-1">
+                            <Sparkles className="w-3.5 h-3.5" />
+                            <span>Player Online Now • Ready to Add</span>
+                          </span>
+                          <span className="text-[10px] font-mono text-emerald-500 font-bold flex items-center gap-1">
+                            <Circle className="w-2 h-2 fill-emerald-500" />
+                            Online
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <img
+                              src={suggestedOnlinePlayer.avatar}
+                              alt={suggestedOnlinePlayer.username}
+                              className="w-11 h-11 rounded-full border-2 border-sky-500/60 object-cover shrink-0"
+                            />
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-extrabold text-sm truncate">@{suggestedOnlinePlayer.username}</span>
+                                <span>{COUNTRY_FLAGS[suggestedOnlinePlayer.country] || '🌐'}</span>
+                                <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border ${theme.badge}`}>
+                                  {suggestedOnlinePlayer.elo}
+                                </span>
+                              </div>
+                              <span className="text-[11px] text-sky-700 dark:text-sky-300 font-medium block truncate mt-0.5">
+                                {suggestedOnlinePlayer.statusText}
+                              </span>
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => handleAddSuggestedOnlinePlayer(suggestedOnlinePlayer)}
+                            className="px-3.5 py-2 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-black text-xs rounded-xl shadow-xs transition-all cursor-pointer active:scale-95 flex items-center gap-1.5 shrink-0"
+                          >
+                            <UserPlus className="w-3.5 h-3.5" />
+                            <span>+ Add</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Recommended Players Carousel */}
+                {/* Popular Featured Online Contenders */}
                 <div className="space-y-2">
-                  <span className="text-xs font-black uppercase tracking-wider block">
-                    Recommended Arena Masters & Bot Opponents
-                  </span>
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-xs font-black uppercase tracking-wider block">
+                      Active Arena Players Online
+                    </span>
+                    <span className={`text-[11px] ${theme.textMuted}`}>Fast Connect</span>
+                  </div>
+
                   <div className="space-y-2">
-                    {SUGGESTED_PLAYERS.map(player => {
-                      const isFriend = friends.some(f => f.username.toLowerCase() === player.username.toLowerCase());
+                    {ANIME_GAMING_CANDIDATES.slice(0, 4).map(candidate => {
+                      const isFriend = friends.some(f => f.username.toLowerCase() === candidate.username.toLowerCase());
+                      const isRequested = sentRequests.includes(candidate.username);
+
                       return (
                         <div
-                          key={player.id}
+                          key={candidate.username}
                           className={`flex items-center justify-between p-3 rounded-2xl border ${theme.card}`}
                         >
                           <div className="flex items-center gap-3 min-w-0">
-                            <img src={player.avatar} alt={player.username} className="w-9 h-9 rounded-full border border-amber-500/30" />
+                            <img
+                              src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${candidate.seed}`}
+                              alt={candidate.username}
+                              className="w-9 h-9 rounded-full border border-amber-500/30 object-cover shrink-0"
+                            />
                             <div className="truncate">
                               <div className="flex items-center gap-1.5">
-                                <span className="font-bold text-xs truncate">{player.username}</span>
-                                <span>{COUNTRY_FLAGS[player.country] || '🌐'}</span>
+                                <span className="font-bold text-xs truncate">@{candidate.username}</span>
+                                <span>{COUNTRY_FLAGS[candidate.country] || '🌐'}</span>
                                 <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border ${theme.badge}`}>
-                                  {player.elo}
+                                  {candidate.elo}
                                 </span>
                               </div>
-                              <span className={`text-[11px] block ${theme.textMuted}`}>{player.statusText}</span>
+                              <span className={`text-[11px] block ${theme.textMuted}`}>{candidate.title}</span>
                             </div>
                           </div>
 
@@ -1147,13 +1483,30 @@ export function FriendRoomModal({
                               <UserCheck className="w-3.5 h-3.5" />
                               <span>Friends</span>
                             </span>
+                          ) : isRequested ? (
+                            <span className="text-xs text-amber-600 font-bold px-3 py-1 flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5" />
+                              <span>Pending</span>
+                            </span>
                           ) : (
                             <button
-                              onClick={() => handleFollowSuggested(player)}
+                              onClick={() => {
+                                handleSendFriendRequest({
+                                  id: `sug_${candidate.username.toLowerCase()}`,
+                                  username: candidate.username,
+                                  avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${candidate.seed}`,
+                                  country: candidate.country,
+                                  elo: candidate.elo,
+                                  isOnline: true,
+                                  statusText: `${candidate.title} • Online`,
+                                  bio: candidate.bio,
+                                  isBot: true
+                                });
+                              }}
                               className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-xs transition-all cursor-pointer active:scale-95 flex items-center gap-1"
                             >
                               <UserPlus className="w-3.5 h-3.5" />
-                              <span>Follow</span>
+                              <span>Request</span>
                             </button>
                           )}
                         </div>
@@ -1163,65 +1516,11 @@ export function FriendRoomModal({
                 </div>
               </div>
             )}
-
-            {/* ========================================================= */}
-            {/* 4th TAB: BLOCKED PLAYERS                                  */}
-            {/* ========================================================= */}
-            {activeTab === 'blocked' && (
-              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-                <div className="flex items-center justify-between px-1">
-                  <span className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 text-rose-500">
-                    <Ban className="w-3.5 h-3.5" />
-                    Blocked Players ({blockedUsers.length})
-                  </span>
-                </div>
-
-                {blockedUsers.length === 0 ? (
-                  <div className={`py-12 text-center space-y-2 rounded-2xl border ${theme.innerBox}`}>
-                    <ShieldCheck className="w-8 h-8 mx-auto text-emerald-500" />
-                    <p className="text-xs font-bold">No Blocked Players</p>
-                    <p className={`text-[11px] max-w-xs mx-auto ${theme.textMuted}`}>
-                      Players you block will appear here. You can unblock and re-add them at any time.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {blockedUsers.map(blocked => (
-                      <div
-                        key={blocked.id}
-                        className={`flex items-center justify-between p-3 rounded-2xl border ${theme.card}`}
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <img
-                            src={blocked.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${blocked.username}`}
-                            alt={blocked.username}
-                            className="w-9 h-9 rounded-full opacity-70 border border-slate-600 grayscale"
-                          />
-                          <div className="truncate">
-                            <span className="font-bold text-xs block truncate">{blocked.username}</span>
-                            <span className={`text-[10px] block ${theme.textMuted}`}>Blocked on {blocked.blockedAt || 'Recent'}</span>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() => handleUnblockAndAdd(blocked)}
-                          className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 shrink-0"
-                          title="Unblock and add back to friends"
-                        >
-                          <RefreshCw className="w-3 h-3" />
-                          <span>Unblock & Add</span>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
           </>
         )}
 
         {/* ========================================================= */}
-        {/* TIME CONTROL PICKER FOR CHALLENGING FRIEND                */}
+        {/* TIME CONTROL PICKER FOR CHALLENGING FRIEND (3, 5, 10, Custom) */}
         {/* ========================================================= */}
         {challengeFriendTarget && (
           <div className="fixed inset-0 z-60 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
@@ -1241,18 +1540,20 @@ export function FriendRoomModal({
 
               <div>
                 <label className={`text-xs font-bold block mb-2 ${theme.textMuted}`}>Select Time Control</label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-4 gap-1.5">
                   {[
-                    { m: 1, label: '1m Bullet ⚡' },
                     { m: 3, label: '3m Blitz 🔥' },
                     { m: 5, label: '5m Blitz ⏱️' },
                     { m: 10, label: '10m Rapid 🎯' }
                   ].map(t => (
                     <button
                       key={t.m}
-                      onClick={() => setChallengeMinutes(t.m)}
-                      className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all ${
-                        challengeMinutes === t.m
+                      onClick={() => {
+                        setChallengeMinutes(t.m);
+                        setIsCustomChallenge(false);
+                      }}
+                      className={`py-2 px-1 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer ${
+                        !isCustomChallenge && challengeMinutes === t.m
                           ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-xs'
                           : isLight
                           ? 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'
@@ -1262,15 +1563,50 @@ export function FriendRoomModal({
                       {t.label}
                     </button>
                   ))}
+
+                  <button
+                    onClick={() => setIsCustomChallenge(true)}
+                    className={`py-2 px-1 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer flex items-center justify-center gap-1 ${
+                      isCustomChallenge
+                        ? 'bg-amber-500 text-slate-950 font-black border-amber-400 shadow-xs'
+                        : isLight
+                        ? 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300'
+                        : 'bg-slate-800 border-slate-700 text-slate-200'
+                    }`}
+                  >
+                    <Sliders className="w-3 h-3" />
+                    <span>Custom</span>
+                  </button>
                 </div>
+
+                {/* Custom Minutes Input */}
+                {isCustomChallenge && (
+                  <div className={`mt-2 p-2.5 rounded-xl border flex items-center gap-2 animate-fade-in ${theme.innerBox}`}>
+                    <span className="text-xs font-bold text-amber-500">Minutes:</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max="60"
+                      value={challengeCustomMinutes}
+                      onChange={e => setChallengeCustomMinutes(e.target.value)}
+                      className={`w-20 border rounded-lg px-2.5 py-1 text-xs font-mono font-bold text-center ${theme.input}`}
+                    />
+                    <span className={`text-[11px] ${theme.textMuted}`}>(1 to 60 minutes)</span>
+                  </div>
+                )}
               </div>
 
               <button
-                onClick={() => handleExecuteChallenge(challengeFriendTarget, challengeMinutes)}
+                onClick={() => {
+                  const finalM = isCustomChallenge
+                    ? Math.max(1, Math.min(60, parseInt(challengeCustomMinutes, 10) || 15))
+                    : challengeMinutes;
+                  handleExecuteChallenge(challengeFriendTarget, finalM);
+                }}
                 className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-1.5"
               >
                 <Swords className="w-4 h-4" />
-                <span>Start Match ({challengeMinutes} min)</span>
+                <span>Start Match ({isCustomChallenge ? challengeCustomMinutes : challengeMinutes} min)</span>
               </button>
             </div>
           </div>
