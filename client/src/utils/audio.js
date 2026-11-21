@@ -234,13 +234,26 @@ class ChessAudio {
     try {
       const now = this.ctx.currentTime;
 
+      // 0. Distinctive match-finish gavel impact (signals game is concluded)
+      const gavelOsc = this.ctx.createOscillator();
+      const gavelGain = this.ctx.createGain();
+      gavelOsc.type = 'triangle';
+      gavelOsc.frequency.setValueAtTime(260, now);
+      gavelOsc.frequency.exponentialRampToValueAtTime(70, now + 0.12);
+      gavelGain.gain.setValueAtTime(0.4, now);
+      gavelGain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+      gavelOsc.connect(gavelGain);
+      gavelGain.connect(this.ctx.destination);
+      gavelOsc.start(now);
+      gavelOsc.stop(now + 0.14);
+
       // 1. Ascending triumphant fanfare arpeggio (C5, E5, G5, C6, E6)
       const arpeggio = [
-        { freq: 523.25, time: 0, dur: 0.14 },    // C5
-        { freq: 659.25, time: 0.12, dur: 0.14 }, // E5
-        { freq: 783.99, time: 0.24, dur: 0.16 }, // G5
-        { freq: 1046.50, time: 0.38, dur: 0.4 }, // C6
-        { freq: 1318.51, time: 0.52, dur: 0.6 }  // E6
+        { freq: 523.25, time: 0.04, dur: 0.14 },    // C5
+        { freq: 659.25, time: 0.16, dur: 0.14 },    // E5
+        { freq: 783.99, time: 0.28, dur: 0.16 },    // G5
+        { freq: 1046.50, time: 0.42, dur: 0.4 },    // C6
+        { freq: 1318.51, time: 0.56, dur: 0.7 }     // E6
       ];
 
       arpeggio.forEach(({ freq, time, dur }) => {
@@ -256,19 +269,19 @@ class ChessAudio {
         osc.stop(now + time + dur);
       });
 
-      // 2. Rich sustained celebratory major chord (C5 + G5 + C6 + E6) at +0.52s
+      // 2. Rich sustained celebratory major chord (C5 + G5 + C6 + E6) at +0.56s
       const chordNotes = [523.25, 783.99, 1046.50, 1318.51];
       chordNotes.forEach((freq) => {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, now + 0.52);
-        gain.gain.setValueAtTime(0.18, now + 0.52);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 1.25);
+        osc.frequency.setValueAtTime(freq, now + 0.56);
+        gain.gain.setValueAtTime(0.20, now + 0.56);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 1.35);
         osc.connect(gain);
         gain.connect(this.ctx.destination);
-        osc.start(now + 0.52);
-        osc.stop(now + 1.25);
+        osc.start(now + 0.56);
+        osc.stop(now + 1.35);
       });
     } catch (e) {}
   }
@@ -280,6 +293,19 @@ class ChessAudio {
 
     try {
       const now = this.ctx.currentTime;
+
+      // 0. Match-finish gavel strike (definite signal that match has ended)
+      const strikeOsc = this.ctx.createOscillator();
+      const strikeGain = this.ctx.createGain();
+      strikeOsc.type = 'triangle';
+      strikeOsc.frequency.setValueAtTime(240, now);
+      strikeOsc.frequency.exponentialRampToValueAtTime(65, now + 0.12);
+      strikeGain.gain.setValueAtTime(0.42, now);
+      strikeGain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+      strikeOsc.connect(strikeGain);
+      strikeGain.connect(this.ctx.destination);
+      strikeOsc.start(now);
+      strikeOsc.stop(now + 0.14);
 
       // 1. Warm sub-bass acoustic warmth foundation (110 Hz -> 55 Hz)
       const subOsc = this.ctx.createOscillator();
@@ -301,13 +327,13 @@ class ChessAudio {
       subOsc.stop(now + 1.3);
 
       // 2. Cinematic contemplative acoustic piano/celesta arpeggio (D minor 9th: D4 -> F4 -> A4 -> C5 -> E5)
-      // Dignified, reflective, and encouraging rather than harsh or depressing
+      // Dignified, reflective, and clear match conclusion signal
       const notes = [
-        { freq: 293.66, delay: 0.0, dur: 0.9, vol: 0.28 },   // D4
-        { freq: 349.23, delay: 0.12, dur: 0.9, vol: 0.26 },  // F4
-        { freq: 440.00, delay: 0.24, dur: 1.0, vol: 0.24 },  // A4
-        { freq: 523.25, delay: 0.38, dur: 1.1, vol: 0.22 },  // C5
-        { freq: 659.25, delay: 0.52, dur: 1.3, vol: 0.20 }   // E5
+        { freq: 293.66, delay: 0.05, dur: 0.9, vol: 0.28 },   // D4
+        { freq: 349.23, delay: 0.16, dur: 0.9, vol: 0.26 },  // F4
+        { freq: 440.00, delay: 0.28, dur: 1.0, vol: 0.24 },  // A4
+        { freq: 523.25, delay: 0.42, dur: 1.1, vol: 0.22 },  // C5
+        { freq: 659.25, delay: 0.56, dur: 1.3, vol: 0.20 }   // E5
       ];
 
       notes.forEach(({ freq, delay, dur, vol }) => {
@@ -339,13 +365,56 @@ class ChessAudio {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, now + 0.55);
-        gain.gain.setValueAtTime(0.12, now + 0.55);
+        osc.frequency.setValueAtTime(freq, now + 0.58);
+        gain.gain.setValueAtTime(0.12, now + 0.58);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
         osc.connect(gain);
         gain.connect(this.ctx.destination);
-        osc.start(now + 0.55);
+        osc.start(now + 0.58);
         osc.stop(now + 1.8);
+      });
+    } catch (e) {}
+  }
+
+  // Harmonic match-drawn sound (peaceful, balanced conclusion)
+  playGameDraw() {
+    if (!this.enabled) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+
+      // Match finish gavel tap
+      const tapOsc = this.ctx.createOscillator();
+      const tapGain = this.ctx.createGain();
+      tapOsc.type = 'triangle';
+      tapOsc.frequency.setValueAtTime(220, now);
+      tapOsc.frequency.exponentialRampToValueAtTime(80, now + 0.09);
+      tapGain.gain.setValueAtTime(0.32, now);
+      tapGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+      tapOsc.connect(tapGain);
+      tapGain.connect(this.ctx.destination);
+      tapOsc.start(now);
+      tapOsc.stop(now + 0.1);
+
+      // Peaceful dual chime (F4 349.23Hz -> C5 523.25Hz -> A5 880Hz)
+      const chimes = [
+        { freq: 349.23, delay: 0.05, dur: 0.6 },
+        { freq: 523.25, delay: 0.16, dur: 0.8 },
+        { freq: 698.46, delay: 0.28, dur: 1.1 }
+      ];
+      chimes.forEach(({ freq, delay, dur }) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + delay);
+        gain.gain.setValueAtTime(0.24, now + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + delay + dur);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now + delay);
+        osc.stop(now + delay + dur);
       });
     } catch (e) {}
   }

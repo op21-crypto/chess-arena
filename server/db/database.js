@@ -22,13 +22,33 @@ if (!fs.existsSync(DATA_DIR)) {
 }
 
 // In-memory state backed by atomic disk persistence
+export const DEFAULT_APP_CONFIG = {
+  defaultTheme: 'system', // 'system' | 'light' | 'dark' | 'black' | 'alabaster'
+  defaultBoardTheme: 'cappuccino',
+  defaultPieceTheme: 'alexander',
+  defaultPieceColorPalette: 'classic',
+  defaultTimeControl: '3m',
+  defaultMusicEnabled: true,
+  defaultMusicTrackIndex: 0,
+  announcement: '', // Live marquee announcement
+  maintenanceMode: false,
+  customBots: [
+    { level: 1, name: 'Beginner', elo: '800 ELO', icon: '🐣', style: 'Fundamentals' },
+    { level: 2, name: 'Casual', elo: '1200 ELO', icon: '🛡️', style: 'Opening Play' },
+    { level: 3, name: 'Master', elo: '1600 ELO', icon: '⚔️', style: 'Tactics' },
+    { level: 4, name: 'FIDE Master', elo: '2000 ELO', icon: '💎', style: 'Positional' },
+    { level: 5, name: 'Grandmaster', elo: '2500+ ELO', icon: '👑', style: 'Stockfish 19 NNUE' }
+  ]
+};
+
 let db = {
   users: {},
   games: {},
   tournaments: {},
   friendships: [], // { id, user1, user2, status: 'pending'|'accepted', requestedBy }
   notifications: {}, // userId -> [notifications]
-  reports: []
+  reports: [],
+  appConfig: { ...DEFAULT_APP_CONFIG }
 };
 
 function saveDb() {
@@ -123,6 +143,7 @@ function loadDb() {
     try {
       const raw = fs.readFileSync(DB_FILE, 'utf-8');
       db = JSON.parse(raw);
+      if (!db.appConfig) db.appConfig = { ...DEFAULT_APP_CONFIG };
       ensureAdminUser();
       return;
     } catch (err) {
@@ -135,6 +156,7 @@ function loadDb() {
     try {
       const raw = fs.readFileSync(SEED_FILE, 'utf-8');
       db = JSON.parse(raw);
+      if (!db.appConfig) db.appConfig = { ...DEFAULT_APP_CONFIG };
       if (!db.users || Object.keys(db.users).length < 50) {
         seedDatabase();
       }
@@ -148,6 +170,7 @@ function loadDb() {
 
   // Fallback to fresh seed
   seedDatabase();
+  if (!db.appConfig) db.appConfig = { ...DEFAULT_APP_CONFIG };
   ensureAdminUser();
   saveDb();
 }
@@ -501,5 +524,68 @@ export const Database = {
       saveDb();
     }
     return rep;
+  },
+
+  // Full Admin Control: App Config & Defaults
+  getAppConfig() {
+    if (!db.appConfig) {
+      db.appConfig = { ...DEFAULT_APP_CONFIG };
+      saveDb();
+    }
+    return db.appConfig;
+  },
+
+  updateAppConfig(updates) {
+    if (!db.appConfig) {
+      db.appConfig = { ...DEFAULT_APP_CONFIG };
+    }
+    db.appConfig = { ...db.appConfig, ...updates };
+    saveDb();
+    return db.appConfig;
+  },
+
+  resetAppConfig() {
+    db.appConfig = { ...DEFAULT_APP_CONFIG };
+    saveDb();
+    return db.appConfig;
+  },
+
+  deleteUser(id) {
+    if (!db.users[id]) return false;
+    // Strictly protect primary admin from deletion
+    if (db.users[id].email?.toLowerCase().trim() === 'op21plus@gmail.com') return false;
+    delete db.users[id];
+    saveDb();
+    return true;
+  },
+
+  // Tournaments
+  getAllTournaments() {
+    return Object.values(db.tournaments || {});
+  },
+
+  createTournament(tournamentData) {
+    if (!db.tournaments) db.tournaments = {};
+    const id = tournamentData.id || `tourn_${Date.now()}`;
+    db.tournaments[id] = {
+      id,
+      name: tournamentData.name || 'Arena Championship',
+      format: tournamentData.format || 'blitz',
+      status: tournamentData.status || 'open',
+      prize: tournamentData.prize || '10,000 Coins',
+      maxPlayers: tournamentData.maxPlayers || 64,
+      participants: tournamentData.participants || [],
+      createdAt: new Date().toISOString(),
+      ...tournamentData
+    };
+    saveDb();
+    return db.tournaments[id];
+  },
+
+  deleteTournament(id) {
+    if (!db.tournaments || !db.tournaments[id]) return false;
+    delete db.tournaments[id];
+    saveDb();
+    return true;
   }
 };

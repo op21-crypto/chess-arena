@@ -2108,6 +2108,8 @@ export default function App() {
       <GameOverModal
         isOpen={showGameOverModal}
         isLight={isLight}
+        isOled={isOled}
+        timeControl={gameSession?.timeControl}
         status={gameSession?.status}
         winner={gameSession?.winner}
         winReason={gameSession?.winReason}

@@ -45,6 +45,11 @@ function requireAuth(req, res, next) {
 
 router.use(authenticateToken);
 
+// ================= GLOBAL APP CONFIGURATION =================
+router.get('/config', (req, res) => {
+  res.json({ config: Database.getAppConfig() });
+});
+
 // ================= AUTHENTICATION =================
 
 // Register
@@ -601,14 +606,16 @@ router.post('/notifications/read', requireAuth, (req, res) => {
   res.json({ success: true });
 });
 
-// ================= ADMIN DASHBOARD =================
+// ================= FULL ADMIN CONTROL CENTER (EXCLUSIVE TO op21plus@gmail.com) =================
 
-router.get('/admin/stats', requireAuth, (req, res) => {
+function checkOpAdmin(req) {
   const dbUser = req.user?.id ? Database.getUserById(req.user.id) : null;
   const userEmail = (dbUser?.email || req.user?.email || '').toLowerCase().trim();
-  const isOpAdmin = userEmail === 'op21plus@gmail.com';
+  return userEmail === 'op21plus@gmail.com';
+}
 
-  if (!isOpAdmin) {
+router.get('/admin/stats', requireAuth, (req, res) => {
+  if (!checkOpAdmin(req)) {
     return res.status(403).json({ error: 'Access denied: Admin command center restricted exclusively to op21plus@gmail.com' });
   }
 
@@ -617,6 +624,8 @@ router.get('/admin/stats', requireAuth, (req, res) => {
   const onlineCount = allUsers.filter(u => u.isOnline).length;
   const ongoingGames = allGames.filter(g => g.status === 'active' || g.status === 'playing' || g.status === 'waiting').length;
   const googleUsersCount = allUsers.filter(u => u.provider === 'google' || (u.email && u.email.endsWith('@gmail.com'))).length;
+  const tournaments = Database.getAllTournaments();
+  const config = Database.getAppConfig();
 
   res.json({
     totalUsers: allUsers.length,
@@ -624,6 +633,8 @@ router.get('/admin/stats', requireAuth, (req, res) => {
     totalGames: allGames.length,
     ongoingGames,
     googleUsersCount,
+    config,
+    tournaments,
     users: allUsers.map(u => {
       const { passwordHash: _, ...safe } = u;
       return safe;
@@ -642,12 +653,108 @@ router.get('/admin/stats', requireAuth, (req, res) => {
   });
 });
 
-router.post('/admin/users/:id/moderate', requireAuth, (req, res) => {
-  const dbUser = req.user?.id ? Database.getUserById(req.user.id) : null;
-  const userEmail = (dbUser?.email || req.user?.email || '').toLowerCase().trim();
-  const isOpAdmin = userEmail === 'op21plus@gmail.com';
+// App Config & Global Defaults Control
+router.get('/admin/config', requireAuth, (req, res) => {
+  if (!checkOpAdmin(req)) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+  res.json({ config: Database.getAppConfig() });
+});
 
-  if (!isOpAdmin) {
+router.post('/admin/config', requireAuth, (req, res) => {
+  if (!checkOpAdmin(req)) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+  const updated = Database.updateAppConfig(req.body);
+  res.json({ success: true, config: updated });
+});
+
+router.post('/admin/reset-defaults', requireAuth, (req, res) => {
+  if (!checkOpAdmin(req)) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+  const reset = Database.resetAppConfig();
+  res.json({ success: true, config: reset });
+});
+
+// Add New Player / User
+router.post('/admin/users/create', requireAuth, (req, res) => {
+  if (!checkOpAdmin(req)) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+  const { username, email, role, ratings, country, countryName, title, avatar } = req.body;
+  if (!username) return res.status(400).json({ error: 'Username is required' });
+
+  const existing = Database.getUserByUsername(username);
+  if (existing) return res.status(400).json({ error: 'Username already taken' });
+
+  const id = `user_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+  const newUser = Database.createUser({
+    id,
+    username,
+    email: email || '',
+    role: role || 'user',
+    country: country || 'IN',
+    countryName: countryName || 'India',
+    title: title || '',
+    avatar: avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`,
+    ratings: {
+      rapid: Number(ratings?.rapid) || 1200,
+      blitz: Number(ratings?.blitz) || 1200,
+      bullet: Number(ratings?.bullet) || 1200,
+      classical: Number(ratings?.classical) || 1200,
+      puzzle: Number(ratings?.puzzle) || 1200
+    }
+  });
+
+  const { passwordHash: _, ...safe } = newUser;
+  res.json({ success: true, user: safe });
+});
+
+// Update Existing Player / User
+router.post('/admin/users/:id/update', requireAuth, (req, res) => {
+  if (!checkOpAdmin(req)) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+  const user = Database.getUserById(req.params.id);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  const { username, email, ratings, title, country, countryName, banned, role } = req.body;
+  const updates = {};
+  if (username) updates.username = username;
+  if (email !== undefined) updates.email = email;
+  if (country) updates.country = country;
+  if (countryName) updates.countryName = countryName;
+  if (title !== undefined) updates.title = title;
+  if (typeof banned === 'boolean') updates.banned = banned;
+  if (role && user.email?.toLowerCase().trim() !== 'op21plus@gmail.com') updates.role = role;
+  if (ratings) {
+    updates.ratings = {
+      ...user.ratings,
+      ...ratings
+    };
+  }
+
+  const updated = Database.updateUser(user.id, updates);
+  const { passwordHash: _, ...safe } = updated;
+  res.json({ success: true, user: safe });
+});
+
+// Delete Player / User Account
+router.delete('/admin/users/:id', requireAuth, (req, res) => {
+  if (!checkOpAdmin(req)) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+  const success = Database.deleteUser(req.params.id);
+  if (!success) {
+    return res.status(400).json({ error: 'Could not delete user (account not found or protected admin)' });
+  }
+  res.json({ success: true, message: 'User deleted permanently' });
+});
+
+// User Moderation (Ban/Unban/Rating adjust)
+router.post('/admin/users/:id/moderate', requireAuth, (req, res) => {
+  if (!checkOpAdmin(req)) {
     return res.status(403).json({ error: 'Access denied: Admin moderation restricted exclusively to op21plus@gmail.com' });
   }
 
@@ -664,6 +771,30 @@ router.post('/admin/users/:id/moderate', requireAuth, (req, res) => {
 
   Database.updateUser(user.id, user);
   res.json({ success: true, user });
+});
+
+// Tournament Control
+router.get('/admin/tournaments', requireAuth, (req, res) => {
+  if (!checkOpAdmin(req)) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+  res.json({ tournaments: Database.getAllTournaments() });
+});
+
+router.post('/admin/tournaments/create', requireAuth, (req, res) => {
+  if (!checkOpAdmin(req)) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+  const created = Database.createTournament(req.body);
+  res.json({ success: true, tournament: created });
+});
+
+router.delete('/admin/tournaments/:id', requireAuth, (req, res) => {
+  if (!checkOpAdmin(req)) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+  const success = Database.deleteTournament(req.params.id);
+  res.json({ success: Boolean(success) });
 });
 
 export default router;
