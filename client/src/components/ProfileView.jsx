@@ -187,7 +187,7 @@ export function ProfileView({
 
           {/* Quick Right Actions (Sign out / Sign In / Admin trigger) */}
           <div className="flex items-center gap-2 self-center sm:self-start">
-            {(user?.role === 'admin' || user?.email?.toLowerCase() === 'op21plus@gmail.com') && onOpenAdmin && (
+            {(user?.email?.toLowerCase().trim() === 'op21plus@gmail.com') && onOpenAdmin && (
               <button
                 onClick={() => {
                   triggerHaptic('move');
@@ -533,20 +533,32 @@ export function ProfileView({
       {/* ================= 3 INLINE ACCORDION OPTIONS ================= */}
       <div className="space-y-3">
         {/* ----------------- 1. STATISTICS & RECORDS ----------------- */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-md transition-all">
+        <div className={`border rounded-2xl overflow-hidden shadow-md transition-all ${
+          isLightMode
+            ? 'bg-white border-slate-200/90 shadow-slate-200/40 text-slate-900'
+            : 'bg-slate-900/90 border-slate-800 text-white'
+        }`}>
           <button
             type="button"
             onClick={() => toggleSection('stats')}
             className={`w-full px-4 py-3.5 flex items-center justify-between text-left transition-colors cursor-pointer select-none active:scale-[0.99] ${
               openSections.stats
-                ? 'bg-amber-500/10 border-b border-amber-500/25'
+                ? isLightMode
+                  ? 'bg-amber-50/80 border-b border-amber-200'
+                  : 'bg-amber-500/10 border-b border-amber-500/25'
+                : isLightMode
+                ? 'hover:bg-slate-50'
                 : 'hover:bg-slate-850'
             }`}
           >
             <div className="flex items-center gap-3 min-w-0">
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
                 openSections.stats
-                  ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
+                  ? isLightMode
+                    ? 'bg-amber-100 border-amber-300 text-amber-700'
+                    : 'bg-amber-500/20 border-amber-500/50 text-amber-400'
+                  : isLightMode
+                  ? 'bg-slate-100 border-slate-200 text-slate-500'
                   : 'bg-slate-950 border-slate-800 text-slate-400'
               }`}>
                 <BarChart3 className="w-4 h-4" />
@@ -554,14 +566,20 @@ export function ProfileView({
 
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs sm:text-sm font-bold text-white tracking-tight truncate">
+                  <span className={`text-xs sm:text-sm font-bold tracking-tight truncate ${
+                    isLightMode ? 'text-slate-900' : 'text-white'
+                  }`}>
                     Statistics & Records
                   </span>
-                  <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+                  <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold border shrink-0 ${
+                    isLightMode
+                      ? 'bg-amber-100 text-amber-800 border-amber-300'
+                      : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                  }`}>
                     {userElo} Elo
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-400 truncate">
+                <p className={`text-[10px] truncate ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
                   Win rate {winRate}% • {unlockedSet.size} achievements
                 </p>
               </div>
@@ -569,24 +587,42 @@ export function ProfileView({
 
             <div className="flex items-center gap-1.5 shrink-0 ml-2">
               <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                openSections.stats ? 'bg-amber-500 text-slate-950 font-black' : 'bg-slate-800 text-slate-400'
+                openSections.stats
+                  ? 'bg-amber-500 text-slate-950 font-black'
+                  : isLightMode
+                  ? 'bg-slate-100 text-slate-600'
+                  : 'bg-slate-800 text-slate-400'
               }`}>
                 {openSections.stats ? 'Opened' : 'Closed'}
               </span>
               <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${
-                openSections.stats ? 'text-amber-400 rotate-180' : 'text-slate-500'
+                openSections.stats
+                  ? 'text-amber-500 rotate-180'
+                  : isLightMode
+                  ? 'text-slate-400'
+                  : 'text-slate-500'
               }`} />
             </div>
           </button>
 
           {/* Expanded Content directly under Statistics & Records button */}
           {openSections.stats && (
-            <div className="p-3.5 sm:p-5 space-y-4 bg-slate-950/60 animate-fade-in border-t border-slate-800/80">
+            <div className={`p-3.5 sm:p-5 space-y-4 animate-fade-in border-t ${
+              isLightMode
+                ? 'bg-slate-50/80 border-slate-200 text-slate-900'
+                : 'bg-slate-950/60 border-slate-800/80 text-slate-100'
+            }`}>
               {/* Quick Player Ranking Standing Banner */}
-              <div className="p-4 bg-gradient-to-br from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800 rounded-2xl space-y-3 shadow-md">
+              <div className={`p-4 border rounded-2xl space-y-3 shadow-md ${
+                isLightMode
+                  ? 'bg-white border-slate-200 text-slate-900'
+                  : 'bg-gradient-to-br from-slate-900 via-slate-900/90 to-slate-950 border-slate-800'
+              }`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Trophy className="w-4 h-4 text-amber-400" />
+                  <span className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${
+                    isLightMode ? 'text-amber-700' : 'text-amber-400'
+                  }`}>
+                    <Trophy className={`w-4 h-4 ${isLightMode ? 'text-amber-600' : 'text-amber-400'}`} />
                     <span>Player Standing & Global Rank</span>
                   </span>
                   <button
@@ -596,7 +632,9 @@ export function ProfileView({
                       triggerHaptic('move');
                       setOpenSections(prev => ({ ...prev, rankings: true }));
                     }}
-                    className="text-xs font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1 hover:underline cursor-pointer"
+                    className={`text-xs font-bold flex items-center gap-1 hover:underline cursor-pointer ${
+                      isLightMode ? 'text-amber-700 hover:text-amber-800' : 'text-amber-400 hover:text-amber-300'
+                    }`}
                   >
                     <span>View in Leaderboard</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -604,35 +642,43 @@ export function ProfileView({
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  <div className="p-3 bg-slate-950/80 border border-slate-800/80 rounded-xl space-y-0.5">
-                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">World Standing</span>
-                    <div className="text-lg sm:text-xl font-black font-mono text-white">
+                  <div className={`p-3 border rounded-xl space-y-0.5 ${
+                    isLightMode ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/80 border-slate-800/80'
+                  }`}>
+                    <span className={`text-[10px] uppercase font-semibold block ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>World Standing</span>
+                    <div className={`text-lg sm:text-xl font-black font-mono ${isLightMode ? 'text-slate-900' : 'text-white'}`}>
                       #{userRank.toLocaleString()}
                     </div>
-                    <span className="text-[10px] text-slate-500 block">of {totalPlayers.toLocaleString()} players</span>
+                    <span className={`text-[10px] block ${isLightMode ? 'text-slate-400' : 'text-slate-500'}`}>of {totalPlayers.toLocaleString()} players</span>
                   </div>
 
-                  <div className="p-3 bg-slate-950/80 border border-slate-800/80 rounded-xl space-y-0.5">
-                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">National Rank</span>
-                    <div className="text-lg sm:text-xl font-black font-mono text-amber-300">
+                  <div className={`p-3 border rounded-xl space-y-0.5 ${
+                    isLightMode ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/80 border-slate-800/80'
+                  }`}>
+                    <span className={`text-[10px] uppercase font-semibold block ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>National Rank</span>
+                    <div className={`text-lg sm:text-xl font-black font-mono ${isLightMode ? 'text-amber-700' : 'text-amber-300'}`}>
                       #{countryRank.toLocaleString()}
                     </div>
-                    <span className="text-[10px] text-slate-500 block">in {user?.countryName || user?.country || 'India 🇮🇳'}</span>
+                    <span className={`text-[10px] block ${isLightMode ? 'text-slate-400' : 'text-slate-500'}`}>in {user?.countryName || user?.country || 'India 🇮🇳'}</span>
                   </div>
 
-                  <div className="col-span-2 sm:col-span-1 p-3 bg-slate-950/80 border border-slate-800/80 rounded-xl space-y-0.5 flex flex-col justify-center">
-                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Competitive Tier</span>
-                    <div className="text-base font-black text-emerald-400">
+                  <div className={`col-span-2 sm:col-span-1 p-3 border rounded-xl space-y-0.5 flex flex-col justify-center ${
+                    isLightMode ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/80 border-slate-800/80'
+                  }`}>
+                    <span className={`text-[10px] uppercase font-semibold block ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>Competitive Tier</span>
+                    <div className={`text-base font-black ${isLightMode ? 'text-emerald-700' : 'text-emerald-400'}`}>
                       Top {((100 - parseFloat(percentile))).toFixed(1)}%
                     </div>
-                    <span className="text-[10px] text-slate-500 block">{percentile}% global lead</span>
+                    <span className={`text-[10px] block ${isLightMode ? 'text-slate-400' : 'text-slate-500'}`}>{percentile}% global lead</span>
                   </div>
                 </div>
               </div>
 
               {/* Ratings Breakdown Grid */}
               <div className="space-y-2">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">
+                <h3 className={`text-xs font-bold uppercase tracking-wider px-1 ${
+                  isLightMode ? 'text-slate-600' : 'text-slate-400'
+                }`}>
                   Elo Ratings by Time Control
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">
@@ -642,12 +688,18 @@ export function ProfileView({
                     { label: 'Rapid', rating: user?.ratings?.rapid || 1078, icon: '⏳' },
                     { label: 'Classical', rating: user?.ratings?.classical || 1190, icon: '🏛️' }
                   ].map((item) => (
-                    <div key={item.label} className="p-3 bg-slate-900/90 border border-slate-800 rounded-xl shadow-xs">
-                      <div className="flex items-center justify-between text-slate-400 mb-1">
+                    <div key={item.label} className={`p-3 border rounded-xl shadow-xs ${
+                      isLightMode ? 'bg-white border-slate-200' : 'bg-slate-900/90 border-slate-800'
+                    }`}>
+                      <div className={`flex items-center justify-between mb-1 ${
+                        isLightMode ? 'text-slate-500' : 'text-slate-400'
+                      }`}>
                         <span className="text-[10px] uppercase font-bold">{item.label}</span>
                         <span className="text-xs">{item.icon}</span>
                       </div>
-                      <div className="text-xl font-black font-mono text-amber-400">{item.rating}</div>
+                      <div className={`text-xl font-black font-mono ${
+                        isLightMode ? 'text-amber-700' : 'text-amber-400'
+                      }`}>{item.rating}</div>
                     </div>
                   ))}
                 </div>
@@ -655,27 +707,33 @@ export function ProfileView({
 
               {/* Career Stats */}
               <div className="space-y-2">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">
+                <h3 className={`text-xs font-bold uppercase tracking-wider px-1 ${
+                  isLightMode ? 'text-slate-600' : 'text-slate-400'
+                }`}>
                   Career Performance Record
                 </h3>
-                <div className="grid grid-cols-3 gap-2.5 p-3.5 bg-slate-900/90 border border-slate-800 rounded-2xl text-center shadow-xs">
+                <div className={`grid grid-cols-3 gap-2.5 p-3.5 border rounded-2xl text-center shadow-xs ${
+                  isLightMode ? 'bg-white border-slate-200' : 'bg-slate-900/90 border-slate-800'
+                }`}>
                   <div>
-                    <span className="text-[11px] text-slate-400 block font-semibold">Total Matches</span>
-                    <span className="text-lg sm:text-xl font-bold font-mono text-white">{user?.stats?.played || 18}</span>
+                    <span className={`text-[11px] block font-semibold ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>Total Matches</span>
+                    <span className={`text-lg sm:text-xl font-bold font-mono ${isLightMode ? 'text-slate-900' : 'text-white'}`}>{user?.stats?.played || 18}</span>
                   </div>
                   <div>
-                    <span className="text-[11px] text-slate-400 block font-semibold">Win Rate</span>
-                    <span className="text-lg sm:text-xl font-bold font-mono text-emerald-400">{winRate || 68}%</span>
+                    <span className={`text-[11px] block font-semibold ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>Win Rate</span>
+                    <span className={`text-lg sm:text-xl font-bold font-mono ${isLightMode ? 'text-emerald-700' : 'text-emerald-400'}`}>{winRate || 68}%</span>
                   </div>
                   <div>
-                    <span className="text-[11px] text-slate-400 block font-semibold">Best Streak</span>
-                    <span className="text-lg sm:text-xl font-bold font-mono text-orange-400">{user?.stats?.winStreak || 5} 🔥</span>
+                    <span className={`text-[11px] block font-semibold ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>Best Streak</span>
+                    <span className={`text-lg sm:text-xl font-bold font-mono ${isLightMode ? 'text-orange-700' : 'text-orange-400'}`}>{user?.stats?.winStreak || 5} 🔥</span>
                   </div>
                 </div>
               </div>
 
               {/* Collapsible Achievements Section (Closed by default) */}
-              <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl overflow-hidden shadow-xs">
+              <div className={`border rounded-2xl overflow-hidden shadow-xs ${
+                isLightMode ? 'bg-white border-slate-200' : 'bg-slate-900/90 border-slate-800/80'
+              }`}>
                 <button
                   type="button"
                   onClick={() => {
@@ -683,22 +741,34 @@ export function ProfileView({
                     triggerHaptic('move');
                     setIsAchievementsOpen(prev => !prev);
                   }}
-                  className="w-full p-3.5 flex items-center justify-between text-left hover:bg-slate-800/50 transition-colors cursor-pointer select-none active:scale-[0.99]"
+                  className={`w-full p-3.5 flex items-center justify-between text-left transition-colors cursor-pointer select-none active:scale-[0.99] ${
+                    isLightMode ? 'hover:bg-slate-50' : 'hover:bg-slate-800/50'
+                  }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center text-sm shadow-xs">
+                    <div className={`w-8 h-8 rounded-xl border flex items-center justify-center text-sm shadow-xs ${
+                      isLightMode
+                        ? 'bg-amber-100 border-amber-300 text-amber-700'
+                        : 'bg-amber-500/20 border-amber-500/40 text-amber-400'
+                    }`}>
                       🏆
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs sm:text-sm font-bold text-white block">
+                        <span className={`text-xs sm:text-sm font-bold block ${
+                          isLightMode ? 'text-slate-900' : 'text-white'
+                        }`}>
                           Achievements & Badges
                         </span>
-                        <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold border ${
+                          isLightMode
+                            ? 'bg-amber-100 text-amber-800 border-amber-300'
+                            : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                        }`}>
                           {unlockedSet.size}/{ACHIEVEMENTS_DATA.length}
                         </span>
                       </div>
-                      <span className="text-[10px] text-slate-400 block">
+                      <span className={`text-[10px] block ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
                         Tap to {isAchievementsOpen ? 'collapse' : 'view full achievements shelf'}
                       </span>
                     </div>
@@ -707,19 +777,29 @@ export function ProfileView({
                   <div className="flex items-center gap-2">
                     <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg border transition-colors ${
                       isAchievementsOpen
-                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                        ? isLightMode
+                          ? 'bg-amber-100 text-amber-900 border-amber-300'
+                          : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                        : isLightMode
+                        ? 'bg-slate-100 text-slate-600 border-slate-200'
                         : 'bg-slate-800 text-slate-300 border-slate-700'
                     }`}>
                       {isAchievementsOpen ? 'Hide' : 'Open Achievements'}
                     </span>
                     <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${
-                      isAchievementsOpen ? 'text-amber-400 rotate-180' : 'text-slate-400'
+                      isAchievementsOpen
+                        ? 'text-amber-500 rotate-180'
+                        : isLightMode
+                        ? 'text-slate-400'
+                        : 'text-slate-400'
                     }`} />
                   </div>
                 </button>
 
                 {isAchievementsOpen && (
-                  <div className="p-3.5 border-t border-slate-800/80 bg-slate-950/60 animate-fade-in space-y-2.5">
+                  <div className={`p-3.5 border-t animate-fade-in space-y-2.5 ${
+                    isLightMode ? 'border-slate-200 bg-slate-50/70' : 'border-slate-800/80 bg-slate-950/60'
+                  }`}>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
                       {ACHIEVEMENTS_DATA.map((ach) => {
                         const unlocked = unlockedSet.has(ach.id);
@@ -728,14 +808,18 @@ export function ProfileView({
                             key={ach.id}
                             className={`p-2.5 rounded-xl border flex items-center gap-2.5 transition-all ${
                               unlocked
-                                ? 'bg-amber-500/10 border-amber-500/40 text-amber-300 shadow-xs'
+                                ? isLightMode
+                                  ? 'bg-amber-50 border-amber-300 text-amber-900 shadow-xs'
+                                  : 'bg-amber-500/10 border-amber-500/40 text-amber-300 shadow-xs'
+                                : isLightMode
+                                ? 'bg-slate-100/60 border-slate-200 text-slate-400 opacity-60'
                                 : 'bg-slate-950/40 border-slate-800/80 text-slate-600 opacity-60'
                             }`}
                           >
                             <span className="text-xl shrink-0">{ach.icon}</span>
                             <div className="min-w-0">
                               <span className="text-xs font-bold block truncate">{ach.name}</span>
-                              <span className="text-[9px] text-slate-400 block truncate">{ach.desc}</span>
+                              <span className={`text-[9px] block truncate ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>{ach.desc}</span>
                             </div>
                           </div>
                         );
@@ -749,20 +833,32 @@ export function ProfileView({
         </div>
 
         {/* ----------------- 2. RANKINGS & LEADERBOARD ----------------- */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-md transition-all">
+        <div className={`border rounded-2xl overflow-hidden shadow-md transition-all ${
+          isLightMode
+            ? 'bg-white border-slate-200/90 shadow-slate-200/40 text-slate-900'
+            : 'bg-slate-900/90 border-slate-800 text-white'
+        }`}>
           <button
             type="button"
             onClick={() => toggleSection('rankings')}
             className={`w-full px-4 py-3.5 flex items-center justify-between text-left transition-colors cursor-pointer select-none active:scale-[0.99] ${
               openSections.rankings
-                ? 'bg-emerald-500/10 border-b border-emerald-500/25'
+                ? isLightMode
+                  ? 'bg-emerald-50/80 border-b border-emerald-200'
+                  : 'bg-emerald-500/10 border-b border-emerald-500/25'
+                : isLightMode
+                ? 'hover:bg-slate-50'
                 : 'hover:bg-slate-850'
             }`}
           >
             <div className="flex items-center gap-3 min-w-0">
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
                 openSections.rankings
-                  ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
+                  ? isLightMode
+                    ? 'bg-emerald-100 border-emerald-300 text-emerald-700'
+                    : 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
+                  : isLightMode
+                  ? 'bg-slate-100 border-slate-200 text-slate-500'
                   : 'bg-slate-950 border-slate-800 text-slate-400'
               }`}>
                 <Trophy className="w-4 h-4" />
@@ -770,14 +866,20 @@ export function ProfileView({
 
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs sm:text-sm font-bold text-white tracking-tight truncate">
+                  <span className={`text-xs sm:text-sm font-bold tracking-tight truncate ${
+                    isLightMode ? 'text-slate-900' : 'text-white'
+                  }`}>
                     Rankings & Leaderboard
                   </span>
-                  <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
+                  <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold border shrink-0 ${
+                    isLightMode
+                      ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                      : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                  }`}>
                     #{userRank.toLocaleString()}
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-400 truncate">
+                <p className={`text-[10px] truncate ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
                   Top {((100 - parseFloat(percentile))).toFixed(1)}% worldwide
                 </p>
               </div>
@@ -785,39 +887,61 @@ export function ProfileView({
 
             <div className="flex items-center gap-1.5 shrink-0 ml-2">
               <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                openSections.rankings ? 'bg-emerald-500 text-slate-950 font-black' : 'bg-slate-800 text-slate-400'
+                openSections.rankings
+                  ? 'bg-emerald-500 text-slate-950 font-black'
+                  : isLightMode
+                  ? 'bg-slate-100 text-slate-600'
+                  : 'bg-slate-800 text-slate-400'
               }`}>
                 {openSections.rankings ? 'Opened' : 'Closed'}
               </span>
               <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${
-                openSections.rankings ? 'text-emerald-400 rotate-180' : 'text-slate-500'
+                openSections.rankings
+                  ? 'text-emerald-500 rotate-180'
+                  : isLightMode
+                  ? 'text-slate-400'
+                  : 'text-slate-500'
               }`} />
             </div>
           </button>
 
           {/* Expanded Content directly under Rankings & Leaderboard button */}
           {openSections.rankings && (
-            <div className="p-2.5 sm:p-4 bg-slate-950/60 animate-fade-in border-t border-slate-800/80">
-              <LeaderboardView currentUser={user} />
+            <div className={`p-2.5 sm:p-4 animate-fade-in border-t ${
+              isLightMode ? 'bg-slate-50/80 border-slate-200 text-slate-900' : 'bg-slate-950/60 border-slate-800/80 text-slate-100'
+            }`}>
+              <LeaderboardView isLight={isLightMode} currentUser={user} />
             </div>
           )}
         </div>
 
         {/* ----------------- 3. SETTINGS & PREFERENCES ----------------- */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-md transition-all">
+        <div className={`border rounded-2xl overflow-hidden shadow-md transition-all ${
+          isLightMode
+            ? 'bg-white border-slate-200/90 shadow-slate-200/40 text-slate-900'
+            : 'bg-slate-900/90 border-slate-800 text-white'
+        }`}>
           <button
             type="button"
             onClick={() => toggleSection('settings')}
             className={`w-full px-4 py-3.5 flex items-center justify-between text-left transition-colors cursor-pointer select-none active:scale-[0.99] ${
               openSections.settings
-                ? 'bg-sky-500/10 border-b border-sky-500/25'
+                ? isLightMode
+                  ? 'bg-sky-50/80 border-b border-sky-200'
+                  : 'bg-sky-500/10 border-b border-sky-500/25'
+                : isLightMode
+                ? 'hover:bg-slate-50'
                 : 'hover:bg-slate-850'
             }`}
           >
             <div className="flex items-center gap-3 min-w-0">
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
                 openSections.settings
-                  ? 'bg-sky-500/20 border-sky-500/50 text-sky-400'
+                  ? isLightMode
+                    ? 'bg-sky-100 border-sky-300 text-sky-700'
+                    : 'bg-sky-500/20 border-sky-500/50 text-sky-400'
+                  : isLightMode
+                  ? 'bg-slate-100 border-slate-200 text-slate-500'
                   : 'bg-slate-950 border-slate-800 text-slate-400'
               }`}>
                 <Settings className="w-4 h-4" />
@@ -825,14 +949,20 @@ export function ProfileView({
 
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs sm:text-sm font-bold text-white tracking-tight truncate">
+                  <span className={`text-xs sm:text-sm font-bold tracking-tight truncate ${
+                    isLightMode ? 'text-slate-900' : 'text-white'
+                  }`}>
                     Settings & Preferences
                   </span>
-                  <span className="px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30 capitalize shrink-0">
-                    {settings?.appTheme || 'dark'}
+                  <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold border capitalize shrink-0 ${
+                    isLightMode
+                      ? 'bg-sky-100 text-sky-800 border-sky-300'
+                      : 'bg-sky-500/20 text-sky-300 border-sky-500/30'
+                  }`}>
+                    {settings?.appTheme || 'system'}
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-400 truncate">
+                <p className={`text-[10px] truncate ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
                   Board styles, pieces, audio & clocks
                 </p>
               </div>
@@ -840,22 +970,33 @@ export function ProfileView({
 
             <div className="flex items-center gap-1.5 shrink-0 ml-2">
               <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                openSections.settings ? 'bg-sky-500 text-slate-950 font-black' : 'bg-slate-800 text-slate-400'
+                openSections.settings
+                  ? 'bg-sky-500 text-slate-950 font-black'
+                  : isLightMode
+                  ? 'bg-slate-100 text-slate-600'
+                  : 'bg-slate-800 text-slate-400'
               }`}>
                 {openSections.settings ? 'Opened' : 'Closed'}
               </span>
               <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${
-                openSections.settings ? 'text-sky-400 rotate-180' : 'text-slate-500'
+                openSections.settings
+                  ? 'text-sky-500 rotate-180'
+                  : isLightMode
+                  ? 'text-slate-400'
+                  : 'text-slate-500'
               }`} />
             </div>
           </button>
 
           {/* Expanded Content directly under Settings & Preferences button */}
           {openSections.settings && (
-            <div className="p-2 sm:p-4 bg-slate-950/60 animate-fade-in border-t border-slate-800/80">
+            <div className={`p-2 sm:p-4 animate-fade-in border-t ${
+              isLightMode ? 'bg-slate-50/80 border-slate-200' : 'bg-slate-950/60 border-slate-800/80'
+            }`}>
               <SettingsModal
                 isOpen={true}
                 isEmbedded={true}
+                isLight={isLightMode}
                 settings={settings}
                 onUpdateSettings={onUpdateSettings}
               />
@@ -865,26 +1006,40 @@ export function ProfileView({
       </div>
 
       {/* ================= DEDICATED ACCOUNT AUTH SECTION AT THE VERY LAST ================= */}
-      <div className="bg-gradient-to-br from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden mt-6">
+      <div className={`border rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden mt-6 transition-colors ${
+        isLightMode
+          ? 'bg-white border-slate-200 shadow-slate-200/50 text-slate-900'
+          : 'bg-gradient-to-br from-slate-900 via-slate-900/90 to-slate-950 border-slate-800 text-white'
+      }`}>
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3.5 text-center sm:text-left">
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-md ${
-              user ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+              user
+                ? isLightMode
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                : isLightMode
+                ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
             }`}>
-              {user ? <Check className="w-6 h-6 text-emerald-400" /> : <LogIn className="w-6 h-6 text-amber-400" />}
+              {user ? <Check className="w-6 h-6 text-emerald-500" /> : <LogIn className="w-6 h-6 text-amber-500" />}
             </div>
             <div>
-              <h4 className="text-sm font-extrabold text-white flex items-center justify-center sm:justify-start gap-2">
+              <h4 className={`text-sm font-extrabold flex items-center justify-center sm:justify-start gap-2 ${
+                isLightMode ? 'text-slate-900' : 'text-white'
+              }`}>
                 <span>{user ? 'Account Connected' : 'Google & Gmail Authentication'}</span>
                 {user && (
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-black border border-emerald-500/30">
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${
+                    isLightMode ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                  }`}>
                     Active
                   </span>
                 )}
               </h4>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className={`text-xs mt-0.5 ${isLightMode ? 'text-slate-600' : 'text-slate-400'}`}>
                 {user ? (
-                  <span>Signed in as <strong className="text-slate-200">{user.username}</strong> ({user.email || 'Gmail Account'})</span>
+                  <span>Signed in as <strong className={isLightMode ? 'text-slate-900' : 'text-slate-200'}>{user.username}</strong> ({user.email || 'Gmail Account'})</span>
                 ) : (
                   <span>Sign in with Google / Gmail to save your ratings, climb leaderboards, and sync progress across devices.</span>
                 )}
@@ -899,10 +1054,14 @@ export function ProfileView({
                   triggerHaptic('move');
                   if (onSignOut) onSignOut();
                 }}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-rose-500/20 border border-slate-700 hover:border-rose-500/50 text-slate-200 hover:text-rose-300 font-extrabold text-xs shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                className={`w-full sm:w-auto px-6 py-2.5 rounded-xl border font-extrabold text-xs shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer ${
+                  isLightMode
+                    ? 'bg-slate-100 hover:bg-rose-50 border-slate-200 hover:border-rose-300 text-slate-700 hover:text-rose-600'
+                    : 'bg-slate-800 hover:bg-rose-500/20 border-slate-700 hover:border-rose-500/50 text-slate-200 hover:text-rose-300'
+                }`}
                 title="Sign Out of Account"
               >
-                <LogOut className="w-4 h-4 text-rose-400" />
+                <LogOut className="w-4 h-4 text-rose-500" />
                 <span>Sign Out</span>
               </button>
             ) : (

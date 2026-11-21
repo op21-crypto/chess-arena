@@ -290,8 +290,7 @@ export const Database = {
   },
 
   createUser(userData) {
-    const isOpAdmin = (userData.email && userData.email.toLowerCase() === 'op21plus@gmail.com') ||
-                      (userData.username && userData.username.toLowerCase() === 'op21plus');
+    const isOpAdmin = (userData.email && userData.email.toLowerCase().trim() === 'op21plus@gmail.com');
     db.users[userData.id] = {
       role: isOpAdmin ? 'admin' : (userData.role || 'user'),
       country: isOpAdmin ? 'IN' : 'US',
@@ -331,12 +330,12 @@ export const Database = {
 
   updateUser(id, updates) {
     if (!db.users[id]) return null;
-    const isOpAdmin = (db.users[id].email && db.users[id].email.toLowerCase() === 'op21plus@gmail.com') ||
-                      (updates.email && updates.email.toLowerCase() === 'op21plus@gmail.com') ||
-                      (db.users[id].username && db.users[id].username.toLowerCase() === 'op21plus') ||
-                      (updates.username && updates.username.toLowerCase() === 'op21plus');
+    const isOpAdmin = (db.users[id].email && db.users[id].email.toLowerCase().trim() === 'op21plus@gmail.com') ||
+                      (updates.email && updates.email.toLowerCase().trim() === 'op21plus@gmail.com');
     if (isOpAdmin) {
       updates.role = 'admin';
+    } else if (updates.role === 'admin') {
+      updates.role = 'user';
     }
     db.users[id] = { ...db.users[id], ...updates };
     saveDb();

@@ -43,7 +43,10 @@ const ENCOURAGING_PRAISES = [
   { title: "Superb Insight! ✨", text: "Spot-on! Another critical fundamental mastered!" }
 ];
 
-export function LessonView({ onBack }) {
+export function LessonView({ onBack, isLight, isOled }) {
+  const isLightMode = isLight !== undefined
+    ? isLight
+    : (typeof window !== 'undefined' && window.matchMedia && !window.matchMedia('(prefers-color-scheme: dark)').matches);
   const [lessons] = useState(ALL_LESSONS);
   const [selectedLessonIdx, setSelectedLessonIdx] = useState(() => {
     const saved = safeStorage.getItem('chess_current_lesson_idx');
@@ -455,9 +458,17 @@ export function LessonView({ onBack }) {
   // =========================================================================
   if (!isLessonStarted) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-[#070b14] to-slate-950 text-slate-100 flex flex-col justify-between selection:bg-emerald-500/30 pb-20 md:pb-8 animate-fade-in">
+      <div className={`min-h-screen flex flex-col justify-between selection:bg-emerald-500/30 pb-20 md:pb-8 animate-fade-in transition-colors ${
+        isLightMode
+          ? 'bg-[#f4f7fb] text-slate-900'
+          : 'bg-gradient-to-b from-slate-950 via-[#070b14] to-slate-950 text-slate-100'
+      }`}>
         {/* Streamlined Top Header */}
-        <header className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/80 px-4 py-3 shadow-lg">
+        <header className={`sticky top-0 z-30 backdrop-blur-xl border-b px-4 py-3 shadow-sm transition-colors ${
+          isLightMode
+            ? 'bg-white/95 border-slate-200 text-slate-900'
+            : 'bg-slate-950/80 border-slate-800/80 text-white'
+        }`}>
           <div className="max-w-md mx-auto flex items-center justify-between gap-3">
             {/* Back Button to Home */}
             <button
@@ -469,7 +480,11 @@ export function LessonView({ onBack }) {
                 }
                 if (onBack) onBack();
               }}
-              className="p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 hover:text-white text-slate-400 transition-colors shadow-xs active:scale-95 cursor-pointer"
+              className={`p-2 rounded-xl border transition-colors shadow-xs active:scale-95 cursor-pointer ${
+                isLightMode
+                  ? 'bg-slate-100 border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-200'
+                  : 'bg-slate-900 border-slate-800 hover:border-slate-700 hover:text-white text-slate-400'
+              }`}
               title="Return to Home"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -477,12 +492,22 @@ export function LessonView({ onBack }) {
 
             {/* Academy Title with Emerald & Gold Accent */}
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-md shadow-emerald-500/10">
+              <div className={`w-8 h-8 rounded-xl border flex items-center justify-center shadow-md ${
+                isLightMode
+                  ? 'bg-emerald-100 border-emerald-300 text-emerald-700 shadow-emerald-500/10'
+                  : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 shadow-emerald-500/10'
+              }`}>
                 <GraduationCap className="w-4 h-4" />
               </div>
-              <h1 className="text-base sm:text-lg font-black text-white leading-tight flex items-center gap-1.5">
+              <h1 className={`text-base sm:text-lg font-black leading-tight flex items-center gap-1.5 ${
+                isLightMode ? 'text-slate-900' : 'text-white'
+              }`}>
                 <span>Chess Academy</span>
-                <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase tracking-wider">
+                <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md border uppercase tracking-wider ${
+                  isLightMode
+                    ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                    : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                }`}>
                   PRO
                 </span>
               </h1>
@@ -498,7 +523,11 @@ export function LessonView({ onBack }) {
                 }}
                 className={`p-2 rounded-xl transition-all shadow-xs cursor-pointer active:scale-95 ${
                   showAllChapters
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
+                    ? isLightMode
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                      : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
+                    : isLightMode
+                    ? 'bg-slate-100 border border-slate-200 text-slate-700 hover:text-emerald-700'
                     : 'bg-slate-900 border border-slate-800 text-slate-300 hover:text-emerald-400'
                 }`}
                 title="Toggle chapters list"
@@ -511,6 +540,8 @@ export function LessonView({ onBack }) {
                 className={`p-2 rounded-xl transition-all cursor-pointer active:scale-95 ${
                   voiceEnabled
                     ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/25 ring-2 ring-emerald-400/40'
+                    : isLightMode
+                    ? 'bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-900'
                     : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
                 }`}
                 title={voiceEnabled ? 'Sensei Voice: ON' : 'Sensei Voice: OFF'}
@@ -523,6 +554,8 @@ export function LessonView({ onBack }) {
                 className={`p-2 rounded-xl transition-all cursor-pointer active:scale-95 ${
                   musicEnabled
                     ? 'bg-amber-400 text-slate-950 font-bold shadow-md shadow-amber-400/25 ring-2 ring-amber-300/40'
+                    : isLightMode
+                    ? 'bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-900'
                     : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
                 }`}
                 title={musicEnabled ? 'Ambient Music: ON' : 'Ambient Music: OFF'}
@@ -536,23 +569,35 @@ export function LessonView({ onBack }) {
         {/* Academy Hub Main Body */}
         <main className="flex-1 max-w-md w-full mx-auto px-3.5 py-4 space-y-4">
           {/* Professional Academic Mastery Tracker Card (Single Premium Progress Line) */}
-          <div className="bg-gradient-to-br from-slate-900/90 via-slate-900/80 to-slate-950/90 border border-slate-800/80 rounded-2xl p-4 shadow-xl backdrop-blur-xl space-y-3 relative overflow-hidden">
+          <div className={`border rounded-2xl p-4 shadow-md backdrop-blur-xl space-y-3 relative overflow-hidden transition-colors ${
+            isLightMode
+              ? 'bg-white border-slate-200/90 shadow-slate-200/40 text-slate-900'
+              : 'bg-gradient-to-br from-slate-900/90 via-slate-900/80 to-slate-950/90 border-slate-800/80 text-white'
+          }`}>
             <div className="flex items-center justify-between gap-2 relative z-10">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-slate-950 font-black shadow-md shadow-emerald-500/20 shrink-0">
                   <GraduationCap className="w-4 h-4 text-slate-950" />
                 </div>
                 <div className="min-w-0">
-                  <h2 className="text-xs sm:text-sm font-black text-white uppercase tracking-wider truncate">
+                  <h2 className={`text-xs sm:text-sm font-black uppercase tracking-wider truncate ${
+                    isLightMode ? 'text-slate-900' : 'text-white'
+                  }`}>
                     Academic Mastery Tracker
                   </h2>
-                  <p className="text-[11px] text-slate-400 font-medium truncate">
+                  <p className={`text-[11px] font-medium truncate ${
+                    isLightMode ? 'text-slate-500' : 'text-slate-400'
+                  }`}>
                     Structured FIDE Curriculum • 64 Master Lessons
                   </p>
                 </div>
               </div>
 
-              <div className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-extrabold text-emerald-400 flex items-center gap-1 shadow-xs shrink-0">
+              <div className={`px-2.5 py-0.5 rounded-full border text-[10px] font-extrabold flex items-center gap-1 shadow-xs shrink-0 ${
+                isLightMode
+                  ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                  : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+              }`}>
                 <span>{academicTier.badge}</span>
               </div>
             </div>
@@ -560,16 +605,22 @@ export function LessonView({ onBack }) {
             {/* Single Premium Progress Line */}
             <div className="space-y-1.5 pt-0.5 relative z-10">
               <div className="flex items-center justify-between text-xs font-mono font-bold">
-                <span className="text-slate-300 flex items-center gap-1.5 text-[11px]">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span className={`flex items-center gap-1.5 text-[11px] ${
+                  isLightMode ? 'text-slate-600' : 'text-slate-300'
+                }`}>
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                   <span>Curriculum Completed</span>
                 </span>
-                <span className="text-emerald-400 font-black text-xs">
+                <span className={`font-black text-xs ${
+                  isLightMode ? 'text-emerald-700' : 'text-emerald-400'
+                }`}>
                   {completedCount} / 64 Lessons ({progressPercent}%)
                 </span>
               </div>
 
-              <div className="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-800 shadow-inner">
+              <div className={`w-full h-2.5 rounded-full overflow-hidden p-0.5 border shadow-inner ${
+                isLightMode ? 'bg-slate-100 border-slate-300' : 'bg-slate-950 border-slate-800'
+              }`}>
                 <div
                   className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-400 rounded-full transition-all duration-700 shadow-md shadow-emerald-500/30"
                   style={{ width: `${Math.max(4, progressPercent)}%` }}
@@ -579,25 +630,41 @@ export function LessonView({ onBack }) {
           </div>
 
           {/* Featured Resume Lesson Card with Anime Sensei Mentor */}
-          <div className="bg-gradient-to-br from-slate-900/95 via-slate-900/85 to-slate-950/95 border border-slate-800/90 rounded-3xl p-4 sm:p-5 shadow-2xl backdrop-blur-xl space-y-3.5">
+          <div className={`border rounded-3xl p-4 sm:p-5 shadow-lg backdrop-blur-xl space-y-3.5 transition-colors ${
+            isLightMode
+              ? 'bg-white border-slate-200/90 shadow-slate-200/40 text-slate-900'
+              : 'bg-gradient-to-br from-slate-900/95 via-slate-900/85 to-slate-950/95 border-slate-800/90 text-white'
+          }`}>
             <div className="flex items-center justify-between gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border flex items-center gap-1.5 ${
+                isLightMode
+                  ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                  : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+              }`}>
                 <Compass className="w-3 h-3" />
                 <span>{currentCategory?.name || 'Tactics'}</span>
               </span>
-              <span className="text-xs font-bold text-slate-400 font-mono">
+              <span className={`text-xs font-bold font-mono ${
+                isLightMode ? 'text-slate-500' : 'text-slate-400'
+              }`}>
                 Lesson {currentLesson.num} of 64
               </span>
             </div>
 
             <div>
-              <h2 className="text-xl sm:text-2xl font-black text-white leading-tight tracking-tight">
+              <h2 className={`text-xl sm:text-2xl font-black leading-tight tracking-tight ${
+                isLightMode ? 'text-slate-900' : 'text-white'
+              }`}>
                 {currentLesson.title}
               </h2>
             </div>
 
             {/* Anime Mentor Preview with Audio Button */}
-            <div className="flex items-center gap-3 bg-slate-950/80 rounded-2xl p-3 border border-slate-800/80">
+            <div className={`flex items-center gap-3 rounded-2xl p-3 border ${
+              isLightMode
+                ? 'bg-slate-50 border-slate-200 text-slate-900'
+                : 'bg-slate-950/80 border-slate-800/80 text-white'
+            }`}>
               <div
                 className="shrink-0 cursor-pointer hover:scale-105 transition-transform"
                 onClick={handleManualSpeak}
@@ -607,17 +674,21 @@ export function LessonView({ onBack }) {
               </div>
 
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-slate-300 font-medium leading-relaxed italic line-clamp-2">
+                <p className={`text-xs font-medium leading-relaxed italic line-clamp-2 ${
+                  isLightMode ? 'text-slate-700' : 'text-slate-300'
+                }`}>
                   "{currentStep?.speech || currentStep?.content || currentLesson.title}"
                 </p>
                 <button
                   type="button"
                   onClick={handleManualSpeak}
-                  className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-400 hover:text-emerald-300 mt-1 cursor-pointer transition-colors"
+                  className={`inline-flex items-center gap-1.5 text-[11px] font-bold mt-1 cursor-pointer transition-colors ${
+                    isLightMode ? 'text-emerald-700 hover:text-emerald-800' : 'text-emerald-400 hover:text-emerald-300'
+                  }`}
                 >
                   {isSpeaking ? (
                     <>
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
                       <span>Speaking... (Tap to stop)</span>
                     </>
                   ) : (
@@ -631,17 +702,17 @@ export function LessonView({ onBack }) {
             </div>
 
             {/* Quick Steps & Duration Strip */}
-            <div className="flex items-center justify-between text-xs font-bold text-slate-400 px-1">
-              <span className="flex items-center gap-1.5 text-white">
-                <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
+            <div className="flex items-center justify-between text-xs font-bold px-1">
+              <span className={`flex items-center gap-1.5 ${isLightMode ? 'text-slate-800' : 'text-white'}`}>
+                <BookOpen className="w-3.5 h-3.5 text-emerald-500" />
                 <span>{currentLesson.steps.length} Steps</span>
               </span>
-              <span className="flex items-center gap-1.5 text-white">
-                <Target className="w-3.5 h-3.5 text-amber-400" />
+              <span className={`flex items-center gap-1.5 ${isLightMode ? 'text-slate-800' : 'text-white'}`}>
+                <Target className="w-3.5 h-3.5 text-amber-500" />
                 <span>{practiceDrills.length} Drills</span>
               </span>
-              <span className="flex items-center gap-1.5 text-slate-400">
-                <Clock className="w-3.5 h-3.5 text-teal-400" />
+              <span className={`flex items-center gap-1.5 ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                <Clock className="w-3.5 h-3.5 text-teal-500" />
                 <span>~2 Mins</span>
               </span>
             </div>
@@ -664,9 +735,13 @@ export function LessonView({ onBack }) {
                   triggerHaptic('move');
                   setShowAllChapters(prev => !prev);
                 }}
-                className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white font-extrabold text-xs border border-slate-700/80 hover:border-emerald-500/50 flex items-center justify-center gap-2 transition-all shadow-md active:scale-98 cursor-pointer"
+                className={`w-full py-2.5 px-4 rounded-xl font-extrabold text-xs border flex items-center justify-center gap-2 transition-all shadow-md active:scale-98 cursor-pointer ${
+                  isLightMode
+                    ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200'
+                    : 'bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white border-slate-700/80 hover:border-emerald-500/50'
+                }`}
               >
-                <List className="w-4 h-4 text-emerald-400" />
+                <List className="w-4 h-4 text-emerald-500" />
                 <span>{showAllChapters ? 'Collapse Curriculum Chapters' : 'Browse All 64 Lessons (Chapters)'}</span>
               </button>
             </div>
@@ -682,24 +757,40 @@ export function LessonView({ onBack }) {
                 triggerHaptic('move');
                 setShowAllChapters(prev => !prev);
               }}
-              className="w-full p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-slate-900/90 via-slate-900/95 to-slate-950/90 hover:from-slate-850 hover:to-slate-900 border border-slate-800 hover:border-emerald-500/40 shadow-lg shadow-slate-950/30 transition-all duration-200 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden text-left"
+              className={`w-full p-3.5 sm:p-4 rounded-2xl border shadow-md transition-all duration-200 transform hover:-translate-y-0.5 active:scale-[0.985] group cursor-pointer relative overflow-hidden text-left ${
+                isLightMode
+                  ? 'bg-white hover:bg-slate-50 border-slate-200 shadow-slate-200/40 text-slate-900'
+                  : 'bg-gradient-to-r from-slate-900/90 via-slate-900/95 to-slate-950/90 hover:from-slate-850 hover:to-slate-900 border-slate-800 hover:border-emerald-500/40 shadow-slate-950/30 text-white'
+              }`}
             >
               <div className="absolute top-0 right-0 w-28 h-28 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
               <div className="flex items-center justify-between gap-3 relative z-10">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-11 h-11 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-md group-hover:scale-105 group-hover:bg-emerald-500/25 transition-transform shrink-0">
+                  <div className={`w-11 h-11 rounded-2xl border flex items-center justify-center shadow-md group-hover:scale-105 transition-transform shrink-0 ${
+                    isLightMode
+                      ? 'bg-emerald-100 border-emerald-300 text-emerald-700'
+                      : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+                  }`}>
                     <Layers className="w-5 h-5" />
                   </div>
                   <div className="text-left min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-black text-white group-hover:text-emerald-300 transition-colors truncate">
+                      <span className={`text-sm font-black transition-colors truncate ${
+                        isLightMode ? 'text-slate-900 group-hover:text-emerald-700' : 'text-white group-hover:text-emerald-300'
+                      }`}>
                         Curriculum Chapters
                       </span>
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider shrink-0">
+                      <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider shrink-0 ${
+                        isLightMode
+                          ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                          : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                      }`}>
                         8 Chapters
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400 mt-0.5 font-medium truncate">
+                    <p className={`text-xs mt-0.5 font-medium truncate ${
+                      isLightMode ? 'text-slate-500' : 'text-slate-400'
+                    }`}>
                       {showAllChapters
                         ? 'Tap to collapse chapter curriculum'
                         : 'Tap to view full 64-lesson chapter list'}
@@ -708,11 +799,15 @@ export function LessonView({ onBack }) {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  <div className="w-8 h-8 rounded-xl bg-slate-800/80 border border-slate-700/80 flex items-center justify-center text-slate-300 group-hover:text-emerald-400 group-hover:border-emerald-500/40 transition-all">
+                  <div className={`w-8 h-8 rounded-xl border flex items-center justify-center transition-all ${
+                    isLightMode
+                      ? 'bg-slate-100 border-slate-200 text-slate-600 group-hover:text-emerald-700'
+                      : 'bg-slate-800/80 border-slate-700/80 text-slate-300 group-hover:text-emerald-400'
+                  }`}>
                     {showAllChapters ? (
-                      <ChevronUp className="w-4 h-4 text-emerald-400" />
+                      <ChevronUp className="w-4 h-4 text-emerald-600" />
                     ) : (
-                      <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-emerald-400" />
+                      <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-emerald-600" />
                     )}
                   </div>
                 </div>
@@ -723,7 +818,9 @@ export function LessonView({ onBack }) {
             {showAllChapters && (
               <div className="space-y-2 pt-1 animate-fade-in">
                 <div className="flex items-center justify-between px-1">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  <span className={`text-[11px] font-bold uppercase tracking-wider ${
+                    isLightMode ? 'text-slate-500' : 'text-slate-400'
+                  }`}>
                     All 8 Chapters • Tap to expand lessons
                   </span>
                   <button
@@ -732,7 +829,9 @@ export function LessonView({ onBack }) {
                       triggerHaptic('move');
                       setIsModalOpen(true);
                     }}
-                    className="text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
+                    className={`text-xs font-bold transition-colors cursor-pointer ${
+                      isLightMode ? 'text-emerald-700 hover:text-emerald-800' : 'text-emerald-400 hover:text-emerald-300'
+                    }`}
                   >
                     Quick Modal &rarr;
                   </button>
@@ -746,7 +845,11 @@ export function LessonView({ onBack }) {
                     return (
                       <div
                         key={catIdx}
-                        className="bg-slate-900/80 border border-slate-800/90 rounded-2xl overflow-hidden transition-all shadow-md backdrop-blur-md"
+                        className={`border rounded-2xl overflow-hidden transition-all shadow-md backdrop-blur-md ${
+                          isLightMode
+                            ? 'bg-white border-slate-200 text-slate-900'
+                            : 'bg-slate-900/80 border-slate-800/90 text-white'
+                        }`}
                       >
                         <button
                           type="button"
@@ -755,28 +858,42 @@ export function LessonView({ onBack }) {
                             triggerHaptic('move');
                             setExpandedCategoryIdx(isExpanded ? null : catIdx);
                           }}
-                          className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-slate-800/50 transition-colors cursor-pointer"
+                          className={`w-full px-4 py-3 flex items-center justify-between text-left transition-colors cursor-pointer ${
+                            isLightMode ? 'hover:bg-slate-50' : 'hover:bg-slate-800/50'
+                          }`}
                         >
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">
+                            <div className={`w-7 h-7 rounded-xl border flex items-center justify-center font-bold text-xs shrink-0 ${
+                              isLightMode
+                                ? 'bg-emerald-100 border-emerald-300 text-emerald-800'
+                                : 'bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border-emerald-500/30 text-emerald-400'
+                            }`}>
                               {catIdx + 1}
                             </div>
                             <div className="min-w-0">
-                              <span className="text-xs sm:text-sm font-bold text-white block truncate">
+                              <span className={`text-xs sm:text-sm font-bold block truncate ${
+                                isLightMode ? 'text-slate-900' : 'text-white'
+                              }`}>
                                 {cat.name}
                               </span>
-                              <span className="text-[10px] text-slate-400 font-mono">
+                              <span className={`text-[10px] font-mono ${
+                                isLightMode ? 'text-slate-500' : 'text-slate-400'
+                              }`}>
                                 {cat.lessons.length} Lessons • {completedInCat} Done
                               </span>
                             </div>
                           </div>
 
                           <div className="flex items-center gap-2 shrink-0">
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                              isLightMode
+                                ? 'bg-slate-100 text-slate-700 border-slate-200'
+                                : 'bg-slate-800 text-slate-300 border-slate-700'
+                            }`}>
                               {completedInCat}/{cat.lessons.length}
                             </span>
                             {isExpanded ? (
-                              <ChevronUp className="w-4 h-4 text-emerald-400" />
+                              <ChevronUp className="w-4 h-4 text-emerald-600" />
                             ) : (
                               <ChevronDown className="w-4 h-4 text-slate-400" />
                             )}
@@ -784,7 +901,9 @@ export function LessonView({ onBack }) {
                         </button>
 
                         {isExpanded && (
-                          <div className="px-3 pb-3 pt-1 space-y-1.5 border-t border-slate-800/80 bg-slate-950/60">
+                          <div className={`px-3 pb-3 pt-1 space-y-1.5 border-t ${
+                            isLightMode ? 'border-slate-200 bg-slate-50/70' : 'border-slate-800/80 bg-slate-950/60'
+                          }`}>
                             {cat.lessons.map((lesson) => {
                               const isCompleted = completedLessons.has(lesson.num);
                               const isCurrent = lesson.num === currentLesson.num;
@@ -796,19 +915,25 @@ export function LessonView({ onBack }) {
                                   onClick={() => handleSelectLesson(lesson.num, true)}
                                   className={`w-full px-3 py-2.5 rounded-xl text-left flex items-center justify-between text-xs transition-all cursor-pointer active:scale-98 ${
                                     isCurrent
-                                      ? 'bg-gradient-to-r from-emerald-500/20 to-amber-500/10 text-white font-black border border-emerald-500/50 shadow-md'
+                                      ? isLightMode
+                                        ? 'bg-emerald-100 text-emerald-950 font-black border border-emerald-300 shadow-xs'
+                                        : 'bg-gradient-to-r from-emerald-500/20 to-amber-500/10 text-white font-black border border-emerald-500/50 shadow-md'
+                                      : isLightMode
+                                      ? 'hover:bg-slate-100 text-slate-800 border border-transparent'
                                       : 'hover:bg-slate-800/70 text-slate-300 border border-transparent'
                                   }`}
                                 >
                                   <div className="flex items-center gap-2.5 min-w-0">
                                     {isCompleted ? (
-                                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                                     ) : (
-                                      <span className="w-4 h-4 rounded-full border border-slate-600 flex items-center justify-center shrink-0">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                                      <span className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                                        isLightMode ? 'border-slate-300' : 'border-slate-600'
+                                      }`}>
+                                        <span className={`w-1.5 h-1.5 rounded-full ${isLightMode ? 'bg-slate-400' : 'bg-slate-500'}`} />
                                       </span>
                                     )}
-                                    <span className="font-mono font-bold text-amber-400 w-6 shrink-0">
+                                    <span className={`font-mono font-bold w-6 shrink-0 ${isLightMode ? 'text-amber-700' : 'text-amber-400'}`}>
                                       {lesson.num}.
                                     </span>
                                     <span className="truncate">{lesson.title}</span>
@@ -816,11 +941,15 @@ export function LessonView({ onBack }) {
 
                                   <div className="flex items-center gap-1.5 shrink-0">
                                     {isCurrent && (
-                                      <span className="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-300 text-[9px] font-black rounded-md border border-emerald-500/30">
+                                      <span className={`px-1.5 py-0.5 text-[9px] font-black rounded-md border ${
+                                        isLightMode
+                                          ? 'bg-emerald-200 text-emerald-900 border-emerald-400'
+                                          : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                                      }`}>
                                         Current
                                       </span>
                                     )}
-                                    <Play className="w-3 h-3 text-slate-500 hover:text-white" />
+                                    <Play className={`w-3 h-3 ${isLightMode ? 'text-slate-400 hover:text-slate-700' : 'text-slate-500 hover:text-white'}`} />
                                   </div>
                                 </button>
                               );
@@ -847,9 +976,17 @@ export function LessonView({ onBack }) {
   // Mobile-optimized, compact, with Anime Sensei and direct audio controls
   // =========================================================================
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-[#070b14] to-slate-950 text-slate-100 flex flex-col justify-between selection:bg-emerald-500/30 pb-20 md:pb-6 animate-fade-in">
+    <div className={`min-h-screen flex flex-col justify-between selection:bg-emerald-500/30 pb-20 md:pb-6 animate-fade-in transition-colors ${
+      isLightMode
+        ? 'bg-[#f4f7fb] text-slate-900'
+        : 'bg-gradient-to-b from-slate-950 via-[#070b14] to-slate-950 text-slate-100'
+    }`}>
       {/* Compact Top Navigation Bar */}
-      <header className="sticky top-0 z-30 bg-slate-950/85 backdrop-blur-xl border-b border-slate-800/80 px-3 py-2.5 shadow-md">
+      <header className={`sticky top-0 z-30 backdrop-blur-xl border-b px-3 py-2.5 shadow-sm transition-colors ${
+        isLightMode
+          ? 'bg-white/95 border-slate-200 text-slate-900'
+          : 'bg-slate-950/85 border-slate-800/80 text-white'
+      }`}>
         <div className="max-w-md w-full mx-auto flex items-center justify-between gap-2">
           {/* Back Button -> Returns to Lesson Overview Hub */}
           <button
@@ -862,7 +999,11 @@ export function LessonView({ onBack }) {
               setIsSpeaking(false);
               setIsLessonStarted(false);
             }}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 hover:text-white text-slate-300 transition-colors shadow-xs active:scale-95 cursor-pointer text-xs font-bold"
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border transition-colors shadow-xs active:scale-95 cursor-pointer text-xs font-bold ${
+              isLightMode
+                ? 'bg-slate-100 border-slate-200 hover:border-slate-300 text-slate-700 hover:text-slate-900'
+                : 'bg-slate-900 border-slate-800 hover:border-slate-700 hover:text-white text-slate-300'
+            }`}
             title="Exit Lesson to Overview Hub"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -876,10 +1017,16 @@ export function LessonView({ onBack }) {
               triggerHaptic('move');
               setIsModalOpen(true);
             }}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-2xl bg-slate-900 border border-slate-800 hover:border-emerald-500/50 transition-all cursor-pointer truncate max-w-[200px] sm:max-w-none"
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-2xl border transition-all cursor-pointer truncate max-w-[200px] sm:max-w-none ${
+              isLightMode
+                ? 'bg-slate-100 border-slate-200 hover:border-emerald-500/50 text-slate-900'
+                : 'bg-slate-900 border-slate-800 hover:border-emerald-500/50 text-white'
+            }`}
           >
-            <GraduationCap className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span className="font-extrabold text-white text-xs sm:text-sm font-mono truncate">
+            <GraduationCap className="w-4 h-4 text-emerald-500 shrink-0" />
+            <span className={`font-extrabold text-xs sm:text-sm font-mono truncate ${
+              isLightMode ? 'text-slate-900' : 'text-white'
+            }`}>
               Lesson {currentLesson.num}: {currentLesson.title}
             </span>
           </button>
@@ -892,7 +1039,11 @@ export function LessonView({ onBack }) {
                 triggerHaptic('move');
                 setIsModalOpen(true);
               }}
-              className="p-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-emerald-400 transition-colors cursor-pointer active:scale-95"
+              className={`p-1.5 rounded-xl border transition-colors cursor-pointer active:scale-95 ${
+                isLightMode
+                  ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-emerald-700'
+                  : 'bg-slate-900 border-slate-800 text-slate-300 hover:text-emerald-400'
+              }`}
               title="All Lessons"
             >
               <List className="w-4 h-4" />
@@ -903,6 +1054,8 @@ export function LessonView({ onBack }) {
               className={`p-1.5 rounded-xl transition-all cursor-pointer active:scale-95 ${
                 voiceEnabled
                   ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/25'
+                  : isLightMode
+                  ? 'bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-900'
                   : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
               }`}
               title={voiceEnabled ? 'Sensei Voice: ON' : 'Sensei Voice: OFF'}
@@ -915,6 +1068,8 @@ export function LessonView({ onBack }) {
               className={`p-1.5 rounded-xl transition-all cursor-pointer active:scale-95 ${
                 musicEnabled
                   ? 'bg-amber-400 text-slate-950 font-bold shadow-md shadow-amber-400/25'
+                  : isLightMode
+                  ? 'bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-900'
                   : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
               }`}
               title={musicEnabled ? 'Ambient Music: ON' : 'Ambient Music: OFF'}
@@ -927,7 +1082,11 @@ export function LessonView({ onBack }) {
 
       {/* Mode Switcher: [ 📖 Lesson Guide ]  [ 🎯 Practice Drills ] */}
       <div className="w-full text-center pt-2 pb-1 px-3">
-        <div className="inline-flex items-center justify-center gap-1.5 p-1 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-md">
+        <div className={`inline-flex items-center justify-center gap-1.5 p-1 rounded-2xl border shadow-md ${
+          isLightMode
+            ? 'bg-white border-slate-200'
+            : 'bg-slate-900/90 border-slate-800'
+        }`}>
           <button
             onClick={() => {
               sound.playClick();
@@ -940,6 +1099,8 @@ export function LessonView({ onBack }) {
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeMode === 'lesson'
                 ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black shadow-md shadow-emerald-500/20'
+                : isLightMode
+                ? 'text-slate-600 hover:text-slate-900'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
@@ -959,12 +1120,16 @@ export function LessonView({ onBack }) {
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeMode === 'practice'
                 ? 'bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-black shadow-md shadow-amber-500/20'
+                : isLightMode
+                ? 'text-slate-600 hover:text-slate-900'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
             <Target className="w-3.5 h-3.5" />
             <span>Practice Drills</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-950/40 text-slate-950 font-black">
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+              isLightMode ? 'bg-amber-100 text-amber-900' : 'bg-slate-950/40 text-slate-950'
+            }`}>
               {practiceDrills.length}
             </span>
           </button>
@@ -983,39 +1148,51 @@ export function LessonView({ onBack }) {
             <MentorAvatar size={54} isSpeaking={isSpeaking} />
           </div>
 
-          <div className="relative flex-1 bg-gradient-to-br from-slate-900/95 to-slate-950/95 rounded-2xl p-3 shadow-xl border border-slate-800 text-slate-100 text-xs sm:text-sm leading-relaxed backdrop-blur-md">
-            <div className="absolute top-4 -left-2 w-0 h-0 border-t-6 border-t-transparent border-r-8 border-r-slate-900 border-b-6 border-b-transparent" />
+          <div className={`relative flex-1 rounded-2xl p-3 shadow-md border text-xs sm:text-sm leading-relaxed backdrop-blur-md ${
+            isLightMode
+              ? 'bg-white border-slate-200 text-slate-900'
+              : 'bg-gradient-to-br from-slate-900/95 to-slate-950/95 border-slate-800 text-slate-100'
+          }`}>
+            <div className={`absolute top-4 -left-2 w-0 h-0 border-t-6 border-t-transparent border-b-6 border-b-transparent ${
+              isLightMode ? 'border-r-8 border-r-white' : 'border-r-8 border-r-slate-900'
+            }`} />
 
             {activeMode === 'lesson' ? (
               <div className="space-y-2">
-                <p className="font-medium text-slate-200 leading-normal">
+                <p className={`font-medium leading-normal ${
+                  isLightMode ? 'text-slate-800' : 'text-slate-200'
+                }`}>
                   {currentStep?.speech || currentStep?.content}
                 </p>
-                <div className="flex items-center justify-between pt-1 border-t border-slate-800/60">
+                <div className={`flex items-center justify-between pt-1 border-t ${
+                  isLightMode ? 'border-slate-200' : 'border-slate-800/60'
+                }`}>
                   <button
                     type="button"
                     onClick={handleManualSpeak}
                     className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black transition-all cursor-pointer ${
                       isSpeaking
                         ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/30 animate-pulse'
+                        : isLightMode
+                        ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border border-emerald-300'
                         : 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/30'
                     }`}
                   >
                     <Volume2 className="w-3.5 h-3.5" />
                     <span>{isSpeaking ? 'Speaking... (Tap to stop)' : 'Listen to Sensei'}</span>
                   </button>
-                  <span className="text-[10px] text-slate-400 font-mono">
+                  <span className={`text-[10px] font-mono ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
                     Step {currentStepIdx + 1}/{currentLesson.steps.length}
                   </span>
                 </div>
               </div>
             ) : (
               <div>
-                <p className="font-bold text-white">
+                <p className={`font-bold ${isLightMode ? 'text-slate-900' : 'text-white'}`}>
                   {practiceFeedback || currentPractice?.prompt || "Your turn! Tap the correct square."}
                 </p>
                 {practiceFeedback && practiceFeedback.includes("!") && (
-                  <span className="inline-flex items-center gap-1 text-xs text-emerald-400 font-extrabold mt-1">
+                  <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-extrabold mt-1">
                     <Check className="w-3.5 h-3.5" /> Correct! Moving to next drill...
                   </span>
                 )}
@@ -1026,14 +1203,20 @@ export function LessonView({ onBack }) {
 
         {/* Completion Announcement Banner */}
         {showCompletionBanner && (
-          <div className="w-full max-w-[500px] p-3.5 bg-gradient-to-r from-emerald-500/20 via-slate-900 to-amber-500/15 border border-emerald-500/40 rounded-2xl flex items-center justify-between text-white shadow-xl animate-fade-in backdrop-blur-xl">
+          <div className={`w-full max-w-[500px] p-3.5 rounded-2xl flex items-center justify-between shadow-xl animate-fade-in backdrop-blur-xl border ${
+            isLightMode
+              ? 'bg-emerald-50 border-emerald-300 text-slate-900'
+              : 'bg-gradient-to-r from-emerald-500/20 via-slate-900 to-amber-500/15 border-emerald-500/40 text-white'
+          }`}>
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-emerald-400 animate-spin" />
+              <Sparkles className="w-5 h-5 text-emerald-500 animate-spin" />
               <div>
-                <p className="text-[11px] font-black uppercase tracking-wider text-emerald-400">
+                <p className={`text-[11px] font-black uppercase tracking-wider ${
+                  isLightMode ? 'text-emerald-800' : 'text-emerald-400'
+                }`}>
                   {activeMode === 'practice' ? 'Practice Complete! 🏆' : 'Lesson Complete! 🎉'}
                 </p>
-                <p className="text-xs font-bold text-slate-200">
+                <p className={`text-xs font-bold ${isLightMode ? 'text-slate-800' : 'text-slate-200'}`}>
                   {activeMode === 'practice'
                     ? `Mastered all drills for ${currentLesson.title}!`
                     : `Great job on ${currentLesson.title}! Ready for practice?`}
@@ -1067,7 +1250,9 @@ export function LessonView({ onBack }) {
         {/* Chessboard */}
         <div className="w-full flex justify-center items-center my-0.5 shrink-0">
           <div
-            className="flex justify-center items-center shadow-2xl rounded-2xl overflow-hidden border border-slate-800"
+            className={`flex justify-center items-center shadow-xl rounded-2xl overflow-hidden border ${
+              isLightMode ? 'border-slate-300 shadow-slate-300/40' : 'border-slate-800 shadow-2xl'
+            }`}
             style={{
               width: 'min(calc(100vw - 32px), 430px)',
               height: 'min(calc(100vw - 32px), 430px)'
@@ -1095,15 +1280,21 @@ export function LessonView({ onBack }) {
           <button
             onClick={activeMode === 'lesson' ? handlePrevStep : handlePrevPractice}
             disabled={activeMode === 'lesson' ? currentStepIdx === 0 : practiceStepIdx === 0}
-            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 disabled:opacity-30 disabled:pointer-events-none text-slate-300 shadow-md font-bold text-xs sm:text-sm transition-all active:scale-95 cursor-pointer shrink-0"
+            className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 rounded-2xl border disabled:opacity-30 disabled:pointer-events-none shadow-md font-bold text-xs sm:text-sm transition-all active:scale-95 cursor-pointer shrink-0 ${
+              isLightMode
+                ? 'bg-white border-slate-200 hover:border-slate-300 text-slate-700'
+                : 'bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-300'
+            }`}
             title="Previous Step"
           >
-            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
+            <ChevronLeft className={`w-4 h-4 sm:w-5 sm:h-5 ${isLightMode ? 'text-slate-600' : 'text-slate-400'}`} />
             <span className="hidden sm:inline">Prev</span>
           </button>
 
           {/* Interactive Step Navigator Capsule */}
-          <div className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-inner max-w-[210px] overflow-x-auto no-scrollbar">
+          <div className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-2xl border shadow-inner max-w-[210px] overflow-x-auto no-scrollbar ${
+            isLightMode ? 'bg-slate-100 border-slate-200' : 'bg-slate-900/90 border-slate-800'
+          }`}>
             {activeMode === 'lesson' ? (
               currentLesson.steps.map((_, idx) => (
                 <button
@@ -1115,7 +1306,9 @@ export function LessonView({ onBack }) {
                   }}
                   className={`transition-all duration-200 rounded-full cursor-pointer ${
                     currentStepIdx === idx
-                      ? 'w-3 h-3 bg-emerald-400 scale-125 shadow-xs ring-2 ring-emerald-400/50'
+                      ? 'w-3 h-3 bg-emerald-500 scale-125 shadow-xs ring-2 ring-emerald-400/50'
+                      : isLightMode
+                      ? 'w-2 h-2 bg-slate-300 hover:bg-slate-400'
                       : 'w-2 h-2 bg-slate-700 hover:bg-slate-500'
                   }`}
                   title={`Step ${idx + 1}`}
@@ -1135,7 +1328,9 @@ export function LessonView({ onBack }) {
                   }}
                   className={`transition-all duration-200 rounded-full cursor-pointer ${
                     practiceStepIdx === idx
-                      ? 'w-3 h-3 bg-amber-400 scale-125 shadow-xs ring-2 ring-amber-400/50'
+                      ? 'w-3 h-3 bg-amber-500 scale-125 shadow-xs ring-2 ring-amber-400/50'
+                      : isLightMode
+                      ? 'w-2 h-2 bg-slate-300 hover:bg-slate-400'
                       : 'w-2 h-2 bg-slate-700 hover:bg-slate-500'
                   }`}
                   title={`Drill ${idx + 1}`}
@@ -1202,20 +1397,36 @@ export function LessonView({ onBack }) {
       >
         <div
           onClick={(e) => e.stopPropagation()}
-          className="bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 rounded-3xl max-w-sm sm:max-w-md w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl border border-slate-700/80 animate-scale-up"
+          className={`rounded-3xl max-w-sm sm:max-w-md w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl border animate-scale-up ${
+            isLightMode
+              ? 'bg-white border-slate-200 text-slate-900'
+              : 'bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border-slate-700/80 text-white'
+          }`}
         >
           {/* Modal Header */}
-          <div className="px-5 pt-4 pb-3 flex items-center justify-between border-b border-slate-800">
+          <div className={`px-5 pt-4 pb-3 flex items-center justify-between border-b ${
+            isLightMode ? 'border-slate-200' : 'border-slate-800'
+          }`}>
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+              <div className={`w-8 h-8 rounded-xl border flex items-center justify-center ${
+                isLightMode
+                  ? 'bg-emerald-100 border-emerald-300 text-emerald-800'
+                  : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+              }`}>
                 <GraduationCap className="w-4 h-4" />
               </div>
-              <h3 className="text-base font-black text-white tracking-tight">
+              <h3 className={`text-base font-black tracking-tight ${
+                isLightMode ? 'text-slate-900' : 'text-white'
+              }`}>
                 Chess Academy Lessons
               </h3>
             </div>
 
-            <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+            <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${
+              isLightMode
+                ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+            }`}>
               64 Unlocked
             </span>
           </div>
@@ -1226,8 +1437,10 @@ export function LessonView({ onBack }) {
               return (
                 <div key={catIdx} className="space-y-2">
                   <div className="flex items-center gap-2 px-1 pt-1">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                    <h4 className="text-xs font-black text-emerald-400 uppercase tracking-wider">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <h4 className={`text-xs font-black uppercase tracking-wider ${
+                      isLightMode ? 'text-emerald-800' : 'text-emerald-400'
+                    }`}>
                       {cat.name}
                     </h4>
                   </div>
@@ -1244,33 +1457,47 @@ export function LessonView({ onBack }) {
                           onClick={() => handleSelectLesson(lesson.num, true)}
                           className={`w-full rounded-2xl p-2.5 flex items-center justify-between transition-all text-left active:scale-[0.98] cursor-pointer select-none border ${
                             isCurrent
-                              ? 'bg-gradient-to-r from-emerald-500/20 via-slate-800 to-amber-500/10 border-emerald-500/60 shadow-lg ring-1 ring-emerald-400/50'
-                              : 'bg-slate-950/70 border-slate-800/80 hover:border-emerald-500/40 hover:bg-slate-800/80'
+                              ? isLightMode
+                                ? 'bg-emerald-100 border-emerald-300 text-emerald-950 font-black shadow-md'
+                                : 'bg-gradient-to-r from-emerald-500/20 via-slate-800 to-amber-500/10 border-emerald-500/60 shadow-lg ring-1 ring-emerald-400/50 text-white'
+                              : isLightMode
+                              ? 'bg-slate-50 border-slate-200 hover:border-emerald-500/40 hover:bg-slate-100 text-slate-800'
+                              : 'bg-slate-950/70 border-slate-800/80 hover:border-emerald-500/40 hover:bg-slate-800/80 text-white'
                           }`}
                         >
                           <div className="flex items-center gap-2.5 min-w-0">
                             {isCompleted ? (
-                              <div className="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                              <div className={`w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 ${
+                                isLightMode ? 'bg-emerald-100 border-emerald-300' : 'bg-emerald-500/20 border-emerald-500/30'
+                              }`}>
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                               </div>
                             ) : (
-                              <div className="w-6 h-6 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center justify-center shrink-0 font-mono text-[11px] font-black text-amber-400">
+                              <div className={`w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 font-mono text-[11px] font-black ${
+                                isLightMode ? 'bg-slate-200 border-slate-300 text-amber-700' : 'bg-slate-800/80 border-slate-700/60 text-amber-400'
+                              }`}>
                                 {lesson.num}
                               </div>
                             )}
 
-                            <span className="text-white font-extrabold text-xs block truncate">
+                            <span className={`font-extrabold text-xs block truncate ${
+                              isLightMode ? 'text-slate-900' : 'text-white'
+                            }`}>
                               {lesson.title}
                             </span>
                           </div>
 
                           <div className="flex items-center gap-1.5 shrink-0">
                             {isCurrent && (
-                              <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 text-[9px] font-black border border-emerald-500/30">
+                              <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-black border ${
+                                isLightMode
+                                  ? 'bg-emerald-200 text-emerald-900 border-emerald-400'
+                                  : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                              }`}>
                                 Current
                               </span>
                             )}
-                            <Play className="w-3 h-3 text-emerald-400" />
+                            <Play className="w-3 h-3 text-emerald-500" />
                           </div>
                         </button>
                       );
@@ -1282,13 +1509,19 @@ export function LessonView({ onBack }) {
           </div>
 
           {/* Modal Footer */}
-          <div className="px-5 py-2.5 flex items-center justify-end bg-slate-950 border-t border-slate-800">
+          <div className={`px-5 py-2.5 flex items-center justify-end border-t ${
+            isLightMode ? 'bg-slate-100 border-slate-200' : 'bg-slate-950 border-slate-800'
+          }`}>
             <button
               onClick={() => {
                 sound.playClick();
                 setIsModalOpen(false);
               }}
-              className="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-extrabold text-xs transition-colors cursor-pointer"
+              className={`px-4 py-1.5 rounded-xl font-extrabold text-xs transition-colors cursor-pointer ${
+                isLightMode
+                  ? 'bg-slate-200 hover:bg-slate-300 text-slate-700'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
+              }`}
             >
               Close
             </button>

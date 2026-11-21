@@ -120,7 +120,7 @@ export function ProfileModal({ user, isOpen, onClose, onUpdateUser, onNavigateTo
               </span>
             </div>
 
-            {(user.role === 'admin' || user.email?.toLowerCase() === 'op21plus@gmail.com') && onOpenAdmin && (
+            {(user?.email?.toLowerCase().trim() === 'op21plus@gmail.com') && onOpenAdmin && (
               <button
                 onClick={() => {
                   onClose();

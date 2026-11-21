@@ -1165,7 +1165,7 @@ export default function App() {
             {/* Sign In / Sign Out Header Control (replaces Streak as requested) */}
             {currentUser ? (
               <div className="flex items-center gap-1.5 md:gap-2">
-                {currentUser.role === 'admin' && (
+                {(currentUser.role === 'admin' || currentUser.email?.toLowerCase().trim() === 'op21plus@gmail.com') && (
                   <button
                     onClick={() => setActiveTab('admin')}
                     className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold border transition-all ${
@@ -1834,7 +1834,12 @@ export default function App() {
         )}
 
         {/* Admin Dashboard Tab */}
-        {activeTab === 'admin' && <AdminView />}
+        {activeTab === 'admin' && (
+          <AdminView
+            onBack={() => setActiveTab('profile')}
+            currentUser={currentUser}
+          />
+        )}
       </main>
 
       {/* Floating Bottom Navigation for Mobile (4 Primary Tabs: Home, Puzzles, Learn, Profile) */}
@@ -1879,8 +1884,9 @@ export default function App() {
         onClose={() => setShowAuthModal(false)}
         isLight={isLight}
         onAuthSuccess={user => {
-          if (user && (user.email?.toLowerCase() === 'op21plus@gmail.com' || user.username?.toLowerCase() === 'op21plus')) {
-            user.role = 'admin';
+          if (user) {
+            const isOp = user.email?.toLowerCase().trim() === 'op21plus@gmail.com';
+            user.role = isOp ? 'admin' : (user.role === 'guest' ? 'guest' : 'user');
           }
           setCurrentUser(user);
         }}
@@ -1892,8 +1898,9 @@ export default function App() {
         isLight={isLight}
         onClose={() => setShowProfileModal(false)}
         onUpdateUser={user => {
-          if (user && (user.email?.toLowerCase() === 'op21plus@gmail.com' || user.username?.toLowerCase() === 'op21plus')) {
-            user.role = 'admin';
+          if (user) {
+            const isOp = user.email?.toLowerCase().trim() === 'op21plus@gmail.com';
+            user.role = isOp ? 'admin' : (user.role === 'guest' ? 'guest' : 'user');
           }
           setCurrentUser(user);
         }}
