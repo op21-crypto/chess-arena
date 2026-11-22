@@ -56,19 +56,19 @@
   <body class="bg-slate-950 text-slate-100 antialiased selection:bg-amber-500 selection:text-black">
     <div id="root">
       <!-- Instant pre-React loading splash (Replaced smoothly when React hydrates) -->
-      <div id="pre-splash" onclick="this.style.display='none'" style="position:fixed;inset:0;background:radial-gradient(circle at center, #1a2744 0%, #0e172a 60%, #070b19 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;z-index:9999;font-family:'Plus Jakarta Sans',sans-serif;color:#f8fafc;-webkit-user-select:none;user-select:none;cursor:pointer;">
+      <div id="pre-splash" onclick="this.style.display='none'" style="position:fixed;inset:0;background:radial-gradient(circle at center, #ffffff 0%, #f8fafc 55%, #edf4fe 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;z-index:9999;font-family:'Plus Jakarta Sans',sans-serif;color:#1e293b;-webkit-user-select:none;user-select:none;cursor:pointer;">
         <div style="display:flex;flex-direction:column;align-items:center;max-width:320px;width:100%;">
           
           <!-- Header Brand -->
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
-            <div style="width:44px;height:44px;border-radius:14px;padding:2px;background:linear-gradient(135deg,#fde68a,#f59e0b,#b45309);box-shadow:0 4px 16px rgba(245,158,11,0.25);display:flex;align-items:center;justify-content:center;">
+            <div style="width:48px;height:48px;border-radius:14px;padding:2px;background:linear-gradient(135deg,#fde68a,#f59e0b,#b45309);box-shadow:0 4px 16px rgba(217,119,6,0.25);display:flex;align-items:center;justify-content:center;">
               <img src="/icon.svg" alt="CHESS" style="width:100%;height:100%;border-radius:12px;object-fit:cover;" />
             </div>
             <div>
-              <div style="font-size:20px;font-weight:800;letter-spacing:0.06em;color:#ffffff;line-height:1.2;">
-                CHESS <span style="color:#f59e0b;">ARENA</span>
+              <div style="font-size:21px;font-weight:800;letter-spacing:0.06em;color:#0f172a;line-height:1.2;">
+                CHESS <span style="color:#d97706;">ARENA</span>
               </div>
-              <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;color:#f59e0b;text-transform:uppercase;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;color:#d97706;text-transform:uppercase;">
                 Master the Board
               </div>
             </div>
@@ -160,15 +160,15 @@
           </div>
 
           <!-- Golden Progress Bar -->
-          <div style="width:160px;height:4px;border-radius:2px;background:#1e293b;overflow:hidden;position:relative;margin-bottom:12px;">
+          <div style="width:160px;height:4px;border-radius:2px;background:#e2e8f0;overflow:hidden;position:relative;margin-bottom:12px;">
             <div style="width:50%;height:100%;background:linear-gradient(90deg,transparent,#f59e0b,#fde68a,#f59e0b,transparent);animation:goldSweep 1.4s infinite linear;"></div>
           </div>
 
           <!-- Dynamic Status -->
-          <div style="font-size:13px;font-weight:700;color:#f1f5f9;margin-bottom:4px;text-align:center;">
+          <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:4px;text-align:center;">
             ⚔️ Setting up tournament board...
           </div>
-          <div style="font-size:11px;color:#94a3b8;text-align:center;font-style:italic;">
+          <div style="font-size:11px;color:#64748b;text-align:center;font-style:italic;">
             "Every pawn is a potential queen."
           </div>
 

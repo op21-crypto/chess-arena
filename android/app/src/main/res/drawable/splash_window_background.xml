@@ -1,8 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 1. Pure Crisp White Canvas -->
     <item>
-        <color android:color="#070b19" />
+        <color android:color="#FFFFFF" />
     </item>
+
+    <!-- 2. Subtle Soft Ambient Radiant Glow behind center matching logo -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="340dp"
+                android:centerX="50%"
+                android:centerY="50%"
+                android:startColor="#1E38BDF8"
+                android:centerColor="#0AF59E0B"
+                android:endColor="#00FFFFFF" />
+        </shape>
+    </item>
+
+    <!-- 3. Subtle Chessboard Grid & Faint Piece Watermark Silhouette -->
+    <item android:drawable="@drawable/splash_chess_watermark" />
+
+    <!-- 4. Soft Rounded Logo Container with subtle border trim -->
+    <item
+        android:width="106dp"
+        android:height="106dp"
+        android:gravity="center">
+        <shape android:shape="rectangle">
+            <corners android:radius="26dp" />
+            <solid android:color="#F8FAFC" />
+            <stroke
+                android:width="2dp"
+                android:color="#E2E8F0" />
+        </shape>
+    </item>
+
+    <!-- 5. App Logo Clash of Kings Emblem -->
     <item
         android:width="96dp"
         android:height="96dp"

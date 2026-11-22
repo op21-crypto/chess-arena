@@ -81,12 +81,16 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Dark luxury immersive status bar & navigation bar
+        // Clean white luxury status bar & navigation bar for initial cold launch splash
         Window window = getWindow();
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.setStatusBarColor(Color.parseColor("#070b19"));
-        window.setNavigationBarColor(Color.parseColor("#070b19"));
+        window.setStatusBarColor(Color.parseColor("#FFFFFF"));
+        window.setNavigationBarColor(Color.parseColor("#FFFFFF"));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            View decor = window.getDecorView();
+            decor.setSystemUiVisibility(decor.getSystemUiVisibility() | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+        }
 
         // Inflate layout containing WebView and native instant splash overlay
         setContentView(R.layout.activity_main);
@@ -199,6 +203,16 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                 if (splashOverlay != null) {
                     splashOverlay.setVisibility(View.GONE);
                 }
+                // Smoothly transition status bar and navigation bar to app's dark luxury theme
+                try {
+                    Window window = getWindow();
+                    window.setStatusBarColor(Color.parseColor("#070b19"));
+                    window.setNavigationBarColor(Color.parseColor("#070b19"));
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        View decor = window.getDecorView();
+                        decor.setSystemUiVisibility(decor.getSystemUiVisibility() & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+                    }
+                } catch (Exception ignored) {}
             })
             .start();
     }
@@ -646,6 +660,42 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        if (webView != null) {
+            webView.onPause();
+            webView.pauseTimers();
+            webView.evaluateJavascript("if (typeof window !== 'undefined' && window.__onAppBackgrounded) { window.__onAppBackgrounded(); }", null);
+        }
+        if (textToSpeech != null && textToSpeech.isSpeaking()) {
+            try { textToSpeech.stop(); } catch (Exception ignored) {}
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (webView != null) {
+            webView.onResume();
+            webView.resumeTimers();
+            webView.evaluateJavascript("if (typeof window !== 'undefined' && window.__onAppForegrounded) { window.__onAppForegrounded(); }", null);
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (webView != null) {
+            webView.onPause();
+            webView.pauseTimers();
+            webView.evaluateJavascript("if (typeof window !== 'undefined' && window.__onAppBackgrounded) { window.__onAppBackgrounded(); }", null);
+        }
+        if (textToSpeech != null && textToSpeech.isSpeaking()) {
+            try { textToSpeech.stop(); } catch (Exception ignored) {}
+        }
+    }
+
+    @Override
     protected void onDestroy() {
         if (statusHandler != null && statusRunnable != null) {
             statusHandler.removeCallbacks(statusRunnable);
@@ -655,6 +705,12 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                 textToSpeech.stop();
                 textToSpeech.shutdown();
             } catch (Exception ignored) {}
+        }
+        if (webView != null) {
+            try {
+                webView.evaluateJavascript("if (typeof window !== 'undefined' && window.__onAppBackgrounded) { window.__onAppBackgrounded(); }", null);
+            } catch (Exception ignored) {}
+            webView.destroy();
         }
         super.onDestroy();
     }

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 1. Pure Crisp White Background -->
+    <item>
+        <color android:color="#FFFFFF" />
+    </item>
+
+    <!-- 2. Subtle Soft Ambient Radiant Glow behind center matching logo blues & golds -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="340dp"
+                android:centerX="50%"
+                android:centerY="46%"
+                android:startColor="#1838BDF8"
+                android:centerColor="#08F59E0B"
+                android:endColor="#00FFFFFF" />
+        </shape>
+    </item>
+
+    <!-- 3. Subtle Chessboard & Faint Piece Watermarks -->
+    <item android:drawable="@drawable/splash_chess_watermark" />
+</layer-list>

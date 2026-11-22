@@ -3,7 +3,7 @@
     android:id="@+id/rootContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#070b19">
+    android:background="#FFFFFF">
 
     <!-- Primary App WebView -->
     <WebView
@@ -12,12 +12,12 @@
         android:layout_height="match_parent"
         android:visibility="visible" />
 
-    <!-- Native Splash Screen Overlay: renders immediately on cold start -->
+    <!-- Native Splash Screen Overlay: renders immediately on cold start with clean white luxury aesthetic -->
     <RelativeLayout
         android:id="@+id/splashOverlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/splash_background_gradient"
+        android:background="@drawable/splash_background_light"
         android:clickable="true"
         android:focusable="true">
 
@@ -42,8 +42,8 @@
                 <!-- 3D Clash App Emblem -->
                 <ImageView
                     android:id="@+id/splashLogo"
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
+                    android:layout_width="46dp"
+                    android:layout_height="46dp"
                     android:src="@mipmap/ic_launcher"
                     android:contentDescription="Chess Arena Logo"
                     android:layout_marginEnd="12dp" />
@@ -57,9 +57,9 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="CHESS ARENA"
-                        android:textSize="20sp"
+                        android:textSize="21sp"
                         android:textStyle="bold"
-                        android:textColor="#FFFFFF"
+                        android:textColor="#0F172A"
                         android:letterSpacing="0.08" />
 
                     <TextView
@@ -68,7 +68,7 @@
                         android:text="MASTER THE BOARD • ONLINE ARENA"
                         android:textSize="10sp"
                         android:textStyle="bold"
-                        android:textColor="#F59E0B"
+                        android:textColor="#D97706"
                         android:letterSpacing="0.12" />
                 </LinearLayout>
             </LinearLayout>
@@ -97,7 +97,7 @@
                     android:indeterminate="true"
                     android:layout_width="160dp"
                     android:layout_height="4dp"
-                    android:indeterminateTint="#F59E0B"
+                    android:indeterminateTint="#D97706"
                     android:layout_marginBottom="12dp" />
 
                 <!-- Dynamic Cycling Status Text -->
@@ -107,7 +107,7 @@
                     android:layout_height="wrap_content"
                     android:text="Setting up the board..."
                     android:textSize="14sp"
-                    android:textColor="#F1F5F9"
+                    android:textColor="#1E293B"
                     android:textStyle="bold"
                     android:layout_marginBottom="4dp" />
 
@@ -118,7 +118,7 @@
                     android:layout_height="wrap_content"
                     android:text="&quot;Every pawn is a potential queen.&quot;"
                     android:textSize="12sp"
-                    android:textColor="#94A3B8"
+                    android:textColor="#64748B"
                     android:gravity="center"
                     android:layout_marginStart="16dp"
                     android:layout_marginEnd="16dp" />
@@ -131,7 +131,7 @@
                     android:text="Tap to Retry"
                     android:textSize="12sp"
                     android:textStyle="bold"
-                    android:textColor="#070B19"
+                    android:textColor="#FFFFFF"
                     android:background="@drawable/splash_retry_button"
                     android:paddingStart="24dp"
                     android:paddingEnd="24dp"

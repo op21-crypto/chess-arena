@@ -762,6 +762,46 @@ export default function App() {
     settings.musicDuringLessons
   ]);
 
+  // Mute/Pause all music and audio whenever app/tab is backgrounded, hidden, or user exits
+  useEffect(() => {
+    const handlePause = () => {
+      musicEngine.pause();
+      try { tts.stop(); } catch (e) {}
+    };
+
+    const handleResume = () => {
+      if (!document.hidden && settings.musicEnabled) {
+        musicEngine.resume();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        handlePause();
+      } else {
+        handleResume();
+      }
+    };
+
+    // Global Android bridge callbacks called directly by MainActivity lifecycle
+    window.__onAppBackgrounded = handlePause;
+    window.__onAppForegrounded = handleResume;
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', handlePause);
+    window.addEventListener('blur', handlePause);
+    window.addEventListener('focus', handleResume);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', handlePause);
+      window.removeEventListener('blur', handlePause);
+      window.removeEventListener('focus', handleResume);
+      delete window.__onAppBackgrounded;
+      delete window.__onAppForegrounded;
+    };
+  }, [settings.musicEnabled]);
+
   // Cancel any lingering speech synthesis whenever navigating between tabs
   useEffect(() => {
     try {

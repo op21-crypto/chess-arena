@@ -250,6 +250,24 @@ class GameMusicEngine {
     this.activeNodes = [];
   }
 
+  pause() {
+    this.wasPlayingBeforePause = this.isPlaying;
+    this.stop();
+    if (this.ctx && this.ctx.state === 'running') {
+      try {
+        this.ctx.suspend().catch(() => {});
+      } catch (e) {}
+    }
+  }
+
+  resume() {
+    if (this.wasPlayingBeforePause) {
+      this.wasPlayingBeforePause = false;
+      this.initCtx();
+      this.start();
+    }
+  }
+
   setVolume(vol) {
     this.volume = Math.max(0, Math.min(1, vol));
     if (this.masterGain && this.ctx) {
