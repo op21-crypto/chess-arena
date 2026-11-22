@@ -56,12 +56,29 @@ export function GameOverModal({
 }) {
   const [copiedPgn, setCopiedPgn] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const hasTriggeredEffectsRef = useRef(false);
 
   const isWhite = playerColor === 'w';
   const isWinner = (winner === 'white' && isWhite) || (winner === 'black' && !isWhite);
   const isDraw = winner === 'draw' || status === 'stalemate' || status === 'draw';
   const isDefeat = !isWinner && !isDraw;
   const isOppWinner = isDefeat;
+
+  // Format match mode tag (e.g., "5 MIN BLITZ", "10 MIN RAPID") without [object Object]
+  const formattedMatchTag = useMemo(() => {
+    if (!timeControl) return 'Arena Match';
+    if (typeof timeControl === 'string') return `${timeControl} Match`;
+    const mins = timeControl.baseMinutes ?? timeControl.minutes;
+    const inc = timeControl.incrementSeconds ?? timeControl.inc ?? 0;
+    const formatName = timeControl.format
+      ? timeControl.format.toUpperCase()
+      : (mins === 0 ? 'CASUAL' : mins < 3 ? 'BULLET' : mins < 10 ? 'BLITZ' : mins <= 30 ? 'RAPID' : 'CLASSICAL');
+    if (mins === 0) return 'CASUAL MATCH';
+    if (typeof mins === 'number') {
+      return inc > 0 ? `${mins} | ${inc} ${formatName}` : `${mins} MIN ${formatName}`;
+    }
+    return 'ARENA MATCH';
+  }, [timeControl]);
 
   // Reset minimized state whenever modal opens
   useEffect(() => {
@@ -70,38 +87,40 @@ export function GameOverModal({
     }
   }, [isOpen]);
 
-  // Trigger rich match-finish audio and celebration effects
+  // Trigger match-finish audio and celebration effects STRICTLY ONCE per match
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      hasTriggeredEffectsRef.current = false;
+      try {
+        confetti.reset();
+      } catch {}
+      return;
+    }
+
+    if (hasTriggeredEffectsRef.current) return;
+    hasTriggeredEffectsRef.current = true;
 
     if (isWinner) {
       sound.playVictory();
-      confetti({
-        particleCount: 120,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#10b981', '#3b82f6', '#f59e0b', '#ec4899', '#ffffff']
-      });
-      const timer = setTimeout(() => {
+      try {
         confetti({
-          particleCount: 75,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0 }
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#10b981', '#3b82f6', '#f59e0b', '#ec4899', '#ffffff']
         });
-        confetti({
-          particleCount: 75,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1 }
-        });
-      }, 300);
-      return () => clearTimeout(timer);
+      } catch {}
     } else if (isDefeat) {
       sound.playGameOver();
     } else if (isDraw) {
       sound.playGameDraw();
     }
+
+    return () => {
+      try {
+        confetti.reset();
+      } catch {}
+    };
   }, [isOpen, isWinner, isDefeat, isDraw]);
 
   // Clean, concise match reason
@@ -311,7 +330,7 @@ export function GameOverModal({
               : 'bg-slate-800/80 text-slate-300 border-slate-700'
           }`}>
             <span>⚡</span>
-            <span>{timeControl ? `${timeControl} Match` : 'Arena Match'}</span>
+            <span>{formattedMatchTag}</span>
           </div>
 
           <button

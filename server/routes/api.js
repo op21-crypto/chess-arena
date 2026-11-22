@@ -624,12 +624,26 @@ router.post(['/rooms/chat', '/rooms/:id/chat'], async (req, res) => {
     };
   }
   if (!room.chatMessages) room.chatMessages = [];
+  const msgId = req.body.id || req.body.messageId || `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+  const now = Date.now();
+  
+  // Deduplicate against already saved message with same ID or identical sender + text sent in the last 4 seconds
+  const exists = room.chatMessages.some(m => 
+    m.id === msgId || 
+    (m.text === text && m.sender?.username === sender?.username && Math.abs(now - (m._ts || now)) < 4000)
+  );
+
+  if (exists) {
+    return res.json({ success: true, chatMessages: room.chatMessages });
+  }
+
   const newMsg = {
-    id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+    id: msgId,
     sender: sender || { username: 'Guest' },
     text,
     emoji,
-    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    _ts: now
   };
   room.chatMessages.push(newMsg);
   if (room.chatMessages.length > 100) room.chatMessages = room.chatMessages.slice(-100);
@@ -741,8 +755,8 @@ router.post(['/rooms/move', '/rooms/:id/move'], async (req, res) => {
     if (!room.moveHistory) room.moveHistory = [];
     room.moveHistory.push(move);
   }
-  if (whiteTime !== undefined) room.whiteTime = whiteTime;
-  if (blackTime !== undefined) room.blackTime = blackTime;
+  if (whiteTime !== undefined && whiteTime !== null) room.whiteTime = Number(whiteTime);
+  if (blackTime !== undefined && blackTime !== null) room.blackTime = Number(blackTime);
   if (capturedPieces) room.capturedPieces = capturedPieces;
   if (status) room.status = status;
   if (winner !== undefined) room.winner = winner;

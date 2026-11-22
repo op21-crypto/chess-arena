@@ -735,6 +735,7 @@ export default function App() {
 
   // Socket reference
   const socketRef = useRef(null);
+  const processedGameOverGamesRef = useRef(new Set());
 
   // Initialize Audio & Music Settings
   useEffect(() => {
@@ -1239,20 +1240,30 @@ export default function App() {
         sound.playMatchStart();
       }
 
-      // Synchronize room chat messages reliably without loss or duplicates
+      // Synchronize room chat messages reliably without duplicates or echoes
       if (Array.isArray(r.chatMessages) && r.chatMessages.length > 0) {
         setChatMessages(prev => {
           const map = new Map();
-          prev.forEach(m => { if (m.id) map.set(m.id, m); });
+          prev.forEach(m => {
+            const key = m.id || `${m.sender?.username || 'u'}_${m.text || ''}_${m.timestamp || ''}`;
+            map.set(key, m);
+          });
           let hasNewFromOpponent = false;
           r.chatMessages.forEach(m => {
-            if (m.id) {
-              if (!map.has(m.id)) {
+            const key = m.id || `${m.sender?.username || 'u'}_${m.text || ''}_${m.timestamp || ''}`;
+            if (!map.has(key)) {
+              // Also check if identical recent message from same sender exists
+              const isDuplicate = prev.some(existing => 
+                existing.text === m.text && 
+                existing.sender?.username === m.sender?.username &&
+                existing.timestamp === m.timestamp
+              );
+              if (!isDuplicate) {
                 if (m.sender?.id !== activeUser.id && m.sender?.username !== activeUser.username) {
                   hasNewFromOpponent = true;
                 }
+                map.set(key, m);
               }
-              map.set(m.id, m);
             }
           });
           if (hasNewFromOpponent) {
@@ -1274,13 +1285,31 @@ export default function App() {
 
       if (movesDiffer || fenDiffers || statusDiffers || opponentJoined || voiceCallDiffers || voiceSignalsDiffers || lastUpdatedDiffers) {
         const captured = getCapturedPieces(r.fen || curr?.fen);
-        setGameSession(prev => ({
-          ...prev,
-          ...r,
-          status: (opponentJoined || (r.whitePlayer && r.blackPlayer && (r.status === 'active' || prev?.status === 'active'))) ? 'active' : (r.status || prev?.status),
-          turn: new Chess(r.fen || prev?.fen || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1').turn(),
-          capturedPieces: { white: captured.byWhite, black: captured.byBlack }
-        }));
+        setGameSession(prev => {
+          if (!prev) return r;
+          // CRITICAL: Prevent clock from renewing to initial base minutes on polling or typing updates!
+          // Only adopt remote clock if a new move occurred; otherwise preserve locally ticking clock.
+          const whiteT = (movesDiffer && typeof r.whiteTime === 'number')
+            ? r.whiteTime
+            : (prev.whiteTime ?? r.whiteTime);
+          const blackT = (movesDiffer && typeof r.blackTime === 'number')
+            ? r.blackTime
+            : (prev.blackTime ?? r.blackTime);
+
+          const resolvedStatus = (opponentJoined || (r.whitePlayer && r.blackPlayer && (r.status === 'active' || prev?.status === 'active')))
+            ? 'active'
+            : (r.status || prev?.status);
+
+          return {
+            ...prev,
+            ...r,
+            whiteTime: whiteT,
+            blackTime: blackT,
+            status: resolvedStatus,
+            turn: new Chess(r.fen || prev?.fen || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1').turn(),
+            capturedPieces: { white: captured.byWhite, black: captured.byBlack }
+          };
+        });
 
         if (movesDiffer) {
           sound.playMove();
@@ -1290,18 +1319,18 @@ export default function App() {
           }
         }
 
-        if (r.status === 'checkmate' || r.status === 'resigned' || r.status === 'stalemate' || r.status === 'draw') {
-          setShowGameOverModal(true);
-          const effectiveCol = isMeBlack ? 'b' : (isMeWhite ? 'w' : playerColorRef.current);
-          const isWinner = (r.winner === 'white' && effectiveCol === 'w') || (r.winner === 'black' && effectiveCol === 'b');
-          if (isWinner) sound.playVictory();
-          else sound.playGameOver();
-          handleMatchFinished({
-            winner: r.winner,
-            status: r.status,
-            winReason: r.winReason,
-            currentSession: r
-          });
+        if (r.status === 'checkmate' || r.status === 'resigned' || r.status === 'stalemate' || r.status === 'draw' || r.status === 'timeout') {
+          const gameFinishId = r.id || roomId;
+          if (!processedGameOverGamesRef.current.has(gameFinishId)) {
+            processedGameOverGamesRef.current.add(gameFinishId);
+            setShowGameOverModal(true);
+            handleMatchFinished({
+              winner: r.winner,
+              status: r.status,
+              winReason: r.winReason,
+              currentSession: r
+            });
+          }
         }
       }
     };
@@ -1576,19 +1605,17 @@ export default function App() {
 
         if (newWhiteTime <= 0 || newBlackTime <= 0) {
           const winner = newWhiteTime <= 0 ? 'black' : 'white';
-          setShowGameOverModal(true);
-          const isWinner = (winner === 'white' && playerColor === 'w') || (winner === 'black' && playerColor === 'b');
-          if (isWinner) {
-            sound.playVictory();
-          } else {
-            sound.playGameOver();
+          const aiGameId = prev.id || `ai_${Date.now()}`;
+          if (!processedGameOverGamesRef.current.has(aiGameId)) {
+            processedGameOverGamesRef.current.add(aiGameId);
+            setShowGameOverModal(true);
+            handleMatchFinished({
+              winner,
+              status: 'timeout',
+              winReason: 'timeout',
+              currentSession: { ...prev, whiteTime: newWhiteTime, blackTime: newBlackTime }
+            });
           }
-          handleMatchFinished({
-            winner,
-            status: 'timeout',
-            winReason: 'timeout',
-            currentSession: { ...prev, whiteTime: newWhiteTime, blackTime: newBlackTime }
-          });
           return {
             ...prev,
             whiteTime: newWhiteTime,
@@ -1629,20 +1656,26 @@ export default function App() {
 
         if (newWhiteTime <= 0 || newBlackTime <= 0) {
           const winner = newWhiteTime <= 0 ? 'black' : 'white';
-          setShowGameOverModal(true);
-          const effectiveCol = playerColorRef.current;
-          const isWinner = (winner === 'white' && effectiveCol === 'w') || (winner === 'black' && effectiveCol === 'b');
-          if (isWinner) {
-            sound.playVictory();
-          } else {
-            sound.playGameOver();
+          const timeoutGameId = prev.id || `room_${Date.now()}`;
+          if (!processedGameOverGamesRef.current.has(timeoutGameId)) {
+            processedGameOverGamesRef.current.add(timeoutGameId);
+            setShowGameOverModal(true);
+            handleMatchFinished({
+              winner,
+              status: 'timeout',
+              winReason: 'timeout',
+              currentSession: { ...prev, whiteTime: newWhiteTime, blackTime: newBlackTime }
+            });
+            if (prev.id) {
+              firebaseRoomService.updateRoomMove(prev.id, {
+                status: 'timeout',
+                winner,
+                winReason: 'timeout',
+                whiteTime: newWhiteTime,
+                blackTime: newBlackTime
+              }).catch(() => {});
+            }
           }
-          handleMatchFinished({
-            winner,
-            status: 'timeout',
-            winReason: 'timeout',
-            currentSession: { ...prev, whiteTime: newWhiteTime, blackTime: newBlackTime }
-          });
           return {
             ...prev,
             whiteTime: newWhiteTime,
@@ -1928,6 +1961,14 @@ export default function App() {
           }
 
           const captured = getCapturedPieces(chess.fen());
+          const incMs = (gameSession.timeControl?.incrementSeconds || 0) * 1000;
+          const wasWhiteTurn = res.color === 'w';
+          const newWhiteTime = wasWhiteTurn
+            ? Math.max(0, (gameSession.whiteTime ?? 600000) + incMs)
+            : (gameSession.whiteTime ?? 600000);
+          const newBlackTime = !wasWhiteTurn
+            ? Math.max(0, (gameSession.blackTime ?? 600000) + incMs)
+            : (gameSession.blackTime ?? 600000);
 
           const updatedSession = {
             ...gameSession,
@@ -1938,6 +1979,8 @@ export default function App() {
             status: isOver ? status : 'active',
             winner: isOver ? winner : null,
             winReason: isOver ? winReason : null,
+            whiteTime: newWhiteTime,
+            blackTime: newBlackTime,
             moveHistory: updatedHistory,
             capturedPieces: { white: captured.byWhite, black: captured.byBlack }
           };
@@ -1945,22 +1988,24 @@ export default function App() {
 
           // Sync room moves with Firestore and REST
           if (gameSession.id) {
+            const moveData = {
+              from: res.from,
+              to: res.to,
+              piece: res.piece,
+              color: res.color,
+              san: res.san,
+              fen: chess.fen()
+            };
+
             firebaseRoomService.updateRoomMove(gameSession.id, {
-              move: {
-                from: res.from,
-                to: res.to,
-                piece: res.piece,
-                color: res.color,
-                san: res.san,
-                fen: chess.fen()
-              },
+              move: moveData,
               fen: chess.fen(),
               turn: chess.turn(),
               status: isOver ? status : 'active',
               winner: isOver ? winner : null,
               winReason: isOver ? winReason : null,
-              whiteTime: gameSession.whiteTime,
-              blackTime: gameSession.blackTime,
+              whiteTime: newWhiteTime,
+              blackTime: newBlackTime,
               capturedPieces: { white: captured.byWhite, black: captured.byBlack }
             }).catch(() => {});
 
@@ -1969,15 +2014,11 @@ export default function App() {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 roomId: gameSession.id,
-                move: {
-                  from: res.from,
-                  to: res.to,
-                  piece: res.piece,
-                  color: res.color,
-                  san: res.san,
-                  fen: chess.fen()
-                },
+                move: moveData,
                 fen: chess.fen(),
+                turn: chess.turn(),
+                whiteTime: newWhiteTime,
+                blackTime: newBlackTime,
                 status: isOver ? status : 'active',
                 winner: isOver ? winner : null,
                 winReason: isOver ? winReason : null
@@ -2145,6 +2186,7 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           roomId: gameSession.id,
+          id: newMsg.id,
           text,
           emoji,
           sender: currentUser

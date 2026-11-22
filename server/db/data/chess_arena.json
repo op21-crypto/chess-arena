@@ -4270,7 +4270,7 @@
         }
       ],
       "achievements": [],
-      "createdAt": "2026-11-22T08:09:53.228Z",
+      "createdAt": "2026-11-22T09:06:21.923Z",
       "isOnline": false,
       "banned": false,
       "id": "user_op_test",
@@ -4278,7 +4278,42 @@
       "email": "op21plus@gmail.com"
     }
   },
-  "games": {},
+  "games": {
+    "arena_test_clock_1": {
+      "id": "arena_test_clock_1",
+      "whitePlayer": {
+        "id": "player_w",
+        "username": "WhiteKing",
+        "elo": 1400
+      },
+      "blackPlayer": {
+        "id": "player_b",
+        "username": "BlackQueen",
+        "elo": 1400
+      },
+      "timeControl": {
+        "baseMinutes": 5,
+        "incrementSeconds": 0
+      },
+      "whiteTime": 294000,
+      "blackTime": 300000,
+      "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "status": "active",
+      "moveHistory": [
+        {
+          "from": "e2",
+          "to": "e4",
+          "san": "e4",
+          "color": "w"
+        }
+      ],
+      "capturedPieces": {
+        "white": [],
+        "black": []
+      },
+      "turn": "b"
+    }
+  },
   "tournaments": {
     "tourney_1795162282911_28qo": {
       "id": "tourney_1795162282911_28qo",

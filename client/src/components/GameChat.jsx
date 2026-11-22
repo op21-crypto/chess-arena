@@ -57,10 +57,11 @@ export function GameChat({
 
   const peerConnection = useRef(null);
   const localStream = useRef(null);
-  const remoteAudio = useRef(new Audio());
+  const remoteAudioRef = useRef(null);
   const audioContext = useRef(null);
   const analyser = useRef(null);
   const callTimerRef = useRef(null);
+  const iceCandidatesQueueRef = useRef([]);
 
   // Auto-scroll ONLY inner chat container without moving the browser window
   useEffect(() => {
@@ -116,6 +117,13 @@ export function GameChat({
       peerConnection.current.close();
       peerConnection.current = null;
     }
+    if (remoteAudioRef.current) {
+      try {
+        remoteAudioRef.current.pause();
+        remoteAudioRef.current.srcObject = null;
+      } catch {}
+    }
+    iceCandidatesQueueRef.current = [];
     if (audioContext.current) {
       audioContext.current.close().catch(() => {});
       audioContext.current = null;
@@ -134,30 +142,51 @@ export function GameChat({
         throw new Error('Microphone not supported on this browser');
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        },
+        video: false
+      });
       localStream.current = stream;
 
       const pc = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' },
+          { urls: 'stun:stun.cloudflare.com:3478' }
+        ]
       });
       peerConnection.current = pc;
 
       stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
       pc.ontrack = (event) => {
-        if (remoteAudio.current) {
-          remoteAudio.current.srcObject = event.streams[0];
-          remoteAudio.current.play().catch(() => {});
+        if (remoteAudioRef.current && event.streams && event.streams[0]) {
+          remoteAudioRef.current.srcObject = event.streams[0];
+          remoteAudioRef.current.volume = 1.0;
+          remoteAudioRef.current.muted = false;
+          remoteAudioRef.current.play().catch(e => {
+            console.warn('Remote audio playback notice:', e);
+          });
         }
       };
 
       pc.onicecandidate = (event) => {
         if (event.candidate) {
+          const candidateData = event.candidate.toJSON ? event.candidate.toJSON() : {
+            candidate: event.candidate.candidate,
+            sdpMid: event.candidate.sdpMid,
+            sdpMLineIndex: event.candidate.sdpMLineIndex
+          };
           if (socket) {
-            socket.emit('webrtc_signal', { gameId, signal: { candidate: event.candidate } });
+            socket.emit('webrtc_signal', { gameId, signal: { candidate: candidateData } });
           }
           if (gameId) {
-            firebaseRoomService.sendRoomVoice(gameId, { action: 'signal', from: currentUser, signal: { candidate: event.candidate } }).catch(() => {});
+            firebaseRoomService.sendRoomVoice(gameId, { action: 'signal', from: currentUser, signal: { candidate: candidateData } }).catch(() => {});
           }
         }
       };
@@ -165,13 +194,17 @@ export function GameChat({
       setupAudioAnalyser(stream);
 
       if (isInitiator) {
-        const offer = await pc.createOffer();
+        const offer = await pc.createOffer({
+          offerToReceiveAudio: true,
+          offerToReceiveVideo: false
+        });
         await pc.setLocalDescription(offer);
+        const offerData = { type: 'offer', sdp: offer.sdp };
         if (socket) {
-          socket.emit('webrtc_signal', { gameId, signal: offer });
+          socket.emit('webrtc_signal', { gameId, signal: offerData });
         }
         if (gameId) {
-          firebaseRoomService.sendRoomVoice(gameId, { action: 'signal', from: currentUser, signal: offer }).catch(() => {});
+          firebaseRoomService.sendRoomVoice(gameId, { action: 'signal', from: currentUser, signal: offerData }).catch(() => {});
         }
       }
 
@@ -186,28 +219,63 @@ export function GameChat({
 
   const handleSignal = async ({ signal }) => {
     try {
+      if (!signal) return;
+
+      // Handle remote ICE candidate
+      if (signal.candidate) {
+        if (peerConnection.current && peerConnection.current.remoteDescription) {
+          try {
+            await peerConnection.current.addIceCandidate(new RTCIceCandidate(signal.candidate));
+          } catch (e) {
+            console.warn('addIceCandidate notice:', e);
+          }
+        } else {
+          iceCandidatesQueueRef.current.push(signal.candidate);
+        }
+        return;
+      }
+
       if (!peerConnection.current) {
         await startWebRTC(false);
       }
+      const pc = peerConnection.current;
+      if (!pc) return;
 
       if (signal.type === 'offer') {
-        await peerConnection.current.setRemoteDescription(new RTCSessionDescription(signal));
-        const answer = await peerConnection.current.createAnswer();
-        await peerConnection.current.setLocalDescription(answer);
+        await pc.setRemoteDescription(new RTCSessionDescription(signal));
+
+        // Flush queued candidates
+        while (iceCandidatesQueueRef.current.length > 0) {
+          const cand = iceCandidatesQueueRef.current.shift();
+          try {
+            await pc.addIceCandidate(new RTCIceCandidate(cand));
+          } catch (e) {
+            console.warn('Queued candidate apply error:', e);
+          }
+        }
+
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        const answerData = { type: 'answer', sdp: answer.sdp };
         if (socket) {
-          socket.emit('webrtc_signal', { gameId, signal: answer });
+          socket.emit('webrtc_signal', { gameId, signal: answerData });
         }
         if (gameId) {
-          firebaseRoomService.sendRoomVoice(gameId, { action: 'signal', from: currentUser, signal: answer }).catch(() => {});
+          firebaseRoomService.sendRoomVoice(gameId, { action: 'signal', from: currentUser, signal: answerData }).catch(() => {});
         }
       } else if (signal.type === 'answer') {
-        if (peerConnection.current && peerConnection.current.signalingState !== 'stable') {
-          await peerConnection.current.setRemoteDescription(new RTCSessionDescription(signal));
+        if (pc.signalingState !== 'stable') {
+          await pc.setRemoteDescription(new RTCSessionDescription(signal));
+          // Flush queued candidates
+          while (iceCandidatesQueueRef.current.length > 0) {
+            const cand = iceCandidatesQueueRef.current.shift();
+            try {
+              await pc.addIceCandidate(new RTCIceCandidate(cand));
+            } catch (e) {
+              console.warn('Queued candidate apply error:', e);
+            }
+          }
         }
-      } else if (signal.candidate && peerConnection.current) {
-        try {
-          await peerConnection.current.addIceCandidate(new RTCIceCandidate(signal.candidate));
-        } catch {}
       }
     } catch (err) {
       console.warn('WebRTC signal handling notice:', err.message);
@@ -319,12 +387,16 @@ export function GameChat({
 
     // 2. WebRTC Peer-to-Peer Signals from Firestore
     if (Array.isArray(roomData.voiceSignals) && roomData.voiceSignals.length > 0 && gameId) {
-      const myId = currentUser?.id;
-      const myName = currentUser?.username;
+      const myId = String(currentUser?.id || '').trim();
+      const myName = String(currentUser?.username || '').trim();
 
       roomData.voiceSignals.forEach(async (sigItem) => {
         if (!sigItem?.signal) return;
-        const isFromMe = (sigItem.from === myId || sigItem.from === myName);
+        const senderId = typeof sigItem.from === 'object'
+          ? String(sigItem.from?.id || sigItem.from?.username || '').trim()
+          : String(sigItem.from || '').trim();
+
+        const isFromMe = (myId && senderId === myId) || (myName && senderId === myName);
         if (isFromMe) return;
 
         const sigKey = `${sigItem.timestamp || 0}_${sigItem.signal.type || 'candidate'}_${JSON.stringify(sigItem.signal).slice(0, 50)}`;
@@ -353,6 +425,9 @@ export function GameChat({
 
   const handleRespondInvitation = (accept) => {
     setVoiceStatus(accept ? 'connected' : 'idle');
+    if (accept && remoteAudioRef.current) {
+      remoteAudioRef.current.play().catch(() => {});
+    }
     if (socket) {
       socket.emit('respond_voice_chat', { gameId, accept, by: currentUser });
     }
@@ -381,8 +456,8 @@ export function GameChat({
   };
 
   const toggleDeafen = () => {
-    if (remoteAudio.current) {
-      remoteAudio.current.muted = !isDeafened;
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.muted = !isDeafened;
       setIsDeafened(!isDeafened);
     }
   };
@@ -709,6 +784,15 @@ export function GameChat({
           <Send className="w-3.5 h-3.5" />
         </button>
       </form>
+
+      {/* Hidden dedicated DOM Audio Element for Real-Time WebRTC Voice Playback */}
+      <audio
+        ref={remoteAudioRef}
+        autoPlay
+        playsInline
+        aria-hidden="true"
+        style={{ display: 'none' }}
+      />
     </div>
   );
 }
