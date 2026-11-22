@@ -125,7 +125,14 @@ export default function App() {
   const [globalConfig, setGlobalConfig] = useState(() => {
     try {
       const cached = safeStorage.getItem('chess_arena_global_config');
-      if (cached) return JSON.parse(cached);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed?.announcement && parsed.announcement.toLowerCase().includes('arena championship')) {
+          parsed.announcement = '';
+          safeStorage.setItem('chess_arena_global_config', JSON.stringify(parsed));
+        }
+        return parsed;
+      }
     } catch {}
     return null;
   });
@@ -855,8 +862,12 @@ export default function App() {
       .then(res => res.json())
       .then(data => {
         if (data?.config) {
-          setGlobalConfig(data.config);
-          safeStorage.setItem('chess_arena_global_config', JSON.stringify(data.config));
+          const cfg = { ...data.config };
+          if (cfg.announcement && cfg.announcement.toLowerCase().includes('arena championship')) {
+            cfg.announcement = '';
+          }
+          setGlobalConfig(cfg);
+          safeStorage.setItem('chess_arena_global_config', JSON.stringify(cfg));
           // If user hasn't explicitly set preferences, seed with global admin defaults
           const saved = safeStorage.getItem('chess_arena_settings');
           if (!saved) {
@@ -2400,7 +2411,9 @@ export default function App() {
       )}
 
       {/* Global Live Announcement Bar Configured by Admin */}
-      {globalConfig?.announcement && activeTab !== 'offline' && (
+      {globalConfig?.announcement &&
+        !globalConfig.announcement.toLowerCase().includes('arena championship') &&
+        activeTab !== 'offline' && (
         <div className={`px-4 py-2 text-xs font-black flex items-center justify-center gap-2 text-center transition-all ${
           isLight
             ? 'bg-amber-100/90 text-amber-950 border-b border-amber-200'

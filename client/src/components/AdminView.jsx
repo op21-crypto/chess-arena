@@ -59,13 +59,37 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
   const [userFilter, setUserFilter] = useState('all'); // 'all' | 'admin' | 'google' | 'guest' | 'suspended'
   const [currentTab, setCurrentTab] = useState('buttons'); // 'buttons' | 'defaults' | 'users' | 'bots' | 'tournaments' | 'games' | 'system'
 
-  // Master Admin Security Gate
+  // Master Admin Security Gate (Auto-unlocked for op21plus@gmail.com, role admin, or session PIN)
   const [isAdminUnlocked, setIsAdminUnlocked] = useState(() => {
-    return sessionStorage.getItem('chess_arena_admin_verified') === 'true';
+    const isOpEmail = (currentUser?.email || '').toLowerCase().trim() === 'op21plus@gmail.com';
+    const isAdminRole = currentUser?.role === 'admin';
+    const isVerifiedSession = sessionStorage.getItem('chess_arena_admin_verified') === 'true';
+    if (isOpEmail || isAdminRole) {
+      try {
+        sessionStorage.setItem('chess_arena_admin_verified', 'true');
+        if (!sessionStorage.getItem('chess_arena_admin_pin')) {
+          sessionStorage.setItem('chess_arena_admin_pin', '212121');
+        }
+      } catch {}
+      return true;
+    }
+    return isVerifiedSession;
   });
   const [gatePinInput, setGatePinInput] = useState('');
   const [gatePinError, setGatePinError] = useState('');
   const [gateVerifying, setGateVerifying] = useState(false);
+
+  useEffect(() => {
+    if ((currentUser?.email || '').toLowerCase().trim() === 'op21plus@gmail.com' || currentUser?.role === 'admin') {
+      setIsAdminUnlocked(true);
+      try {
+        sessionStorage.setItem('chess_arena_admin_verified', 'true');
+        if (!sessionStorage.getItem('chess_arena_admin_pin')) {
+          sessionStorage.setItem('chess_arena_admin_pin', '212121');
+        }
+      } catch {}
+    }
+  }, [currentUser]);
 
   // Modals state
   const [showAddUserModal, setShowAddUserModal] = useState(false);
@@ -168,19 +192,26 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
     setTimeout(() => setActionMessage(''), 3500);
   };
 
+  const getAdminPin = () => {
+    return sessionStorage.getItem('chess_arena_admin_pin') || safeStorage.getItem('chess_arena_admin_pin') || '212121';
+  };
+
   const getAdminHeaders = () => {
-    const pin = sessionStorage.getItem('chess_arena_admin_pin') || safeStorage.getItem('chess_arena_admin_pin') || '212121';
+    const pin = getAdminPin();
     const token = safeStorage.getItem('token') || '';
+    const email = currentUser?.email || 'op21plus@gmail.com';
     return {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
-      'x-admin-pin': pin
+      'x-admin-pin': pin,
+      'x-admin-email': email
     };
   };
 
   const fetchStats = (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
-    fetch('/api/admin/stats', {
+    const pin = getAdminPin();
+    fetch(`/api/admin/stats?adminPin=${encodeURIComponent(pin)}`, {
       headers: getAdminHeaders()
     })
       .then(res => {
@@ -195,7 +226,8 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
             ...data.config,
             buttons: { ...prev.buttons, ...(data.config.buttons || {}) },
             buttonLabels: { ...prev.buttonLabels, ...(data.config.buttonLabels || {}) },
-            customButtons: Array.isArray(data.config.customButtons) ? data.config.customButtons : prev.customButtons
+            customButtons: Array.isArray(data.config.customButtons) ? data.config.customButtons : prev.customButtons,
+            customBots: Array.isArray(data.config.customBots) && data.config.customBots.length > 0 ? data.config.customBots : prev.customBots
           }));
         }
         setLoading(false);
@@ -239,17 +271,28 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
 
   // Save Config as Global App Defaults & Broadcast
   const handleSaveConfig = () => {
-    // 1. Instantly persist to local storage and parent App state so changes take effect immediately
+    const pin = getAdminPin();
+    const email = currentUser?.email || 'op21plus@gmail.com';
+    const payload = {
+      ...configForm,
+      adminPin: pin,
+      userEmail: email
+    };
+
+    // 1. Instantly persist to local storage and parent App state with 0 latency
     safeStorage.setItem('chess_arena_global_config', JSON.stringify(configForm));
     if (onUpdateGlobalConfig) {
       onUpdateGlobalConfig(configForm);
     }
+    try {
+      window.dispatchEvent(new CustomEvent('chess_arena_config_updated', { detail: configForm }));
+    } catch {}
 
     // 2. Persist to server & Firestore
-    fetch('/api/admin/config', {
+    fetch(`/api/admin/config?adminPin=${encodeURIComponent(pin)}`, {
       method: 'POST',
       headers: getAdminHeaders(),
-      body: JSON.stringify(configForm)
+      body: JSON.stringify(payload)
     })
       .then(res => res.json())
       .then(data => {
@@ -257,14 +300,57 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
           notify('✓ Configuration saved & broadcasted live across Chess Arena!');
           safeStorage.setItem('chess_arena_global_config', JSON.stringify(data.config));
           if (onUpdateGlobalConfig) onUpdateGlobalConfig(data.config);
-          fetchStats();
+          setStats(prev => prev ? { ...prev, config: data.config } : prev);
         } else {
           notify(data.error || 'Configuration saved to app cache.');
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        console.warn('Save config note:', err);
         notify('✓ Configuration saved & active in app.');
       });
+  };
+
+  // Bot Tier Handlers (Add, Remove, Edit)
+  const handleAddBotTier = () => {
+    const bots = configForm.customBots || [];
+    const nextLevel = bots.length + 1;
+    const defaultIcons = ['🤖', '⚔️', '🛡️', '⚡', '💎', '🔥', '👑', '🐉'];
+    const chosenIcon = defaultIcons[(nextLevel - 1) % defaultIcons.length];
+    const newTier = {
+      level: nextLevel,
+      name: `Tier ${nextLevel}`,
+      elo: `${1000 + nextLevel * 300} ELO`,
+      icon: chosenIcon,
+      style: 'Balanced tactics & speed'
+    };
+    const updatedBots = [...bots, newTier];
+    setConfigForm(prev => ({
+      ...prev,
+      customBots: updatedBots
+    }));
+    safeStorage.setItem('chess_arena_global_config', JSON.stringify({ ...configForm, customBots: updatedBots }));
+    if (onUpdateGlobalConfig) onUpdateGlobalConfig({ ...configForm, customBots: updatedBots });
+    notify(`✓ Added Bot Tier ${nextLevel}! Click Save & Broadcast to publish.`);
+  };
+
+  const handleDeleteBotTier = (indexToDelete) => {
+    const bots = configForm.customBots || [];
+    if (bots.length <= 1) {
+      alert('You must have at least one bot tier.');
+      return;
+    }
+    const filtered = bots.filter((_, idx) => idx !== indexToDelete).map((bot, idx) => ({
+      ...bot,
+      level: idx + 1
+    }));
+    setConfigForm(prev => ({
+      ...prev,
+      customBots: filtered
+    }));
+    safeStorage.setItem('chess_arena_global_config', JSON.stringify({ ...configForm, customBots: filtered }));
+    if (onUpdateGlobalConfig) onUpdateGlobalConfig({ ...configForm, customBots: filtered });
+    notify('✓ Bot tier deleted. Click Save & Broadcast to publish.');
   };
 
   // Button Controls Handlers
@@ -428,10 +514,11 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
     }
 
     try {
-      const res = await fetch('/api/admin/update-pin', {
+      const pin = getAdminPin();
+      const res = await fetch(`/api/admin/update-pin?adminPin=${encodeURIComponent(pin)}`, {
         method: 'POST',
         headers: getAdminHeaders(),
-        body: JSON.stringify({ oldPin: oldPin.trim(), newPin: newPin.trim() })
+        body: JSON.stringify({ oldPin: oldPin.trim(), newPin: newPin.trim(), adminPin: pin })
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -455,7 +542,8 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
   };
 
   const handleExportDatabase = () => {
-    fetch('/api/admin/database/export', {
+    const pin = getAdminPin();
+    fetch(`/api/admin/database/export?adminPin=${encodeURIComponent(pin)}`, {
       headers: getAdminHeaders()
     })
       .then(res => res.json())
@@ -490,9 +578,11 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
   // Reset to Factory Defaults
   const handleResetDefaults = () => {
     if (!window.confirm('Reset all app defaults to standard factory settings?')) return;
-    fetch('/api/admin/reset-defaults', {
+    const pin = getAdminPin();
+    fetch(`/api/admin/reset-defaults?adminPin=${encodeURIComponent(pin)}`, {
       method: 'POST',
-      headers: getAdminHeaders()
+      headers: getAdminHeaders(),
+      body: JSON.stringify({ adminPin: pin })
     })
       .then(res => res.json())
       .then(data => {
@@ -509,10 +599,11 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
 
   // User Moderation: Ban/Unban
   const handleModerate = (userId, banned) => {
-    fetch(`/api/admin/users/${userId}/moderate`, {
+    const pin = getAdminPin();
+    fetch(`/api/admin/users/${userId}/moderate?adminPin=${encodeURIComponent(pin)}`, {
       method: 'POST',
       headers: getAdminHeaders(),
-      body: JSON.stringify({ banned })
+      body: JSON.stringify({ banned, adminPin: pin })
     })
       .then(res => res.json())
       .then(() => {
@@ -532,9 +623,11 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
     }
     if (!window.confirm(`Permanently delete account for "${user.username}" (${user.email || 'Guest'})? This cannot be undone.`)) return;
 
-    fetch(`/api/admin/users/${user.id}`, {
+    const pin = getAdminPin();
+    fetch(`/api/admin/users/${user.id}?adminPin=${encodeURIComponent(pin)}`, {
       method: 'DELETE',
-      headers: getAdminHeaders()
+      headers: getAdminHeaders(),
+      body: JSON.stringify({ adminPin: pin })
     })
       .then(res => res.json())
       .then(data => {
@@ -556,10 +649,12 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
       return;
     }
 
-    fetch('/api/admin/users/create', {
+    const pin = getAdminPin();
+    fetch(`/api/admin/users/create?adminPin=${encodeURIComponent(pin)}`, {
       method: 'POST',
       headers: getAdminHeaders(),
       body: JSON.stringify({
+        adminPin: pin,
         username: newUserForm.username.trim(),
         email: newUserForm.email.trim(),
         role: newUserForm.role,
@@ -602,10 +697,12 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
     e.preventDefault();
     if (!editingUser) return;
 
-    fetch(`/api/admin/users/${editingUser.id}/update`, {
+    const pin = getAdminPin();
+    fetch(`/api/admin/users/${editingUser.id}/update?adminPin=${encodeURIComponent(pin)}`, {
       method: 'POST',
       headers: getAdminHeaders(),
       body: JSON.stringify({
+        adminPin: pin,
         username: editingUser.username,
         email: editingUser.email,
         title: editingUser.title || '',
@@ -638,10 +735,11 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
     e.preventDefault();
     if (!newTournForm.name.trim()) return;
 
-    fetch('/api/admin/tournaments/create', {
+    const pin = getAdminPin();
+    fetch(`/api/admin/tournaments/create?adminPin=${encodeURIComponent(pin)}`, {
       method: 'POST',
       headers: getAdminHeaders(),
-      body: JSON.stringify(newTournForm)
+      body: JSON.stringify({ ...newTournForm, adminPin: pin })
     })
       .then(res => res.json())
       .then(data => {
@@ -658,9 +756,11 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
   // Tournament Management: Delete
   const handleDeleteTournament = (tournId, name) => {
     if (!window.confirm(`Delete tournament "${name}"?`)) return;
-    fetch(`/api/admin/tournaments/${tournId}`, {
+    const pin = getAdminPin();
+    fetch(`/api/admin/tournaments/${tournId}?adminPin=${encodeURIComponent(pin)}`, {
       method: 'DELETE',
-      headers: getAdminHeaders()
+      headers: getAdminHeaders(),
+      body: JSON.stringify({ adminPin: pin })
     })
       .then(res => res.json())
       .then(() => {
@@ -805,8 +905,17 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
           </div>
         </div>
 
-        {/* Action Buttons: Lock, Refresh & Back */}
-        <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+        {/* Action Buttons: Save & Broadcast, Lock, Refresh & Back */}
+        <div className="flex items-center gap-2 self-start sm:self-center shrink-0 flex-wrap">
+          <button
+            onClick={handleSaveConfig}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-white text-xs font-black rounded-xl shadow-lg shadow-emerald-500/25 active:scale-95 transition-all cursor-pointer"
+            title="Save all changes & broadcast live to all players"
+          >
+            <Save className="w-3.5 h-3.5" />
+            <span>Save & Broadcast</span>
+          </button>
+
           <button
             onClick={handleLockConsole}
             className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
@@ -1810,32 +1919,55 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
                 <span>Stockfish AI Engine Bot Tiers</span>
               </h3>
               <p className="text-xs text-slate-500">
-                Customize the 5 difficulty tiers (Name, ELO score, Icon emoji, and playing style).
+                Full Admin Control: Add, edit, remove, and broadcast difficulty tiers in real time.
               </p>
             </div>
 
-            <button
-              onClick={handleSaveConfig}
-              className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95"
-            >
-              <Save className="w-3.5 h-3.5" />
-              <span>Save Bot Tiers</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleAddBotTier}
+                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+                title="Add a new custom AI bot level"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Bot Tier</span>
+              </button>
+
+              <button
+                onClick={handleSaveConfig}
+                className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+                title="Save and broadcast bot tiers live across the app"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span>Save Bot Tiers</span>
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {configForm.customBots?.map((bot, idx) => (
               <div
                 key={bot.level || idx}
-                className={`p-4 rounded-2xl border space-y-3 relative ${
-                  isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/70 border-slate-800'
+                className={`p-4 rounded-2xl border space-y-3 relative transition-all ${
+                  isLight ? 'bg-slate-50 border-slate-200 shadow-sm' : 'bg-slate-950/70 border-slate-800 shadow-md'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-500">
-                    Tier {bot.level}
+                    Tier {bot.level || idx + 1}
                   </span>
-                  <span className="text-xl">{bot.icon}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">{bot.icon}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteBotTier(idx)}
+                      className="p-1 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 active:scale-90 transition-all cursor-pointer"
+                      title={`Delete Tier ${bot.level || idx + 1}`}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -1905,6 +2037,21 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
                 </div>
               </div>
             ))}
+
+            {/* Quick Add Bot Tier Card */}
+            <button
+              type="button"
+              onClick={handleAddBotTier}
+              className={`p-4 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all cursor-pointer active:scale-95 min-h-[220px] ${
+                isLight ? 'border-slate-300 hover:border-amber-500 hover:bg-amber-50/50 text-slate-600' : 'border-slate-800 hover:border-amber-500 hover:bg-slate-900/60 text-slate-400'
+              }`}
+            >
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center shadow-inner">
+                <Plus className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-bold">Add New Bot Tier</span>
+              <span className="text-[10px] text-slate-500">Add customizable bot level</span>
+            </button>
           </div>
         </div>
       )}

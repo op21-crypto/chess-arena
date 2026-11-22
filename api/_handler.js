@@ -6,8 +6,8 @@ const app = express();
 
 app.use(cors({
   origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-pin', 'X-Admin-Pin', 'adminpin', 'adminPin', 'x-admin-email', 'x-requested-with', 'Accept']
 }));
 app.use(express.json());
 

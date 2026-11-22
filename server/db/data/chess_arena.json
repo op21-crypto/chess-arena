@@ -4349,7 +4349,7 @@
     "defaultTimeControl": "3m",
     "defaultMusicEnabled": true,
     "defaultMusicTrackIndex": 0,
-    "announcement": "Arena Championship 2026",
+    "announcement": "",
     "maintenanceMode": false,
     "customBots": [
       {
