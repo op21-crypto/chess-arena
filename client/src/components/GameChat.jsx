@@ -75,121 +75,58 @@ export function GameChat({
     }
   }, [messages.length]);
 
-  // Handle external voice trigger (from GameControls "Voice Call Friend" button)
-  useEffect(() => {
-    if (triggerVoiceCall > 0 && voiceStatus === 'idle' && isPlayer) {
-      handleRequestVoice();
-    }
-  }, [triggerVoiceCall]);
+  const processedSignalsRef = useRef(new Set());
 
-  // Setup WebRTC and Socket listeners for Voice Call
-  useEffect(() => {
-    if (!socket || !gameId) return;
+  const setupAudioAnalyser = (stream) => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      audioContext.current = new AudioCtx();
+      const source = audioContext.current.createMediaStreamSource(stream);
+      analyser.current = audioContext.current.createAnalyser();
+      analyser.current.fftSize = 256;
+      source.connect(analyser.current);
 
-    const handleInvitation = ({ from }) => {
-      setInviter(from);
-      setVoiceStatus('invited');
-      sound.playChat();
-    };
-
-    const handleResponse = async ({ accepted, by }) => {
-      if (accepted) {
-        setVoiceStatus('connected');
-        startWebRTC(true);
-      } else {
-        setVoiceStatus('idle');
-        setVoiceError(`${by?.username || 'Opponent'} declined voice call.`);
-        setTimeout(() => setVoiceError(''), 4000);
-      }
-    };
-
-    const handleSignal = async ({ signal }) => {
-      try {
-        if (!peerConnection.current) {
-          await startWebRTC(false);
+      const dataArray = new Uint8Array(analyser.current.frequencyBinCount);
+      const checkAudio = () => {
+        if (!analyser.current) return;
+        analyser.current.getByteFrequencyData(dataArray);
+        const average = dataArray.reduce((acc, v) => acc + v, 0) / dataArray.length;
+        const speaking = average > 25;
+        if (speaking !== isSpeaking) {
+          setIsSpeaking(speaking);
+          socket?.emit('voice_status_update', { gameId, isMuted, isSpeaking: speaking });
         }
-
-        if (signal.type === 'offer') {
-          await peerConnection.current.setRemoteDescription(new RTCSessionDescription(signal));
-          const answer = await peerConnection.current.createAnswer();
-          await peerConnection.current.setLocalDescription(answer);
-          if (socket) {
-            socket.emit('webrtc_signal', { gameId, signal: answer });
-          }
-          if (gameId) {
-            firebaseRoomService.sendRoomVoice(gameId, { action: 'signal', from: currentUser, signal: answer }).catch(() => {});
-          }
-        } else if (signal.type === 'answer') {
-          await peerConnection.current.setRemoteDescription(new RTCSessionDescription(signal));
-        } else if (signal.candidate) {
-          await peerConnection.current.addIceCandidate(new RTCIceCandidate(signal.candidate));
+        if (voiceStatus === 'connected') {
+          requestAnimationFrame(checkAudio);
         }
-      } catch (err) {
-        console.warn('WebRTC signal handling notice:', err.message);
-      }
-    };
-
-    const handlePeerStatus = ({ isSpeaking: peerSpeaking }) => {
-      setIsSpeaking(peerSpeaking);
-    };
-
-    const handleOpponentTyping = ({ user, isTyping }) => {
-      if (user?.id !== currentUser?.id && user?.username !== currentUser?.username) {
-        setSocketOpponentTyping(Boolean(isTyping));
-      }
-    };
-
-    socket.on('voice_chat_invitation', handleInvitation);
-    socket.on('voice_chat_response', handleResponse);
-    socket.on('webrtc_signal', handleSignal);
-    socket.on('voice_peer_status', handlePeerStatus);
-    socket.on('game_chat_typing', handleOpponentTyping);
-
-    return () => {
-      socket.off('voice_chat_invitation', handleInvitation);
-      socket.off('voice_chat_response', handleResponse);
-      socket.off('webrtc_signal', handleSignal);
-      socket.off('voice_peer_status', handlePeerStatus);
-      socket.off('game_chat_typing', handleOpponentTyping);
-      cleanupVoice();
-    };
-  }, [socket, gameId]);
-
-  // Handle roomData voice updates from Firestore / REST
-  useEffect(() => {
-    if (!roomData?.voiceCall) return;
-    const vc = roomData.voiceCall;
-    const isFromOther = vc.from?.id !== currentUser?.id && vc.from?.username !== currentUser?.username;
-    if (vc.status === 'requesting' && isFromOther) {
-      if (voiceStatus !== 'invited' && voiceStatus !== 'connected') {
-        setInviter(vc.from);
-        setVoiceStatus('invited');
-        sound.playChat();
-      }
-    } else if (vc.status === 'connected' && voiceStatus === 'requesting') {
-      setVoiceStatus('connected');
-      startWebRTC(true);
-    } else if (vc.status === 'declined' && voiceStatus === 'requesting') {
-      setVoiceStatus('idle');
-      setVoiceError(`${vc.by?.username || 'Opponent'} declined voice call.`);
-      setTimeout(() => setVoiceError(''), 4000);
+      };
+      checkAudio();
+    } catch (e) {
+      console.warn('VAD setup skipped:', e);
     }
-  }, [roomData?.voiceCall, currentUser?.id, currentUser?.username, voiceStatus]);
+  };
 
-  // Call duration timer
-  useEffect(() => {
-    if (voiceStatus === 'connected') {
-      setCallDuration(0);
-      callTimerRef.current = setInterval(() => {
-        setCallDuration(d => d + 1);
-      }, 1000);
-    } else {
-      if (callTimerRef.current) clearInterval(callTimerRef.current);
+  const cleanupVoice = () => {
+    if (localStream.current) {
+      localStream.current.getTracks().forEach((track) => track.stop());
+      localStream.current = null;
     }
-    return () => {
-      if (callTimerRef.current) clearInterval(callTimerRef.current);
-    };
-  }, [voiceStatus]);
+    if (peerConnection.current) {
+      peerConnection.current.close();
+      peerConnection.current = null;
+    }
+    if (audioContext.current) {
+      audioContext.current.close().catch(() => {});
+      audioContext.current = null;
+    }
+    if (callTimerRef.current) clearInterval(callTimerRef.current);
+    if (gameId) {
+      firebaseRoomService.sendRoomVoice(gameId, { action: 'end' }).catch(() => {});
+    }
+    setVoiceStatus('idle');
+    setIsSpeaking(false);
+  };
 
   const startWebRTC = async (isInitiator) => {
     try {
@@ -247,55 +184,34 @@ export function GameChat({
     }
   };
 
-  const setupAudioAnalyser = (stream) => {
+  const handleSignal = async ({ signal }) => {
     try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      audioContext.current = new AudioCtx();
-      const source = audioContext.current.createMediaStreamSource(stream);
-      analyser.current = audioContext.current.createAnalyser();
-      analyser.current.fftSize = 256;
-      source.connect(analyser.current);
+      if (!peerConnection.current) {
+        await startWebRTC(false);
+      }
 
-      const dataArray = new Uint8Array(analyser.current.frequencyBinCount);
-      const checkAudio = () => {
-        if (!analyser.current) return;
-        analyser.current.getByteFrequencyData(dataArray);
-        const average = dataArray.reduce((acc, v) => acc + v, 0) / dataArray.length;
-        const speaking = average > 25;
-        if (speaking !== isSpeaking) {
-          setIsSpeaking(speaking);
-          socket?.emit('voice_status_update', { gameId, isMuted, isSpeaking: speaking });
+      if (signal.type === 'offer') {
+        await peerConnection.current.setRemoteDescription(new RTCSessionDescription(signal));
+        const answer = await peerConnection.current.createAnswer();
+        await peerConnection.current.setLocalDescription(answer);
+        if (socket) {
+          socket.emit('webrtc_signal', { gameId, signal: answer });
         }
-        if (voiceStatus === 'connected') {
-          requestAnimationFrame(checkAudio);
+        if (gameId) {
+          firebaseRoomService.sendRoomVoice(gameId, { action: 'signal', from: currentUser, signal: answer }).catch(() => {});
         }
-      };
-      checkAudio();
-    } catch (e) {
-      console.warn('VAD setup skipped:', e);
+      } else if (signal.type === 'answer') {
+        if (peerConnection.current && peerConnection.current.signalingState !== 'stable') {
+          await peerConnection.current.setRemoteDescription(new RTCSessionDescription(signal));
+        }
+      } else if (signal.candidate && peerConnection.current) {
+        try {
+          await peerConnection.current.addIceCandidate(new RTCIceCandidate(signal.candidate));
+        } catch {}
+      }
+    } catch (err) {
+      console.warn('WebRTC signal handling notice:', err.message);
     }
-  };
-
-  const cleanupVoice = () => {
-    if (localStream.current) {
-      localStream.current.getTracks().forEach((track) => track.stop());
-      localStream.current = null;
-    }
-    if (peerConnection.current) {
-      peerConnection.current.close();
-      peerConnection.current = null;
-    }
-    if (audioContext.current) {
-      audioContext.current.close().catch(() => {});
-      audioContext.current = null;
-    }
-    if (callTimerRef.current) clearInterval(callTimerRef.current);
-    if (gameId) {
-      firebaseRoomService.sendRoomVoice(gameId, { action: 'end' }).catch(() => {});
-    }
-    setVoiceStatus('idle');
-    setIsSpeaking(false);
   };
 
   const handleRequestVoice = () => {
@@ -322,6 +238,118 @@ export function GameChat({
       }).catch(() => {});
     }
   };
+
+  // Handle external voice trigger (from GameControls "Voice Call Friend" button)
+  useEffect(() => {
+    if (triggerVoiceCall > 0 && voiceStatus === 'idle' && isPlayer) {
+      handleRequestVoice();
+    }
+  }, [triggerVoiceCall]);
+
+  // Setup WebRTC and Socket listeners for Voice Call
+  useEffect(() => {
+    if (!socket || !gameId) return;
+
+    const handleInvitation = ({ from }) => {
+      setInviter(from);
+      setVoiceStatus('invited');
+      sound.playChat();
+    };
+
+    const handleResponse = async ({ accepted, by }) => {
+      if (accepted) {
+        setVoiceStatus('connected');
+        startWebRTC(true);
+      } else {
+        setVoiceStatus('idle');
+        setVoiceError(`${by?.username || 'Opponent'} declined voice call.`);
+        setTimeout(() => setVoiceError(''), 4000);
+      }
+    };
+
+    const handlePeerStatus = ({ isSpeaking: peerSpeaking }) => {
+      setIsSpeaking(peerSpeaking);
+    };
+
+    const handleOpponentTyping = ({ user, isTyping }) => {
+      if (user?.id !== currentUser?.id && user?.username !== currentUser?.username) {
+        setSocketOpponentTyping(Boolean(isTyping));
+      }
+    };
+
+    socket.on('voice_chat_invitation', handleInvitation);
+    socket.on('voice_chat_response', handleResponse);
+    socket.on('webrtc_signal', handleSignal);
+    socket.on('voice_peer_status', handlePeerStatus);
+    socket.on('game_chat_typing', handleOpponentTyping);
+
+    return () => {
+      socket.off('voice_chat_invitation', handleInvitation);
+      socket.off('voice_chat_response', handleResponse);
+      socket.off('webrtc_signal', handleSignal);
+      socket.off('voice_peer_status', handlePeerStatus);
+      socket.off('game_chat_typing', handleOpponentTyping);
+      cleanupVoice();
+    };
+  }, [socket, gameId]);
+
+  // Handle roomData voice updates (Calls & WebRTC Signals) from Firestore / REST
+  useEffect(() => {
+    if (!roomData?.voiceCall && (!roomData?.voiceSignals || roomData.voiceSignals.length === 0)) return;
+
+    // 1. Voice Call Request / Response handling
+    if (roomData.voiceCall) {
+      const vc = roomData.voiceCall;
+      const isFromOther = vc.from?.id !== currentUser?.id && vc.from?.username !== currentUser?.username;
+      if (vc.status === 'requesting' && isFromOther) {
+        if (voiceStatus !== 'invited' && voiceStatus !== 'connected') {
+          setInviter(vc.from);
+          setVoiceStatus('invited');
+          sound.playChat();
+        }
+      } else if (vc.status === 'connected' && voiceStatus === 'requesting') {
+        setVoiceStatus('connected');
+        startWebRTC(true);
+      } else if (vc.status === 'declined' && voiceStatus === 'requesting') {
+        setVoiceStatus('idle');
+        setVoiceError(`${vc.by?.username || 'Opponent'} declined voice call.`);
+        setTimeout(() => setVoiceError(''), 4000);
+      }
+    }
+
+    // 2. WebRTC Peer-to-Peer Signals from Firestore
+    if (Array.isArray(roomData.voiceSignals) && roomData.voiceSignals.length > 0 && gameId) {
+      const myId = currentUser?.id;
+      const myName = currentUser?.username;
+
+      roomData.voiceSignals.forEach(async (sigItem) => {
+        if (!sigItem?.signal) return;
+        const isFromMe = (sigItem.from === myId || sigItem.from === myName);
+        if (isFromMe) return;
+
+        const sigKey = `${sigItem.timestamp || 0}_${sigItem.signal.type || 'candidate'}_${JSON.stringify(sigItem.signal).slice(0, 50)}`;
+        if (processedSignalsRef.current.has(sigKey)) return;
+        processedSignalsRef.current.add(sigKey);
+
+        await handleSignal({ signal: sigItem.signal });
+      });
+    }
+  }, [roomData?.voiceCall, roomData?.voiceSignals, currentUser?.id, currentUser?.username, voiceStatus, gameId]);
+
+  // Call duration timer
+  useEffect(() => {
+    if (voiceStatus === 'connected') {
+      setCallDuration(0);
+      callTimerRef.current = setInterval(() => {
+        setCallDuration(d => d + 1);
+      }, 1000);
+    } else {
+      if (callTimerRef.current) clearInterval(callTimerRef.current);
+    }
+    return () => {
+      if (callTimerRef.current) clearInterval(callTimerRef.current);
+    };
+  }, [voiceStatus]);
 
   const handleRespondInvitation = (accept) => {
     setVoiceStatus(accept ? 'connected' : 'idle');

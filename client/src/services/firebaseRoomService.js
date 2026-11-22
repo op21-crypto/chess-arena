@@ -177,10 +177,13 @@ export const firebaseRoomService = {
     if (!updated.voiceSignals) updated.voiceSignals = [];
 
     // Assign open player seat
-    if (!updated.whitePlayer && (!updated.blackPlayer || updated.blackPlayer.id !== activeUser.id)) {
+    const isHostWhite = updated.whitePlayer && (updated.whitePlayer.id === activeUser.id || updated.whitePlayer.username === activeUser.username);
+    const isHostBlack = updated.blackPlayer && (updated.blackPlayer.id === activeUser.id || updated.blackPlayer.username === activeUser.username);
+
+    if (!updated.whitePlayer && !isHostBlack) {
       updated.whitePlayer = activeUser;
       updated.status = 'active';
-    } else if (!updated.blackPlayer && (!updated.whitePlayer || updated.whitePlayer.id !== activeUser.id)) {
+    } else if (!updated.blackPlayer && !isHostWhite) {
       updated.blackPlayer = activeUser;
       updated.status = 'active';
     } else if (updated.whitePlayer && updated.blackPlayer) {
@@ -194,6 +197,29 @@ export const firebaseRoomService = {
 
   async updateRoomMove(roomId, { fen, move, turn, status, winner, winReason, whiteTime, blackTime, capturedPieces }) {
     if (!roomId) return false;
+    try {
+      const inst = await getFirestoreInstance();
+      if (inst) {
+        const { db, doc, setDoc, arrayUnion } = inst;
+        const ref = doc(db, 'rooms', roomId);
+        const updates = {
+          fen,
+          turn: turn || (fen ? fen.split(' ')[1] : 'w'),
+          status: status || 'active',
+          lastUpdated: Date.now()
+        };
+        if (move) updates.moveHistory = arrayUnion(move);
+        if (winner !== undefined) updates.winner = winner;
+        if (winReason !== undefined) updates.winReason = winReason;
+        if (whiteTime !== undefined) updates.whiteTime = whiteTime;
+        if (blackTime !== undefined) updates.blackTime = blackTime;
+        if (capturedPieces) updates.capturedPieces = capturedPieces;
+        await setDoc(ref, updates, { merge: true });
+        return true;
+      }
+    } catch (e) {
+      console.warn('[FirebaseRoomService] updateRoomMove direct write fallback:', e);
+    }
     try {
       const current = await this.getRoom(roomId);
       if (!current) return false;
@@ -224,6 +250,20 @@ export const firebaseRoomService = {
 
   async sendRoomChat(roomId, message) {
     if (!roomId || !message) return false;
+    try {
+      const inst = await getFirestoreInstance();
+      if (inst) {
+        const { db, doc, setDoc, arrayUnion } = inst;
+        const ref = doc(db, 'rooms', roomId);
+        await setDoc(ref, {
+          chatMessages: arrayUnion(message),
+          lastUpdated: Date.now()
+        }, { merge: true });
+        return true;
+      }
+    } catch (e) {
+      console.warn('[FirebaseRoomService] sendRoomChat direct fallback:', e);
+    }
     try {
       const current = await this.getRoom(roomId);
       if (!current) return false;
@@ -266,6 +306,29 @@ export const firebaseRoomService = {
 
   async sendRoomVoice(roomId, { action, from, by, accept, signal }) {
     if (!roomId) return false;
+    try {
+      const inst = await getFirestoreInstance();
+      if (inst) {
+        const { db, doc, setDoc, arrayUnion } = inst;
+        const ref = doc(db, 'rooms', roomId);
+        const updates = { lastUpdated: Date.now() };
+
+        if (action === 'request') {
+          updates.voiceCall = { status: 'requesting', from, requestedAt: Date.now() };
+        } else if (action === 'respond') {
+          updates.voiceCall = { status: accept ? 'connected' : 'declined', by: by || from, respondedAt: Date.now() };
+        } else if (action === 'end') {
+          updates.voiceCall = null;
+          updates.voiceSignals = [];
+        } else if (action === 'signal' && signal) {
+          updates.voiceSignals = arrayUnion({ from: from?.id || from?.username, signal, timestamp: Date.now() });
+        }
+        await setDoc(ref, updates, { merge: true });
+        return true;
+      }
+    } catch (e) {
+      console.warn('[FirebaseRoomService] sendRoomVoice direct write fallback:', e);
+    }
     try {
       const current = await this.getRoom(roomId);
       if (!current) return false;

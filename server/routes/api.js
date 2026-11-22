@@ -431,8 +431,15 @@ router.post('/rooms/create', async (req, res) => {
     elo: 1200
   };
 
-  // Strictly random 50/50 color allocation for private rooms
-  const isWhite = Math.random() > 0.5;
+  // Color preference allocation for private rooms ('w', 'b', or 'random')
+  let isWhite = true;
+  if (colorPreference === 'w') {
+    isWhite = true;
+  } else if (colorPreference === 'b') {
+    isWhite = false;
+  } else {
+    isWhite = Math.random() > 0.5;
+  }
 
   const room = {
     id,
@@ -548,10 +555,13 @@ router.post(['/rooms/join', '/rooms/:id/join'], async (req, res) => {
   if (!room.voiceSignals) room.voiceSignals = [];
 
   // Slot the joining player into the open seat
-  if (!room.whitePlayer && (!room.blackPlayer || room.blackPlayer.id !== joiningPlayer.id)) {
+  const isHostWhite = room.whitePlayer && (room.whitePlayer.id === joiningPlayer.id || room.whitePlayer.username === joiningPlayer.username);
+  const isHostBlack = room.blackPlayer && (room.blackPlayer.id === joiningPlayer.id || room.blackPlayer.username === joiningPlayer.username);
+
+  if (!room.whitePlayer && !isHostBlack) {
     room.whitePlayer = joiningPlayer;
     room.status = 'active';
-  } else if (!room.blackPlayer && (!room.whitePlayer || room.whitePlayer.id !== joiningPlayer.id)) {
+  } else if (!room.blackPlayer && !isHostWhite) {
     room.blackPlayer = joiningPlayer;
     room.status = 'active';
   } else if (room.whitePlayer && room.blackPlayer) {
@@ -702,8 +712,11 @@ router.post(['/rooms/move', '/rooms/:id/move'], async (req, res) => {
     };
   }
 
-  const { move, fen, whiteTime, blackTime, capturedPieces, status, winner, winReason } = req.body;
-  if (fen) room.fen = fen;
+  const { move, fen, turn, whiteTime, blackTime, capturedPieces, status, winner, winReason } = req.body;
+  if (fen) {
+    room.fen = fen;
+    room.turn = turn || (fen.split(' ')[1] || 'w');
+  }
   if (move) {
     if (!room.moveHistory) room.moveHistory = [];
     room.moveHistory.push(move);
@@ -714,6 +727,9 @@ router.post(['/rooms/move', '/rooms/:id/move'], async (req, res) => {
   if (status) room.status = status;
   if (winner !== undefined) room.winner = winner;
   if (winReason !== undefined) room.winReason = winReason;
+  if (room.whitePlayer && room.blackPlayer && room.status === 'waiting') {
+    room.status = 'active';
+  }
 
   room.lastUpdated = Date.now();
   Database.saveGame(room);

@@ -534,6 +534,15 @@ export default function App() {
   const [chatMessages, setChatMessages] = useState([]);
   const [opponentIsTyping, setOpponentIsTyping] = useState(false);
   const [isAIGame, setIsAIGame] = useState(false);
+  const gameSessionRef = useRef(gameSession);
+  useEffect(() => {
+    gameSessionRef.current = gameSession;
+  }, [gameSession]);
+
+  const playerColorRef = useRef(playerColor);
+  useEffect(() => {
+    playerColorRef.current = playerColor;
+  }, [playerColor]);
   const [aiLevel, setAiLevel] = useState(3); // Master level by default
   const [aiThinking, setAiThinking] = useState(false);
   const [currentAIOpponent, setCurrentAIOpponent] = useState(null);
@@ -997,8 +1006,15 @@ export default function App() {
       firebaseRoomService.joinRoom(roomParam, activeUser).then(room => {
         if (room) {
           setGameSession(room);
-          const isWhite = room.whitePlayer?.id === activeUser.id;
-          setPlayerColor(isWhite ? 'w' : 'b');
+          const isWhite = room.whitePlayer && (
+            room.whitePlayer.id === activeUser.id ||
+            room.whitePlayer.username === activeUser.username
+          );
+          const isBlack = room.blackPlayer && (
+            room.blackPlayer.id === activeUser.id ||
+            room.blackPlayer.username === activeUser.username
+          );
+          setPlayerColor(isBlack ? 'b' : (isWhite ? 'w' : 'b'));
           setActiveTab('game');
           sound.playMatchStart();
         }
@@ -1011,10 +1027,17 @@ export default function App() {
       })
         .then(r => r.json())
         .then(data => {
-          if (data.room) {
+          if (data?.room) {
             setGameSession(data.room);
-            const isWhite = data.room.whitePlayer?.id === activeUser.id;
-            setPlayerColor(isWhite ? 'w' : 'b');
+            const isWhite = data.room.whitePlayer && (
+              data.room.whitePlayer.id === activeUser.id ||
+              data.room.whitePlayer.username === activeUser.username
+            );
+            const isBlack = data.room.blackPlayer && (
+              data.room.blackPlayer.id === activeUser.id ||
+              data.room.blackPlayer.username === activeUser.username
+            );
+            setPlayerColor(isBlack ? 'b' : (isWhite ? 'w' : 'b'));
             setActiveTab('game');
             sound.playMatchStart();
           }
@@ -1035,36 +1058,67 @@ export default function App() {
   // Room synchronization (Real-time Firestore Push + HTTP Polling Fallback)
   useEffect(() => {
     if (!gameSession?.id || isAIGame) return;
+    const roomId = gameSession.id;
 
     const handleRoomData = (r) => {
       if (!r) return;
-      const movesDiffer = (r.moveHistory?.length || 0) !== (gameSession.moveHistory?.length || 0);
-      const fenDiffers = r.fen && r.fen !== gameSession.fen;
-      const statusDiffers = r.status && r.status !== gameSession.status;
-      const opponentJoined = (gameSession.status === 'waiting' && r.status === 'active') ||
-        (!gameSession.blackPlayer && r.blackPlayer) ||
-        (!gameSession.whitePlayer && r.whitePlayer);
+      const curr = gameSessionRef.current;
+      const activeUser = currentUser || getOrCreateUser();
+
+      // Synchronize player color orientation dynamically based on assigned room seats
+      const isMeWhite = Boolean(
+        r.whitePlayer && (
+          r.whitePlayer.id === activeUser.id ||
+          r.whitePlayer.username === activeUser.username
+        )
+      );
+      const isMeBlack = Boolean(
+        r.blackPlayer && (
+          r.blackPlayer.id === activeUser.id ||
+          r.blackPlayer.username === activeUser.username
+        )
+      );
+      if (isMeWhite && playerColorRef.current !== 'w') {
+        setPlayerColor('w');
+      } else if (isMeBlack && playerColorRef.current !== 'b') {
+        setPlayerColor('b');
+      }
+
+      const movesDiffer = (r.moveHistory?.length || 0) !== (curr?.moveHistory?.length || 0);
+      const fenDiffers = r.fen && r.fen !== curr?.fen;
+      const statusDiffers = r.status && r.status !== curr?.status;
+      const opponentJoined = (curr?.status === 'waiting' && r.status === 'active') ||
+        (!curr?.blackPlayer && r.blackPlayer) ||
+        (!curr?.whitePlayer && r.whitePlayer);
+      const voiceCallDiffers = JSON.stringify(r.voiceCall || null) !== JSON.stringify(curr?.voiceCall || null);
+      const voiceSignalsDiffers = (r.voiceSignals?.length || 0) !== (curr?.voiceSignals?.length || 0);
+      const lastUpdatedDiffers = r.lastUpdated && r.lastUpdated !== curr?.lastUpdated;
 
       // Play match start sound when friend enters room!
       if (opponentJoined) {
         sound.playMatchStart();
       }
 
-      // Synchronize room chat messages
+      // Synchronize room chat messages reliably without loss or duplicates
       if (Array.isArray(r.chatMessages) && r.chatMessages.length > 0) {
         setChatMessages(prev => {
-          const prevIds = new Set(prev.map(m => m.id));
-          const newIncoming = r.chatMessages.filter(m => !prevIds.has(m.id));
-          if (newIncoming.length > 0) {
-            const fromOpponent = newIncoming.some(
-              m => m.sender?.id !== currentUser?.id && m.sender?.username !== currentUser?.username
-            );
-            if (fromOpponent) {
-              sound.playChat();
+          const map = new Map();
+          prev.forEach(m => { if (m.id) map.set(m.id, m); });
+          let hasNewFromOpponent = false;
+          r.chatMessages.forEach(m => {
+            if (m.id) {
+              if (!map.has(m.id)) {
+                if (m.sender?.id !== activeUser.id && m.sender?.username !== activeUser.username) {
+                  hasNewFromOpponent = true;
+                }
+              }
+              map.set(m.id, m);
             }
-            return [...prev, ...newIncoming];
+          });
+          if (hasNewFromOpponent) {
+            sound.playChat();
           }
-          return prev;
+          return Array.from(map.values());
         });
       }
 
@@ -1072,18 +1126,18 @@ export default function App() {
       if (r.typingUsers) {
         const now = Date.now();
         const isTyping = Object.values(r.typingUsers).some(u => {
-          const isOther = u.id !== currentUser?.id && u.username !== currentUser?.username;
+          const isOther = u.id !== activeUser.id && u.username !== activeUser.username;
           return isOther && (now - (u.timestamp || 0) < 3500);
         });
         setOpponentIsTyping(isTyping);
       }
 
-      if (movesDiffer || fenDiffers || statusDiffers || opponentJoined) {
-        const captured = getCapturedPieces(r.fen || gameSession.fen);
+      if (movesDiffer || fenDiffers || statusDiffers || opponentJoined || voiceCallDiffers || voiceSignalsDiffers || lastUpdatedDiffers) {
+        const captured = getCapturedPieces(r.fen || curr?.fen);
         setGameSession(prev => ({
           ...prev,
           ...r,
-          status: opponentJoined ? 'active' : (r.status || prev?.status),
+          status: (opponentJoined || (r.whitePlayer && r.blackPlayer && (r.status === 'active' || prev?.status === 'active'))) ? 'active' : (r.status || prev?.status),
           turn: new Chess(r.fen || prev?.fen || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1').turn(),
           capturedPieces: { white: captured.byWhite, black: captured.byBlack }
         }));
@@ -1098,7 +1152,8 @@ export default function App() {
 
         if (r.status === 'checkmate' || r.status === 'resigned' || r.status === 'stalemate' || r.status === 'draw') {
           setShowGameOverModal(true);
-          const isWinner = (r.winner === 'white' && playerColor === 'w') || (r.winner === 'black' && playerColor === 'b');
+          const effectiveCol = isMeBlack ? 'b' : (isMeWhite ? 'w' : playerColorRef.current);
+          const isWinner = (r.winner === 'white' && effectiveCol === 'w') || (r.winner === 'black' && effectiveCol === 'b');
           if (isWinner) sound.playVictory();
           else sound.playGameOver();
           handleMatchFinished({
@@ -1112,25 +1167,25 @@ export default function App() {
     };
 
     // 1. Primary: Instant Firestore onSnapshot subscription (<50ms)
-    const unsubscribe = firebaseRoomService.subscribeToRoom(gameSession.id, handleRoomData);
+    const unsubscribe = firebaseRoomService.subscribeToRoom(roomId, handleRoomData);
 
     // 2. Fallback: Secondary HTTP poll
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/rooms/get?id=${gameSession.id}`);
+        const res = await fetch(`/api/rooms/get?id=${roomId}`);
         if (!res.ok) return;
         const data = await res.json();
         if (data?.room) {
           handleRoomData(data.room);
         }
       } catch {}
-    }, 1500);
+    }, 1200);
 
     return () => {
       unsubscribe();
       clearInterval(interval);
     };
-  }, [gameSession?.id, gameSession?.fen, gameSession?.moveHistory?.length, gameSession?.status, gameSession?.whitePlayer?.id, gameSession?.blackPlayer?.id, isAIGame, currentUser?.id, currentUser?.username, playerColor]);
+  }, [gameSession?.id, isAIGame]);
 
   // Update socket authentication when user changes
   useEffect(() => {
@@ -1159,8 +1214,16 @@ export default function App() {
   const handleCreateFriendRoom = async (config) => {
     const activeUser = getOrCreateUser();
     const roomId = `arena_${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-    // Strictly random 50/50 color allocation for private rooms
-    const isWhite = Math.random() > 0.5;
+
+    // Starting side allocation based on host's selection ('w', 'b', or 'random')
+    let isWhite = true;
+    if (config?.colorPreference === 'w') {
+      isWhite = true;
+    } else if (config?.colorPreference === 'b') {
+      isWhite = false;
+    } else {
+      isWhite = Math.random() > 0.5;
+    }
     const baseMinutes = config?.timeControl?.baseMinutes || 10;
 
     const initialGame = {
@@ -1198,8 +1261,8 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           roomId,
-          timeControl: config.timeControl,
-          colorPreference: config.colorPreference,
+          timeControl: config?.timeControl,
+          colorPreference: config?.colorPreference,
           user: activeUser
         })
       });
@@ -1222,8 +1285,15 @@ export default function App() {
       const joinedRoom = await firebaseRoomService.joinRoom(cleanId, activeUser);
       if (joinedRoom) {
         setGameSession(joinedRoom);
-        const isWhite = joinedRoom.whitePlayer?.id === activeUser.id;
-        setPlayerColor(isWhite ? 'w' : 'b');
+        const isWhite = joinedRoom.whitePlayer && (
+          joinedRoom.whitePlayer.id === activeUser.id ||
+          joinedRoom.whitePlayer.username === activeUser.username
+        );
+        const isBlack = joinedRoom.blackPlayer && (
+          joinedRoom.blackPlayer.id === activeUser.id ||
+          joinedRoom.blackPlayer.username === activeUser.username
+        );
+        setPlayerColor(isBlack ? 'b' : (isWhite ? 'w' : 'b'));
         setShowFriendRoomModal(false);
         setShowGameOverModal(false);
         setActiveTab('game');
@@ -1239,8 +1309,15 @@ export default function App() {
       const data = await res.json();
       if (data?.room) {
         setGameSession(data.room);
-        const isWhite = data.room.whitePlayer?.id === activeUser.id;
-        setPlayerColor(isWhite ? 'w' : 'b');
+        const isWhite = data.room.whitePlayer && (
+          data.room.whitePlayer.id === activeUser.id ||
+          data.room.whitePlayer.username === activeUser.username
+        );
+        const isBlack = data.room.blackPlayer && (
+          data.room.blackPlayer.id === activeUser.id ||
+          data.room.blackPlayer.username === activeUser.username
+        );
+        setPlayerColor(isBlack ? 'b' : (isWhite ? 'w' : 'b'));
         setShowFriendRoomModal(false);
         setShowGameOverModal(false);
         setActiveTab('game');
@@ -1393,6 +1470,60 @@ export default function App() {
 
     return () => clearInterval(interval);
   }, [isAIGame, gameSession?.isGameOver, playerColor]);
+
+  // Multiplayer Room Game Clock Timer (Runs only after friend joins: status === 'active')
+  useEffect(() => {
+    if (isAIGame || !gameSession || !gameSession.isRoom || gameSession.isGameOver || gameSession.status !== 'active') return;
+    if (!gameSession.whitePlayer || !gameSession.blackPlayer) return;
+    // Unlimited time / casual mode
+    if (gameSession.timeControl?.baseMinutes === 0) return;
+
+    const interval = setInterval(() => {
+      setGameSession(prev => {
+        if (!prev || prev.isGameOver || prev.status !== 'active') return prev;
+        if (prev.timeControl?.baseMinutes === 0) return prev;
+
+        const isWhiteTurn = prev.turn === 'w';
+        const newWhiteTime = isWhiteTurn ? Math.max(0, prev.whiteTime - 100) : prev.whiteTime;
+        const newBlackTime = !isWhiteTurn ? Math.max(0, prev.blackTime - 100) : prev.blackTime;
+
+        if (newWhiteTime <= 0 || newBlackTime <= 0) {
+          const winner = newWhiteTime <= 0 ? 'black' : 'white';
+          setShowGameOverModal(true);
+          const effectiveCol = playerColorRef.current;
+          const isWinner = (winner === 'white' && effectiveCol === 'w') || (winner === 'black' && effectiveCol === 'b');
+          if (isWinner) {
+            sound.playVictory();
+          } else {
+            sound.playGameOver();
+          }
+          handleMatchFinished({
+            winner,
+            status: 'timeout',
+            winReason: 'timeout',
+            currentSession: { ...prev, whiteTime: newWhiteTime, blackTime: newBlackTime }
+          });
+          return {
+            ...prev,
+            whiteTime: newWhiteTime,
+            blackTime: newBlackTime,
+            isGameOver: true,
+            status: 'timeout',
+            winner,
+            winReason: 'timeout'
+          };
+        }
+
+        return {
+          ...prev,
+          whiteTime: newWhiteTime,
+          blackTime: newBlackTime
+        };
+      });
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [isAIGame, gameSession?.id, gameSession?.status, gameSession?.isGameOver, gameSession?.whitePlayer?.id, gameSession?.blackPlayer?.id]);
 
   const triggerAIMove = async (fen, session, level = 3) => {
     setAiThinking(true);
@@ -1904,12 +2035,25 @@ export default function App() {
     }
   };
 
-  // Header active player identification
-  const whitePlayer = gameSession?.whitePlayer;
-  const blackPlayer = gameSession?.blackPlayer;
-  const isWhite = playerColor === 'w';
-  const opponent = isWhite ? blackPlayer : whitePlayer;
-  const me = isWhite ? whitePlayer : blackPlayer;
+  // Active player identification with dynamic orientation guarantee
+  const activeUser = currentUser || getOrCreateUser();
+  const isCurrentUserWhite = Boolean(
+    gameSession?.whitePlayer && (
+      gameSession.whitePlayer.id === activeUser.id ||
+      gameSession.whitePlayer.username === activeUser.username
+    )
+  );
+  const isCurrentUserBlack = Boolean(
+    gameSession?.blackPlayer && (
+      gameSession.blackPlayer.id === activeUser.id ||
+      gameSession.blackPlayer.username === activeUser.username
+    )
+  );
+
+  const effectivePlayerColor = isCurrentUserBlack ? 'b' : (isCurrentUserWhite ? 'w' : playerColor);
+  const isWhite = effectivePlayerColor === 'w';
+  const me = isWhite ? gameSession?.whitePlayer : gameSession?.blackPlayer;
+  const opponent = isWhite ? gameSession?.blackPlayer : gameSession?.whitePlayer;
   // Dynamic Day & Night System Theme Detection
   const [systemIsDark, setSystemIsDark] = useState(() => {
     if (typeof window !== 'undefined' && window.matchMedia) {
@@ -2670,7 +2814,7 @@ export default function App() {
                   <Chessboard
                     fen={gameSession.fen}
                     onMove={handleMove}
-                    playerColor={playerColor}
+                    playerColor={effectivePlayerColor}
                     flipped={boardFlipped}
                     boardTheme={settings.boardTheme}
                     pieceTheme={settings.pieceTheme}
@@ -2718,10 +2862,10 @@ export default function App() {
                 <GameControls
                   isLight={isLight}
                   isGameOver={gameSession.isGameOver}
-                  isPlayer={playerColor === 'w' || playerColor === 'b'}
+                  isPlayer={effectivePlayerColor === 'w' || effectivePlayerColor === 'b'}
                   drawOfferedBy={gameSession.drawOfferedBy}
                   rematchRequestedBy={gameSession.rematchRequestedBy}
-                  currentUserColor={playerColor}
+                  currentUserColor={effectivePlayerColor}
                   onResign={handleResign}
                   onOfferDraw={handleOfferDraw}
                   onRespondDraw={handleRespondDraw}
@@ -2755,7 +2899,7 @@ export default function App() {
                       opponentUser={opponent}
                       socket={socketRef.current}
                       gameId={gameSession.id}
-                      isPlayer={playerColor === 'w' || playerColor === 'b'}
+                      isPlayer={effectivePlayerColor === 'w' || effectivePlayerColor === 'b'}
                       triggerVoiceCall={voiceCallTrigger}
                       isOpponentTyping={opponentIsTyping}
                       onTyping={handleSendTyping}

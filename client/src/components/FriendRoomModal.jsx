@@ -837,11 +837,12 @@ export function FriendRoomModal({
   const [challengeCustomMinutes, setChallengeCustomMinutes] = useState('15');
   const [isCustomChallenge, setIsCustomChallenge] = useState(false);
 
-  // Room state (Starting Side removed; strictly random 50/50 automatically)
+  // Room state
   const [roomCode, setRoomCode] = useState('');
   const [selectedRoomMinutes, setSelectedRoomMinutes] = useState(5); // 3, 5, 10, or custom
   const [customRoomMinutes, setCustomRoomMinutes] = useState('15');
   const [isCustomRoom, setIsCustomRoom] = useState(false);
+  const [selectedRoomColor, setSelectedRoomColor] = useState('random'); // 'w' | 'random' | 'b'
   const [copied, setCopied] = useState(false);
 
   // Set default tab to 'friends' or initialTab on open and reload persistent friends
@@ -1501,7 +1502,7 @@ export function FriendRoomModal({
     copyLink();
   };
 
-  // Resolve room creation with strictly random side
+  // Resolve room creation with selected or random side
   const handleCreateRoomAction = () => {
     const finalMinutes = isCustomRoom
       ? Math.max(1, Math.min(60, parseInt(customRoomMinutes, 10) || 15))
@@ -1509,7 +1510,7 @@ export function FriendRoomModal({
 
     onCreateRoom({
       timeControl: { baseMinutes: finalMinutes, incrementSeconds: 0 },
-      colorPreference: 'random' // Strictly random 50/50 starting side automatically
+      colorPreference: selectedRoomColor
     });
   };
 
@@ -1963,6 +1964,45 @@ export function FriendRoomModal({
                             <span className={`text-[11px] ${theme.textMuted}`}>(1 to 60 mins per player)</span>
                           </div>
                         )}
+                      </div>
+
+                      {/* Starting Side Selection: White, Random, Black */}
+                      <div className="space-y-1.5">
+                        <label className={`text-[11px] font-bold block ${theme.textMuted}`}>Choose Your Side</label>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {[
+                            { id: 'w', label: 'White', sub: 'You play 1st', symbol: '⚪' },
+                            { id: 'random', label: 'Random', sub: 'Fair 50 / 50', symbol: '🎲' },
+                            { id: 'b', label: 'Black', sub: 'You play 2nd', symbol: '⚫' }
+                          ].map(side => {
+                            const isSideSelected = selectedRoomColor === side.id;
+                            return (
+                              <button
+                                key={side.id}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedRoomColor(side.id);
+                                  triggerHaptic('move');
+                                }}
+                                className={`py-2 px-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
+                                  isSideSelected
+                                    ? isLight
+                                      ? 'bg-amber-100 border-amber-500 text-amber-950 font-black shadow-xs ring-1 ring-amber-400'
+                                      : 'bg-amber-500/20 border-amber-400 text-amber-200 font-black shadow-xs ring-1 ring-amber-400/50'
+                                    : isLight
+                                      ? 'bg-slate-50/80 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-100'
+                                      : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
+                                }`}
+                              >
+                                <span className="text-base leading-none mb-0.5">{side.symbol}</span>
+                                <span className="text-[11px] font-bold block leading-tight">{side.label}</span>
+                                <span className={`text-[9px] block ${isSideSelected ? (isLight ? 'text-amber-900 font-bold' : 'text-amber-300 font-bold') : (isLight ? 'text-slate-400' : 'text-slate-500')}`}>
+                                  {side.sub}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
 
                       <button
