@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Zap, Clock, Shield, Sparkles, Copy, Check, Share2, Bot, Users, X,
   UserPlus, Search, Circle, Swords, Trash2, LogIn, Send, AlertCircle,
@@ -236,18 +236,16 @@ export function MatchmakingModal({
 
 export { FriendRoomModal } from "./FriendRoomModal.jsx";
 
-export function PlayAIModal({ isOpen, onClose, onStartAIGame, isLight = false }) {
+export function PlayAIModal({ isOpen, onClose, onStartAIGame, isLight = false, customBots = null }) {
   const [selectedLevel, setSelectedLevel] = useState(3); // Master level by default
   const [selectedTime, setSelectedTime] = useState(10); // minutes (0 = unlimited)
 
-  if (!isOpen) return null;
-
   // Clean, executive difficulty tiers with distinct vibrant colors & zero bulky text
-  const AI_LEVELS = [
+  const AI_LEVELS = useMemo(() => [
     {
       level: 1,
-      name: 'Beginner',
-      elo: '800 ELO',
+      name: customBots?.find(b => b.level === 1)?.name || 'Beginner',
+      elo: customBots?.find(b => b.level === 1)?.elo || '800 ELO',
       icon: Shield,
       accentBorder: 'border-emerald-500',
       accentRing: 'ring-emerald-400/40',
@@ -266,8 +264,8 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame, isLight = false })
     },
     {
       level: 2,
-      name: 'Challenger',
-      elo: '1200 ELO',
+      name: customBots?.find(b => b.level === 2)?.name || 'Challenger',
+      elo: customBots?.find(b => b.level === 2)?.elo || '1200 ELO',
       icon: Zap,
       accentBorder: 'border-sky-500',
       accentRing: 'ring-sky-400/40',
@@ -286,8 +284,8 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame, isLight = false })
     },
     {
       level: 3,
-      name: 'Master',
-      elo: '1600 ELO',
+      name: customBots?.find(b => b.level === 3)?.name || 'Master',
+      elo: customBots?.find(b => b.level === 3)?.elo || '1600 ELO',
       icon: Swords,
       accentBorder: 'border-amber-500',
       accentRing: 'ring-amber-400/40',
@@ -306,8 +304,8 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame, isLight = false })
     },
     {
       level: 4,
-      name: 'FIDE Master',
-      elo: '2100 ELO',
+      name: customBots?.find(b => b.level === 4)?.name || 'FIDE Master',
+      elo: customBots?.find(b => b.level === 4)?.elo || '2100 ELO',
       icon: Trophy,
       accentBorder: 'border-purple-500',
       accentRing: 'ring-purple-400/40',
@@ -326,8 +324,8 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame, isLight = false })
     },
     {
       level: 5,
-      name: 'Grandmaster',
-      elo: '2600+ ELO',
+      name: customBots?.find(b => b.level === 5)?.name || 'Grandmaster',
+      elo: customBots?.find(b => b.level === 5)?.elo || '2600+ ELO',
       icon: Crown,
       accentBorder: 'border-rose-500',
       accentRing: 'ring-rose-400/40',
@@ -344,7 +342,7 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame, isLight = false })
       accentTextDark: 'text-rose-400',
       btnGradient: 'from-rose-500 via-rose-600 to-rose-500 hover:from-rose-400 hover:to-rose-400 text-white shadow-rose-500/25'
     }
-  ];
+  ], [customBots]);
 
   const TIME_OPTIONS = [
     { minutes: 10, label: '10 min', sub: 'Rapid', icon: Clock },
@@ -353,15 +351,23 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame, isLight = false })
     { minutes: 0, label: 'No Clock', sub: 'Casual', icon: Trophy }
   ];
 
+  if (!isOpen) return null;
+
   const currentLevelObj = AI_LEVELS.find((l) => l.level === selectedLevel) || AI_LEVELS[2];
 
   const handlePlay = (lvl = selectedLevel) => {
     sound.playMove();
     triggerHaptic('impact');
+    const chosenBot = AI_LEVELS.find(l => l.level === lvl) || currentLevelObj;
     onStartAIGame({
       level: lvl,
       color: 'random',
-      timeMinutes: selectedTime
+      timeMinutes: selectedTime,
+      customOpponent: {
+        username: chosenBot.name,
+        elo: parseInt(chosenBot.elo, 10) || (700 + lvl * 200),
+        title: chosenBot.name
+      }
     });
   };
 

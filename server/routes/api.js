@@ -1570,29 +1570,46 @@ router.get('/admin/stats', requireAdmin, (req, res) => {
 });
 
 // App Config & Global Defaults Control
-router.get('/admin/config', requireAuth, (req, res) => {
-  if (!checkOpAdmin(req)) {
-    return res.status(403).json({ error: 'Access denied' });
+router.get('/admin/config', requireAdmin, async (req, res) => {
+  try {
+    const remote = await firestoreRestService.getRoom('app_global_config');
+    if (remote?.config) {
+      Database.updateAppConfig(remote.config);
+    }
+  } catch (err) {
+    console.warn('[Firestore] /admin/config fetch error:', err.message);
   }
   res.json({ config: Database.getAppConfig() });
 });
 
-router.post('/admin/config', requireAuth, (req, res) => {
-  if (!checkOpAdmin(req)) {
-    return res.status(403).json({ error: 'Access denied' });
-  }
+router.post('/admin/config', requireAdmin, async (req, res) => {
   const updated = Database.updateAppConfig(req.body);
+  try {
+    await firestoreRestService.saveRoom({
+      id: 'app_global_config',
+      config: updated,
+      lastUpdated: Date.now()
+    });
+  } catch (err) {
+    console.warn('[Firestore] Failed to persist app_global_config:', err.message);
+  }
   if (req.io) {
     req.io.emit('app_config_updated', updated);
   }
   res.json({ success: true, config: updated });
 });
 
-router.post('/admin/reset-defaults', requireAuth, (req, res) => {
-  if (!checkOpAdmin(req)) {
-    return res.status(403).json({ error: 'Access denied' });
-  }
+router.post('/admin/reset-defaults', requireAdmin, async (req, res) => {
   const reset = Database.resetAppConfig();
+  try {
+    await firestoreRestService.saveRoom({
+      id: 'app_global_config',
+      config: reset,
+      lastUpdated: Date.now()
+    });
+  } catch (err) {
+    console.warn('[Firestore] Failed to persist reset app_global_config:', err.message);
+  }
   if (req.io) {
     req.io.emit('app_config_updated', reset);
   }
@@ -1600,10 +1617,7 @@ router.post('/admin/reset-defaults', requireAuth, (req, res) => {
 });
 
 // Add New Player / User
-router.post('/admin/users/create', requireAuth, (req, res) => {
-  if (!checkOpAdmin(req)) {
-    return res.status(403).json({ error: 'Access denied' });
-  }
+router.post('/admin/users/create', requireAdmin, (req, res) => {
   const { username, email, role, ratings, country, countryName, title, avatar } = req.body;
   if (!username) return res.status(400).json({ error: 'Username is required' });
 
@@ -1634,10 +1648,7 @@ router.post('/admin/users/create', requireAuth, (req, res) => {
 });
 
 // Update Existing Player / User
-router.post('/admin/users/:id/update', requireAuth, (req, res) => {
-  if (!checkOpAdmin(req)) {
-    return res.status(403).json({ error: 'Access denied' });
-  }
+router.post('/admin/users/:id/update', requireAdmin, (req, res) => {
   const user = Database.getUserById(req.params.id);
   if (!user) return res.status(404).json({ error: 'User not found' });
 
@@ -1663,10 +1674,7 @@ router.post('/admin/users/:id/update', requireAuth, (req, res) => {
 });
 
 // Delete Player / User Account
-router.delete('/admin/users/:id', requireAuth, (req, res) => {
-  if (!checkOpAdmin(req)) {
-    return res.status(403).json({ error: 'Access denied' });
-  }
+router.delete('/admin/users/:id', requireAdmin, (req, res) => {
   const success = Database.deleteUser(req.params.id);
   if (!success) {
     return res.status(400).json({ error: 'Could not delete user (account not found or protected admin)' });
@@ -1675,11 +1683,7 @@ router.delete('/admin/users/:id', requireAuth, (req, res) => {
 });
 
 // User Moderation (Ban/Unban/Rating adjust)
-router.post('/admin/users/:id/moderate', requireAuth, (req, res) => {
-  if (!checkOpAdmin(req)) {
-    return res.status(403).json({ error: 'Access denied: Admin moderation restricted exclusively to op21plus@gmail.com' });
-  }
-
+router.post('/admin/users/:id/moderate', requireAdmin, (req, res) => {
   const { banned, ratingAdjustment, reason } = req.body;
   const user = Database.getUserById(req.params.id);
   if (!user) return res.status(404).json({ error: 'User not found' });
@@ -1696,25 +1700,16 @@ router.post('/admin/users/:id/moderate', requireAuth, (req, res) => {
 });
 
 // Tournament Control
-router.get('/admin/tournaments', requireAuth, (req, res) => {
-  if (!checkOpAdmin(req)) {
-    return res.status(403).json({ error: 'Access denied' });
-  }
+router.get('/admin/tournaments', requireAdmin, (req, res) => {
   res.json({ tournaments: Database.getAllTournaments() });
 });
 
-router.post('/admin/tournaments/create', requireAuth, (req, res) => {
-  if (!checkOpAdmin(req)) {
-    return res.status(403).json({ error: 'Access denied' });
-  }
+router.post('/admin/tournaments/create', requireAdmin, (req, res) => {
   const created = Database.createTournament(req.body);
   res.json({ success: true, tournament: created });
 });
 
-router.delete('/admin/tournaments/:id', requireAuth, (req, res) => {
-  if (!checkOpAdmin(req)) {
-    return res.status(403).json({ error: 'Access denied' });
-  }
+router.delete('/admin/tournaments/:id', requireAdmin, (req, res) => {
   const success = Database.deleteTournament(req.params.id);
   res.json({ success: Boolean(success) });
 });

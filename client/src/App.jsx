@@ -4,7 +4,8 @@ import { Chess } from 'chess.js';
 import {
   Home, Trophy, Swords, Users, BookOpen, Bot, Shield, Volume2, VolumeX,
   Palette, User, LogOut, Bell, Flame, Sparkles, ChevronRight, Settings, Music, Zap, ArrowRight,
-  LogIn, X, Clock, Mic, Smartphone, GraduationCap, Puzzle, CircleUserRound, Sun, Moon, Copy
+  LogIn, X, Clock, Mic, Smartphone, GraduationCap, Puzzle, CircleUserRound, Sun, Moon, Copy,
+  Megaphone
 } from 'lucide-react';
 
 import { Chessboard } from './components/Chessboard.jsx';
@@ -287,6 +288,39 @@ export default function App() {
     safeStorage.setItem('chess_arena_selected_avatar', chosenAvatar);
     safeStorage.setItem('token', `mock_guest_token_${Date.now()}`);
     return guest;
+  };
+
+  const handleSignOut = () => {
+    safeStorage.removeItem('token');
+    safeStorage.removeItem('chess_arena_user');
+    safeStorage.removeItem('chess_arena_user_profile');
+    sessionStorage.removeItem('chess_arena_admin_verified');
+    sessionStorage.removeItem('chess_arena_admin_pin');
+
+    const initialChosen = safeStorage.getItem('chess_arena_initial_elo_chosen');
+    const baseElo = initialChosen ? (parseInt(initialChosen, 10) || 1200) : 1200;
+    const chosenAvatar = safeStorage.getItem('chess_arena_selected_avatar') || DEFAULT_APP_AVATAR;
+    const guestNum = Math.floor(1000 + Math.random() * 9000);
+    const guest = {
+      id: `guest_${Date.now()}_${guestNum}`,
+      username: `Guest_${guestNum}`,
+      role: 'guest',
+      elo: baseElo,
+      initialElo: baseElo,
+      initialEloSelected: Boolean(initialChosen),
+      ratings: { bullet: baseElo, blitz: baseElo, rapid: baseElo, classical: baseElo },
+      country: 'IN',
+      countryName: 'India',
+      countryFlag: '🇮🇳',
+      avatar: chosenAvatar
+    };
+    setCurrentUser(guest);
+    safeStorage.setItem('chess_arena_user', JSON.stringify(guest));
+    safeStorage.setItem('token', `mock_guest_token_${Date.now()}`);
+    setInGameNotice('✓ Signed out successfully. You are now playing in Guest Mode.');
+    setTimeout(() => setInGameNotice(null), 4000);
+    sound.playClick();
+    triggerHaptic('move');
   };
 
   // Modals for Match Launching
@@ -2365,6 +2399,18 @@ export default function App() {
       </header>
       )}
 
+      {/* Global Live Announcement Bar Configured by Admin */}
+      {globalConfig?.announcement && activeTab !== 'offline' && (
+        <div className={`px-4 py-2 text-xs font-black flex items-center justify-center gap-2 text-center transition-all ${
+          isLight
+            ? 'bg-amber-100/90 text-amber-950 border-b border-amber-200'
+            : 'bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 text-amber-300 border-b border-amber-500/30'
+        }`}>
+          <Megaphone className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+          <span>{globalConfig.announcement}</span>
+        </div>
+      )}
+
       {/* Main Content View Switcher */}
       <main className="flex-1 flex flex-col relative">
         {(activeTab === 'home' || activeTab === 'play') && (() => {
@@ -3022,12 +3068,7 @@ export default function App() {
             onOpenStreak={() => setShowStreakModal(true)}
             onOpenAdmin={() => setActiveTab('admin')}
             onNavigateToLeaderboard={() => {}}
-            onSignOut={() => {
-              safeStorage.removeItem('token');
-              safeStorage.removeItem('chess_arena_user');
-              setCurrentUser(null);
-              setActiveTab('home');
-            }}
+            onSignOut={handleSignOut}
             onSignIn={() => setShowAuthModal(true)}
           />
         )}
@@ -3043,6 +3084,10 @@ export default function App() {
             onBack={() => setActiveTab('profile')}
             currentUser={currentUser}
             isLight={isLight}
+            onUpdateGlobalConfig={(cfg) => {
+              setGlobalConfig(cfg);
+              safeStorage.setItem('chess_arena_global_config', JSON.stringify(cfg));
+            }}
           />
         )}
       </main>
@@ -3275,6 +3320,7 @@ export default function App() {
         isLight={isLight}
         onClose={() => setShowAIModal(false)}
         onStartAIGame={handleStartAIGame}
+        customBots={globalConfig?.customBots}
       />
 
       {analysisGame && (

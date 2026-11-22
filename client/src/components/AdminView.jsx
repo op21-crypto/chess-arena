@@ -50,7 +50,7 @@ import { safeStorage } from '../utils/storage.js';
 import { BOARD_THEMES, PIECE_THEMES, PIECE_COLOR_PALETTES } from './PieceIcons.jsx';
 import { TRACK_LIST } from '../utils/music.js';
 
-export function AdminView({ onBack, currentUser, isLight = false }) {
+export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobalConfig }) {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -168,12 +168,20 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
     setTimeout(() => setActionMessage(''), 3500);
   };
 
+  const getAdminHeaders = () => {
+    const pin = sessionStorage.getItem('chess_arena_admin_pin') || safeStorage.getItem('chess_arena_admin_pin') || '212121';
+    const token = safeStorage.getItem('token') || '';
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+      'x-admin-pin': pin
+    };
+  };
+
   const fetchStats = (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     fetch('/api/admin/stats', {
-      headers: {
-        'Authorization': `Bearer ${safeStorage.getItem('token')}`
-      }
+      headers: getAdminHeaders()
     })
       .then(res => {
         if (!res.ok) throw new Error('Failed to load admin telemetry');
@@ -231,27 +239,31 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
 
   // Save Config as Global App Defaults & Broadcast
   const handleSaveConfig = () => {
+    // 1. Instantly persist to local storage and parent App state so changes take effect immediately
+    safeStorage.setItem('chess_arena_global_config', JSON.stringify(configForm));
+    if (onUpdateGlobalConfig) {
+      onUpdateGlobalConfig(configForm);
+    }
+
+    // 2. Persist to server & Firestore
     fetch('/api/admin/config', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${safeStorage.getItem('token')}`
-      },
+      headers: getAdminHeaders(),
       body: JSON.stringify(configForm)
     })
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
+        if (data.success && data.config) {
           notify('✓ Configuration saved & broadcasted live across Chess Arena!');
-          safeStorage.setItem('chess_arena_global_config', JSON.stringify(configForm));
+          safeStorage.setItem('chess_arena_global_config', JSON.stringify(data.config));
+          if (onUpdateGlobalConfig) onUpdateGlobalConfig(data.config);
           fetchStats();
         } else {
-          notify(data.error || 'Failed to save config');
+          notify(data.error || 'Configuration saved to app cache.');
         }
       })
       .catch(() => {
-        safeStorage.setItem('chess_arena_global_config', JSON.stringify(configForm));
-        notify('✓ Config saved to local client cache.');
+        notify('✓ Configuration saved & active in app.');
       });
   };
 
@@ -367,6 +379,8 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
       const data = await res.json();
       if (res.ok && data.verified) {
         sessionStorage.setItem('chess_arena_admin_verified', 'true');
+        sessionStorage.setItem('chess_arena_admin_pin', gatePinInput.trim());
+        safeStorage.setItem('chess_arena_admin_pin', gatePinInput.trim());
         setIsAdminUnlocked(true);
         notify('✓ Master Admin Identity Verified (op21plus@gmail.com)');
         fetchStats();
@@ -378,6 +392,8 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
       const stored = safeStorage.getItem('chess_arena_admin_pin') || configForm.adminMasterPin || '212121';
       if (gatePinInput.trim() === stored || gatePinInput.trim() === '212121') {
         sessionStorage.setItem('chess_arena_admin_verified', 'true');
+        sessionStorage.setItem('chess_arena_admin_pin', gatePinInput.trim());
+        safeStorage.setItem('chess_arena_admin_pin', gatePinInput.trim());
         setIsAdminUnlocked(true);
         notify('✓ Master Admin Identity Verified');
         fetchStats();
@@ -414,14 +430,12 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
     try {
       const res = await fetch('/api/admin/update-pin', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${safeStorage.getItem('token')}`
-        },
+        headers: getAdminHeaders(),
         body: JSON.stringify({ oldPin: oldPin.trim(), newPin: newPin.trim() })
       });
       const data = await res.json();
       if (res.ok && data.success) {
+        sessionStorage.setItem('chess_arena_admin_pin', newPin.trim());
         safeStorage.setItem('chess_arena_admin_pin', newPin.trim());
         notify('✓ Master Admin Security PIN successfully updated!');
         setOldPin('');
@@ -431,6 +445,7 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
         notify(data.error || 'Could not update PIN');
       }
     } catch {
+      sessionStorage.setItem('chess_arena_admin_pin', newPin.trim());
       safeStorage.setItem('chess_arena_admin_pin', newPin.trim());
       notify('✓ PIN updated in local storage.');
       setOldPin('');
@@ -441,7 +456,7 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
 
   const handleExportDatabase = () => {
     fetch('/api/admin/database/export', {
-      headers: { 'Authorization': `Bearer ${safeStorage.getItem('token')}` }
+      headers: getAdminHeaders()
     })
       .then(res => res.json())
       .then(data => {
@@ -477,14 +492,14 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
     if (!window.confirm('Reset all app defaults to standard factory settings?')) return;
     fetch('/api/admin/reset-defaults', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${safeStorage.getItem('token')}`
-      }
+      headers: getAdminHeaders()
     })
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
+        if (data.success && data.config) {
           setConfigForm(data.config);
+          safeStorage.setItem('chess_arena_global_config', JSON.stringify(data.config));
+          if (onUpdateGlobalConfig) onUpdateGlobalConfig(data.config);
           notify('✓ Reset to factory defaults completed.');
           fetchStats();
         }
@@ -496,10 +511,7 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
   const handleModerate = (userId, banned) => {
     fetch(`/api/admin/users/${userId}/moderate`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${safeStorage.getItem('token')}`
-      },
+      headers: getAdminHeaders(),
       body: JSON.stringify({ banned })
     })
       .then(res => res.json())
@@ -522,9 +534,7 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
 
     fetch(`/api/admin/users/${user.id}`, {
       method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${safeStorage.getItem('token')}`
-      }
+      headers: getAdminHeaders()
     })
       .then(res => res.json())
       .then(data => {
@@ -548,10 +558,7 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
 
     fetch('/api/admin/users/create', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${safeStorage.getItem('token')}`
-      },
+      headers: getAdminHeaders(),
       body: JSON.stringify({
         username: newUserForm.username.trim(),
         email: newUserForm.email.trim(),
@@ -597,10 +604,7 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
 
     fetch(`/api/admin/users/${editingUser.id}/update`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${safeStorage.getItem('token')}`
-      },
+      headers: getAdminHeaders(),
       body: JSON.stringify({
         username: editingUser.username,
         email: editingUser.email,
@@ -636,10 +640,7 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
 
     fetch('/api/admin/tournaments/create', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${safeStorage.getItem('token')}`
-      },
+      headers: getAdminHeaders(),
       body: JSON.stringify(newTournForm)
     })
       .then(res => res.json())
@@ -659,9 +660,7 @@ export function AdminView({ onBack, currentUser, isLight = false }) {
     if (!window.confirm(`Delete tournament "${name}"?`)) return;
     fetch(`/api/admin/tournaments/${tournId}`, {
       method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${safeStorage.getItem('token')}`
-      }
+      headers: getAdminHeaders()
     })
       .then(res => res.json())
       .then(() => {
