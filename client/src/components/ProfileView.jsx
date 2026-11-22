@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   User, Trophy, Settings, Award, Shield, Flame, Sparkles,
   Edit2, Check, ArrowRight, LogOut, LogIn, ChevronRight, ChevronDown, Globe,
-  BarChart3, Sun, Moon, SunMoon, Contrast, Monitor, Crown, Search, X, Lock, Zap
+  BarChart3, Sun, Moon, SunMoon, Contrast, Monitor, Crown, Search, X, Lock, Zap,
+  RotateCcw, Mail
 } from 'lucide-react';
 import { calculateUserRanking } from '../data/leaderboardData.js';
 import { WORLD_COUNTRIES, getCountryByCode, getCountryFlag } from '../data/countries.js';
@@ -1498,84 +1499,130 @@ export function ProfileView({
       </div>
 
       {/* ================= DEDICATED ACCOUNT AUTH SECTION ================= */}
-      <div className={`border rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden mt-6 transition-colors ${
-        isLightMode
-          ? 'bg-white border-slate-200 shadow-slate-200/50 text-slate-900'
-          : 'bg-gradient-to-br from-slate-900 via-slate-900/90 to-slate-950 border-slate-800 text-white'
-      }`}>
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5 text-center sm:text-left">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-md ${
-              user
-                ? isLightMode
-                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-300'
-                  : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                : isLightMode
-                ? 'bg-amber-50 text-amber-700 border border-amber-300'
-                : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
-            }`}>
-              {user ? <Check className="w-6 h-6 text-emerald-500 stroke-[2.5]" /> : <LogIn className="w-6 h-6 text-amber-500" />}
-            </div>
-            <div>
-              <h4 className={`text-sm font-extrabold flex items-center justify-center sm:justify-start gap-2 ${
-                isLightMode ? 'text-slate-950' : 'text-white'
-              }`}>
-                <span>{user ? 'Account Connected' : 'Google & Gmail Authentication'}</span>
-                {user && (
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${
-                    isLightMode ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+      {(() => {
+        const isRegistered = Boolean(user && user.role !== 'guest' && (user.email || user.role === 'admin'));
+        return (
+          <div className={`border rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden mt-6 transition-colors ${
+            isLightMode
+              ? 'bg-white border-slate-200 shadow-slate-200/50 text-slate-900'
+              : 'bg-gradient-to-br from-slate-900 via-slate-900/90 to-slate-950 border-slate-800 text-white'
+          }`}>
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5 text-center sm:text-left">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-md ${
+                  isRegistered
+                    ? isLightMode
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-300'
+                      : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                    : isLightMode
+                    ? 'bg-amber-50 text-amber-700 border border-amber-300'
+                    : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+                }`}>
+                  {isRegistered ? <Check className="w-6 h-6 text-emerald-500 stroke-[2.5]" /> : <LogIn className="w-6 h-6 text-amber-500" />}
+                </div>
+                <div>
+                  <h4 className={`text-sm font-extrabold flex items-center justify-center sm:justify-start gap-2 ${
+                    isLightMode ? 'text-slate-950' : 'text-white'
                   }`}>
-                    Active
-                  </span>
-                )}
-              </h4>
-              <p className={`text-xs mt-0.5 ${isLightMode ? 'text-slate-650' : 'text-slate-400'}`}>
-                {user ? (
-                  <span>Signed in as <strong className={isLightMode ? 'text-slate-950' : 'text-slate-200'}>{user.username}</strong> ({user.email || 'Gmail Connected'})</span>
+                    <span>{isRegistered ? 'Account Connected' : 'Guest Mode • Sign In / Register'}</span>
+                    {isRegistered ? (
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${
+                        isLightMode ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                      }`}>
+                        Active
+                      </span>
+                    ) : (
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${
+                        isLightMode ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                      }`}>
+                        Guest Account
+                      </span>
+                    )}
+                  </h4>
+                  <p className={`text-xs mt-0.5 ${isLightMode ? 'text-slate-650' : 'text-slate-400'}`}>
+                    {isRegistered ? (
+                      <span>Signed in as <strong className={isLightMode ? 'text-slate-950' : 'text-slate-200'}>{user.username}</strong> ({user.email || 'Registered User'})</span>
+                    ) : (
+                      <span>Playing as <strong className={isLightMode ? 'text-slate-950' : 'text-slate-200'}>{user?.username || 'Guest'}</strong>. Connect your Gmail or email to climb leaderboards and sync across devices.</span>
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              <div className="w-full sm:w-auto shrink-0 flex flex-wrap items-center justify-center sm:justify-end gap-2">
+                {isRegistered ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      sound.playClick();
+                      triggerHaptic('move');
+                      if (onSignOut) onSignOut();
+                    }}
+                    className={`w-full sm:w-auto px-6 py-2.5 rounded-xl border font-extrabold text-xs shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer ${
+                      isLightMode
+                        ? 'bg-slate-100 hover:bg-rose-50 border-slate-300 hover:border-rose-300 text-slate-800 hover:text-rose-600'
+                        : 'bg-slate-800 hover:bg-rose-500/20 border-slate-700 hover:border-rose-500/50 text-slate-200 hover:text-rose-300'
+                    }`}
+                    title="Sign Out of Account"
+                  >
+                    <LogOut className="w-4 h-4 text-rose-500" />
+                    <span>Sign Out</span>
+                  </button>
                 ) : (
-                  <span>Sign in with Google / Gmail to save your ratings, climb leaderboards, and sync progress across devices.</span>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        sound.playClick();
+                        triggerHaptic('move');
+                        if (onSignIn) onSignIn();
+                      }}
+                      className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/25 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                      title="Sign In with Google / Gmail"
+                    >
+                      <LogIn className="w-4 h-4 text-slate-950" />
+                      <span>Sign In with Gmail</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        sound.playClick();
+                        triggerHaptic('move');
+                        if (onSignIn) onSignIn();
+                      }}
+                      className={`px-4 py-2.5 rounded-xl border font-extrabold text-xs transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer ${
+                        isLightMode
+                          ? 'bg-white hover:bg-slate-100 border-slate-300 text-slate-800'
+                          : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200'
+                      }`}
+                      title="Sign In with Email or Password"
+                    >
+                      <Mail className="w-4 h-4 text-amber-500" />
+                      <span>Email Sign In</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        sound.playClick();
+                        triggerHaptic('move');
+                        if (onSignOut) onSignOut();
+                      }}
+                      className={`p-2.5 rounded-xl border font-extrabold text-xs transition-all active:scale-95 flex items-center justify-center cursor-pointer ${
+                        isLightMode
+                          ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-600'
+                          : 'bg-slate-800/80 hover:bg-slate-750 border-slate-700 text-slate-400'
+                      }`}
+                      title="Reset to New Guest Session"
+                    >
+                      <RotateCcw className="w-4 h-4 text-slate-400" />
+                    </button>
+                  </>
                 )}
-              </p>
+              </div>
             </div>
           </div>
-
-          <div className="w-full sm:w-auto shrink-0">
-            {user ? (
-              <button
-                type="button"
-                onClick={() => {
-                  sound.playClick();
-                  triggerHaptic('move');
-                  if (onSignOut) onSignOut();
-                }}
-                className={`w-full sm:w-auto px-6 py-2.5 rounded-xl border font-extrabold text-xs shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer ${
-                  isLightMode
-                    ? 'bg-slate-100 hover:bg-rose-50 border-slate-300 hover:border-rose-300 text-slate-800 hover:text-rose-600'
-                    : 'bg-slate-800 hover:bg-rose-500/20 border-slate-700 hover:border-rose-500/50 text-slate-200 hover:text-rose-300'
-                }`}
-                title="Sign Out of Account"
-              >
-                <LogOut className="w-4 h-4 text-rose-500" />
-                <span>Sign Out</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  sound.playClick();
-                  triggerHaptic('move');
-                  if (onSignIn) onSignIn();
-                }}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/25 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
-                title="Sign In with Google / Gmail"
-              >
-                <LogIn className="w-4 h-4 text-slate-950" />
-                <span>Sign In with Gmail</span>
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+        );
+      })()}
     </div>
   );
 }

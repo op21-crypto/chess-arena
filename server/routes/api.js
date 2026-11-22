@@ -48,7 +48,15 @@ function requireAuth(req, res, next) {
 router.use(authenticateToken);
 
 // ================= GLOBAL APP CONFIGURATION =================
-router.get('/config', (req, res) => {
+router.get('/config', async (req, res) => {
+  try {
+    const remote = await firestoreRestService.getRoom('app_global_config');
+    if (remote?.config) {
+      Database.updateAppConfig(remote.config);
+    }
+  } catch (err) {
+    console.warn('[Firestore] /config fetch error:', err.message);
+  }
   res.json({ config: Database.getAppConfig() });
 });
 
@@ -1455,12 +1463,29 @@ Core Rules:
   }
 });
 
-// ================= FULL ADMIN CONTROL CENTER (EXCLUSIVE TO op21plus@gmail.com) =================
+// ================= FULL ADMIN CONTROL CENTER (EXCLUSIVE TO op21plus@gmail.com & MASTER PIN) =================
 
 function checkOpAdmin(req) {
+  // 1. Check Master Admin PIN in headers, query, or body
+  const pinHeader = req.headers['x-admin-pin'];
+  const pinBody = req.body?.adminPin || req.body?.pin;
+  const pinQuery = req.query?.adminPin || req.query?.pin;
+  const pin = pinHeader || pinBody || pinQuery;
+  if (pin && Database.verifyAdminPin(pin)) {
+    return true;
+  }
+
+  // 2. Check authenticated user email or admin role
   const dbUser = req.user?.id ? Database.getUserById(req.user.id) : null;
   const userEmail = (dbUser?.email || req.user?.email || '').toLowerCase().trim();
-  return userEmail === 'op21plus@gmail.com';
+  return userEmail === 'op21plus@gmail.com' || req.user?.role === 'admin';
+}
+
+function requireAdmin(req, res, next) {
+  if (checkOpAdmin(req)) {
+    return next();
+  }
+  return res.status(403).json({ error: 'Access denied: Admin command center restricted exclusively to op21plus@gmail.com' });
 }
 
 // Verify Master Security PIN (pre-flight for Admin Console)
@@ -1476,10 +1501,7 @@ router.post('/admin/verify-pin', (req, res) => {
 });
 
 // Update Master Security PIN
-router.post('/admin/update-pin', requireAuth, (req, res) => {
-  if (!checkOpAdmin(req)) {
-    return res.status(403).json({ error: 'Access denied: Admin command center restricted exclusively to op21plus@gmail.com' });
-  }
+router.post('/admin/update-pin', requireAdmin, (req, res) => {
   const { oldPin, newPin } = req.body;
   if (!Database.verifyAdminPin(oldPin)) {
     return res.status(400).json({ error: 'Current Master Security PIN is incorrect' });
@@ -1492,20 +1514,14 @@ router.post('/admin/update-pin', requireAuth, (req, res) => {
 });
 
 // Full Database Backup Export
-router.get('/admin/database/export', requireAuth, (req, res) => {
-  if (!checkOpAdmin(req)) {
-    return res.status(403).json({ error: 'Access denied: Admin command center restricted exclusively to op21plus@gmail.com' });
-  }
+router.get('/admin/database/export', requireAdmin, (req, res) => {
   const backup = Database.exportFullDatabase();
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Content-Disposition', `attachment; filename="chess_arena_db_${Date.now()}.json"`);
   res.json(backup);
 });
 
-router.get('/admin/stats', requireAuth, (req, res) => {
-  if (!checkOpAdmin(req)) {
-    return res.status(403).json({ error: 'Access denied: Admin command center restricted exclusively to op21plus@gmail.com' });
-  }
+router.get('/admin/stats', requireAdmin, (req, res) => {
 
   const allUsers = Database.getAllUsers();
   const allGames = Database.getAllGames(200);

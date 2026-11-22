@@ -416,7 +416,7 @@ public class SplashChessboardView extends View {
         });
         moveAnimator.addListener(new AnimatorListenerAdapter() {
             @Override
-            public void end(Animator animation) {
+            public void onAnimationEnd(Animator animation) {
                 // Land piece on destination square
                 currentPieces[move.toR][move.toC] = movingPieceType;
                 currentColors[move.toR][move.toC] = movingPieceColor;
