@@ -262,6 +262,11 @@ export function getLocalAIMove(fen, level = 2) {
     const isMate = chess.isCheckmate();
     chess.undo();
     if (isMate) {
+      // Level 1 (Beginner): "beginner can wait to give checkmate"
+      // 60% chance to skip instant mate, giving casual players room to learn
+      if (level === 1 && Math.random() < 0.60) {
+        continue;
+      }
       return {
         from: m.from,
         to: m.to,
@@ -272,9 +277,46 @@ export function getLocalAIMove(fen, level = 2) {
     }
   }
 
-  // 3. Level 1 (Beginner 800 ELO): Friendly moves with occasional inaccuracies
+  // Grandmaster (Level 5): Deep checkmate hunt (checkmate in 2 moves)
+  // "grandmaster can win in few moves with checkmate"
+  if (level === 5 && legalMoves.length <= 35) {
+    for (const m of legalMoves) {
+      chess.move(m);
+      const oppReplies = chess.moves({ verbose: true });
+      if (oppReplies.length > 0) {
+        let allRepliesLeadToMate = true;
+        for (const opp of oppReplies) {
+          chess.move(opp);
+          const hasWinningMate = chess.moves({ verbose: true }).some(nextM => {
+            chess.move(nextM);
+            const mate = chess.isCheckmate();
+            chess.undo();
+            return mate;
+          });
+          chess.undo();
+          if (!hasWinningMate) {
+            allRepliesLeadToMate = false;
+            break;
+          }
+        }
+        if (allRepliesLeadToMate) {
+          chess.undo();
+          return {
+            from: m.from,
+            to: m.to,
+            promotion: m.promotion || 'q',
+            san: m.san,
+            uci: `${m.from}${m.to}${m.promotion || ''}`
+          };
+        }
+      }
+      chess.undo();
+    }
+  }
+
+  // 3. Level 1 (Beginner 800 ELO): Casual friendly moves with occasional inaccuracies
   if (level === 1) {
-    if (Math.random() < 0.40) {
+    if (Math.random() < 0.45) {
       const quietMoves = legalMoves.filter(m => !m.captured && !m.san.includes('+'));
       const pool = quietMoves.length > 0 ? quietMoves : legalMoves;
       const pick = pool[Math.floor(Math.random() * pool.length)];
@@ -319,13 +361,13 @@ export function getLocalAIMove(fen, level = 2) {
     }
   }
 
-  // 5. Positional 1-ply tactical search with opponent response verification
+  // 5. Positional tactical search with opponent response verification
   const isWhite = chess.turn() === 'w';
   let bestMove = legalMoves[0];
   let bestScore = isWhite ? -Infinity : Infinity;
 
-  // Level-calibrated randomness jitter
-  const jitterAmount = level === 1 ? 90 : level === 2 ? 40 : level === 3 ? 15 : 0;
+  // Level-calibrated randomness jitter: Level 3 (Master), Level 4, Level 5 have 0 jitter! No big blunders!
+  const jitterAmount = level === 1 ? 90 : level === 2 ? 35 : 0;
 
   for (const move of legalMoves) {
     chess.move(move);
@@ -424,7 +466,7 @@ class BrowserStockfishEngine {
     }
   }
 
-  getMove(fen, level = 2, timeoutMs = 650) {
+  getMove(fen, level = 3, timeoutMs = 1200) {
     return new Promise((resolve) => {
       if (!this.worker) {
         return resolve(null);
@@ -446,9 +488,9 @@ class BrowserStockfishEngine {
 
       this.currentResolver = resolver;
 
-      const uciSkills = [0, 5, 10, 16, 20];
-      const depths = [2, 4, 6, 8, 12];
-      const moveTimes = [80, 120, 180, 220, 350];
+      const uciSkills = [0, 6, 12, 17, 20];
+      const depths = [2, 4, 8, 12, 16];
+      const moveTimes = [100, 150, 280, 500, 900];
       const skill = uciSkills[Math.max(0, Math.min(4, level - 1))];
       const depth = depths[Math.max(0, Math.min(4, level - 1))];
       const time = moveTimes[Math.max(0, Math.min(4, level - 1))];
@@ -512,9 +554,9 @@ export function getCapturedPieces(fen) {
  * 2. Seamlessly falls back to getLocalAIMove if worker is busy or offline.
  * Guaranteed to NEVER hang, and always make a legal move.
  */
-export async function getAIMoveAsync(fen, level = 2) {
+export async function getAIMoveAsync(fen, level = 3) {
   try {
-    const workerMove = await browserStockfish.getMove(fen, level, 650);
+    const workerMove = await browserStockfish.getMove(fen, level, 1200);
     if (workerMove && workerMove.from && workerMove.to) {
       // Validate move legality with chess.js
       const testChess = new Chess(fen);
@@ -539,4 +581,29 @@ export async function getAIMoveAsync(fen, level = 2) {
 
   // Fast guaranteed local move
   return getLocalAIMove(fen, level);
+}
+
+/**
+ * Realistic thinking delay based on selected level.
+ * Level 1 (Beginner): 2000 - 4000ms (2-4 seconds)
+ * Level 2 (Challenger): 2000 - 3500ms (2-3.5 seconds)
+ * Level 3 (Master - Default): 2000 - 3000ms (2-3 seconds, standard master speed)
+ * Level 4 (FIDE Master): 1500 - 2500ms (1.5-2.5 seconds)
+ * Level 5 (Grandmaster): 1200 - 2000ms (1.2-2.0 seconds, ruthless precision)
+ */
+export function getAIDelayMs(level = 3) {
+  switch (level) {
+    case 1:
+      return Math.floor(2000 + Math.random() * 2000); // 2000 - 4000ms
+    case 2:
+      return Math.floor(2000 + Math.random() * 1500); // 2000 - 3500ms
+    case 3:
+      return Math.floor(2000 + Math.random() * 1000); // 2000 - 3000ms
+    case 4:
+      return Math.floor(1500 + Math.random() * 1000); // 1500 - 2500ms
+    case 5:
+      return Math.floor(1200 + Math.random() * 800);  // 1200 - 2000ms
+    default:
+      return Math.floor(2000 + Math.random() * 1000);
+  }
 }

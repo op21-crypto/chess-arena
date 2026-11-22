@@ -39,7 +39,7 @@ import { triggerHaptic, speakMove } from './utils/device.js';
 import { tts } from './utils/universalTTS.js';
 import { getOpeningName } from './utils/openings.js';
 import { safeStorage } from './utils/storage.js';
-import { getLocalAIMove, getAIMoveAsync, getCapturedPieces } from './utils/aiEngine.js';
+import { getLocalAIMove, getAIMoveAsync, getCapturedPieces, getAIDelayMs } from './utils/aiEngine.js';
 import { calculateUserRanking } from './data/leaderboardData.js';
 import { calculateEloDelta, getFormatFromTimeControl } from './utils/elo.js';
 import { getStreakInfo } from './utils/streak.js';
@@ -534,7 +534,7 @@ export default function App() {
   const [chatMessages, setChatMessages] = useState([]);
   const [opponentIsTyping, setOpponentIsTyping] = useState(false);
   const [isAIGame, setIsAIGame] = useState(false);
-  const [aiLevel, setAiLevel] = useState(2);
+  const [aiLevel, setAiLevel] = useState(3); // Master level by default
   const [aiThinking, setAiThinking] = useState(false);
   const [currentAIOpponent, setCurrentAIOpponent] = useState(null);
   const [inGameNotice, setInGameNotice] = useState(null);
@@ -1257,18 +1257,18 @@ export default function App() {
 
   // Handle AI Practice Matches & Direct Notification Challenges
   const handleStartAIGame = (param1, param2, param3, param4) => {
-    let level = 2;
+    let level = 3;
     let timeMinutes = 10;
     let preferredColor = null;
     let customOpponent = null;
 
     if (typeof param1 === 'object' && param1 !== null) {
-      level = Number(param1.level) || 2;
+      level = Number(param1.level) || 3;
       timeMinutes = param1.timeMinutes !== undefined ? Number(param1.timeMinutes) : 10;
       preferredColor = param1.preferredColor || param1.color || null;
       customOpponent = param1.challenger || param1.customOpponent || null;
     } else {
-      if (param1 !== undefined) level = Number(param1) || 2;
+      if (param1 !== undefined) level = Number(param1) || 3;
       if (param2 !== undefined) timeMinutes = Number(param2);
       if (param3 !== undefined) preferredColor = param3;
       if (param4 !== undefined) customOpponent = param4;
@@ -1338,9 +1338,7 @@ export default function App() {
 
     // White always plays the 1st move: if AI is White (user is Black), Stockfish plays 1st immediately
     if (color === 'b') {
-      setTimeout(() => {
-        triggerAIMove(startingSession.fen, startingSession, level);
-      }, 350);
+      triggerAIMove(startingSession.fen, startingSession, level);
     }
   };
 
@@ -1396,9 +1394,12 @@ export default function App() {
     return () => clearInterval(interval);
   }, [isAIGame, gameSession?.isGameOver, playerColor]);
 
-  const triggerAIMove = async (fen, session, level) => {
+  const triggerAIMove = async (fen, session, level = 3) => {
     setAiThinking(true);
     try {
+      const delayMs = getAIDelayMs(level);
+      const delayPromise = new Promise(resolve => setTimeout(resolve, delayMs));
+
       let aiMove = null;
 
       // 1. First try modern Web Worker Stockfish / Async engine with budget
@@ -1412,6 +1413,9 @@ export default function App() {
       if (!aiMove || !aiMove.from || !aiMove.to) {
         aiMove = getLocalAIMove(fen, level);
       }
+
+      // Authentic level-calibrated delay (2-4s Beginner, 2-3s Master) while opponent thinking indicator is active
+      await delayPromise;
 
       if (!aiMove || !aiMove.from || !aiMove.to) {
         console.warn('AI could not find legal move.');
@@ -1591,9 +1595,7 @@ export default function App() {
         setGameSession(updatedSession);
 
         if (!isOver) {
-          setTimeout(() => {
-            triggerAIMove(chess.fen(), updatedSession, aiLevel);
-          }, 300);
+          triggerAIMove(chess.fen(), updatedSession, aiLevel);
         }
       }
     } else {

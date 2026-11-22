@@ -66,14 +66,18 @@ export function MatchmakingModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fade-in">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 animate-fade-in transition-all ${
+      isLight ? 'bg-slate-900/40 backdrop-blur-xs' : 'bg-slate-950/80 backdrop-blur-md'
+    }`}>
       <div className={`border rounded-3xl p-4 sm:p-5 max-w-sm sm:max-w-md w-full space-y-3.5 shadow-2xl relative transition-all ${
         isLight
-          ? 'bg-white/98 border-slate-200/90 text-slate-900 shadow-slate-900/10'
-          : 'bg-[#0B0F19]/98 border-slate-800/90 text-slate-100 shadow-black/60'
+          ? 'bg-white border-slate-200 text-slate-900 shadow-slate-900/15'
+          : 'bg-[#0B0F19] border-slate-800 text-slate-100 shadow-black/80'
       }`}>
         {/* Top Header */}
-        <div className="flex items-center justify-between pb-2.5 border-b border-slate-150 dark:border-slate-800">
+        <div className={`flex items-center justify-between pb-2.5 border-b ${
+          isLight ? 'border-slate-200' : 'border-slate-800'
+        }`}>
           <div className="flex items-center gap-2.5">
             <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${
               isLight
@@ -99,7 +103,7 @@ export function MatchmakingModal({
             }}
             className={`p-1.5 rounded-full border transition-colors cursor-pointer ${
               isLight
-                ? 'bg-slate-100 border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-200'
+                ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-950 hover:bg-slate-200'
                 : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700'
             }`}
             title="Close"
@@ -111,18 +115,20 @@ export function MatchmakingModal({
         {isSearching ? (
           <div className="py-7 flex flex-col items-center justify-center space-y-3.5">
             <div className="relative w-18 h-18 flex items-center justify-center">
-              <span className="absolute inset-0 rounded-full border-4 border-amber-500/30 animate-ping" />
+              <span className={`absolute inset-0 rounded-full border-4 animate-ping ${
+                isLight ? 'border-amber-500/40' : 'border-amber-500/30'
+              }`} />
               <span className={`w-14 h-14 rounded-full border flex items-center justify-center text-2xl shadow-inner ${
-                isLight ? 'bg-amber-50 border-amber-300' : 'bg-slate-800 border-amber-500/40'
+                isLight ? 'bg-amber-100/90 border-amber-300' : 'bg-slate-800 border-amber-500/40'
               }`}>
                 ♟️
               </span>
             </div>
             <div className="text-center space-y-0.5">
-              <span className={`text-sm font-black block ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              <span className={`text-base font-black block tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 Finding Opponent...
               </span>
-              <span className="text-xs text-amber-600 dark:text-amber-400 font-mono font-bold">
+              <span className={`text-xs font-mono font-bold ${isLight ? 'text-amber-700' : 'text-amber-400'}`}>
                 {selectedPreset.name} • {selectedPreset.format.toUpperCase()}
               </span>
             </div>
@@ -132,10 +138,10 @@ export function MatchmakingModal({
                 triggerHaptic('move');
                 onCancelMatchmaking();
               }}
-              className={`px-4 py-1.5 font-bold text-xs rounded-xl transition-colors cursor-pointer border ${
+              className={`px-5 py-2 font-black text-xs rounded-xl transition-all cursor-pointer border shadow-xs ${
                 isLight
-                  ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
-                  : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300'
+                  ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800 active:scale-95'
+                  : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200 active:scale-95'
               }`}
             >
               Cancel Queue
@@ -153,7 +159,7 @@ export function MatchmakingModal({
               </span>
             </div>
 
-            {/* Compact, Sleek 4x2 Time Grid (Tailored & Non-Bulky) */}
+            {/* Compact, Sleek 4x2 Time Grid (Tailored & High Contrast) */}
             <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
               {TIME_PRESETS.map((p) => {
                 const isSelected = selectedPreset.id === p.id;
@@ -172,10 +178,10 @@ export function MatchmakingModal({
                     className={`py-2 px-1 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer select-none active:scale-95 ${
                       isSelected
                         ? isLight
-                          ? 'bg-gradient-to-b from-amber-50 via-amber-100/60 to-amber-50/80 border-amber-500 text-amber-950 shadow-xs ring-1.5 ring-amber-400/50'
-                          : 'bg-gradient-to-b from-amber-500/20 via-amber-500/10 to-transparent border-amber-400 text-white shadow-md shadow-amber-500/20 ring-1.5 ring-amber-400/40'
+                          ? 'bg-gradient-to-b from-amber-50 via-amber-100/70 to-amber-50 border-amber-500 text-amber-950 shadow-xs ring-2 ring-amber-400/50'
+                          : 'bg-gradient-to-b from-amber-500/20 via-amber-500/10 to-transparent border-amber-400 text-white shadow-md ring-2 ring-amber-400/40'
                         : isLight
-                        ? 'bg-slate-50/80 hover:bg-white border-slate-200/90 text-slate-700 hover:border-slate-300 shadow-2xs'
+                        ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800 hover:border-slate-300 shadow-2xs'
                         : 'bg-slate-950/60 hover:bg-slate-900/80 border-slate-800 text-slate-300 hover:border-slate-700'
                     }`}
                   >
@@ -231,18 +237,113 @@ export function MatchmakingModal({
 export { FriendRoomModal } from "./FriendRoomModal.jsx";
 
 export function PlayAIModal({ isOpen, onClose, onStartAIGame, isLight = false }) {
-  const [selectedLevel, setSelectedLevel] = useState(2);
+  const [selectedLevel, setSelectedLevel] = useState(3); // Master level by default
   const [selectedTime, setSelectedTime] = useState(10); // minutes (0 = unlimited)
 
   if (!isOpen) return null;
 
-  // Clean, professional AI difficulty tiers with tailored vector badges
+  // Clean, executive difficulty tiers with distinct vibrant colors & zero bulky text
   const AI_LEVELS = [
-    { level: 1, name: 'Beginner Sensei', elo: '800 ELO', icon: Shield, iconColor: 'text-emerald-500', iconBg: 'bg-emerald-500/10 border-emerald-500/25', desc: 'Learning & fundamental tactics' },
-    { level: 2, name: 'Casual Tactician', elo: '1200 ELO', icon: Shield, iconColor: 'text-sky-500', iconBg: 'bg-sky-500/10 border-sky-500/25', desc: 'Solid play with occasional errors' },
-    { level: 3, name: 'Master Strategist', elo: '1600 ELO', icon: Swords, iconColor: 'text-amber-500', iconBg: 'bg-amber-500/10 border-amber-500/25', desc: 'Strong tactical calculation & defense' },
-    { level: 4, name: 'FIDE Mastermind', elo: '2000 ELO', icon: Sparkles, iconColor: 'text-purple-500', iconBg: 'bg-purple-500/10 border-purple-500/25', desc: 'Expert positioning & endgame depth' },
-    { level: 5, name: 'Grandmaster Deity', elo: '2500+ ELO', icon: Crown, iconColor: 'text-amber-400', iconBg: 'bg-amber-500/15 border-amber-500/35', desc: 'Ultra-fast Stockfish 19 engine speed' }
+    {
+      level: 1,
+      name: 'Beginner',
+      elo: '800 ELO',
+      icon: Shield,
+      accentBorder: 'border-emerald-500',
+      accentRing: 'ring-emerald-400/40',
+      activeBgLight: 'bg-emerald-50/90',
+      activeBgDark: 'bg-emerald-500/15',
+      iconColorLight: 'text-emerald-700',
+      iconColorDark: 'text-emerald-400',
+      iconBgLight: 'bg-emerald-100 border-emerald-300',
+      iconBgDark: 'bg-emerald-500/20 border-emerald-500/40',
+      badgeLight: 'bg-emerald-100 text-emerald-950 border-emerald-300',
+      badgeDark: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+      radioActive: 'bg-emerald-500 text-white',
+      accentTextLight: 'text-emerald-700',
+      accentTextDark: 'text-emerald-400',
+      btnGradient: 'from-emerald-500 via-emerald-600 to-emerald-500 hover:from-emerald-400 hover:to-emerald-400 text-white shadow-emerald-500/25'
+    },
+    {
+      level: 2,
+      name: 'Challenger',
+      elo: '1200 ELO',
+      icon: Zap,
+      accentBorder: 'border-sky-500',
+      accentRing: 'ring-sky-400/40',
+      activeBgLight: 'bg-sky-50/90',
+      activeBgDark: 'bg-sky-500/15',
+      iconColorLight: 'text-sky-700',
+      iconColorDark: 'text-sky-400',
+      iconBgLight: 'bg-sky-100 border-sky-300',
+      iconBgDark: 'bg-sky-500/20 border-sky-500/40',
+      badgeLight: 'bg-sky-100 text-sky-950 border-sky-300',
+      badgeDark: 'bg-sky-500/20 text-sky-300 border-sky-500/40',
+      radioActive: 'bg-sky-500 text-white',
+      accentTextLight: 'text-sky-700',
+      accentTextDark: 'text-sky-400',
+      btnGradient: 'from-sky-500 via-sky-600 to-sky-500 hover:from-sky-400 hover:to-sky-400 text-white shadow-sky-500/25'
+    },
+    {
+      level: 3,
+      name: 'Master',
+      elo: '1600 ELO',
+      icon: Swords,
+      accentBorder: 'border-amber-500',
+      accentRing: 'ring-amber-400/40',
+      activeBgLight: 'bg-amber-50/90',
+      activeBgDark: 'bg-amber-500/15',
+      iconColorLight: 'text-amber-700',
+      iconColorDark: 'text-amber-400',
+      iconBgLight: 'bg-amber-100 border-amber-300',
+      iconBgDark: 'bg-amber-500/20 border-amber-500/40',
+      badgeLight: 'bg-amber-100 text-amber-950 border-amber-300',
+      badgeDark: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+      radioActive: 'bg-amber-500 text-slate-950',
+      accentTextLight: 'text-amber-700',
+      accentTextDark: 'text-amber-400',
+      btnGradient: 'from-amber-500 via-amber-600 to-amber-500 hover:from-amber-400 hover:to-amber-400 text-slate-950 shadow-amber-500/25'
+    },
+    {
+      level: 4,
+      name: 'FIDE Master',
+      elo: '2100 ELO',
+      icon: Trophy,
+      accentBorder: 'border-purple-500',
+      accentRing: 'ring-purple-400/40',
+      activeBgLight: 'bg-purple-50/90',
+      activeBgDark: 'bg-purple-500/15',
+      iconColorLight: 'text-purple-700',
+      iconColorDark: 'text-purple-400',
+      iconBgLight: 'bg-purple-100 border-purple-300',
+      iconBgDark: 'bg-purple-500/20 border-purple-500/40',
+      badgeLight: 'bg-purple-100 text-purple-950 border-purple-300',
+      badgeDark: 'bg-purple-500/20 text-purple-300 border-purple-500/40',
+      radioActive: 'bg-purple-500 text-white',
+      accentTextLight: 'text-purple-700',
+      accentTextDark: 'text-purple-400',
+      btnGradient: 'from-purple-500 via-purple-600 to-purple-500 hover:from-purple-400 hover:to-purple-400 text-white shadow-purple-500/25'
+    },
+    {
+      level: 5,
+      name: 'Grandmaster',
+      elo: '2600+ ELO',
+      icon: Crown,
+      accentBorder: 'border-rose-500',
+      accentRing: 'ring-rose-400/40',
+      activeBgLight: 'bg-rose-50/90',
+      activeBgDark: 'bg-rose-500/15',
+      iconColorLight: 'text-rose-700',
+      iconColorDark: 'text-rose-400',
+      iconBgLight: 'bg-rose-100 border-rose-300',
+      iconBgDark: 'bg-rose-500/20 border-rose-500/40',
+      badgeLight: 'bg-rose-100 text-rose-950 border-rose-300',
+      badgeDark: 'bg-rose-500/20 text-rose-300 border-rose-500/40',
+      radioActive: 'bg-rose-500 text-white',
+      accentTextLight: 'text-rose-700',
+      accentTextDark: 'text-rose-400',
+      btnGradient: 'from-rose-500 via-rose-600 to-rose-500 hover:from-rose-400 hover:to-rose-400 text-white shadow-rose-500/25'
+    }
   ];
 
   const TIME_OPTIONS = [
@@ -252,7 +353,7 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame, isLight = false })
     { minutes: 0, label: 'No Clock', sub: 'Casual', icon: Trophy }
   ];
 
-  const currentLevelObj = AI_LEVELS.find((l) => l.level === selectedLevel) || AI_LEVELS[1];
+  const currentLevelObj = AI_LEVELS.find((l) => l.level === selectedLevel) || AI_LEVELS[2];
 
   const handlePlay = (lvl = selectedLevel) => {
     sound.playMove();
@@ -265,14 +366,18 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame, isLight = false })
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fade-in">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 animate-fade-in transition-all ${
+      isLight ? 'bg-slate-900/40 backdrop-blur-xs' : 'bg-slate-950/80 backdrop-blur-md'
+    }`}>
       <div className={`border rounded-3xl p-4 sm:p-5 max-w-sm sm:max-w-md w-full shadow-2xl relative space-y-3.5 transition-all ${
         isLight
-          ? 'bg-white/98 border-slate-200/90 text-slate-900 shadow-slate-900/10'
-          : 'bg-[#0B0F19]/98 border-slate-800/90 text-slate-100 shadow-black/60'
+          ? 'bg-white border-slate-200 text-slate-900 shadow-slate-900/15'
+          : 'bg-[#0B0F19] border-slate-800 text-slate-100 shadow-black/80'
       }`}>
         {/* Top Header */}
-        <div className="flex items-center justify-between pb-2.5 border-b border-slate-150 dark:border-slate-800">
+        <div className={`flex items-center justify-between pb-2.5 border-b ${
+          isLight ? 'border-slate-200' : 'border-slate-800'
+        }`}>
           <div className="flex items-center gap-2.5">
             <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${
               isLight
@@ -300,7 +405,7 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame, isLight = false })
             }}
             className={`p-1.5 rounded-full border transition-colors cursor-pointer ${
               isLight
-                ? 'bg-slate-100 border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-200'
+                ? 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-950 hover:bg-slate-200'
                 : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700'
             }`}
             title="Close"
@@ -309,18 +414,20 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame, isLight = false })
           </button>
         </div>
 
-        {/* 5 Difficulty Tiers (Clean, Executive Grandmaster Cards) */}
-        <div className="space-y-1.5">
+        {/* 5 Difficulty Tiers (Clean, Bold Names, Elo Badge & Little Gap) */}
+        <div className="space-y-2">
           <div className="flex items-center justify-between px-0.5">
             <span className={`text-[10px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
               Select Difficulty
             </span>
-            <span className={`text-[10px] font-mono font-bold ${isLight ? 'text-amber-700' : 'text-amber-400'}`}>
+            <span className={`text-[10px] font-mono font-black ${
+              isLight ? currentLevelObj.accentTextLight : currentLevelObj.accentTextDark
+            }`}>
               {currentLevelObj.name} • {currentLevelObj.elo}
             </span>
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-2.5">
             {AI_LEVELS.map((item) => {
               const isSelected = selectedLevel === item.level;
               const IconComponent = item.icon;
@@ -333,53 +440,48 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame, isLight = false })
                     triggerHaptic('move');
                     setSelectedLevel(item.level);
                   }}
-                  className={`px-2.5 py-2 rounded-xl border flex items-center justify-between transition-all cursor-pointer select-none active:scale-[0.99] ${
+                  className={`px-3 py-2.5 rounded-2xl border flex items-center justify-between transition-all cursor-pointer select-none active:scale-[0.99] ${
                     isSelected
                       ? isLight
-                        ? 'bg-gradient-to-r from-amber-50/90 via-white to-amber-50/40 border-amber-500 text-slate-900 shadow-xs ring-1.5 ring-amber-400/40'
-                        : 'bg-gradient-to-r from-amber-500/15 via-slate-900/90 to-amber-500/5 border-amber-400/80 text-white shadow-md ring-1.5 ring-amber-400/30'
+                        ? `${item.activeBgLight} ${item.accentBorder} text-slate-900 shadow-sm ring-2 ${item.accentRing}`
+                        : `${item.activeBgDark} ${item.accentBorder} text-white shadow-md ring-2 ${item.accentRing}`
                       : isLight
-                      ? 'bg-slate-50/70 border-slate-200/80 hover:border-slate-300 hover:bg-slate-100/70 text-slate-800'
-                      : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700 hover:bg-slate-900/60 text-slate-300'
+                      ? 'bg-slate-50 border-slate-200 hover:border-slate-300 hover:bg-slate-100 text-slate-800'
+                      : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 hover:bg-slate-900/60 text-slate-300'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 ${item.iconBg}`}>
-                      <IconComponent className={`w-3.5 h-3.5 ${item.iconColor}`} />
-                    </div>
-                    <div className="min-w-0">
-                      <span className={`text-xs sm:text-sm block truncate leading-tight ${
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 transition-colors ${
+                      isSelected
+                        ? (isLight ? item.iconBgLight : item.iconBgDark)
+                        : (isLight ? 'bg-slate-100 border-slate-200 text-slate-500' : 'bg-slate-900 border-slate-800 text-slate-400')
+                    }`}>
+                      <IconComponent className={`w-4 h-4 ${
                         isSelected
-                          ? isLight ? 'text-slate-950 font-black' : 'text-white font-black'
-                          : isLight ? 'text-slate-800 font-bold' : 'text-slate-200 font-bold'
-                      }`}>
-                        {item.name}
-                      </span>
-                      <span className={`text-[10px] block truncate ${
-                        isSelected
-                          ? isLight ? 'text-amber-800 font-medium' : 'text-amber-300 font-medium'
-                          : isLight ? 'text-slate-500' : 'text-slate-400'
-                      }`}>
-                        {item.desc}
-                      </span>
+                          ? (isLight ? item.iconColorLight : item.iconColorDark)
+                          : (isLight ? 'text-slate-600' : 'text-slate-400')
+                      }`} />
                     </div>
+                    <span className={`text-sm sm:text-base tracking-tight leading-none ${
+                      isSelected
+                        ? isLight ? 'text-slate-950 font-black' : 'text-white font-black'
+                        : isLight ? 'text-slate-800 font-bold' : 'text-slate-200 font-bold'
+                    }`}>
+                      {item.name}
+                    </span>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border ${
+                  <div className="flex items-center gap-2.5 shrink-0">
+                    <span className={`text-[11px] font-mono font-black px-2.5 py-1 rounded-lg border tracking-tight ${
                       isSelected
-                        ? isLight
-                          ? 'bg-amber-100 text-amber-900 border-amber-300 font-black'
-                          : 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-black'
-                        : isLight
-                        ? 'bg-white text-slate-600 border-slate-200'
-                        : 'bg-slate-900 text-slate-400 border-slate-800'
+                        ? (isLight ? item.badgeLight : item.badgeDark)
+                        : (isLight ? 'bg-white text-slate-700 border-slate-200' : 'bg-slate-900 text-slate-400 border-slate-800')
                     }`}>
                       {item.elo}
                     </span>
-                    <div className={`w-4 h-4 rounded-full flex items-center justify-center transition-all ${
+                    <div className={`w-4.5 h-4.5 rounded-full flex items-center justify-center transition-all ${
                       isSelected
-                        ? 'bg-amber-500 text-slate-950 shadow-xs ring-2 ring-amber-400/40'
+                        ? `${item.radioActive} shadow-xs ring-2 ${item.accentRing}`
                         : isLight
                         ? 'border-2 border-slate-300 bg-white'
                         : 'border-2 border-slate-700 bg-transparent'
@@ -393,7 +495,7 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame, isLight = false })
           </div>
         </div>
 
-        {/* Time Control Selection (Compact, Sleek, Tailored) */}
+        {/* Time Control Selection (Compact, Sleek, High Contrast) */}
         <div className="space-y-1">
           <div className="flex items-center justify-between px-0.5">
             <span className={`text-[10px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -421,10 +523,10 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame, isLight = false })
                   className={`py-1.5 px-1 rounded-xl border text-center transition-all cursor-pointer active:scale-95 ${
                     isSelected
                       ? isLight
-                        ? 'bg-gradient-to-b from-amber-50 via-amber-100/60 to-amber-50/80 border-amber-500 text-amber-950 font-black shadow-xs ring-1.5 ring-amber-400/50'
-                        : 'bg-gradient-to-b from-amber-500/20 via-amber-500/10 to-transparent border-amber-400 text-white font-black shadow-sm ring-1.5 ring-amber-400/40'
+                        ? 'bg-gradient-to-b from-amber-50 via-amber-100/70 to-amber-50 border-amber-500 text-amber-950 font-black shadow-xs ring-2 ring-amber-400/50'
+                        : 'bg-gradient-to-b from-amber-500/20 via-amber-500/10 to-transparent border-amber-400 text-white font-black shadow-sm ring-2 ring-amber-400/40'
                       : isLight
-                      ? 'bg-slate-50/80 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-100'
+                      ? 'bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-100'
                       : 'bg-slate-950/70 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
                   }`}
                 >
@@ -441,7 +543,7 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame, isLight = false })
                   <span className={`text-[9px] block uppercase font-bold tracking-wider truncate ${
                     isSelected
                       ? isLight ? 'text-amber-900 font-extrabold' : 'text-amber-300 font-extrabold'
-                      : isLight ? 'text-slate-400' : 'text-slate-500'
+                      : isLight ? 'text-slate-500' : 'text-slate-400'
                   }`}>
                     {t.sub}
                   </span>
@@ -456,7 +558,7 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame, isLight = false })
           <button
             type="button"
             onClick={() => handlePlay(selectedLevel)}
-            className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-600 to-amber-500 hover:from-amber-400 hover:via-amber-500 hover:to-amber-400 text-slate-950 font-black text-xs sm:text-sm tracking-wide shadow-md shadow-amber-500/25 transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+            className={`w-full py-3 px-4 rounded-2xl bg-gradient-to-r ${currentLevelObj.btnGradient} font-black text-xs sm:text-sm tracking-wide shadow-md transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer`}
           >
             <Swords className="w-4 h-4 stroke-[2.5]" />
             <span>Play vs {currentLevelObj.name} ({currentLevelObj.elo})</span>
