@@ -15,6 +15,7 @@ export function NotificationsDropdown({
   onDeclineChallenge,
   onAcceptFriendRequest,
   onDeclineFriendRequest,
+  onDismissNotification,
   onClearAll,
   isLight = false
 }) {
@@ -208,9 +209,30 @@ export function NotificationsDropdown({
                         <span className="font-bold text-xs truncate">
                           @{item.fromUser?.username || 'Player'}
                         </span>
-                        <span className={`text-[10px] font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                          {item.time || 'Just now'}
-                        </span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className={`text-[10px] font-mono ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                            {item.time || 'Just now'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              sound.playClick();
+                              triggerHaptic('move');
+                              if (onDismissNotification) {
+                                onDismissNotification(item.id);
+                              } else if (onDeclineChallenge) {
+                                onDeclineChallenge(item.id);
+                              }
+                            }}
+                            className={`p-1 rounded-md transition-colors cursor-pointer ${
+                              isLight ? 'text-slate-400 hover:text-rose-600 hover:bg-slate-200' : 'text-slate-500 hover:text-rose-400 hover:bg-slate-800'
+                            }`}
+                            title="Dismiss notification"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
                       </div>
                       <p className={`text-xs mt-0.5 leading-snug font-medium ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
                         {item.message}
@@ -235,6 +257,7 @@ export function NotificationsDropdown({
                       <button
                         onClick={() => {
                           sound.playClick();
+                          triggerHaptic('move');
                           onDeclineChallenge(item.id);
                         }}
                         className={`py-1.5 px-2.5 rounded-xl border text-xs font-bold transition-colors cursor-pointer ${
@@ -264,6 +287,7 @@ export function NotificationsDropdown({
                       <button
                         onClick={() => {
                           sound.playClick();
+                          triggerHaptic('move');
                           onDeclineFriendRequest(item.id);
                         }}
                         className={`py-1.5 px-2.5 rounded-xl border text-xs font-bold transition-colors cursor-pointer ${
@@ -273,6 +297,30 @@ export function NotificationsDropdown({
                         }`}
                       >
                         Decline
+                      </button>
+                    </div>
+                  )}
+
+                  {!isChallenge && !isFriendReq && (
+                    <div className="flex items-center justify-end pt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          sound.playClick();
+                          triggerHaptic('move');
+                          if (onDismissNotification) {
+                            onDismissNotification(item.id);
+                          } else if (onDeclineChallenge) {
+                            onDeclineChallenge(item.id);
+                          }
+                        }}
+                        className={`px-3 py-1 rounded-xl border text-[11px] font-bold transition-colors cursor-pointer ${
+                          isLight
+                            ? 'bg-white hover:bg-slate-100 border-slate-300 text-slate-700'
+                            : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300'
+                        }`}
+                      >
+                        Dismiss
                       </button>
                     </div>
                   )}

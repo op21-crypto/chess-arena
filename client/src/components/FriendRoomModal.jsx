@@ -8,7 +8,14 @@ import {
 import { safeStorage } from '../utils/storage.js';
 import { triggerHaptic } from '../utils/device.js';
 import { sound } from '../utils/audio.js';
-import { removeFriendPermanently, blockFriendPermanently, getBlockedFriends } from '../utils/socialAutomation.js';
+import {
+  removeFriendPermanently,
+  blockFriendPermanently,
+  getBlockedFriends,
+  addFriendPermanently,
+  getStoredFriends,
+  getFriendsStorageKey
+} from '../utils/socialAutomation.js';
 import { getSmartFriendReply } from '../services/aiChatService.js';
 
 const COUNTRY_FLAGS = {
@@ -692,21 +699,32 @@ export function FriendRoomModal({
   const [activeTab, setActiveTab] = useState(initialTab || (isHeaderEntry ? 'friends' : 'room'));
   const [isBotTyping, setIsBotTyping] = useState(false);
 
+  const myUsername = (currentUser?.username || '').trim().toLowerCase();
+  const myId = (currentUser?.id || '').toString();
+
   const [friends, setFriends] = useState(() => {
     try {
-      const saved = safeStorage.getItem('chess_arena_friends_v3');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          return parsed.filter(f => f && typeof f === 'object' && typeof f.username === 'string');
-        }
+      const stored = getStoredFriends(currentUser?.username);
+      if (stored && stored.length > 0) {
+        return stored.filter(f => {
+          if (!f?.username) return false;
+          const u = f.username.toLowerCase();
+          return u !== myUsername && String(f.id || '') !== myId;
+        });
       }
     } catch {}
-    return DEFAULT_FRIENDS;
+    return DEFAULT_FRIENDS.filter(f => f.isBot);
   });
 
-  // Safe reference to friends list preventing any runtime null/undefined crashes
-  const safeFriends = Array.isArray(friends) ? friends : [];
+  // Safe reference to friends list preventing any runtime null/undefined crashes AND strictly filtering out currentUser!
+  const safeFriends = (Array.isArray(friends) ? friends : []).filter(f => {
+    if (!f || !f.username || typeof f.username !== 'string') return false;
+    const fUser = f.username.trim().toLowerCase();
+    const fId = (f.id || '').toString();
+    if (myUsername && fUser === myUsername) return false;
+    if (myId && fId === myId) return false;
+    return true;
+  });
   const blockedFriends = getBlockedFriends();
   const blockedSet = new Set(
     (Array.isArray(blockedFriends) ? blockedFriends : [])
@@ -829,22 +847,52 @@ export function FriendRoomModal({
   // Set default tab to 'friends' or initialTab on open and reload persistent friends
   useEffect(() => {
     if (isOpen) {
+      const username = currentUser?.username;
       try {
-        const saved = safeStorage.getItem('chess_arena_friends_v3');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
-            setFriends(parsed.filter(f => f && typeof f === 'object' && typeof f.username === 'string'));
-          } else {
-            setFriends(DEFAULT_FRIENDS);
-          }
+        const stored = getStoredFriends(username);
+        if (stored && stored.length > 0) {
+          const myName = (username || '').toLowerCase();
+          setFriends(stored.filter(f => f?.username && f.username.toLowerCase() !== myName));
         } else {
-          safeStorage.setItem('chess_arena_friends_v3', JSON.stringify(DEFAULT_FRIENDS));
-          setFriends(DEFAULT_FRIENDS);
+          setFriends(DEFAULT_FRIENDS.filter(f => f.isBot));
         }
       } catch {
-        setFriends(DEFAULT_FRIENDS);
+        setFriends(DEFAULT_FRIENDS.filter(f => f.isBot));
       }
+
+      // Fetch remote mutual friends from server & Firestore
+      if (username) {
+        fetch(`/api/friends?username=${encodeURIComponent(username)}`, {
+          headers: {
+            'Authorization': `Bearer ${safeStorage.getItem('token') || ''}`
+          }
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data?.friends && Array.isArray(data.friends)) {
+              setFriends(prev => {
+                const map = new Map();
+                const myName = username.toLowerCase();
+                (Array.isArray(prev) ? prev : []).forEach(f => {
+                  if (f?.username && f.username.toLowerCase() !== myName) {
+                    map.set(f.username.toLowerCase(), f);
+                  }
+                });
+                data.friends.forEach(f => {
+                  if (f?.username && f.username.toLowerCase() !== myName) {
+                    map.set(f.username.toLowerCase(), f);
+                  }
+                });
+                const merged = Array.from(map.values());
+                const key = getFriendsStorageKey(username);
+                safeStorage.setItem(key, JSON.stringify(merged));
+                return merged;
+              });
+            }
+          })
+          .catch(() => {});
+      }
+
       setActiveTab(initialTab || (initialTab === 'friends' ? 'friends' : 'room'));
       setSelectedFriend(null);
       setChattingFriend(null);
@@ -854,14 +902,20 @@ export function FriendRoomModal({
       setSearchNotFound(false);
       setRequestStatus(null);
     }
-  }, [isOpen, initialTab]);
+  }, [isOpen, initialTab, currentUser?.username]);
 
   // Sync to safeStorage
   useEffect(() => {
     try {
-      safeStorage.setItem('chess_arena_friends_v3', JSON.stringify(friends));
+      const username = currentUser?.username;
+      const key = getFriendsStorageKey(username);
+      const myName = (username || '').toLowerCase();
+      const cleaned = (Array.isArray(friends) ? friends : []).filter(
+        f => f?.username && f.username.toLowerCase() !== myName
+      );
+      safeStorage.setItem(key, JSON.stringify(cleaned));
     } catch {}
-  }, [friends]);
+  }, [friends, currentUser?.username]);
 
   useEffect(() => {
     try {
@@ -972,7 +1026,17 @@ export function FriendRoomModal({
     triggerHaptic('move');
     setChallengeFriendTarget(null);
 
-    const isBotFriend = friend.isBot || BOT_LEVEL_MAP[friend.id] || friend.id.startsWith('f_') || friend.id.startsWith('sug_') || friend.id.startsWith('anime_');
+    const idStr = String(friend?.id || '');
+    const isBotFriend = Boolean(
+      friend?.isBot ||
+      BOT_LEVEL_MAP[friend?.id] ||
+      idStr.startsWith('f_') ||
+      idStr.startsWith('sug_') ||
+      idStr.startsWith('anime_') ||
+      friend?.anime ||
+      DEFAULT_FRIENDS.some(df => df.username?.toLowerCase() === friend?.username?.toLowerCase() && df.isBot)
+    );
+
     if (isBotFriend && onStartAIGame) {
       const elo = Number(friend.elo) || 1600;
       let level = BOT_LEVEL_MAP[friend.id];
@@ -994,11 +1058,12 @@ export function FriendRoomModal({
       colorPreference: 'random' // Strictly random side assignment
     };
 
+    sound.playMatchStart();
+    onClose();
     if (onChallengeFriend) {
       onChallengeFriend(friend, config);
-    } else {
+    } else if (onCreateRoom) {
       onCreateRoom(config);
-      setActiveTab('room');
     }
   };
 
@@ -1191,13 +1256,14 @@ export function FriendRoomModal({
     }).catch(() => {});
 
     // If target is a simulated bot/community player, accept after a friendly delay
-    if (userToSend?.isBot || (userToSend?.id && (userToSend.id.startsWith('f_') || userToSend.id.startsWith('sug_') || userToSend.id.startsWith('anime_')))) {
+    const targetIdStr = String(userToSend?.id || '');
+    if (userToSend?.isBot || targetIdStr.startsWith('f_') || targetIdStr.startsWith('sug_') || targetIdStr.startsWith('anime_')) {
       setTimeout(() => {
         setFriends(prev => {
           const list = Array.isArray(prev) ? prev : [];
           if (list.some(f => f?.username && typeof f.username === 'string' && f.username.toLowerCase() === targetUsername.toLowerCase())) return list;
           const updated = [userToSend, ...list];
-          safeStorage.setItem('chess_arena_friends_v3', JSON.stringify(updated));
+          addFriendPermanently(userToSend, currentUser?.username);
           return updated;
         });
         setPendingSentRequests(prev => {
@@ -1220,8 +1286,14 @@ export function FriendRoomModal({
       clearInterval(suggestTimerRef.current);
       suggestTimerRef.current = null;
     }
+    const myName = (currentUser?.username || '').trim().toLowerCase();
+    const pName = (player.username || '').trim().toLowerCase();
+    if (myName && pName === myName) {
+      setRequestStatus({ type: 'error', text: 'You cannot add yourself as a friend.' });
+      return;
+    }
     const list = Array.isArray(friends) ? friends : [];
-    if (list.some(f => f?.username && typeof f.username === 'string' && f.username.toLowerCase() === player.username.toLowerCase())) {
+    if (list.some(f => f?.username && typeof f.username === 'string' && f.username.toLowerCase() === pName)) {
       setSearchNotFound(false);
       setRequestStatus({ type: 'info', text: `@${player.username} is already in your friends list!` });
       setSuggestedOnlinePlayer(null);
@@ -1229,7 +1301,7 @@ export function FriendRoomModal({
     }
     const updated = [player, ...list];
     setFriends(updated);
-    safeStorage.setItem('chess_arena_friends_v3', JSON.stringify(updated));
+    addFriendPermanently(player, currentUser?.username);
     setSuggestedOnlinePlayer(null);
     setSearchNotFound(false);
     setRequestStatus({
@@ -1241,7 +1313,7 @@ export function FriendRoomModal({
   };
 
   const handleRemoveFriend = (friendId) => {
-    removeFriendPermanently(friendId);
+    removeFriendPermanently(friendId, currentUser?.username);
     setFriends(prev => prev.filter(f => f.id !== friendId && f.username !== friendId));
     setSelectedFriend(null);
     if (chattingFriend?.id === friendId) setChattingFriend(null);
@@ -1250,16 +1322,18 @@ export function FriendRoomModal({
     triggerHaptic('move');
 
     const token = safeStorage.getItem('token');
-    if (token) {
-      fetch('/api/friends/remove', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ friendId })
-      }).catch(() => {});
-    }
+    fetch('/api/friends/remove', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token || ''}`
+      },
+      body: JSON.stringify({
+        friendId,
+        friendUsername: typeof friendId === 'string' ? friendId : '',
+        username: currentUser?.username
+      })
+    }).catch(() => {});
   };
 
   const handleBlockUser = (friend) => {

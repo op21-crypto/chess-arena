@@ -403,12 +403,19 @@ export default function App() {
     setNotifications(prev => processAppOpenNotifications(prev));
   }, []);
 
-  const handleAcceptNotificationChallenge = (notif) => {
+  const handleAcceptNotificationChallenge = async (notif) => {
     setShowNotifications(false);
-    markNotificationDismissed(notif);
+    markNotificationDismissed(notif, currentUser?.username);
     setNotifications(prev => prev.filter(n => n.id !== notif.id));
     sound.playMatchStart();
     triggerHaptic('move');
+
+    // If challenge was created with a real match roomId:
+    if (notif.roomId) {
+      await handleJoinFriendRoom(notif.roomId);
+      setActiveTab('game');
+      return;
+    }
 
     const challenger = notif.fromUser || notif.from || {};
     const baseMinutes = notif.config?.timeControl?.baseMinutes || 5;
@@ -428,18 +435,18 @@ export default function App() {
 
   const handleDeclineNotificationChallenge = (id) => {
     const target = notifications.find(n => n.id === id);
-    markNotificationDismissed(target || id);
+    markNotificationDismissed(target || id, currentUser?.username);
     setNotifications(prev => prev.filter(n => n.id !== id));
     sound.playClick();
   };
 
   const handleAcceptNotificationFriendRequest = (notif) => {
-    markNotificationDismissed(notif);
+    markNotificationDismissed(notif, currentUser?.username);
     setNotifications(prev => prev.filter(n => n.id !== notif.id));
     sound.playMove();
     triggerHaptic('move');
     if (notif.fromUser) {
-      addFriendPermanently(notif.fromUser);
+      addFriendPermanently(notif.fromUser, currentUser?.username);
     }
     const token = safeStorage.getItem('token');
     fetch('/api/friends/respond', {
@@ -459,7 +466,7 @@ export default function App() {
 
   const handleDeclineNotificationFriendRequest = (id) => {
     const target = notifications.find(n => n.id === id);
-    markNotificationDismissed(target || id);
+    markNotificationDismissed(target || id, currentUser?.username);
     setNotifications(prev => prev.filter(n => n.id !== id));
     sound.playClick();
     const token = safeStorage.getItem('token');
@@ -493,11 +500,14 @@ export default function App() {
         if (!res.ok) return;
         const data = await res.json();
         if (isMounted && data?.notifications && Array.isArray(data.notifications) && data.notifications.length > 0) {
-          const dismissedRaw = safeStorage.getItem('chess_arena_dismissed_notifications_v3');
-          let dismissedSet = new Set();
-          try {
-            if (dismissedRaw) dismissedSet = new Set(JSON.parse(dismissedRaw));
-          } catch {}
+          const dismissedSet = getDismissedNotifications();
+
+          // Auto-sync mutual friends when friend_accepted arrives
+          data.notifications.forEach(notif => {
+            if (notif.type === 'friend_accepted' && notif.fromUser) {
+              addFriendPermanently(notif.fromUser, userToSync);
+            }
+          });
 
           setNotifications(prev => {
             const existingIds = new Set(prev.map(n => n.id));
@@ -1199,6 +1209,7 @@ export default function App() {
 
     // Also emit to socket if gateway connected
     socketRef.current?.emit('create_room', { ...config, roomId });
+    return { roomId, game: initialGame };
   };
 
   const handleJoinFriendRoom = async (roomId) => {
@@ -2954,11 +2965,36 @@ export default function App() {
           setActiveTab('game');
           setShowFriendRoomModal(false);
         }}
-        onChallengeFriend={(friend, customConfig) => {
+        onChallengeFriend={async (friend, customConfig) => {
+          setShowFriendRoomModal(false);
+          setActiveTab('game');
+          sound.playMatchStart();
           const cfg = customConfig || { timeControl: { baseMinutes: 5, incrementSeconds: 0 }, colorPreference: 'random' };
-          handleCreateFriendRoom(cfg);
+          const result = await handleCreateFriendRoom(cfg);
+          const roomId = result?.roomId || createdRoomInfo?.roomId;
+          const activeUser = getOrCreateUser();
+
+          // 1. Deliver real challenge notification to friend's Firestore inbox
+          try {
+            await fetch('/api/notifications/challenge', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                targetUsername: friend.username,
+                fromUser: activeUser,
+                roomId,
+                timeControl: cfg.timeControl,
+                format: cfg.timeControl?.baseMinutes <= 2 ? 'bullet' : (cfg.timeControl?.baseMinutes <= 5 ? 'blitz' : 'rapid')
+              })
+            });
+          } catch {}
+
+          // 2. Emit socket challenge event
           socketRef.current?.emit('challenge_friend', {
             friendId: friend.id,
+            targetUsername: friend.username,
+            roomId,
+            fromUser: activeUser,
             config: { timeControl: cfg.timeControl, format: cfg.timeControl?.baseMinutes <= 2 ? 'bullet' : (cfg.timeControl?.baseMinutes <= 5 ? 'blitz' : 'rapid') }
           });
         }}
@@ -2975,8 +3011,20 @@ export default function App() {
         onDeclineChallenge={handleDeclineNotificationChallenge}
         onAcceptFriendRequest={handleAcceptNotificationFriendRequest}
         onDeclineFriendRequest={handleDeclineNotificationFriendRequest}
+        onDismissNotification={(id) => {
+          const target = notifications.find(n => n.id === id);
+          markNotificationDismissed(target || id, currentUser?.username);
+          setNotifications(prev => prev.filter(n => n.id !== id));
+        }}
         onClearAll={() => {
-          notifications.forEach(n => markNotificationDismissed(n));
+          notifications.forEach(n => markNotificationDismissed(n, currentUser?.username));
+          if (currentUser?.username) {
+            fetch('/api/notifications/clear', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username: currentUser.username })
+            }).catch(() => {});
+          }
           setNotifications([]);
         }}
         isLight={isLight}

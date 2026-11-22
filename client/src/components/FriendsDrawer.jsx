@@ -9,14 +9,17 @@ export function FriendsDrawer({ currentUser, isOpen, onClose, onChallengeFriend 
   const [message, setMessage] = useState('');
 
   const fetchFriends = () => {
-    fetch('/api/friends', {
+    const user = currentUser?.username;
+    fetch(`/api/friends${user ? `?username=${encodeURIComponent(user)}` : ''}`, {
       headers: {
-        'Authorization': `Bearer ${safeStorage.getItem('token')}`
+        'Authorization': `Bearer ${safeStorage.getItem('token') || ''}`
       }
     })
       .then(res => res.json())
       .then(data => {
-        setFriends(data.friends || []);
+        const myName = (user || '').toLowerCase();
+        const raw = data.friends || [];
+        setFriends(raw.filter(f => f?.username && f.username.toLowerCase() !== myName));
         setPending(data.pendingRequests || []);
       })
       .catch(err => console.error(err));

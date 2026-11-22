@@ -823,13 +823,105 @@ router.post('/tournaments/:id/join', requireAuth, (req, res) => {
 
 // ================= FRIENDS & NOTIFICATIONS =================
 
-router.get('/friends', requireAuth, (req, res) => {
-  const friends = Database.getUserFriends(req.user.id).map(f => {
-    const { passwordHash: _, ...safe } = f;
-    return safe;
-  });
-  const pendingRequests = Database.getPendingFriendRequests(req.user.id);
-  res.json({ friends, pendingRequests });
+// Helper to persist genuine mutual friendships in Firestore
+async function addMutualFriendshipFirestore(userA, userB) {
+  if (!userA?.username || !userB?.username) return;
+  const usernameA = userA.username.toLowerCase();
+  const usernameB = userB.username.toLowerCase();
+  if (usernameA === usernameB) return; // Prevent adding self
+
+  // Add B to A's list
+  try {
+    const docA = await firestoreRestService.getRoom(`friends_${usernameA}`);
+    const itemsA = docA?.items && Array.isArray(docA.items) ? docA.items : [];
+    if (!itemsA.some(f => f?.username?.toLowerCase() === usernameB)) {
+      itemsA.unshift({
+        id: userB.id || `u_${usernameB}`,
+        username: userB.username,
+        avatar: userB.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${userB.username}`,
+        country: userB.country || 'IN',
+        elo: Number(userB.elo) || 1200,
+        title: userB.title || 'Mutual Friend',
+        isOnline: true,
+        statusText: 'Online • Ready to play',
+        addedAt: Date.now()
+      });
+      await firestoreRestService.saveRoom({
+        id: `friends_${usernameA}`,
+        type: 'friends_list',
+        username: usernameA,
+        items: itemsA.slice(0, 100),
+        updatedAt: Date.now()
+      });
+    }
+  } catch (err) {
+    console.warn('Error saving mutual friend A:', err.message);
+  }
+
+  // Add A to B's list
+  try {
+    const docB = await firestoreRestService.getRoom(`friends_${usernameB}`);
+    const itemsB = docB?.items && Array.isArray(docB.items) ? docB.items : [];
+    if (!itemsB.some(f => f?.username?.toLowerCase() === usernameA)) {
+      itemsB.unshift({
+        id: userA.id || `u_${usernameA}`,
+        username: userA.username,
+        avatar: userA.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${userA.username}`,
+        country: userA.country || 'IN',
+        elo: Number(userA.elo) || 1200,
+        title: userA.title || 'Mutual Friend',
+        isOnline: true,
+        statusText: 'Online • Ready to play',
+        addedAt: Date.now()
+      });
+      await firestoreRestService.saveRoom({
+        id: `friends_${usernameB}`,
+        type: 'friends_list',
+        username: usernameB,
+        items: itemsB.slice(0, 100),
+        updatedAt: Date.now()
+      });
+    }
+  } catch (err) {
+    console.warn('Error saving mutual friend B:', err.message);
+  }
+}
+
+router.get('/friends', async (req, res) => {
+  try {
+    const username = req.user?.username || req.query.username;
+    if (!username) {
+      return res.json({ friends: [], pendingRequests: [] });
+    }
+
+    let friendsList = [];
+    try {
+      const doc = await firestoreRestService.getRoom(`friends_${username.toLowerCase()}`);
+      if (doc?.items && Array.isArray(doc.items)) {
+        friendsList = doc.items;
+      }
+    } catch {}
+
+    if (req.user?.id) {
+      try {
+        const dbFriends = Database.getUserFriends(req.user.id).map(f => {
+          const { passwordHash: _, ...safe } = f;
+          return safe;
+        });
+        const map = new Map();
+        friendsList.forEach(f => map.set(f.username?.toLowerCase(), f));
+        dbFriends.forEach(f => map.set(f.username?.toLowerCase(), f));
+        friendsList = Array.from(map.values());
+      } catch {}
+    }
+
+    // Filter out current user so they NEVER appear in their own friend list!
+    const filtered = friendsList.filter(f => f?.username && f.username.toLowerCase() !== username.toLowerCase());
+
+    res.json({ friends: filtered, pendingRequests: [] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 router.post('/friends/request', async (req, res) => {
@@ -879,7 +971,7 @@ router.post('/friends/request', async (req, res) => {
       }
     };
 
-    // 1. Deliver to target's Firestore notification box so it immediately reaches the recipient across devices
+    // 1. Deliver to target's Firestore notification box so it immediately reaches recipient across devices
     const boxId = `notifs_${targetUsername.toLowerCase()}`;
     try {
       const box = await firestoreRestService.getRoom(boxId);
@@ -938,8 +1030,26 @@ router.post('/friends/respond', async (req, res) => {
       } catch {}
     }
 
-    // 2. If accepted, send acceptance notification back to sender's notification box
+    // 2. If accepted, establish true MUTUAL friendship in Firestore on both accounts!
     if (accept && fromUsername && recipientUsername) {
+      const userA = {
+        id: fromUserId || `u_${fromUsername}`,
+        username: fromUsername,
+        avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${fromUsername}`,
+        country: 'IN',
+        elo: 1200
+      };
+      const userB = {
+        id: req.user?.id || `u_${recipientUsername}`,
+        username: recipientUsername,
+        avatar: req.user?.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${recipientUsername}`,
+        country: req.user?.country || 'IN',
+        elo: req.user?.ratings?.rapid || req.user?.elo || 1200
+      };
+
+      await addMutualFriendshipFirestore(userA, userB);
+
+      // Send acceptance notification back to sender's notification box
       const senderBoxId = `notifs_${fromUsername.toLowerCase()}`;
       try {
         const senderBox = await firestoreRestService.getRoom(senderBoxId);
@@ -952,8 +1062,11 @@ router.post('/friends/respond', async (req, res) => {
           time: 'Just now',
           timestamp: Date.now(),
           fromUser: {
+            id: userB.id,
             username: recipientUsername,
-            avatar: req.user?.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${recipientUsername}`
+            avatar: userB.avatar,
+            country: userB.country,
+            elo: userB.elo
           }
         });
         await firestoreRestService.saveRoom({
@@ -981,10 +1094,137 @@ router.post('/friends/respond', async (req, res) => {
   }
 });
 
-router.post('/friends/remove', requireAuth, (req, res) => {
-  const { friendId } = req.body;
-  Database.removeFriendship(req.user.id, friendId);
-  res.json({ success: true });
+router.post('/friends/remove', async (req, res) => {
+  try {
+    const { friendId, friendUsername, username } = req.body;
+    const currentUsername = req.user?.username || username;
+
+    if (req.user?.id && friendId) {
+      try { Database.removeFriendship(req.user.id, friendId); } catch {}
+    }
+
+    if (currentUsername && (friendUsername || friendId)) {
+      const docId = `friends_${currentUsername.toLowerCase()}`;
+      try {
+        const doc = await firestoreRestService.getRoom(docId);
+        if (doc?.items && Array.isArray(doc.items)) {
+          const updated = doc.items.filter(f => {
+            if (friendUsername && f.username?.toLowerCase() === friendUsername.toLowerCase()) return false;
+            if (friendId && f.id === friendId) return false;
+            return true;
+          });
+          await firestoreRestService.saveRoom({
+            id: docId,
+            type: 'friends_list',
+            username: currentUsername.toLowerCase(),
+            items: updated,
+            updatedAt: Date.now()
+          });
+        }
+      } catch {}
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Deliver match challenges between genuine players
+router.post('/notifications/challenge', async (req, res) => {
+  try {
+    const { targetUsername, fromUser, roomId, timeControl, format } = req.body;
+    if (!targetUsername || !fromUser) {
+      return res.status(400).json({ error: 'targetUsername and fromUser are required' });
+    }
+
+    const minutes = timeControl?.baseMinutes || 5;
+    const formatName = format || (minutes <= 2 ? 'Bullet' : (minutes <= 5 ? 'Blitz' : 'Rapid'));
+    const notifItem = {
+      id: `chal_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      type: 'challenge',
+      title: 'Game Challenge ⚔️',
+      message: `@${fromUser.username} challenged you to a ${minutes}-min ${formatName} match!`,
+      time: 'Just now',
+      timestamp: Date.now(),
+      fromUser: {
+        id: fromUser.id || `u_${fromUser.username}`,
+        username: fromUser.username,
+        avatar: fromUser.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${fromUser.username}`,
+        country: fromUser.country || 'IN',
+        elo: fromUser.ratings?.rapid || fromUser.elo || 1200
+      },
+      config: {
+        roomId,
+        timeControl: { baseMinutes: minutes, incrementSeconds: timeControl?.incrementSeconds || 0 },
+        format: formatName.toLowerCase()
+      }
+    };
+
+    const boxId = `notifs_${targetUsername.toLowerCase()}`;
+    const box = await firestoreRestService.getRoom(boxId);
+    const items = box?.items && Array.isArray(box.items) ? box.items : [];
+    // Replace any old pending challenge from this sender
+    const filtered = items.filter(i => !(i.type === 'challenge' && i.fromUser?.username?.toLowerCase() === fromUser.username.toLowerCase()));
+    filtered.unshift(notifItem);
+    await firestoreRestService.saveRoom({
+      id: boxId,
+      type: 'notifications_box',
+      username: targetUsername.toLowerCase(),
+      items: filtered.slice(0, 30),
+      updatedAt: Date.now()
+    });
+
+    res.json({ success: true, notification: notifItem });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Dismiss a specific notification permanently from remote Firestore box
+router.post('/notifications/dismiss', async (req, res) => {
+  try {
+    const { username, notifId } = req.body;
+    const user = req.user?.username || username;
+    if (!user || !notifId) return res.status(400).json({ error: 'Username and notifId required' });
+
+    const boxId = `notifs_${user.toLowerCase()}`;
+    const box = await firestoreRestService.getRoom(boxId);
+    if (box?.items && Array.isArray(box.items)) {
+      const filtered = box.items.filter(item => item.id !== notifId);
+      await firestoreRestService.saveRoom({
+        id: boxId,
+        type: 'notifications_box',
+        username: user.toLowerCase(),
+        items: filtered,
+        updatedAt: Date.now()
+      });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Clear all notifications permanently from remote Firestore box
+router.post('/notifications/clear', async (req, res) => {
+  try {
+    const { username } = req.body;
+    const user = req.user?.username || username;
+    if (!user) return res.status(400).json({ error: 'Username required' });
+
+    const boxId = `notifs_${user.toLowerCase()}`;
+    await firestoreRestService.saveRoom({
+      id: boxId,
+      type: 'notifications_box',
+      username: user.toLowerCase(),
+      items: [],
+      updatedAt: Date.now()
+    });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 router.get('/notifications', async (req, res) => {

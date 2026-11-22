@@ -117,21 +117,21 @@ export const GENERAL_CHALLENGERS = [
   ...ANIME_FEMALE_CHARACTERS
 ];
 
-const NOTIFICATIONS_STORAGE_KEY = 'chess_arena_notifications_v3';
-const INITIAL_SEEDED_KEY = 'chess_arena_initial_notifs_seeded_v3';
-const DISMISSED_NOTIFS_KEY = 'chess_arena_dismissed_notifs_v3';
-const APP_OPEN_COUNT_KEY = 'chess_arena_app_open_count';
-const LAST_NOTIF_TIME_KEY = 'chess_arena_last_notif_time_v3';
-const NEXT_OPEN_TARGET_KEY = 'chess_arena_next_open_target_v3';
-const FRIENDS_STORAGE_KEY = 'chess_arena_friends_v3';
-const BLOCKED_STORAGE_KEY = 'chess_arena_blocked_friends_v3';
+export const NOTIFICATIONS_STORAGE_KEY = 'chess_arena_notifications_v4';
+export const INITIAL_SEEDED_KEY = 'chess_arena_initial_notifs_seeded_v4';
+export const DISMISSED_NOTIFS_KEY = 'chess_arena_dismissed_notifs_v4';
+export const APP_OPEN_COUNT_KEY = 'chess_arena_app_open_count';
+export const LAST_NOTIF_TIME_KEY = 'chess_arena_last_notif_time_v4';
+export const NEXT_OPEN_TARGET_KEY = 'chess_arena_next_open_target_v4';
+export const FRIENDS_STORAGE_KEY = 'chess_arena_friends_v4';
+export const BLOCKED_STORAGE_KEY = 'chess_arena_blocked_friends_v4';
 
 /**
  * Reads list of dismissed/handled notification IDs and usernames
  */
 export function getDismissedNotifications() {
   try {
-    const raw = safeStorage.getItem(DISMISSED_NOTIFS_KEY);
+    const raw = safeStorage.getItem(DISMISSED_NOTIFS_KEY) || safeStorage.getItem('chess_arena_dismissed_notifs_v3') || safeStorage.getItem('chess_arena_dismissed_notifications_v3');
     if (raw) return JSON.parse(raw);
   } catch {}
   return [];
@@ -140,7 +140,7 @@ export function getDismissedNotifications() {
 /**
  * Permanently marks a notification as dismissed/accepted/declined so it NEVER returns
  */
-export function markNotificationDismissed(notifOrId) {
+export function markNotificationDismissed(notifOrId, currentUsername = null) {
   if (!notifOrId) return;
   const id = typeof notifOrId === 'string' ? notifOrId : notifOrId?.id;
   const username = typeof notifOrId === 'object' ? notifOrId?.fromUser?.username : null;
@@ -148,7 +148,22 @@ export function markNotificationDismissed(notifOrId) {
   const set = new Set(current);
   if (id) set.add(id);
   if (username) set.add(`user_${username.toLowerCase()}`);
-  safeStorage.setItem(DISMISSED_NOTIFS_KEY, JSON.stringify([...set]));
+  const serialized = JSON.stringify([...set]);
+  safeStorage.setItem(DISMISSED_NOTIFS_KEY, serialized);
+  safeStorage.setItem('chess_arena_dismissed_notifs_v3', serialized);
+  safeStorage.setItem('chess_arena_dismissed_notifications_v3', serialized);
+
+  // Sync dismissal with server Firestore box if possible
+  const u = currentUsername || (typeof notifOrId === 'object' ? notifOrId?.targetUsername : null);
+  if (u && id) {
+    try {
+      fetch('/api/notifications/dismiss', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: u, notifId: id })
+      }).catch(() => {});
+    } catch {}
+  }
 }
 
 /**
@@ -419,13 +434,25 @@ export function processAppOpenNotifications(currentNotifs = []) {
   return notifs;
 }
 
+export function getFriendsStorageKey(currentUsername) {
+  const clean = (currentUsername || '').trim().toLowerCase();
+  return clean ? `chess_arena_friends_v4_${clean}` : FRIENDS_STORAGE_KEY;
+}
+
 /**
- * Reads stored friends list
+ * Reads stored friends list (strictly user-scoped)
  */
-export function getStoredFriends() {
+export function getStoredFriends(username = null) {
   try {
-    const raw = safeStorage.getItem(FRIENDS_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    const key = getFriendsStorageKey(username);
+    const raw = safeStorage.getItem(key);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        const cleanUser = (username || '').toLowerCase();
+        return parsed.filter(f => f && typeof f === 'object' && f.username && (!cleanUser || f.username.toLowerCase() !== cleanUser));
+      }
+    }
   } catch {}
   return [];
 }
@@ -435,64 +462,74 @@ export function getStoredFriends() {
  */
 export function getBlockedFriends() {
   try {
-    const raw = safeStorage.getItem(BLOCKED_STORAGE_KEY);
+    const raw = safeStorage.getItem(BLOCKED_STORAGE_KEY) || safeStorage.getItem('chess_arena_blocked_friends_v3');
     if (raw) return JSON.parse(raw);
   } catch {}
   return [];
 }
 
 /**
- * Permanently adds a friend to the user's friend list
+ * Permanently adds a friend to the user's friend list (guaranteed never to add self)
  */
-export function addFriendPermanently(userObj) {
-  if (!userObj || !userObj.username) return getStoredFriends();
-  const current = getStoredFriends();
+export function addFriendPermanently(userObj, currentUsername = null) {
+  if (!userObj || !userObj.username) return getStoredFriends(currentUsername);
+  const cleanCurrent = (currentUsername || '').trim().toLowerCase();
+  const cleanTarget = userObj.username.trim().toLowerCase();
+  if (cleanCurrent && cleanTarget === cleanCurrent) {
+    return getStoredFriends(currentUsername); // NEVER add self
+  }
+  const current = getStoredFriends(currentUsername);
 
   // If already exists, do not duplicate
-  if (current.some(f => f.username === userObj.username)) {
+  if (current.some(f => f.username.toLowerCase() === cleanTarget)) {
     return current;
   }
 
+  const idStr = String(userObj.id || '');
   const newFriend = {
     id: userObj.id || `f_${Date.now()}`,
     username: userObj.username,
     avatar: userObj.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${userObj.username}`,
-    country: userObj.country || 'JP',
-    elo: Number(userObj.elo) || 1850,
+    country: userObj.country || 'IN',
+    elo: Number(userObj.elo) || 1200,
     title: userObj.title || 'Mutual Friend',
     isOnline: true,
-    statusText: `Online • ${userObj.title || 'Ready to play'}`,
+    statusText: userObj.statusText || 'Online • Ready to play',
     bio: userObj.bio || 'Chess friend from Arena',
     anime: userObj.anime || null,
-    isBot: Boolean(userObj.isBot || userObj.anime || userObj.id?.startsWith('anime_') || userObj.id?.startsWith('f_') || userObj.id?.startsWith('sug_')),
+    isBot: Boolean(userObj.isBot || userObj.anime || idStr.startsWith('anime_') || idStr.startsWith('f_') || idStr.startsWith('sug_')),
     addedAt: Date.now()
   };
 
-  const updated = [newFriend, ...current];
-  safeStorage.setItem(FRIENDS_STORAGE_KEY, JSON.stringify(updated));
+  const updated = [newFriend, ...current.filter(f => f.username.toLowerCase() !== cleanCurrent)];
+  const key = getFriendsStorageKey(currentUsername);
+  safeStorage.setItem(key, JSON.stringify(updated));
   return updated;
 }
 
 /**
  * Permanently removes a friend from the friend list
  */
-export function removeFriendPermanently(friendIdOrUsername) {
-  const current = getStoredFriends();
+export function removeFriendPermanently(friendIdOrUsername, currentUsername = null) {
+  const current = getStoredFriends(currentUsername);
+  const targetLower = String(friendIdOrUsername).toLowerCase();
   const updated = current.filter(
-    f => f.id !== friendIdOrUsername && f.username !== friendIdOrUsername
+    f => f.id !== friendIdOrUsername && f.username?.toLowerCase() !== targetLower
   );
-  safeStorage.setItem(FRIENDS_STORAGE_KEY, JSON.stringify(updated));
+  const key = getFriendsStorageKey(currentUsername);
+  safeStorage.setItem(key, JSON.stringify(updated));
   return updated;
 }
 
 /**
  * Blocks a friend and permanently removes them from the friend list
  */
-export function blockFriendPermanently(friendIdOrUsername) {
+export function blockFriendPermanently(friendIdOrUsername, currentUsername = null) {
   const blocked = getBlockedFriends();
-  if (!blocked.includes(friendIdOrUsername)) {
-    blocked.push(friendIdOrUsername);
+  const target = String(friendIdOrUsername).toLowerCase();
+  if (!blocked.includes(target)) {
+    blocked.push(target);
     safeStorage.setItem(BLOCKED_STORAGE_KEY, JSON.stringify(blocked));
   }
-  return removeFriendPermanently(friendIdOrUsername);
+  return removeFriendPermanently(friendIdOrUsername, currentUsername);
 }
