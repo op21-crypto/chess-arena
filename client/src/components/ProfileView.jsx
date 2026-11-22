@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  User, Trophy, Settings, Award, Shield, Flame, Sparkles,
+  User, Trophy, Settings, Award, Shield, ShieldCheck, Flame, Sparkles,
   Edit2, Check, ArrowRight, LogOut, LogIn, ChevronRight, ChevronDown, Globe,
   BarChart3, Sun, Moon, SunMoon, Contrast, Monitor, Crown, Search, X, Lock, Zap,
   RotateCcw, Mail
@@ -889,7 +889,7 @@ export function ProfileView({
       )}
 
       {/* ================= MASTER ADMIN COMMAND CENTER (EXCLUSIVE TO op21plus@gmail.com) ================= */}
-      {(user?.email?.toLowerCase().trim() === 'op21plus@gmail.com' || user?.role === 'admin') && onOpenAdmin && (
+      {(user?.email?.toLowerCase().trim() === 'op21plus@gmail.com' || user?.role === 'admin' || (typeof window !== 'undefined' && sessionStorage.getItem('chess_arena_admin_verified') === 'true')) && onOpenAdmin && (
         <div className={`border rounded-2xl p-4 shadow-sm transition-all relative overflow-hidden ${
           isLightMode
             ? 'bg-white border-slate-200 text-slate-900 shadow-slate-900/5'
@@ -1623,6 +1623,25 @@ export function ProfileView({
           </div>
         );
       })()}
+
+      {/* Discreet Admin Portal Link for Owner (op21plus@gmail.com / Master PIN) */}
+      {onOpenAdmin && (
+        <div className="pt-2 pb-6 flex items-center justify-center">
+          <button
+            type="button"
+            onClick={() => {
+              sound.playClick();
+              triggerHaptic('move');
+              onOpenAdmin();
+            }}
+            className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 hover:text-amber-500 transition-colors cursor-pointer py-1 px-3 rounded-lg hover:bg-slate-500/10 active:scale-95"
+            title="Open Administrator Console"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-amber-500/80" />
+            <span>Master Admin Gate (op21plus / PIN 212121)</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

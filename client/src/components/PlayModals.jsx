@@ -241,108 +241,114 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame, isLight = false, c
   const [selectedTime, setSelectedTime] = useState(10); // minutes (0 = unlimited)
 
   // Clean, executive difficulty tiers with distinct vibrant colors & zero bulky text
-  const AI_LEVELS = useMemo(() => [
-    {
-      level: 1,
-      name: customBots?.find(b => b.level === 1)?.name || 'Beginner',
-      elo: customBots?.find(b => b.level === 1)?.elo || '800 ELO',
-      icon: Shield,
-      accentBorder: 'border-emerald-500',
-      accentRing: 'ring-emerald-400/40',
-      activeBgLight: 'bg-emerald-50/90',
-      activeBgDark: 'bg-emerald-500/15',
-      iconColorLight: 'text-emerald-700',
-      iconColorDark: 'text-emerald-400',
-      iconBgLight: 'bg-emerald-100 border-emerald-300',
-      iconBgDark: 'bg-emerald-500/20 border-emerald-500/40',
-      badgeLight: 'bg-emerald-100 text-emerald-950 border-emerald-300',
-      badgeDark: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
-      radioActive: 'bg-emerald-500 text-white',
-      accentTextLight: 'text-emerald-700',
-      accentTextDark: 'text-emerald-400',
-      btnGradient: 'from-emerald-500 via-emerald-600 to-emerald-500 hover:from-emerald-400 hover:to-emerald-400 text-white shadow-emerald-500/25'
-    },
-    {
-      level: 2,
-      name: customBots?.find(b => b.level === 2)?.name || 'Challenger',
-      elo: customBots?.find(b => b.level === 2)?.elo || '1200 ELO',
-      icon: Zap,
-      accentBorder: 'border-sky-500',
-      accentRing: 'ring-sky-400/40',
-      activeBgLight: 'bg-sky-50/90',
-      activeBgDark: 'bg-sky-500/15',
-      iconColorLight: 'text-sky-700',
-      iconColorDark: 'text-sky-400',
-      iconBgLight: 'bg-sky-100 border-sky-300',
-      iconBgDark: 'bg-sky-500/20 border-sky-500/40',
-      badgeLight: 'bg-sky-100 text-sky-950 border-sky-300',
-      badgeDark: 'bg-sky-500/20 text-sky-300 border-sky-500/40',
-      radioActive: 'bg-sky-500 text-white',
-      accentTextLight: 'text-sky-700',
-      accentTextDark: 'text-sky-400',
-      btnGradient: 'from-sky-500 via-sky-600 to-sky-500 hover:from-sky-400 hover:to-sky-400 text-white shadow-sky-500/25'
-    },
-    {
-      level: 3,
-      name: customBots?.find(b => b.level === 3)?.name || 'Master',
-      elo: customBots?.find(b => b.level === 3)?.elo || '1600 ELO',
-      icon: Swords,
-      accentBorder: 'border-amber-500',
-      accentRing: 'ring-amber-400/40',
-      activeBgLight: 'bg-amber-50/90',
-      activeBgDark: 'bg-amber-500/15',
-      iconColorLight: 'text-amber-700',
-      iconColorDark: 'text-amber-400',
-      iconBgLight: 'bg-amber-100 border-amber-300',
-      iconBgDark: 'bg-amber-500/20 border-amber-500/40',
-      badgeLight: 'bg-amber-100 text-amber-950 border-amber-300',
-      badgeDark: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
-      radioActive: 'bg-amber-500 text-slate-950',
-      accentTextLight: 'text-amber-700',
-      accentTextDark: 'text-amber-400',
-      btnGradient: 'from-amber-500 via-amber-600 to-amber-500 hover:from-amber-400 hover:to-amber-400 text-slate-950 shadow-amber-500/25'
-    },
-    {
-      level: 4,
-      name: customBots?.find(b => b.level === 4)?.name || 'FIDE Master',
-      elo: customBots?.find(b => b.level === 4)?.elo || '2100 ELO',
-      icon: Trophy,
-      accentBorder: 'border-purple-500',
-      accentRing: 'ring-purple-400/40',
-      activeBgLight: 'bg-purple-50/90',
-      activeBgDark: 'bg-purple-500/15',
-      iconColorLight: 'text-purple-700',
-      iconColorDark: 'text-purple-400',
-      iconBgLight: 'bg-purple-100 border-purple-300',
-      iconBgDark: 'bg-purple-500/20 border-purple-500/40',
-      badgeLight: 'bg-purple-100 text-purple-950 border-purple-300',
-      badgeDark: 'bg-purple-500/20 text-purple-300 border-purple-500/40',
-      radioActive: 'bg-purple-500 text-white',
-      accentTextLight: 'text-purple-700',
-      accentTextDark: 'text-purple-400',
-      btnGradient: 'from-purple-500 via-purple-600 to-purple-500 hover:from-purple-400 hover:to-purple-400 text-white shadow-purple-500/25'
-    },
-    {
-      level: 5,
-      name: customBots?.find(b => b.level === 5)?.name || 'Grandmaster',
-      elo: customBots?.find(b => b.level === 5)?.elo || '2600+ ELO',
-      icon: Crown,
-      accentBorder: 'border-rose-500',
-      accentRing: 'ring-rose-400/40',
-      activeBgLight: 'bg-rose-50/90',
-      activeBgDark: 'bg-rose-500/15',
-      iconColorLight: 'text-rose-700',
-      iconColorDark: 'text-rose-400',
-      iconBgLight: 'bg-rose-100 border-rose-300',
-      iconBgDark: 'bg-rose-500/20 border-rose-500/40',
-      badgeLight: 'bg-rose-100 text-rose-950 border-rose-300',
-      badgeDark: 'bg-rose-500/20 text-rose-300 border-rose-500/40',
-      radioActive: 'bg-rose-500 text-white',
-      accentTextLight: 'text-rose-700',
-      accentTextDark: 'text-rose-400',
-      btnGradient: 'from-rose-500 via-rose-600 to-rose-500 hover:from-rose-400 hover:to-rose-400 text-white shadow-rose-500/25'
-    }
-  ], [customBots]);
+  const AI_LEVELS = useMemo(() => {
+    const palettes = [
+      {
+        icon: Shield,
+        accentBorder: 'border-emerald-500',
+        accentRing: 'ring-emerald-400/40',
+        activeBgLight: 'bg-emerald-50/90',
+        activeBgDark: 'bg-emerald-500/15',
+        iconColorLight: 'text-emerald-700',
+        iconColorDark: 'text-emerald-400',
+        iconBgLight: 'bg-emerald-100 border-emerald-300',
+        iconBgDark: 'bg-emerald-500/20 border-emerald-500/40',
+        badgeLight: 'bg-emerald-100 text-emerald-950 border-emerald-300',
+        badgeDark: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+        radioActive: 'bg-emerald-500 text-white',
+        accentTextLight: 'text-emerald-700',
+        accentTextDark: 'text-emerald-400',
+        btnGradient: 'from-emerald-500 via-emerald-600 to-emerald-500 hover:from-emerald-400 hover:to-emerald-400 text-white shadow-emerald-500/25'
+      },
+      {
+        icon: Zap,
+        accentBorder: 'border-sky-500',
+        accentRing: 'ring-sky-400/40',
+        activeBgLight: 'bg-sky-50/90',
+        activeBgDark: 'bg-sky-500/15',
+        iconColorLight: 'text-sky-700',
+        iconColorDark: 'text-sky-400',
+        iconBgLight: 'bg-sky-100 border-sky-300',
+        iconBgDark: 'bg-sky-500/20 border-sky-500/40',
+        badgeLight: 'bg-sky-100 text-sky-950 border-sky-300',
+        badgeDark: 'bg-sky-500/20 text-sky-300 border-sky-500/40',
+        radioActive: 'bg-sky-500 text-white',
+        accentTextLight: 'text-sky-700',
+        accentTextDark: 'text-sky-400',
+        btnGradient: 'from-sky-500 via-sky-600 to-sky-500 hover:from-sky-400 hover:to-sky-400 text-white shadow-sky-500/25'
+      },
+      {
+        icon: Swords,
+        accentBorder: 'border-amber-500',
+        accentRing: 'ring-amber-400/40',
+        activeBgLight: 'bg-amber-50/90',
+        activeBgDark: 'bg-amber-500/15',
+        iconColorLight: 'text-amber-700',
+        iconColorDark: 'text-amber-400',
+        iconBgLight: 'bg-amber-100 border-amber-300',
+        iconBgDark: 'bg-amber-500/20 border-amber-500/40',
+        badgeLight: 'bg-amber-100 text-amber-950 border-amber-300',
+        badgeDark: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+        radioActive: 'bg-amber-500 text-slate-950',
+        accentTextLight: 'text-amber-700',
+        accentTextDark: 'text-amber-400',
+        btnGradient: 'from-amber-500 via-amber-600 to-amber-500 hover:from-amber-400 hover:to-amber-400 text-slate-950 shadow-amber-500/25'
+      },
+      {
+        icon: Trophy,
+        accentBorder: 'border-purple-500',
+        accentRing: 'ring-purple-400/40',
+        activeBgLight: 'bg-purple-50/90',
+        activeBgDark: 'bg-purple-500/15',
+        iconColorLight: 'text-purple-700',
+        iconColorDark: 'text-purple-400',
+        iconBgLight: 'bg-purple-100 border-purple-300',
+        iconBgDark: 'bg-purple-500/20 border-purple-500/40',
+        badgeLight: 'bg-purple-100 text-purple-950 border-purple-300',
+        badgeDark: 'bg-purple-500/20 text-purple-300 border-purple-500/40',
+        radioActive: 'bg-purple-500 text-white',
+        accentTextLight: 'text-purple-700',
+        accentTextDark: 'text-purple-400',
+        btnGradient: 'from-purple-500 via-purple-600 to-purple-500 hover:from-purple-400 hover:to-purple-400 text-white shadow-purple-500/25'
+      },
+      {
+        icon: Crown,
+        accentBorder: 'border-rose-500',
+        accentRing: 'ring-rose-400/40',
+        activeBgLight: 'bg-rose-50/90',
+        activeBgDark: 'bg-rose-500/15',
+        iconColorLight: 'text-rose-700',
+        iconColorDark: 'text-rose-400',
+        iconBgLight: 'bg-rose-100 border-rose-300',
+        iconBgDark: 'bg-rose-500/20 border-rose-500/40',
+        badgeLight: 'bg-rose-100 text-rose-950 border-rose-300',
+        badgeDark: 'bg-rose-500/20 text-rose-300 border-rose-500/40',
+        radioActive: 'bg-rose-500 text-white',
+        accentTextLight: 'text-rose-700',
+        accentTextDark: 'text-rose-400',
+        btnGradient: 'from-rose-500 via-rose-600 to-rose-500 hover:from-rose-400 hover:to-rose-400 text-white shadow-rose-500/25'
+      }
+    ];
+
+    const sourceBots = Array.isArray(customBots) && customBots.length > 0 ? customBots : [
+      { level: 1, name: 'Beginner', elo: '800 ELO' },
+      { level: 2, name: 'Casual', elo: '1200 ELO' },
+      { level: 3, name: 'Master', elo: '1600 ELO' },
+      { level: 4, name: 'FIDE Master', elo: '2100 ELO' },
+      { level: 5, name: 'Grandmaster', elo: '2600+ ELO' }
+    ];
+
+    return sourceBots.map((bot, index) => {
+      const palette = palettes[index % palettes.length];
+      return {
+        level: bot.level || index + 1,
+        name: bot.name || `Bot Level ${index + 1}`,
+        elo: bot.elo || `${800 + index * 400} ELO`,
+        iconEmoji: bot.icon || null,
+        ...palette
+      };
+    });
+  }, [customBots]);
 
   const TIME_OPTIONS = [
     { minutes: 10, label: '10 min', sub: 'Rapid', icon: Clock },
@@ -462,11 +468,15 @@ export function PlayAIModal({ isOpen, onClose, onStartAIGame, isLight = false, c
                         ? (isLight ? item.iconBgLight : item.iconBgDark)
                         : (isLight ? 'bg-slate-100 border-slate-200 text-slate-500' : 'bg-slate-900 border-slate-800 text-slate-400')
                     }`}>
-                      <IconComponent className={`w-4 h-4 ${
-                        isSelected
-                          ? (isLight ? item.iconColorLight : item.iconColorDark)
-                          : (isLight ? 'text-slate-600' : 'text-slate-400')
-                      }`} />
+                      {item.iconEmoji ? (
+                        <span className="text-sm select-none">{item.iconEmoji}</span>
+                      ) : (
+                        <IconComponent className={`w-4 h-4 ${
+                          isSelected
+                            ? (isLight ? item.iconColorLight : item.iconColorDark)
+                            : (isLight ? 'text-slate-600' : 'text-slate-400')
+                        }`} />
+                      )}
                     </div>
                     <span className={`text-sm sm:text-base tracking-tight leading-none ${
                       isSelected

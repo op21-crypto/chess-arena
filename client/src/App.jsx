@@ -1146,6 +1146,43 @@ export default function App() {
     };
   }, []);
 
+  // Synchronize Global Admin Configuration (Local Events, Cross-Tab Storage & 15s Polling)
+  useEffect(() => {
+    const handleLocalConfigUpdated = (e) => {
+      if (e.detail) {
+        setGlobalConfig(e.detail);
+      }
+    };
+    const handleStorageChange = (e) => {
+      if (e.key === 'chess_arena_global_config' && e.newValue) {
+        try {
+          setGlobalConfig(JSON.parse(e.newValue));
+        } catch {}
+      }
+    };
+    window.addEventListener('chess_arena_config_updated', handleLocalConfigUpdated);
+    window.addEventListener('storage', handleStorageChange);
+
+    const pollConfig = () => {
+      fetch('/api/config')
+        .then(res => res.json())
+        .then(data => {
+          if (data?.config) {
+            setGlobalConfig(data.config);
+            safeStorage.setItem('chess_arena_global_config', JSON.stringify(data.config));
+          }
+        })
+        .catch(() => {});
+    };
+    const pollTimer = setInterval(pollConfig, 15000);
+
+    return () => {
+      window.removeEventListener('chess_arena_config_updated', handleLocalConfigUpdated);
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(pollTimer);
+    };
+  }, []);
+
   // Room synchronization (Real-time Firestore Push + HTTP Polling Fallback)
   useEffect(() => {
     if (!gameSession?.id || isAIGame) return;
