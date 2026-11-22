@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Eye, RotateCcw, Sparkles, Swords, Copy, Check, X,
   Zap, Star, ThumbsUp
