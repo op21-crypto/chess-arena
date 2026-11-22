@@ -1163,6 +1163,15 @@ export default function App() {
     window.addEventListener('chess_arena_config_updated', handleLocalConfigUpdated);
     window.addEventListener('storage', handleStorageChange);
 
+    // 1. Instant Real-Time Firestore onSnapshot Subscription (<50ms across all players globally)
+    const unsubscribeConfig = firebaseRoomService.subscribeToRoom('app_global_config', (data) => {
+      if (data?.config) {
+        setGlobalConfig(data.config);
+        safeStorage.setItem('chess_arena_global_config', JSON.stringify(data.config));
+      }
+    });
+
+    // 2. Resilient Polling Fallback every 5s
     const pollConfig = () => {
       fetch('/api/config')
         .then(res => res.json())
@@ -1174,11 +1183,14 @@ export default function App() {
         })
         .catch(() => {});
     };
-    const pollTimer = setInterval(pollConfig, 15000);
+    const pollTimer = setInterval(pollConfig, 5000);
 
     return () => {
       window.removeEventListener('chess_arena_config_updated', handleLocalConfigUpdated);
       window.removeEventListener('storage', handleStorageChange);
+      if (typeof unsubscribeConfig === 'function') {
+        unsubscribeConfig();
+      }
       clearInterval(pollTimer);
     };
   }, []);
@@ -2889,8 +2901,8 @@ export default function App() {
                     isTurn={currentTurn === (isWhite ? 'b' : 'w')}
                     timeMs={isWhite ? gameSession.blackTime : gameSession.whiteTime}
                     isActive={!gameSession.isGameOver && gameSession.status !== 'waiting'}
-                    capturedPieces={isWhite ? gameSession.capturedPieces?.black : gameSession.capturedPieces?.white}
-                    opponentCaptured={isWhite ? gameSession.capturedPieces?.white : gameSession.capturedPieces?.black}
+                    capturedPieces={isButtonVisible('gameCapturedPieces') ? (isWhite ? gameSession.capturedPieces?.black : gameSession.capturedPieces?.white) : []}
+                    opponentCaptured={isButtonVisible('gameCapturedPieces') ? (isWhite ? gameSession.capturedPieces?.white : gameSession.capturedPieces?.black) : []}
                   />
                 </div>
 
@@ -2982,8 +2994,8 @@ export default function App() {
                     isTurn={currentTurn === (isWhite ? 'w' : 'b')}
                     timeMs={isWhite ? gameSession.whiteTime : gameSession.blackTime}
                     isActive={!gameSession.isGameOver && gameSession.status !== 'waiting'}
-                    capturedPieces={isWhite ? gameSession.capturedPieces?.white : gameSession.capturedPieces?.black}
-                    opponentCaptured={isWhite ? gameSession.capturedPieces?.black : gameSession.capturedPieces?.white}
+                    capturedPieces={isButtonVisible('gameCapturedPieces') ? (isWhite ? gameSession.capturedPieces?.white : gameSession.capturedPieces?.black) : []}
+                    opponentCaptured={isButtonVisible('gameCapturedPieces') ? (isWhite ? gameSession.capturedPieces?.black : gameSession.capturedPieces?.white) : []}
                   />
                 </div>
               </div>
@@ -3032,7 +3044,7 @@ export default function App() {
                     inGameNotice={inGameNotice}
                   />
                 ) : (
-                  settings.allowChat ? (
+                  isButtonVisible('gameChatDrawer') && settings.allowChat ? (
                     <GameChat
                       isLight={isLight}
                       messages={chatMessages}

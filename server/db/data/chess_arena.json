@@ -4264,13 +4264,13 @@
       },
       "ratingHistory": [
         {
-          "date": "2026-11-21",
+          "date": "2026-11-22",
           "rating": 1200,
           "format": "rapid"
         }
       ],
       "achievements": [],
-      "createdAt": "2026-11-21T22:05:43.362Z",
+      "createdAt": "2026-11-22T08:09:53.228Z",
       "isOnline": false,
       "banned": false,
       "id": "user_op_test",
@@ -4349,7 +4349,7 @@
     "defaultTimeControl": "3m",
     "defaultMusicEnabled": true,
     "defaultMusicTrackIndex": 0,
-    "announcement": "",
+    "announcement": "Arena Championship 2026",
     "maintenanceMode": false,
     "customBots": [
       {

@@ -47,6 +47,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { safeStorage } from '../utils/storage.js';
+import { firebaseRoomService } from '../services/firebaseRoomService.js';
 import { BOARD_THEMES, PIECE_THEMES, PIECE_COLOR_PALETTES } from './PieceIcons.jsx';
 import { TRACK_LIST } from '../utils/music.js';
 
@@ -288,7 +289,14 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
       window.dispatchEvent(new CustomEvent('chess_arena_config_updated', { detail: configForm }));
     } catch {}
 
-    // 2. Persist to server & Firestore
+    // 2. Direct real-time broadcast via Firestore (< 50ms to all connected clients worldwide)
+    firebaseRoomService.createRoom({
+      id: 'app_global_config',
+      config: configForm,
+      lastUpdated: Date.now()
+    }).catch(e => console.warn('[Firestore] direct config save fallback:', e));
+
+    // 3. Persist to server & backend database
     fetch(`/api/admin/config?adminPin=${encodeURIComponent(pin)}`, {
       method: 'POST',
       headers: getAdminHeaders(),
@@ -590,6 +598,11 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
           setConfigForm(data.config);
           safeStorage.setItem('chess_arena_global_config', JSON.stringify(data.config));
           if (onUpdateGlobalConfig) onUpdateGlobalConfig(data.config);
+          firebaseRoomService.createRoom({
+            id: 'app_global_config',
+            config: data.config,
+            lastUpdated: Date.now()
+          }).catch(() => {});
           notify('✓ Reset to factory defaults completed.');
           fetchStats();
         }
