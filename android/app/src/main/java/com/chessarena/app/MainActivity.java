@@ -101,6 +101,18 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         splashQuoteText = findViewById(R.id.splashQuoteText);
         splashRetryButton = findViewById(R.id.splashRetryButton);
 
+        // Connect SplashChessboardView opening moves to live status text
+        SplashChessboardView splashChessboard = findViewById(R.id.splashChessboard);
+        if (splashChessboard != null) {
+            splashChessboard.setOnMoveListener((notation, description) -> {
+                runOnUiThread(() -> {
+                    if (splashStatusText != null && !isAppLoaded) {
+                        splashStatusText.setText("⚔️ " + notation + " • " + description);
+                    }
+                });
+            });
+        }
+
         // Initialize Native Android Text-To-Speech engine
         initTextToSpeech();
 
@@ -108,7 +120,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         initSplashController();
 
         configureWebView();
-        checkAndRequestPermissions();
+        // NOTE: Permissions are requested politely 4 seconds after home screen opens, never during splash!
 
         Intent startIntent = getIntent();
         Uri startData = startIntent != null ? startIntent.getData() : null;
@@ -171,20 +183,17 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             splashOverlay.setOnClickListener(v -> hideSplashScreen());
         }
 
-        // Automatic smooth splash transition after 2.2 seconds
-        new Handler(Looper.getMainLooper()).postDelayed(this::hideSplashScreen, 2200);
-
-        // Fallback safety: if loading takes longer than 7 seconds, offer tap to retry
+        // Fallback safety: if loading takes longer than 9 seconds, offer tap to retry
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             if (!isAppLoaded) {
                 if (splashRetryButton != null) {
                     splashRetryButton.setVisibility(View.VISIBLE);
                 }
                 if (splashStatusText != null) {
-                    splashStatusText.setText("Connecting taking longer than usual...");
+                    splashStatusText.setText("Connecting taking longer than usual... Tap to retry");
                 }
             }
-        }, 7500);
+        }, 9000);
     }
 
     public void hideSplashScreen() {
@@ -195,10 +204,10 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             statusHandler.removeCallbacks(statusRunnable);
         }
 
-        // Silky 400ms alpha fade-out into the interactive board UI
+        // Silky 400ms alpha fade-out into the already-rendered home screen
         splashOverlay.animate()
             .alpha(0f)
-            .setDuration(420)
+            .setDuration(400)
             .withEndAction(() -> {
                 if (splashOverlay != null) {
                     splashOverlay.setVisibility(View.GONE);
@@ -213,6 +222,9 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                         decor.setSystemUiVisibility(decor.getSystemUiVisibility() & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
                     }
                 } catch (Exception ignored) {}
+
+                // Politely request permissions 4 seconds AFTER app is completely open and user is on home screen
+                new Handler(Looper.getMainLooper()).postDelayed(MainActivity.this::checkAndRequestPermissions, 4000);
             })
             .start();
     }
@@ -474,16 +486,15 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             } catch (Exception ignored) {}
         });
 
-        // Performance & background
+        // Performance & background: white background matches splash so there is zero black flash
         webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
-        webView.setBackgroundColor(Color.parseColor("#070b19"));
+        webView.setBackgroundColor(Color.WHITE);
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                // When web document finishes loading, dismiss splash screen smoothly after a brief settle delay
-                view.postDelayed(MainActivity.this::hideSplashScreen, 500);
+                // NOTE: Splash overlay remains visible and smoothly crossfades ONLY when React signals onAppReady()!
             }
 
             @Override
@@ -582,11 +593,27 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     }
 
     private void checkAndRequestPermissions() {
+        if (isFinishing() || isDestroyed()) return;
+        java.util.List<String> neededPermissions = new java.util.ArrayList<>();
+
+        // 1. Audio Recording for in-game WebRTC voice chat
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED) {
+            neededPermissions.add(Manifest.permission.RECORD_AUDIO);
+        }
+
+        // 2. Notifications for game challenges & match alerts (Android 13+ / API 33+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                neededPermissions.add(Manifest.permission.POST_NOTIFICATIONS);
+            }
+        }
+
+        if (!neededPermissions.isEmpty()) {
             ActivityCompat.requestPermissions(
                     this,
-                    new String[]{Manifest.permission.RECORD_AUDIO},
+                    neededPermissions.toArray(new String[0]),
                     PERMISSION_REQUEST_CODE
             );
         }

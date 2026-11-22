@@ -1,5 +1,7 @@
 package com.chessarena.app;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -11,19 +13,38 @@ import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.Typeface;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import androidx.annotation.Nullable;
 import androidx.core.graphics.PathParser;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
 /**
  * SplashChessboardView
- * High-performance, hardware-accelerated tournament chessboard rendered natively.
- * Features Staunton vector chess pieces, Italian Game opening setup,
- * animated golden move highlights, coordinates, and luxury bevel styling.
+ * Ultra-premium, hardware-accelerated tournament chessboard rendered natively.
+ * Features:
+ * - AMOLED Tournament Green & Cream luxury square colors
+ * - Solid high-contrast ivory & obsidian Staunton pieces
+ * - Realistic animated piece movements playing the Italian Game opening sequence
+ * - Smooth slow-drifting floating chess silhouettes and ambient elements in the background
  */
 public class SplashChessboardView extends View {
+
+    public interface OnMoveListener {
+        void onMovePlayed(String notation, String description);
+    }
+
+    private OnMoveListener onMoveListener;
+
+    public void setOnMoveListener(OnMoveListener listener) {
+        this.onMoveListener = listener;
+    }
 
     // Piece types
     private static final int PIECE_NONE = 0;
@@ -58,35 +79,88 @@ public class SplashChessboardView extends View {
     private static final String SVG_KING =
         "M22.5 11.63V6M20 8h5M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5M11.5 37c5.5 3.5 15.5 3.5 21 0v-7s9-4.5 6-10.5c-4-1-6 2-6 2s-3-2-5-2-4 2-5 3-3-3-5-3-5 2-5 2-2-3-6-2c-3 6 6 10.5 6 10.5v7z";
 
-    // Board position: Italian Game (1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5)
-    // Ranks 8 down to 1 (indices 0 to 7), Files a to h (indices 0 to 7)
-    private static final int[][] BOARD_PIECES = {
-        { PIECE_ROOK, PIECE_NONE,   PIECE_BISHOP, PIECE_QUEEN, PIECE_KING, PIECE_BISHOP, PIECE_KNIGHT, PIECE_ROOK }, // rank 8 (Black)
-        { PIECE_PAWN, PIECE_PAWN,   PIECE_PAWN,   PIECE_PAWN,  PIECE_NONE, PIECE_PAWN,   PIECE_PAWN,   PIECE_PAWN }, // rank 7
-        { PIECE_NONE, PIECE_NONE,   PIECE_KNIGHT, PIECE_NONE,  PIECE_NONE, PIECE_NONE,   PIECE_NONE,   PIECE_NONE }, // rank 6 (Nc6)
-        { PIECE_NONE, PIECE_NONE,   PIECE_BISHOP, PIECE_NONE,  PIECE_PAWN, PIECE_NONE,   PIECE_NONE,   PIECE_NONE }, // rank 5 (Bc5, e5)
-        { PIECE_NONE, PIECE_NONE,   PIECE_BISHOP, PIECE_NONE,  PIECE_PAWN, PIECE_NONE,   PIECE_NONE,   PIECE_NONE }, // rank 4 (Bc4, e4)
-        { PIECE_NONE, PIECE_NONE,   PIECE_NONE,   PIECE_NONE,  PIECE_NONE, PIECE_KNIGHT, PIECE_NONE,   PIECE_NONE }, // rank 3 (Nf3)
-        { PIECE_PAWN, PIECE_PAWN,   PIECE_PAWN,   PIECE_PAWN,  PIECE_NONE, PIECE_PAWN,   PIECE_PAWN,   PIECE_PAWN }, // rank 2 (White)
-        { PIECE_ROOK, PIECE_KNIGHT, PIECE_NONE,   PIECE_QUEEN, PIECE_KING, PIECE_NONE,   PIECE_NONE,   PIECE_ROOK }  // rank 1
+    // Standard starting position
+    private static final int[][] INITIAL_PIECES = {
+        { PIECE_ROOK, PIECE_KNIGHT, PIECE_BISHOP, PIECE_QUEEN, PIECE_KING, PIECE_BISHOP, PIECE_KNIGHT, PIECE_ROOK },
+        { PIECE_PAWN, PIECE_PAWN,   PIECE_PAWN,   PIECE_PAWN,  PIECE_PAWN, PIECE_PAWN,   PIECE_PAWN,   PIECE_PAWN },
+        { PIECE_NONE, PIECE_NONE,   PIECE_NONE,   PIECE_NONE,  PIECE_NONE, PIECE_NONE,   PIECE_NONE,   PIECE_NONE },
+        { PIECE_NONE, PIECE_NONE,   PIECE_NONE,   PIECE_NONE,  PIECE_NONE, PIECE_NONE,   PIECE_NONE,   PIECE_NONE },
+        { PIECE_NONE, PIECE_NONE,   PIECE_NONE,   PIECE_NONE,  PIECE_NONE, PIECE_NONE,   PIECE_NONE,   PIECE_NONE },
+        { PIECE_NONE, PIECE_NONE,   PIECE_NONE,   PIECE_NONE,  PIECE_NONE, PIECE_NONE,   PIECE_NONE,   PIECE_NONE },
+        { PIECE_PAWN, PIECE_PAWN,   PIECE_PAWN,   PIECE_PAWN,  PIECE_PAWN, PIECE_PAWN,   PIECE_PAWN,   PIECE_PAWN },
+        { PIECE_ROOK, PIECE_KNIGHT, PIECE_BISHOP, PIECE_QUEEN, PIECE_KING, PIECE_BISHOP, PIECE_KNIGHT, PIECE_ROOK }
     };
 
-    private static final int[][] BOARD_COLORS = {
-        { COLOR_BLACK, COLOR_NONE,  COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK },
-        { COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_NONE,  COLOR_BLACK, COLOR_BLACK, COLOR_BLACK },
-        { COLOR_NONE,  COLOR_NONE,  COLOR_BLACK, COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_NONE },
-        { COLOR_NONE,  COLOR_NONE,  COLOR_BLACK, COLOR_NONE,  COLOR_BLACK, COLOR_NONE,  COLOR_NONE,  COLOR_NONE },
-        { COLOR_NONE,  COLOR_NONE,  COLOR_WHITE, COLOR_NONE,  COLOR_WHITE, COLOR_NONE,  COLOR_NONE,  COLOR_NONE },
-        { COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_WHITE, COLOR_NONE,  COLOR_NONE },
-        { COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_NONE,  COLOR_WHITE, COLOR_WHITE, COLOR_WHITE },
-        { COLOR_WHITE, COLOR_WHITE, COLOR_NONE,  COLOR_WHITE, COLOR_WHITE, COLOR_NONE,  COLOR_NONE,  COLOR_WHITE }
+    private static final int[][] INITIAL_COLORS = {
+        { COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK },
+        { COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK },
+        { COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_NONE },
+        { COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_NONE },
+        { COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_NONE },
+        { COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_NONE,  COLOR_NONE },
+        { COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE },
+        { COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE }
     };
+
+    // Live mutable board state
+    private final int[][] currentPieces = new int[8][8];
+    private final int[][] currentColors = new int[8][8];
+
+    // Move step model
+    private static class MoveStep {
+        final int fromR, fromC, toR, toC;
+        final String notation;
+        final String description;
+        final boolean isCastle;
+        final int rookFromR, rookFromC, rookToR, rookToC;
+
+        MoveStep(int fr, int fc, int tr, int tc, String not, String desc) {
+            this(fr, fc, tr, tc, not, desc, false, 0, 0, 0, 0);
+        }
+
+        MoveStep(int fr, int fc, int tr, int tc, String not, String desc, boolean isCastle, int rfr, int rfc, int rtr, int rtc) {
+            this.fromR = fr; this.fromC = fc; this.toR = tr; this.toC = tc;
+            this.notation = not; this.description = desc;
+            this.isCastle = isCastle;
+            this.rookFromR = rfr; this.rookFromC = rfc; this.rookToR = rtr; this.rookToC = rtc;
+        }
+    }
+
+    // Italian Game (Giuoco Piano) Opening Sequence
+    private static final MoveStep[] MOVES_ROSTER = {
+        new MoveStep(6, 4, 4, 4, "1. e4", "King's Pawn Opening"),
+        new MoveStep(1, 4, 3, 4, "1... e5", "Open Game Defense"),
+        new MoveStep(7, 6, 5, 5, "2. Nf3", "Developing Knight & Attacking e5"),
+        new MoveStep(0, 1, 2, 2, "2... Nc6", "Knight Defending Central Pawn"),
+        new MoveStep(7, 5, 4, 2, "3. Bc4", "Italian Game • Classical Bishop"),
+        new MoveStep(0, 5, 3, 2, "3... Bc5", "Giuoco Piano • Quiet Game"),
+        new MoveStep(6, 2, 5, 2, "4. c3", "Preparing Central Breakthrough"),
+        new MoveStep(0, 6, 2, 5, "4... Nf6", "Counter-Attacking White's e4"),
+        new MoveStep(7, 4, 7, 6, "5. O-O", "Grandmaster Kingside Castling", true, 7, 7, 7, 5)
+    };
+
+    // Floating background particle model
+    private static class FloatingParticle {
+        float x, y;
+        float vx, vy;
+        float size;
+        float rotation;
+        float rotSpeed;
+        float swayPhase;
+        float swaySpeed;
+        int color;
+        int pieceType;
+    }
+
+    private final List<FloatingParticle> particles = new ArrayList<>();
+    private final Random random = new Random();
 
     // Drawing paints
     private final Paint boardBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint lightSquarePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint darkSquarePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint highlightPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint highlightFromPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint highlightToPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint whitePieceFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint whitePieceStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint blackPieceFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -94,6 +168,7 @@ public class SplashChessboardView extends View {
     private final Paint goldAccentPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint coordTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint shadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint particlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
     // Geometry & Paths
     private final RectF outerBorderRect = new RectF();
@@ -102,9 +177,22 @@ public class SplashChessboardView extends View {
     private final Path[] parsedPaths = new Path[7];
     private final Matrix transformMatrix = new Matrix();
 
-    // Pulse animation
-    private ValueAnimator pulseAnimator;
-    private float pulseValue = 0f;
+    // Move animation state
+    private int currentMoveIndex = 0;
+    private boolean isPieceMoving = false;
+    private float moveProgress = 0f;
+    private MoveStep activeMove = null;
+    private int movingPieceType = PIECE_NONE;
+    private int movingPieceColor = COLOR_NONE;
+    private int movingRookType = PIECE_NONE;
+    private int movingRookColor = COLOR_NONE;
+
+    private ValueAnimator moveAnimator;
+    private final Handler moveHandler = new Handler(Looper.getMainLooper());
+    private Runnable nextMoveRunnable;
+
+    // Background continuous animation timer
+    private ValueAnimator ambientLoopAnimator;
 
     public SplashChessboardView(Context context) {
         super(context);
@@ -121,7 +209,19 @@ public class SplashChessboardView extends View {
         init();
     }
 
+    private void resetBoardToStart() {
+        for (int r = 0; r < 8; r++) {
+            System.arraycopy(INITIAL_PIECES[r], 0, currentPieces[r], 0, 8);
+            System.arraycopy(INITIAL_COLORS[r], 0, currentColors[r], 0, 8);
+        }
+        currentMoveIndex = 0;
+        isPieceMoving = false;
+        activeMove = null;
+    }
+
     private void init() {
+        resetBoardToStart();
+
         // Parse piece paths
         try {
             parsedPaths[PIECE_PAWN] = PathParser.createPathFromPathData(SVG_PAWN);
@@ -131,75 +231,231 @@ public class SplashChessboardView extends View {
             parsedPaths[PIECE_QUEEN] = PathParser.createPathFromPathData(SVG_QUEEN);
             parsedPaths[PIECE_KING] = PathParser.createPathFromPathData(SVG_KING);
         } catch (Throwable ignored) {
-            // Fallback will render simple glyphs if path parsing fails
+            // Fallback geometric glyphs if SVG parsing unavailable
         }
 
-        // Configure paints
+        // Configure paints: AMOLED Tournament Green & Cream luxury color palette
         boardBorderPaint.setStyle(Paint.Style.FILL);
 
+        // Light Squares: Crisp porcelain ivory tournament cream
         lightSquarePaint.setStyle(Paint.Style.FILL);
-        lightSquarePaint.setColor(Color.parseColor("#F8FAFC")); // Crisp tournament porcelain ivory
+        lightSquarePaint.setColor(Color.parseColor("#F4F7EE"));
 
+        // Dark Squares: Rich AMOLED luxury tournament green
         darkSquarePaint.setStyle(Paint.Style.FILL);
-        darkSquarePaint.setColor(Color.parseColor("#475569")); // High-contrast clean tournament slate
+        darkSquarePaint.setColor(Color.parseColor("#2E6B3A"));
 
-        highlightPaint.setStyle(Paint.Style.FILL);
+        // Move highlights
+        highlightFromPaint.setStyle(Paint.Style.FILL);
+        highlightFromPaint.setColor(Color.argb(90, 245, 158, 11)); // Soft amber glow on departure
 
+        highlightToPaint.setStyle(Paint.Style.FILL);
+        highlightToPaint.setColor(Color.argb(140, 245, 158, 11)); // Vibrant gold on landing
+
+        // Outer gold bevel accent rim
         goldAccentPaint.setStyle(Paint.Style.STROKE);
         goldAccentPaint.setColor(Color.parseColor("#F59E0B"));
         goldAccentPaint.setStrokeWidth(3.5f);
 
+        // White Pieces: Pure solid ivory white with crisp slate contour for razor-sharp definition
         whitePieceFillPaint.setStyle(Paint.Style.FILL);
-        whitePieceFillPaint.setColor(Color.parseColor("#FFFFFF")); // Pure brilliant luminous ivory
+        whitePieceFillPaint.setColor(Color.parseColor("#FFFFFF"));
 
         whitePieceStrokePaint.setStyle(Paint.Style.STROKE);
-        whitePieceStrokePaint.setColor(Color.parseColor("#D97706")); // Warm royal amber-gold contour
-        whitePieceStrokePaint.setStrokeWidth(2.5f);
+        whitePieceStrokePaint.setColor(Color.parseColor("#1E293B")); // Dark slate contour
+        whitePieceStrokePaint.setStrokeWidth(2.2f);
         whitePieceStrokePaint.setStrokeCap(Paint.Cap.ROUND);
         whitePieceStrokePaint.setStrokeJoin(Paint.Join.ROUND);
 
+        // Black Pieces: Deep AMOLED obsidian charcoal with crisp titanium silver-white contour
         blackPieceFillPaint.setStyle(Paint.Style.FILL);
-        blackPieceFillPaint.setColor(Color.parseColor("#E0F2FE")); // High-contrast radiant celestial ice / light silver-blue
+        blackPieceFillPaint.setColor(Color.parseColor("#151E18"));
 
         blackPieceStrokePaint.setStyle(Paint.Style.STROKE);
-        blackPieceStrokePaint.setColor(Color.parseColor("#0284C7")); // Royal cyan-blue contour (no dark black blob)
-        blackPieceStrokePaint.setStrokeWidth(2.5f);
+        blackPieceStrokePaint.setColor(Color.parseColor("#F1F5F9")); // Titanium silver-white contour
+        blackPieceStrokePaint.setStrokeWidth(2.2f);
         blackPieceStrokePaint.setStrokeCap(Paint.Cap.ROUND);
         blackPieceStrokePaint.setStrokeJoin(Paint.Join.ROUND);
 
-        coordTextPaint.setColor(Color.parseColor("#CBD5E1"));
+        // Board Coordinates
+        coordTextPaint.setColor(Color.parseColor("#FDE68A")); // Royal amber gold lettering
         coordTextPaint.setTextSize(22f);
         coordTextPaint.setTypeface(Typeface.create(Typeface.MONOSPACE, Typeface.BOLD));
         coordTextPaint.setTextAlign(Paint.Align.CENTER);
 
+        // Drop shadow for pieces
         shadowPaint.setStyle(Paint.Style.FILL);
-        shadowPaint.setColor(Color.parseColor("#50000000"));
+        shadowPaint.setColor(Color.argb(80, 0, 0, 0));
 
-        // Setup smooth pulsing animation
-        pulseAnimator = ValueAnimator.ofFloat(0.2f, 0.75f);
-        pulseAnimator.setDuration(1300);
-        pulseAnimator.setRepeatMode(ValueAnimator.REVERSE);
-        pulseAnimator.setRepeatCount(ValueAnimator.INFINITE);
-        pulseAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
-        pulseAnimator.addUpdateListener(anim -> {
-            pulseValue = (float) anim.getAnimatedValue();
+        // Particle paint for background floating elements
+        particlePaint.setStyle(Paint.Style.FILL);
+
+        // Setup 12 ambient floating particles
+        initParticles();
+
+        // Ambient background animation loop (runs continuously at 60fps)
+        ambientLoopAnimator = ValueAnimator.ofFloat(0f, 1f);
+        ambientLoopAnimator.setDuration(1000);
+        ambientLoopAnimator.setRepeatCount(ValueAnimator.INFINITE);
+        ambientLoopAnimator.addUpdateListener(anim -> {
+            updateParticles();
             postInvalidateOnAnimation();
         });
+
+        // Initialize move sequence runner
+        setupMoveRunner();
+    }
+
+    private void initParticles() {
+        particles.clear();
+        int[] palette = {
+            Color.argb(20, 46, 107, 58),   // AMOLED Tournament green glow
+            Color.argb(24, 245, 158, 11),  // Amber gold glow
+            Color.argb(18, 56, 189, 248),  // Sky celestial blue glow
+            Color.argb(16, 15, 23, 42)     // Slate dark silhouette
+        };
+        int[] pieces = {
+            PIECE_KING, PIECE_QUEEN, PIECE_ROOK, PIECE_BISHOP, PIECE_KNIGHT, PIECE_PAWN
+        };
+
+        for (int i = 0; i < 14; i++) {
+            FloatingParticle p = new FloatingParticle();
+            p.x = random.nextFloat() * 1000f;
+            p.y = random.nextFloat() * 1000f;
+            p.vx = (random.nextFloat() - 0.5f) * 0.4f;
+            p.vy = 0.35f + random.nextFloat() * 0.55f; // Gentle upward drift
+            p.size = 28f + random.nextFloat() * 45f;
+            p.rotation = random.nextFloat() * 360f;
+            p.rotSpeed = (random.nextFloat() - 0.5f) * 0.35f;
+            p.swayPhase = random.nextFloat() * (float) Math.PI * 2f;
+            p.swaySpeed = 0.015f + random.nextFloat() * 0.02f;
+            p.color = palette[random.nextInt(palette.length)];
+            p.pieceType = pieces[random.nextInt(pieces.length)];
+            particles.add(p);
+        }
+    }
+
+    private void updateParticles() {
+        float w = getWidth();
+        float h = getHeight();
+        if (w <= 0 || h <= 0) return;
+
+        for (FloatingParticle p : particles) {
+            p.y -= p.vy;
+            p.swayPhase += p.swaySpeed;
+            p.x += p.vx + (float) Math.sin(p.swayPhase) * 0.65f;
+            p.rotation += p.rotSpeed;
+
+            // Screen boundary wrap-around
+            if (p.y < -p.size) {
+                p.y = h + p.size;
+                p.x = random.nextFloat() * w;
+            }
+            if (p.x < -p.size) {
+                p.x = w + p.size;
+            } else if (p.x > w + p.size) {
+                p.x = -p.size;
+            }
+        }
+    }
+
+    private void setupMoveRunner() {
+        nextMoveRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (currentMoveIndex < MOVES_ROSTER.length) {
+                    playMove(MOVES_ROSTER[currentMoveIndex]);
+                } else {
+                    // Sequence finished: brief pause, reset to opening board, and loop
+                    moveHandler.postDelayed(() -> {
+                        resetBoardToStart();
+                        if (onMoveListener != null) {
+                            onMoveListener.onMovePlayed("Setup", "Standard Starting Position");
+                        }
+                        postInvalidateOnAnimation();
+                        moveHandler.postDelayed(nextMoveRunnable, 1400);
+                    }, 2200);
+                }
+            }
+        };
+    }
+
+    private void playMove(MoveStep move) {
+        activeMove = move;
+        movingPieceType = currentPieces[move.fromR][move.fromC];
+        movingPieceColor = currentColors[move.fromR][move.fromC];
+
+        // Lift piece off the starting square
+        currentPieces[move.fromR][move.fromC] = PIECE_NONE;
+        currentColors[move.fromR][move.fromC] = COLOR_NONE;
+
+        if (move.isCastle) {
+            movingRookType = currentPieces[move.rookFromR][move.rookFromC];
+            movingRookColor = currentColors[move.rookFromR][move.rookFromC];
+            currentPieces[move.rookFromR][move.rookFromC] = PIECE_NONE;
+            currentColors[move.rookFromR][move.rookFromC] = COLOR_NONE;
+        }
+
+        isPieceMoving = true;
+
+        if (onMoveListener != null) {
+            onMoveListener.onMovePlayed(move.notation, move.description);
+        }
+
+        if (moveAnimator != null) {
+            moveAnimator.cancel();
+        }
+
+        // Smooth parabolic glide: 750ms duration with organic easing
+        moveAnimator = ValueAnimator.ofFloat(0f, 1f);
+        moveAnimator.setDuration(750);
+        moveAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        moveAnimator.addUpdateListener(anim -> {
+            moveProgress = (float) anim.getAnimatedValue();
+            postInvalidateOnAnimation();
+        });
+        moveAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void end(Animator animation) {
+                // Land piece on destination square
+                currentPieces[move.toR][move.toC] = movingPieceType;
+                currentColors[move.toR][move.toC] = movingPieceColor;
+
+                if (move.isCastle) {
+                    currentPieces[move.rookToR][move.rookToC] = movingRookType;
+                    currentColors[move.rookToR][move.rookToC] = movingRookColor;
+                }
+
+                isPieceMoving = false;
+                currentMoveIndex++;
+                postInvalidateOnAnimation();
+
+                // Wait 1000ms before playing the next move in sequence
+                moveHandler.postDelayed(nextMoveRunnable, 1000);
+            }
+        });
+        moveAnimator.start();
     }
 
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        if (pulseAnimator != null && !pulseAnimator.isRunning()) {
-            pulseAnimator.start();
+        if (ambientLoopAnimator != null && !ambientLoopAnimator.isRunning()) {
+            ambientLoopAnimator.start();
         }
+        // Start move sequence after initial settle delay
+        moveHandler.postDelayed(nextMoveRunnable, 800);
     }
 
     @Override
     protected void onDetachedFromWindow() {
-        if (pulseAnimator != null) {
-            pulseAnimator.cancel();
+        if (ambientLoopAnimator != null) {
+            ambientLoopAnimator.cancel();
         }
+        if (moveAnimator != null) {
+            moveAnimator.cancel();
+        }
+        moveHandler.removeCallbacksAndMessages(null);
         super.onDetachedFromWindow();
     }
 
@@ -207,10 +463,10 @@ public class SplashChessboardView extends View {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int width = MeasureSpec.getSize(widthMeasureSpec);
         int height = MeasureSpec.getSize(heightMeasureSpec);
-        // Keep board perfectly square, adapting to screen dimensions
-        int size = Math.min(width, height);
-        if (size <= 0) size = 300;
-        setMeasuredDimension(size, size);
+        // Fill full available space so ambient particles can drift around the central board
+        if (width <= 0) width = 300;
+        if (height <= 0) height = 300;
+        setMeasuredDimension(width, height);
     }
 
     @Override
@@ -221,23 +477,29 @@ public class SplashChessboardView extends View {
         float h = getHeight();
         if (w <= 0 || h <= 0) return;
 
-        float padding = Math.min(w, h) * 0.035f;
-        outerBorderRect.set(padding, padding, w - padding, h - padding);
+        // 1. Draw smooth floating background particles
+        drawAmbientBackground(canvas);
 
-        // 1. Draw outer luxury beveled board border
+        // 2. Calculate centered chessboard geometry
+        float boardSize = Math.min(w, h) * 0.94f;
+        float boardLeft = (w - boardSize) / 2f;
+        float boardTop = (h - boardSize) / 2f;
+        outerBorderRect.set(boardLeft, boardTop, boardLeft + boardSize, boardTop + boardSize);
+
+        // 3. Draw outer luxury beveled board frame (Deep AMOLED Forest Green)
         boardBorderPaint.setShader(new LinearGradient(
             outerBorderRect.left, outerBorderRect.top,
             outerBorderRect.right, outerBorderRect.bottom,
-            Color.parseColor("#0d1526"), Color.parseColor("#1e293b"),
+            Color.parseColor("#0A1C12"), Color.parseColor("#163924"),
             Shader.TileMode.CLAMP
         ));
-        canvas.drawRoundRect(outerBorderRect, 20f, 20f, boardBorderPaint);
+        canvas.drawRoundRect(outerBorderRect, 22f, 22f, boardBorderPaint);
 
-        // Gold rim around entire board frame
-        canvas.drawRoundRect(outerBorderRect, 20f, 20f, goldAccentPaint);
+        // Outer gold accent rim
+        canvas.drawRoundRect(outerBorderRect, 22f, 22f, goldAccentPaint);
 
-        // 2. Inner chessboard area (with coordinate border)
-        float coordMargin = Math.min(w, h) * 0.045f;
+        // 4. Inner chessboard coordinate margin & playing area
+        float coordMargin = boardSize * 0.045f;
         boardRect.set(
             outerBorderRect.left + coordMargin,
             outerBorderRect.top + coordMargin,
@@ -247,7 +509,7 @@ public class SplashChessboardView extends View {
 
         float sqSize = boardRect.width() / 8f;
 
-        // 3. Draw 64 squares & pieces
+        // 5. Draw 64 squares with move highlights
         for (int r = 0; r < 8; r++) {
             for (int c = 0; c < 8; c++) {
                 float left = boardRect.left + c * sqSize;
@@ -258,26 +520,57 @@ public class SplashChessboardView extends View {
                 boolean isLight = (r + c) % 2 == 0;
                 canvas.drawRect(squareRect, isLight ? lightSquarePaint : darkSquarePaint);
 
-                // Highlight key tactical squares (Italian Game: e4, e5, c4, f3, c5, c6)
-                if ((r == 4 && c == 4) || (r == 3 && c == 4) || (r == 5 && c == 5) || (r == 4 && c == 2)) {
-                    int alpha = (int) (pulseValue * 220);
-                    highlightPaint.setColor(Color.argb(alpha, 245, 158, 11)); // Amber gold pulse
-                    canvas.drawRect(squareRect, highlightPaint);
+                // Highlight active move squares
+                if (activeMove != null) {
+                    if (r == activeMove.fromR && c == activeMove.fromC) {
+                        canvas.drawRect(squareRect, highlightFromPaint);
+                    } else if (r == activeMove.toR && c == activeMove.toC) {
+                        canvas.drawRect(squareRect, highlightToPaint);
+                    }
                 }
 
-                // Draw piece on this square
-                int piece = BOARD_PIECES[r][c];
-                int color = BOARD_COLORS[r][c];
+                // Draw stationary pieces
+                int piece = currentPieces[r][c];
+                int color = currentColors[r][c];
                 if (piece != PIECE_NONE && color != COLOR_NONE) {
-                    drawPiece(canvas, squareRect, piece, color == COLOR_WHITE);
+                    drawPieceAt(canvas, squareRect.left, squareRect.top, sqSize, piece, color == COLOR_WHITE, 0f);
                 }
             }
         }
 
-        // Subtle inner golden border around squares
+        // 6. Draw moving piece(s) smoothly gliding across the board with realistic parabolic lift
+        if (isPieceMoving && activeMove != null && movingPieceType != PIECE_NONE) {
+            float startX = boardRect.left + activeMove.fromC * sqSize;
+            float startY = boardRect.top + activeMove.fromR * sqSize;
+            float targetX = boardRect.left + activeMove.toC * sqSize;
+            float targetY = boardRect.top + activeMove.toR * sqSize;
+
+            float curX = (1f - moveProgress) * startX + moveProgress * targetX;
+            float curY = (1f - moveProgress) * startY + moveProgress * targetY;
+
+            // Parabolic lift arc: piece elevates as if picked up by hand
+            float lift = (float) Math.sin(moveProgress * Math.PI) * (sqSize * 0.28f);
+
+            drawPieceAt(canvas, curX, curY - lift, sqSize, movingPieceType, movingPieceColor == COLOR_WHITE, lift);
+
+            // Handle castling rook movement
+            if (activeMove.isCastle && movingRookType != PIECE_NONE) {
+                float rStartX = boardRect.left + activeMove.rookFromC * sqSize;
+                float rStartY = boardRect.top + activeMove.rookFromR * sqSize;
+                float rTargetX = boardRect.left + activeMove.rookToC * sqSize;
+                float rTargetY = boardRect.top + activeMove.rookToR * sqSize;
+
+                float rCurX = (1f - moveProgress) * rStartX + moveProgress * rTargetX;
+                float rCurY = (1f - moveProgress) * rStartY + moveProgress * rTargetY;
+
+                drawPieceAt(canvas, rCurX, rCurY, sqSize, movingRookType, movingRookColor == COLOR_WHITE, 0f);
+            }
+        }
+
+        // Inner gold border around squares
         canvas.drawRect(boardRect, goldAccentPaint);
 
-        // 4. File labels (a-h) on bottom border
+        // 7. File labels (a-h) on bottom frame
         float textY = outerBorderRect.bottom - (coordMargin * 0.28f);
         String[] files = {"a", "b", "c", "d", "e", "f", "g", "h"};
         for (int c = 0; c < 8; c++) {
@@ -285,7 +578,7 @@ public class SplashChessboardView extends View {
             canvas.drawText(files[c], textX, textY, coordTextPaint);
         }
 
-        // Rank labels (1-8) on left border
+        // Rank labels (1-8) on left frame
         for (int r = 0; r < 8; r++) {
             float labelY = boardRect.top + r * sqSize + (sqSize * 0.62f);
             float labelX = outerBorderRect.left + (coordMargin * 0.5f);
@@ -293,14 +586,32 @@ public class SplashChessboardView extends View {
         }
     }
 
-    private void drawPiece(Canvas canvas, RectF square, int pieceType, boolean isWhite) {
+    private void drawAmbientBackground(Canvas canvas) {
+        for (FloatingParticle p : particles) {
+            Path path = (p.pieceType >= 0 && p.pieceType < parsedPaths.length) ? parsedPaths[p.pieceType] : null;
+            if (path != null) {
+                canvas.save();
+                canvas.translate(p.x, p.y);
+                canvas.rotate(p.rotation);
+
+                float scale = p.size / 45f;
+                canvas.scale(scale, scale);
+                canvas.translate(-22.5f, -22.5f);
+
+                particlePaint.setColor(p.color);
+                canvas.drawPath(path, particlePaint);
+                canvas.restore();
+            }
+        }
+    }
+
+    private void drawPieceAt(Canvas canvas, float left, float top, float sqSize, int pieceType, boolean isWhite, float lift) {
         Path path = (pieceType >= 0 && pieceType < parsedPaths.length) ? parsedPaths[pieceType] : null;
 
         if (path != null) {
-            // Staunton SVG path standard dimension is 45x45
-            float scale = (square.width() * 0.78f) / 45f;
-            float dx = square.left + (square.width() - 45f * scale) / 2f;
-            float dy = square.top + (square.height() - 45f * scale) / 2f;
+            float scale = (sqSize * 0.78f) / 45f;
+            float dx = left + (sqSize - 45f * scale) / 2f;
+            float dy = top + (sqSize - 45f * scale) / 2f;
 
             canvas.save();
             transformMatrix.reset();
@@ -308,9 +619,10 @@ public class SplashChessboardView extends View {
             transformMatrix.postTranslate(dx, dy);
             canvas.concat(transformMatrix);
 
-            // Piece drop shadow
+            // Piece drop shadow: scales and shifts when lifted
             canvas.save();
-            canvas.translate(1.5f, 2.5f);
+            float shadowOffset = 2.5f + (lift * 0.4f);
+            canvas.translate(shadowOffset, shadowOffset * 1.5f);
             canvas.drawPath(path, shadowPaint);
             canvas.restore();
 
@@ -325,10 +637,10 @@ public class SplashChessboardView extends View {
 
             canvas.restore();
         } else {
-            // Robust geometric fallback in case PathParser fails on legacy targets
-            float cx = square.centerX();
-            float cy = square.centerY();
-            float radius = square.width() * 0.25f;
+            // Robust geometric fallback
+            float cx = left + sqSize / 2f;
+            float cy = top + sqSize / 2f;
+            float radius = sqSize * 0.25f;
 
             Paint fill = isWhite ? whitePieceFillPaint : blackPieceFillPaint;
             Paint stroke = isWhite ? whitePieceStrokePaint : blackPieceStrokePaint;

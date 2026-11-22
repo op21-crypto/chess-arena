@@ -313,16 +313,22 @@ export default function App() {
   const [avgPairingTime, setAvgPairingTime] = useState('1.1s');
   const [activeBattlesCount, setActiveBattlesCount] = useState(() => Math.round(12023 * 0.24));
 
-  // Signal Android native container that web app has mounted and is ready
+  // Signal Android native container that web app has fully rendered and is ready
   useEffect(() => {
-    try {
-      if (window.AndroidBridge && typeof window.AndroidBridge.onAppReady === 'function') {
-        window.AndroidBridge.onAppReady();
-      }
-      if (window.AndroidTTS && typeof window.AndroidTTS.onAppReady === 'function') {
-        window.AndroidTTS.onAppReady();
-      }
-    } catch {}
+    // Wait for browser composite thread to complete the paint of the home UI
+    const animId = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        try {
+          if (window.AndroidBridge && typeof window.AndroidBridge.onAppReady === 'function') {
+            window.AndroidBridge.onAppReady();
+          }
+          if (window.AndroidTTS && typeof window.AndroidTTS.onAppReady === 'function') {
+            window.AndroidTTS.onAppReady();
+          }
+        } catch {}
+      });
+    });
+    return () => cancelAnimationFrame(animId);
   }, []);
 
   useEffect(() => {
