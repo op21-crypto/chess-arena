@@ -888,7 +888,7 @@ export function ProfileView({
         </div>
       )}
 
-      {/* ================= MASTER ADMIN COMMAND CENTER (EXCLUSIVE TO op21plus@gmail.com) ================= */}
+      {/* ================= ADMIN COMMAND CENTER ================= */}
       {(user?.email?.toLowerCase().trim() === 'op21plus@gmail.com' || user?.role === 'admin' || (typeof window !== 'undefined' && sessionStorage.getItem('chess_arena_admin_verified') === 'true')) && onOpenAdmin && (
         <div className={`border rounded-2xl p-4 shadow-sm transition-all relative overflow-hidden ${
           isLightMode
@@ -903,10 +903,12 @@ export function ProfileView({
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-extrabold tracking-tight flex items-center gap-1.5">
-                    <span>Admin Master Control Suite</span>
+                    <span>Admin Control Suite</span>
+                    {user?.role === 'admin' && (
                     <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30">
-                      op21plus
+                      Admin
                     </span>
+                    )}
                   </h3>
                 </div>
                 <p className={`text-xs mt-0.5 ${isLightMode ? 'text-slate-600' : 'text-slate-400'}`}>
@@ -1624,8 +1626,8 @@ export function ProfileView({
         );
       })()}
 
-      {/* Discreet Admin Portal Link for Owner (op21plus@gmail.com / Master PIN) */}
-      {onOpenAdmin && (
+      {/* Discreet Admin Portal Link — only visible to authenticated admin */}
+      {(user?.email?.toLowerCase().trim() === 'op21plus@gmail.com' || user?.role === 'admin') && onOpenAdmin && (
         <div className="pt-2 pb-6 flex items-center justify-center">
           <button
             type="button"
@@ -1638,7 +1640,7 @@ export function ProfileView({
             title="Open Administrator Console"
           >
             <ShieldCheck className="w-3.5 h-3.5 text-amber-500/80" />
-            <span>Master Admin Gate (op21plus / PIN 212121)</span>
+            <span>Admin Console</span>
           </button>
         </div>
       )}

@@ -1,0 +1,912 @@
+[
+  {
+    "id": 1,
+    "category": "Verb + Preposition",
+    "subcategory": "Accuse of",
+    "difficulty": "Easy",
+    "type": "Fill in the blank",
+    "question": "The cashier was accused _____ embezzling company funds over several months.",
+    "options": [
+      "with",
+      "of",
+      "for",
+      "against"
+    ],
+    "correct": 1,
+    "combination": "Accused + of",
+    "hindi_meaning": "किसी अपराध या गलती का आरोप लगाना",
+    "grammar_rule": "The verb 'accuse' is always followed by the preposition 'of' when denoting the crime or offense.",
+    "correct_sentence": "The cashier was accused of embezzling company funds over several months.",
+    "hindi_translation": "खजांची (कैशियर) पर कई महीनों तक कंपनी के धन का गबन करने का आरोप लगाया गया था।",
+    "why_others_incorrect": {
+      "A": "'With' is used with 'charged' (charged with a crime), not 'accused'.",
+      "C": "'For' is used with 'blamed' or 'criticized', never with 'accused'.",
+      "D": "'Against' is used with 'allegations against', not directly with the verb 'accuse'."
+    },
+    "memory_trick": "Remember: Accused OF an offense, but Charged WITH a crime."
+  },
+  {
+    "id": 2,
+    "category": "Verb + Preposition",
+    "subcategory": "Abstain from",
+    "difficulty": "Easy",
+    "type": "Fill in the blank",
+    "question": "The doctor strictly advised the diabetic patient to abstain _____ refined sugar and sugary drinks.",
+    "options": [
+      "from",
+      "to",
+      "against",
+      "with"
+    ],
+    "correct": 0,
+    "combination": "Abstain + from",
+    "hindi_meaning": "परहेज करना / दूर रहना",
+    "grammar_rule": "Verbs denoting restraint, separation, or avoidance (abstain, refrain, desist, prevent, prohibit) take the preposition 'from' followed by a noun or gerund.",
+    "correct_sentence": "The doctor strictly advised the diabetic patient to abstain from refined sugar and sugary drinks.",
+    "hindi_translation": "डॉक्टर ने मधुमेह के रोगी को परिष्कृत चीनी और मीठे पेय पदार्थों से परहेज करने की सख्त सलाह दी।",
+    "why_others_incorrect": {
+      "B": "'To' indicates direction or destination, which is incorrect with verbs of avoidance.",
+      "C": "'Against' indicates opposition or conflict.",
+      "D": "'With' indicates accompaniment or instrument."
+    },
+    "memory_trick": "Abstain FROM, Refrain FROM — both mean keeping away FROM something."
+  },
+  {
+    "id": 3,
+    "category": "Verb + Preposition",
+    "subcategory": "Comply with",
+    "difficulty": "Moderate",
+    "type": "Sentence improvement",
+    "question": "Every commercial vehicle driver must [comply to the traffic regulations] issued by the transport department.",
+    "options": [
+      "comply for the traffic regulations",
+      "comply in the traffic regulations",
+      "comply with the traffic regulations",
+      "No improvement"
+    ],
+    "correct": 2,
+    "combination": "Comply + with",
+    "hindi_meaning": "नियमों या आदेशों का पालन करना",
+    "grammar_rule": "'Comply' always takes 'with'. Note that 'conform' takes 'to', and 'abide' takes 'by'. Confusing these three is a frequent SSC trap.",
+    "correct_sentence": "Every commercial vehicle driver must comply with the traffic regulations issued by the transport department.",
+    "hindi_translation": "प्रत्येक वाणिज्यिक वाहन चालक को परिवहन विभाग द्वारा जारी यातायात नियमों का पालन करना चाहिए।",
+    "why_others_incorrect": {
+      "A": "'Comply for' is ungrammatical in standard English.",
+      "B": "'Comply in' is never used.",
+      "D": "Original sentence erroneously used 'comply to'."
+    },
+    "memory_trick": "Trio Rule: Abide BY = Comply WITH = Conform TO."
+  },
+  {
+    "id": 4,
+    "category": "Verb + Preposition",
+    "subcategory": "Abide by",
+    "difficulty": "Easy",
+    "type": "Fill in the blank",
+    "question": "Both parties agreed to abide _____ the arbitrator's final verdict without further litigation.",
+    "options": [
+      "with",
+      "to",
+      "by",
+      "at"
+    ],
+    "correct": 2,
+    "combination": "Abide + by",
+    "hindi_meaning": "निर्णय या नियम पर टिके रहना / मानना",
+    "grammar_rule": "'Abide by' is an immutable phrasal verb meaning to obey or accept a decision, rule, or agreement.",
+    "correct_sentence": "Both parties agreed to abide by the arbitrator's final verdict without further litigation.",
+    "hindi_translation": "दोनों पक्ष आगे किसी मुकदमेबाजी के बिना मध्यस्थ के अंतिम निर्णय का पालन करने पर सहमत हुए।",
+    "why_others_incorrect": {
+      "A": "'With' is used with 'comply with'.",
+      "B": "'To' is used with 'conform to' or 'adhere to'.",
+      "D": "'At' indicates a point in time or location."
+    },
+    "memory_trick": "Abide BY a decision / rule."
+  },
+  {
+    "id": 5,
+    "category": "Verb + Preposition",
+    "subcategory": "Insist on",
+    "difficulty": "Moderate",
+    "type": "Fill in the blank",
+    "question": "The manager insisted _____ completing the quarterly audit before the end of this week.",
+    "options": [
+      "for",
+      "to",
+      "on",
+      "over"
+    ],
+    "correct": 2,
+    "combination": "Insist + on",
+    "hindi_meaning": "किसी बात पर अड़ना / जोर देना",
+    "grammar_rule": "The verb 'insist' takes the preposition 'on' (or upon) followed by a noun or gerund (V-ing). It never takes 'for' or 'to'.",
+    "correct_sentence": "The manager insisted on completing the quarterly audit before the end of this week.",
+    "hindi_translation": "प्रबंधक ने इस सप्ताह के अंत से पहले त्रैमासिक ऑडिट पूरा करने पर जोर दिया।",
+    "why_others_incorrect": {
+      "A": "'For' is commonly used by mistake in Indian English, but is grammatically incorrect.",
+      "B": "'To' is invalid because 'insist' is followed by 'on + V-ing'.",
+      "D": "'Over' means regarding or across."
+    },
+    "memory_trick": "Insist ON doing something."
+  },
+  {
+    "id": 6,
+    "category": "Verb + Preposition",
+    "subcategory": "Cope with",
+    "difficulty": "Difficult",
+    "type": "Error spotting",
+    "question": "The young entrepreneur found it extremely difficult (A) / to cope up with the heavy workload (B) / and erratic market fluctuations. (C) / No error (D)",
+    "options": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "correct": 1,
+    "combination": "Cope + with (NOT cope up with)",
+    "hindi_meaning": "सामना करना / तालमेल बिठाना",
+    "grammar_rule": "The phrase 'cope up with' is a superfluous error commonly asked in SSC exams. The correct idiom is strictly 'cope with'. 'Up' should be omitted.",
+    "correct_sentence": "The young entrepreneur found it extremely difficult to cope with the heavy workload and erratic market fluctuations.",
+    "hindi_translation": "युवा उद्यमी को भारी कार्यभार और अनिश्चित बाजार के उतार-चढ़ाव से निपटना बेहद मुश्किल लगा।",
+    "why_others_incorrect": {
+      "A": "Part A has no grammatical error.",
+      "C": "Part C uses parallel nouns correctly.",
+      "D": "Error exists in part B: 'cope up with' must be replaced by 'cope with'."
+    },
+    "memory_trick": "Superfluous Alert: There is NO 'UP' in 'COPE WITH'!"
+  },
+  {
+    "id": 7,
+    "category": "Verb + Preposition",
+    "subcategory": "Consist of",
+    "difficulty": "Easy",
+    "type": "Fill in the blank",
+    "question": "The scientific panel consists _____ seven eminent nuclear physicists from top research institutes.",
+    "options": [
+      "with",
+      "of",
+      "from",
+      "in"
+    ],
+    "correct": 1,
+    "combination": "Consist + of",
+    "hindi_meaning": "से मिलकर बनना / समाहित होना",
+    "grammar_rule": "'Consist of' means to be composed of or formed from specific parts or members.",
+    "correct_sentence": "The scientific panel consists of seven eminent nuclear physicists from top research institutes.",
+    "hindi_translation": "वैज्ञानिक पैनल में शीर्ष अनुसंधान संस्थानों के सात प्रख्यात परमाणु भौतिक विज्ञानी शामिल हैं।",
+    "why_others_incorrect": {
+      "A": "'Consist with' is obsolete; 'compatible with' is used instead.",
+      "C": "'From' expresses origin, not composition.",
+      "D": "'Consist in' means to lie in or reside in (e.g. Happiness consists in contentment)."
+    },
+    "memory_trick": "Composed OF = Consists OF = Comprises (no 'of')."
+  },
+  {
+    "id": 8,
+    "category": "Verb + Preposition",
+    "subcategory": "Deprive of",
+    "difficulty": "Moderate",
+    "type": "Fill in the blank",
+    "question": "The tyrannical regime deprived the citizens _____ their fundamental civic liberties.",
+    "options": [
+      "from",
+      "off",
+      "of",
+      "with"
+    ],
+    "correct": 2,
+    "combination": "Deprive + of",
+    "hindi_meaning": "वंचित करना / छीन लेना",
+    "grammar_rule": "Verbs of dispossession such as 'deprive', 'bereave', 'rob', and 'strip' take the preposition 'of'.",
+    "correct_sentence": "The tyrannical regime deprived the citizens of their fundamental civic liberties.",
+    "hindi_translation": "अत्याचारी शासन ने नागरिकों को उनके मौलिक नागरिक अधिकारों से वंचित कर दिया।",
+    "why_others_incorrect": {
+      "A": "'From' is often mistakenly chosen because in Hindi it means 'से', but 'deprive' takes 'of'.",
+      "B": "'Off' implies physical removal from a surface.",
+      "D": "'With' denotes possession or means."
+    },
+    "memory_trick": "Deprived OF, Robbed OF, Bereft OF."
+  },
+  {
+    "id": 9,
+    "category": "Verb + Preposition",
+    "subcategory": "Congratulate on",
+    "difficulty": "Moderate",
+    "type": "Fill in the blank",
+    "question": "The principal congratulated Rohan _____ his exceptional performance in the national science olympiad.",
+    "options": [
+      "for",
+      "on",
+      "at",
+      "about"
+    ],
+    "correct": 1,
+    "combination": "Congratulate + on",
+    "hindi_meaning": "बधाई देना",
+    "grammar_rule": "The verb 'congratulate' (as well as the noun 'congratulations') takes the preposition 'on' (or upon) for the occasion or achievement. Never use 'for'.",
+    "correct_sentence": "The principal congratulated Rohan on his exceptional performance in the national science olympiad.",
+    "hindi_translation": "प्राचार्य ने रोहन को राष्ट्रीय विज्ञान ओलंपियाड में उनके उत्कृष्ट प्रदर्शन पर बधाई दी।",
+    "why_others_incorrect": {
+      "A": "'For' is a very common colloquial error; in formal English, 'congratulate on' is standard.",
+      "C": "'At' is used for points of time or skills (good at).",
+      "D": "'About' is used with talk/discuss."
+    },
+    "memory_trick": "Congratulate ON / Felicitate ON."
+  },
+  {
+    "id": 10,
+    "category": "Verb + Preposition",
+    "subcategory": "Differ from",
+    "difficulty": "Moderate",
+    "type": "Fill in the blank",
+    "question": "Modern diesel engines differ significantly _____ older petrol models in fuel efficiency.",
+    "options": [
+      "to",
+      "from",
+      "with",
+      "than"
+    ],
+    "correct": 1,
+    "combination": "Differ + from",
+    "hindi_meaning": "भिन्न होना (विशेषता या रूप में)",
+    "grammar_rule": "When expressing unlikeness or difference in traits/nature, 'differ' takes 'from'. (When expressing disagreement in opinion with a person, 'differ with' is used).",
+    "correct_sentence": "Modern diesel engines differ significantly from older petrol models in fuel efficiency.",
+    "hindi_translation": "आधुनिक डीजल इंजन ईंधन दक्षता में पुराने पेट्रोल मॉडलों से काफी भिन्न हैं।",
+    "why_others_incorrect": {
+      "A": "'To' is used with 'similar to', opposite of differ.",
+      "C": "'With' is used when differing in opinion with a person.",
+      "D": "'Than' is used after comparative adjectives (e.g. better than), not after the verb 'differ'."
+    },
+    "memory_trick": "Differ FROM things (unlike); Differ WITH people (disagree)."
+  },
+  {
+    "id": 11,
+    "category": "Verb + Preposition",
+    "subcategory": "Refrain from",
+    "difficulty": "Easy",
+    "type": "Fill in the blank",
+    "question": "Please refrain _____ making derogatory remarks during the parliamentary debate.",
+    "options": [
+      "to",
+      "from",
+      "by",
+      "with"
+    ],
+    "correct": 1,
+    "combination": "Refrain + from",
+    "hindi_meaning": "बचना / परहेज करना (विशेषकर किसी कार्य से)",
+    "grammar_rule": "'Refrain' always takes 'from' followed by a gerund (V-ing) or noun. It implies temporarily holding oneself back from an action.",
+    "correct_sentence": "Please refrain from making derogatory remarks during the parliamentary debate.",
+    "hindi_translation": "कृपया संसदीय बहस के दौरान अपमानजनक टिप्पणी करने से बचें।",
+    "why_others_incorrect": {
+      "A": "'To' cannot follow verbs of prevention or cessation.",
+      "C": "'By' indicates agency or means.",
+      "D": "'With' indicates instrument or association."
+    },
+    "memory_trick": "Abstain from bad habits; Refrain from specific actions."
+  },
+  {
+    "id": 12,
+    "category": "Verb + Preposition",
+    "subcategory": "Excel in",
+    "difficulty": "Easy",
+    "type": "Fill in the blank",
+    "question": "With consistent practice, the young athlete managed to excel _____ high jump.",
+    "options": [
+      "at",
+      "in",
+      "with",
+      "for"
+    ],
+    "correct": 1,
+    "combination": "Excel + in",
+    "hindi_meaning": "श्रेष्ठ प्रदर्शन करना / निपुण होना",
+    "grammar_rule": "The verb 'excel' takes the preposition 'in' when referring to a field, subject, or discipline.",
+    "correct_sentence": "With consistent practice, the young athlete managed to excel in high jump.",
+    "hindi_translation": "निरंतर अभ्यास से युवा एथलीट ऊंची कूद में उत्कृष्ट प्रदर्शन करने में सफल रहा।",
+    "why_others_incorrect": {
+      "A": "'At' is used with adjectives like 'good at', 'expert at', but the verb 'excel' prefers 'in'.",
+      "C": "'With' expresses accompaniment.",
+      "D": "'For' indicates purpose."
+    },
+    "memory_trick": "Excel IN a field or sport."
+  },
+  {
+    "id": 13,
+    "category": "Verb + Preposition",
+    "subcategory": "Prevent from",
+    "difficulty": "Moderate",
+    "type": "Sentence improvement",
+    "question": "Heavy security was deployed to [prevent the protesters to enter] the legislative assembly.",
+    "options": [
+      "prevent the protesters from entering",
+      "prevent the protesters in entering",
+      "prevent the protesters for entering",
+      "No improvement"
+    ],
+    "correct": 0,
+    "combination": "Prevent + from + V-ing",
+    "hindi_meaning": "रोकना / बाधा डालना",
+    "grammar_rule": "Verbs of stopping or forbidding ('prevent', 'prohibit', 'stop', 'deter') require 'from + Gerund (V-ing)', NOT an infinitive ('to + V1').",
+    "correct_sentence": "Heavy security was deployed to prevent the protesters from entering the legislative assembly.",
+    "hindi_translation": "प्रदर्शनकारियों को विधानसभा में प्रवेश करने से रोकने के लिए भारी सुरक्षा तैनात की गई थी।",
+    "why_others_incorrect": {
+      "B": "'Prevent in' is grammatically incorrect.",
+      "C": "'Prevent for' is an erroneous construction.",
+      "D": "Original sentence incorrectly used 'to enter' instead of 'from entering'."
+    },
+    "memory_trick": "Prevent someone FROM doing something."
+  },
+  {
+    "id": 14,
+    "category": "Verb + Preposition",
+    "subcategory": "Succeed in",
+    "difficulty": "Easy",
+    "type": "Fill in the blank",
+    "question": "After years of relentless effort, she finally succeeded _____ cracking the civil services examination.",
+    "options": [
+      "to",
+      "in",
+      "at",
+      "for"
+    ],
+    "correct": 1,
+    "combination": "Succeed + in",
+    "hindi_meaning": "सफल होना / कामयाबी हासिल करना",
+    "grammar_rule": "'Succeed' takes the preposition 'in' followed by a noun or gerund (V-ing) when denoting achievement.",
+    "correct_sentence": "After years of relentless effort, she finally succeeded in cracking the civil services examination.",
+    "hindi_translation": "वर्षों के अथक प्रयास के बाद, वह आखिरकार सिविल सेवा परीक्षा पास करने में सफल रही।",
+    "why_others_incorrect": {
+      "A": "'Succeed to' means to inherit or follow in an office/throne (e.g., succeeded to the throne).",
+      "C": "'At' is not paired with the verb 'succeed'.",
+      "D": "'For' cannot denote the area of success."
+    },
+    "memory_trick": "Succeed IN doing an achievement."
+  },
+  {
+    "id": 15,
+    "category": "Verb + Preposition",
+    "subcategory": "Rely on",
+    "difficulty": "Easy",
+    "type": "Fill in the blank",
+    "question": "In critical situations, one cannot solely rely _____ hearsay evidence.",
+    "options": [
+      "at",
+      "with",
+      "on",
+      "in"
+    ],
+    "correct": 2,
+    "combination": "Rely + on / upon",
+    "hindi_meaning": "निर्भर होना / भरोसा करना",
+    "grammar_rule": "The verb 'rely' takes 'on' or 'upon'. Similar verbs like 'depend', 'count', 'bank', and 'hinge' also take 'on/upon'.",
+    "correct_sentence": "In critical situations, one cannot solely rely on hearsay evidence.",
+    "hindi_translation": "महत्वपूर्ण स्थितियों में, कोई केवल सुनी-सुनाई बातों पर भरोसा नहीं कर सकता।",
+    "why_others_incorrect": {
+      "A": "'At' is used for location or target.",
+      "B": "'With' is used for accompaniment.",
+      "D": "'In' is paired with 'believe in' or 'confide in', not 'rely'."
+    },
+    "memory_trick": "Rely ON, Depend ON, Bank ON, Count ON."
+  },
+  {
+    "id": 16,
+    "category": "Verb + Preposition",
+    "subcategory": "Belong to",
+    "difficulty": "Easy",
+    "type": "Fill in the blank",
+    "question": "This ancestral mansion once belonged _____ an aristocratic landlord of Bengal.",
+    "options": [
+      "with",
+      "to",
+      "for",
+      "in"
+    ],
+    "correct": 1,
+    "combination": "Belong + to",
+    "hindi_meaning": "का होना / से संबंधित होना (स्वामित्व)",
+    "grammar_rule": "'Belong' takes 'to' to show ownership or membership of a group/club.",
+    "correct_sentence": "This ancestral mansion once belonged to an aristocratic landlord of Bengal.",
+    "hindi_translation": "यह पैतृक हवेली कभी बंगाल के एक कुलीन ज़मींदार की थी।",
+    "why_others_incorrect": {
+      "A": "'Belong with' means fitting alongside, not ownership.",
+      "C": "'Belong for' is ungrammatical.",
+      "D": "'Belong in' refers to appropriate category/place (e.g. This belongs in the kitchen)."
+    },
+    "memory_trick": "Belong TO a person (ownership)."
+  },
+  {
+    "id": 17,
+    "category": "Verb + Preposition",
+    "subcategory": "Suffer from",
+    "difficulty": "Easy",
+    "type": "Fill in the blank",
+    "question": "Many elderly residents in metropolitan cities suffer _____ chronic respiratory ailments.",
+    "options": [
+      "with",
+      "of",
+      "from",
+      "by"
+    ],
+    "correct": 2,
+    "combination": "Suffer + from",
+    "hindi_meaning": "पीड़ित होना / कष्ट सहना",
+    "grammar_rule": "When afflicted with a disease, pain, or adversity, the verb 'suffer' takes 'from'. (Note: You die OF a disease, but you suffer FROM a disease).",
+    "correct_sentence": "Many elderly residents in metropolitan cities suffer from chronic respiratory ailments.",
+    "hindi_translation": "महानगरों के कई बुजुर्ग निवासी सांस की पुरानी बीमारियों से पीड़ित हैं।",
+    "why_others_incorrect": {
+      "A": "'With' is colloquial and incorrect in formal standard grammar.",
+      "B": "'Of' is used with 'die of a disease', not 'suffer'.",
+      "D": "'By' is used for agent in passive voice."
+    },
+    "memory_trick": "Suffer FROM a disease, but Die OF a disease."
+  },
+  {
+    "id": 18,
+    "category": "Verb + Preposition",
+    "subcategory": "Apologise to / for",
+    "difficulty": "Moderate",
+    "type": "Fill in the blank",
+    "question": "The minister was forced to apologise _____ the public _____ his reckless statement.",
+    "options": [
+      "for; to",
+      "to; for",
+      "with; about",
+      "at; for"
+    ],
+    "correct": 1,
+    "combination": "Apologise + to (person) + for (fault)",
+    "hindi_meaning": "क्षमा मांगना (व्यक्ति से गलती के लिए)",
+    "grammar_rule": "One apologises TO a person FOR a misconduct or fault.",
+    "correct_sentence": "The minister was forced to apologise to the public for his reckless statement.",
+    "hindi_translation": "मंत्री को अपने लापरवाह बयान के लिए जनता से माफी मांगने के लिए मजबूर होना पड़ा।",
+    "why_others_incorrect": {
+      "A": "Reversed the positions of 'for' and 'to'.",
+      "C": "'Apologise with' is incorrect.",
+      "D": "'Apologise at' is completely invalid."
+    },
+    "memory_trick": "Apologise TO someone FOR something."
+  },
+  {
+    "id": 19,
+    "category": "Verb + Preposition",
+    "subcategory": "Apply to / for",
+    "difficulty": "Moderate",
+    "type": "Fill in the blank",
+    "question": "Candidates must apply _____ the committee chairman _____ permission to inspect the records.",
+    "options": [
+      "for; to",
+      "to; for",
+      "in; with",
+      "with; for"
+    ],
+    "correct": 1,
+    "combination": "Apply + to (authority) + for (thing requested)",
+    "hindi_meaning": "आवेदन करना / अर्जी देना",
+    "grammar_rule": "One applies TO an authority or officer FOR a post, grant, or permission.",
+    "correct_sentence": "Candidates must apply to the committee chairman for permission to inspect the records.",
+    "hindi_translation": "उम्मीदवारों को रिकॉर्ड का निरीक्षण करने की अनुमति के लिए समिति के अध्यक्ष को आवेदन करना होगा।",
+    "why_others_incorrect": {
+      "A": "Inverted order of 'to' and 'for'.",
+      "C": "'Apply in' is used for forms/modes, not people.",
+      "D": "'Apply with' is grammatically incorrect here."
+    },
+    "memory_trick": "Apply TO an authority FOR a post/permission."
+  },
+  {
+    "id": 20,
+    "category": "Verb + Preposition",
+    "subcategory": "Participate in",
+    "difficulty": "Easy",
+    "type": "Fill in the blank",
+    "question": "Over five hundred delegates from across the globe participated _____ the environmental summit.",
+    "options": [
+      "at",
+      "into",
+      "in",
+      "with"
+    ],
+    "correct": 2,
+    "combination": "Participate + in",
+    "hindi_meaning": "भाग लेना / हिस्सा लेना",
+    "grammar_rule": "The verb 'participate' is followed by 'in' when referring to an event, discussion, or competition.",
+    "correct_sentence": "Over five hundred delegates from across the globe participated in the environmental summit.",
+    "hindi_translation": "दुनिया भर से पाँच सौ से अधिक प्रतिनिधियों ने पर्यावरण शिखर सम्मेलन में भाग लिया।",
+    "why_others_incorrect": {
+      "A": "'At' denotes static location.",
+      "B": "'Into' denotes motion inside.",
+      "D": "'With' is used with 'collaborate with', not 'participate'."
+    },
+    "memory_trick": "Participate IN an event."
+  },
+  {
+    "id": 21,
+    "category": "Verb + Preposition",
+    "subcategory": "Dispense with",
+    "difficulty": "Difficult",
+    "type": "Fill in the blank",
+    "question": "Due to severe automation, the textile mill decided to dispense _____ the services of manual sorters.",
+    "options": [
+      "from",
+      "of",
+      "with",
+      "off"
+    ],
+    "correct": 2,
+    "combination": "Dispense + with",
+    "hindi_meaning": "की सेवा समाप्त करना / बिना काम चलाना / त्यागना",
+    "grammar_rule": "'Dispense with' means to manage without something or stop using someone's services. ('Dispense to' means distribute).",
+    "correct_sentence": "Due to severe automation, the textile mill decided to dispense with the services of manual sorters.",
+    "hindi_translation": "भारी स्वचालन के कारण, कपड़ा मिल ने मैनुअल सॉर्टर्स की सेवाओं को समाप्त करने का निर्णय लिया।",
+    "why_others_incorrect": {
+      "A": "'Dispense from' is incorrect.",
+      "B": "'Dispense of' is a common confusion with 'dispose of'.",
+      "D": "'Dispense off' is colloquial and erroneous."
+    },
+    "memory_trick": "Dispense WITH services = Dispose OF items."
+  },
+  {
+    "id": 22,
+    "category": "Verb + Preposition",
+    "subcategory": "Dispose of",
+    "difficulty": "Difficult",
+    "type": "Error spotting",
+    "question": "The company was looking for a safe way (A) / to dispose off toxic industrial waste (B) / without harming aquatic life. (C) / No error (D)",
+    "options": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "correct": 1,
+    "combination": "Dispose + of (Single 'F')",
+    "hindi_meaning": "निपटारा करना / फेंकना / बेचना",
+    "grammar_rule": "The phrasal verb is 'dispose of' with a SINGLE 'F', meaning to get rid of. The spelling 'dispose off' is a chronic SSC error trap.",
+    "correct_sentence": "The company was looking for a safe way to dispose of toxic industrial waste without harming aquatic life.",
+    "hindi_translation": "कंपनी जलीय जीवन को नुकसान पहुंचाए बिना जहरीले औद्योगिक कचरे का निपटान करने का सुरक्षित तरीका तलाश रही थी।",
+    "why_others_incorrect": {
+      "A": "Part A contains no error.",
+      "C": "Part C is grammatically sound.",
+      "D": "Part B is incorrect because 'dispose off' must be corrected to 'dispose of'."
+    },
+    "memory_trick": "Dispose OF (Single F) = Get rid of."
+  },
+  {
+    "id": 23,
+    "category": "Verb + Preposition",
+    "subcategory": "Yearn for",
+    "difficulty": "Moderate",
+    "type": "Fill in the blank",
+    "question": "Living in exile for decades, the lonely soldier yearned _____ the warmth of his homeland.",
+    "options": [
+      "after",
+      "for",
+      "to",
+      "at"
+    ],
+    "correct": 1,
+    "combination": "Yearn + for",
+    "hindi_meaning": "तीव्र इच्छा रखना / तड़पना",
+    "grammar_rule": "'Yearn' (meaning to have an intense longing or desire) is followed by 'for' (or rarely 'after'). In standard SSC questions, 'yearn for' is the tested fixed form.",
+    "correct_sentence": "Living in exile for decades, the lonely soldier yearned for the warmth of his homeland.",
+    "hindi_translation": "दशकों तक निर्वासन में रहते हुए, अकेला सैनिक अपनी मातृभूमि के अपनत्व के लिए तड़प रहा था।",
+    "why_others_incorrect": {
+      "A": "'After' is acceptable in literary contexts with 'hankered after', but 'yearn for' is the primary fixed preposition.",
+      "C": "'To' requires a bare infinitive verb (yearned to return).",
+      "D": "'At' is invalid."
+    },
+    "memory_trick": "Yearn FOR, Long FOR, Crave FOR."
+  },
+  {
+    "id": 24,
+    "category": "Verb + Preposition",
+    "subcategory": "Yield to",
+    "difficulty": "Moderate",
+    "type": "Fill in the blank",
+    "question": "The honest officer refused to yield _____ political intimidation and continued the probe.",
+    "options": [
+      "before",
+      "to",
+      "under",
+      "with"
+    ],
+    "correct": 1,
+    "combination": "Yield + to",
+    "hindi_meaning": "घुटने टेकना / आत्मसमर्पण करना / झुकना",
+    "grammar_rule": "The verb 'yield' takes the preposition 'to' when it means to surrender, give way, or submit to pressure/force.",
+    "correct_sentence": "The honest officer refused to yield to political intimidation and continued the probe.",
+    "hindi_translation": "ईमानदार अधिकारी ने राजनीतिक धमकी के आगे झुकने से इनकार कर दिया और जांच जारी रखी।",
+    "why_others_incorrect": {
+      "A": "'Before' is sometimes colloquially used, but grammatically 'yield to' is the fixed idiom.",
+      "C": "'Under' is used in 'succumb under' or 'buckle under pressure'.",
+      "D": "'With' does not convey surrender."
+    },
+    "memory_trick": "Yield TO pressure = Succumb TO pressure."
+  },
+  {
+    "id": 25,
+    "category": "Verb + Preposition",
+    "subcategory": "Conform to",
+    "difficulty": "Moderate",
+    "type": "Fill in the blank",
+    "question": "The newly manufactured medicines must strictly conform _____ international safety standards.",
+    "options": [
+      "with",
+      "to",
+      "by",
+      "in"
+    ],
+    "correct": 1,
+    "combination": "Conform + to",
+    "hindi_meaning": "के अनुसार होना / अनुरूप होना",
+    "grammar_rule": "'Conform' takes 'to' (or occasionally 'with') when meaning to comply with rules or standards. 'Conform to' is the standard SSC key.",
+    "correct_sentence": "The newly manufactured medicines must strictly conform to international safety standards.",
+    "hindi_translation": "नई निर्मित दवाओं को अंतरराष्ट्रीय सुरक्षा मानकों के पूरी तरह अनुरूप होना चाहिए।",
+    "why_others_incorrect": {
+      "A": "'With' is used with 'comply with', not the preferred form for conform in SSC.",
+      "C": "'By' is used with 'abide by'.",
+      "D": "'In' is incorrect here."
+    },
+    "memory_trick": "Conform TO standards."
+  },
+  {
+    "id": 26,
+    "category": "Verb + Preposition",
+    "subcategory": "Aim at",
+    "difficulty": "Easy",
+    "type": "Fill in the blank",
+    "question": "The hunter carefully aimed his rifle _____ the ferocious tiger lurking in the bush.",
+    "options": [
+      "on",
+      "at",
+      "to",
+      "towards"
+    ],
+    "correct": 1,
+    "combination": "Aim + at",
+    "hindi_meaning": "निशाना साधना",
+    "grammar_rule": "The verb 'aim' takes 'at' when directing a weapon or pointing an effort towards a specific target.",
+    "correct_sentence": "The hunter carefully aimed his rifle at the ferocious tiger lurking in the bush.",
+    "hindi_translation": "शिकारी ने झाड़ियों में छिपे खूंखार बाघ पर सावधानी से अपनी राइफल का निशाना साधा।",
+    "why_others_incorrect": {
+      "A": "'On' is incorrect for targeting with a weapon.",
+      "C": "'To' denotes motion, not a point of aim.",
+      "D": "'Towards' indicates general orientation, not the precise target."
+    },
+    "memory_trick": "Aim AT a target, Shoot AT a target."
+  },
+  {
+    "id": 27,
+    "category": "Verb + Preposition",
+    "subcategory": "Believe in",
+    "difficulty": "Easy",
+    "type": "Fill in the blank",
+    "question": "Swami Vivekananda urged the youth to believe _____ their inner potential and righteous deeds.",
+    "options": [
+      "on",
+      "upon",
+      "in",
+      "with"
+    ],
+    "correct": 2,
+    "combination": "Believe + in",
+    "hindi_meaning": "में विश्वास या आस्था रखना",
+    "grammar_rule": "'Believe in' means to have faith in the existence or efficacy/goodness of something or someone.",
+    "correct_sentence": "Swami Vivekananda urged the youth to believe in their inner potential and righteous deeds.",
+    "hindi_translation": "स्वामी विवेकानंद ने युवाओं से अपनी आंतरिक क्षमता और नेक कार्यों में विश्वास रखने का आग्रह किया।",
+    "why_others_incorrect": {
+      "A": "'Believe on' is archaic/biblical and incorrect in modern English.",
+      "B": "'Believe upon' is non-standard.",
+      "D": "'Believe with' is meaningless."
+    },
+    "memory_trick": "Faith IN = Believe IN."
+  },
+  {
+    "id": 28,
+    "category": "Verb + Preposition",
+    "subcategory": "Glance at",
+    "difficulty": "Easy",
+    "type": "Fill in the blank",
+    "question": "She glanced quickly _____ her wristwatch before rushing towards the boarding gate.",
+    "options": [
+      "to",
+      "in",
+      "at",
+      "on"
+    ],
+    "correct": 2,
+    "combination": "Glance + at",
+    "hindi_meaning": "सरसरी नज़र डालना",
+    "grammar_rule": "Verbs of looking or brief visual attention ('look', 'glance', 'stare', 'gaze', 'peer', 'glare') take 'at'.",
+    "correct_sentence": "She glanced quickly at her wristwatch before rushing towards the boarding gate.",
+    "hindi_translation": "बोर्डिंग गेट की ओर भागने से पहले उसने तुरंत अपनी कलाई घड़ी पर एक नज़र डाली।",
+    "why_others_incorrect": {
+      "A": "'To' is not used with verbs of brief looking.",
+      "B": "'In' is incorrect.",
+      "D": "'On' does not indicate visual direction."
+    },
+    "memory_trick": "Look AT, Glance AT, Stare AT, Gaze AT."
+  },
+  {
+    "id": 29,
+    "category": "Verb + Preposition",
+    "subcategory": "Stare at",
+    "difficulty": "Easy",
+    "type": "Fill in the blank",
+    "question": "It is considered impolite to stare _____ strangers in public transportation.",
+    "options": [
+      "on",
+      "towards",
+      "at",
+      "upon"
+    ],
+    "correct": 2,
+    "combination": "Stare + at",
+    "hindi_meaning": "घूरना / टकटकी लगाकर देखना",
+    "grammar_rule": "The verb 'stare' takes 'at' to indicate the direct object being gazed upon fixedly.",
+    "correct_sentence": "It is considered impolite to stare at strangers in public transportation.",
+    "hindi_translation": "सार्वजनिक परिवहन में अजनबियों को घूरना अशिष्ट माना जाता है।",
+    "why_others_incorrect": {
+      "A": "'Stare on' is ungrammatical.",
+      "B": "'Towards' indicates direction without direct gaze.",
+      "D": "'Upon' is archaic and not used with stare."
+    },
+    "memory_trick": "Stare AT someone."
+  },
+  {
+    "id": 30,
+    "category": "Verb + Preposition",
+    "subcategory": "Compensate for",
+    "difficulty": "Moderate",
+    "type": "Fill in the blank",
+    "question": "The insurance firm agreed to compensate the farmer _____ the losses caused by the hailstorm.",
+    "options": [
+      "to",
+      "for",
+      "against",
+      "with"
+    ],
+    "correct": 1,
+    "combination": "Compensate + for",
+    "hindi_meaning": "मुआवजा देना / क्षतिपूर्ति करना",
+    "grammar_rule": "The verb 'compensate' takes 'for' when referring to the loss, damage, or injury suffered.",
+    "correct_sentence": "The insurance firm agreed to compensate the farmer for the losses caused by the hailstorm.",
+    "hindi_translation": "बीमा कंपनी ओलावृष्टि से हुए नुकसान की भरपाई किसान को करने के लिए सहमत हो गई।",
+    "why_others_incorrect": {
+      "A": "'Compensate to' is incorrect when stating the reason or damage.",
+      "C": "'Against' is used with 'insure against', not compensate.",
+      "D": "'With' is used for monetary instruments."
+    },
+    "memory_trick": "Make up FOR = Compensate FOR."
+  },
+  {
+    "id": 31,
+    "category": "Verb + Preposition",
+    "subcategory": "Beware of",
+    "difficulty": "Easy",
+    "type": "Fill in the blank",
+    "question": "Tourists traveling abroad are cautioned to beware _____ fraudulent currency exchange kiosks.",
+    "options": [
+      "from",
+      "to",
+      "of",
+      "with"
+    ],
+    "correct": 2,
+    "combination": "Beware + of",
+    "hindi_meaning": "से सावधान या सचेत रहना",
+    "grammar_rule": "'Beware' takes the preposition 'of'. It is commonly seen in notices like 'Beware of pickpockets / dogs'.",
+    "correct_sentence": "Tourists traveling abroad are cautioned to beware of fraudulent currency exchange kiosks.",
+    "hindi_translation": "विदेश यात्रा करने वाले पर्यटकों को फर्जी मुद्रा विनिमय कियोस्क से सावधान रहने की चेतावनी दी जाती है।",
+    "why_others_incorrect": {
+      "A": "'From' is a literal translation error from Hindi ('से सावधान'); the correct English preposition is 'of'.",
+      "B": "'To' is incorrect.",
+      "D": "'With' is invalid."
+    },
+    "memory_trick": "Beware OF pickpockets / Beware OF dogs."
+  },
+  {
+    "id": 32,
+    "category": "Verb + Preposition",
+    "subcategory": "Brood over",
+    "difficulty": "Moderate",
+    "type": "Fill in the blank",
+    "question": "Instead of brooding _____ past failures, one should focus on forthcoming opportunities.",
+    "options": [
+      "at",
+      "over",
+      "with",
+      "for"
+    ],
+    "correct": 1,
+    "combination": "Brood + over / on",
+    "hindi_meaning": "चिंता में डूबे रहना / पुरानी बातों पर दुखी होना",
+    "grammar_rule": "'Brood' takes 'over' or 'on' when referring to dwelling morbidly or gloomily on a subject.",
+    "correct_sentence": "Instead of brooding over past failures, one should focus on forthcoming opportunities.",
+    "hindi_translation": "पिछली असफलताओं पर चिंता करने के बजाय, व्यक्ति को आगामी अवसरों पर ध्यान केंद्रित करना चाहिए।",
+    "why_others_incorrect": {
+      "A": "'At' is not paired with brood.",
+      "C": "'With' is incorrect.",
+      "D": "'For' does not convey continuous rumination."
+    },
+    "memory_trick": "Brood OVER sorrows / failures."
+  },
+  {
+    "id": 33,
+    "category": "Verb + Preposition",
+    "subcategory": "Cling to",
+    "difficulty": "Moderate",
+    "type": "Fill in the blank",
+    "question": "Despite scientific evidence, orthodox groups still cling _____ archaic superstitions.",
+    "options": [
+      "with",
+      "to",
+      "on",
+      "in"
+    ],
+    "correct": 1,
+    "combination": "Cling + to",
+    "hindi_meaning": "चिमटना / कसकर पकड़े रहना / अड़े रहना",
+    "grammar_rule": "Verbs expressing attachment or adherence ('cling', 'stick', 'adhere', 'cleave') take 'to'.",
+    "correct_sentence": "Despite scientific evidence, orthodox groups still cling to archaic superstitions.",
+    "hindi_translation": "वैज्ञानिक प्रमाणों के बावजूद, रूढ़िवादी समूह अभी भी पुरातन अंधविश्वासों से चिपके हुए हैं।",
+    "why_others_incorrect": {
+      "A": "'With' is incorrect; cling takes 'to'.",
+      "C": "'On' is frequently confused colloquially but grammatically incorrect.",
+      "D": "'In' does not express adherence."
+    },
+    "memory_trick": "Adhere TO, Stick TO, Cling TO."
+  },
+  {
+    "id": 34,
+    "category": "Verb + Preposition",
+    "subcategory": "Collide with",
+    "difficulty": "Easy",
+    "type": "Fill in the blank",
+    "question": "The speeding passenger bus collided violently _____ an oncoming freight truck.",
+    "options": [
+      "against",
+      "to",
+      "with",
+      "into"
+    ],
+    "correct": 2,
+    "combination": "Collide + with",
+    "hindi_meaning": "से टकराना",
+    "grammar_rule": "The verb 'collide' takes 'with' when two moving bodies crash into each other.",
+    "correct_sentence": "The speeding passenger bus collided violently with an oncoming freight truck.",
+    "hindi_translation": "तेज रफ्तार यात्री बस सामने से आ रहे मालवाहक ट्रक से जोरदार टकरा गई।",
+    "why_others_incorrect": {
+      "A": "'Against' is used with 'crashed against a wall' (static object).",
+      "B": "'To' is ungrammatical with collide.",
+      "D": "'Into' is used with 'crashed into', but 'collided' takes 'with'."
+    },
+    "memory_trick": "Collide WITH another moving object."
+  },
+  {
+    "id": 35,
+    "category": "Verb + Preposition",
+    "subcategory": "Confide in / to",
+    "difficulty": "Difficult",
+    "type": "Fill in the blank",
+    "question": "A true friend is someone you can confide _____ without any fear of betrayal.",
+    "options": [
+      "with",
+      "to",
+      "in",
+      "on"
+    ],
+    "correct": 2,
+    "combination": "Confide + in",
+    "hindi_meaning": "राज बताना / गहरा विश्वास करना",
+    "grammar_rule": "You confide IN a person (trust them with secrets); but you confide a secret TO a person.",
+    "correct_sentence": "A true friend is someone you can confide in without any fear of betrayal.",
+    "hindi_translation": "एक सच्चा दोस्त वह होता है जिस पर आप विश्वासघात के किसी भी डर के बिना भरोसा कर सकते हैं और राज साझा कर सकते हैं।",
+    "why_others_incorrect": {
+      "A": "'With' is ungrammatical with confide.",
+      "B": "'To' is used when the secret itself is the direct object (e.g., He confided his plan TO me).",
+      "D": "'On' is not used with confide."
+    },
+    "memory_trick": "Confide IN a person; Confide secrets TO a person."
+  }
+]

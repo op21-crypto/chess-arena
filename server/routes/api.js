@@ -171,7 +171,7 @@ router.post('/auth/login', async (req, res) => {
 
     const isOp = (user.email && user.email.toLowerCase().trim() === 'op21plus@gmail.com');
     if (isOp) {
-      // Verify against password or Master Admin PIN (default: 212121)
+      // Verify against password or Admin PIN
       const pinMatch = Database.verifyAdminPin(password);
       const passMatch = user.passwordHash ? bcrypt.compareSync(password, user.passwordHash) : false;
       if (!pinMatch && !passMatch) {
@@ -226,12 +226,12 @@ router.post('/auth/google', async (req, res) => {
     const cleanEmail = email.toLowerCase().trim();
     const isOp = cleanEmail === 'op21plus@gmail.com';
 
-    // Strict identity verification for op21plus@gmail.com: require Master Admin PIN
+    // Strict identity verification for admin account: require Admin PIN
     if (isOp) {
       const { adminPin } = req.body;
       if (!adminPin || !Database.verifyAdminPin(adminPin)) {
         return res.status(403).json({
-          error: 'Master Admin Identity Verification Failed: Valid 6-digit Master PIN is required to verify ownership of op21plus@gmail.com'
+          error: 'Admin Identity Verification Failed: Valid security PIN is required.'
         });
       }
     }
@@ -1489,10 +1489,10 @@ Core Rules:
   }
 });
 
-// ================= FULL ADMIN CONTROL CENTER (EXCLUSIVE TO op21plus@gmail.com & MASTER PIN) =================
+// ================= ADMIN CONTROL CENTER =================
 
 function checkOpAdmin(req) {
-  // 1. Check Master Admin PIN in headers, query, or body (212121 is always authorized)
+  // 1. Check Admin PIN in headers, query, or body
   const pinHeader = req.headers['x-admin-pin'] || req.headers['adminpin'] || req.headers['admin-pin'];
   const pinBody = req.body?.adminPin || req.body?.pin || req.body?.admin_pin || req.body?.adminMasterPin;
   const pinQuery = req.query?.adminPin || req.query?.pin || req.query?.admin_pin;
@@ -1522,7 +1522,7 @@ function requireAdmin(req, res, next) {
   if (checkOpAdmin(req)) {
     return next();
   }
-  return res.status(403).json({ error: 'Access denied: Admin command center restricted exclusively to op21plus@gmail.com' });
+  return res.status(403).json({ error: 'Access denied: Admin console access restricted.' });
 }
 
 // Verify Master Security PIN (pre-flight for Admin Console)
@@ -1532,7 +1532,7 @@ router.post('/admin/verify-pin', (req, res) => {
     return res.status(400).json({ error: 'Master Security PIN is required' });
   }
   if (Database.verifyAdminPin(pin)) {
-    return res.json({ success: true, verified: true, message: 'Admin Identity Verified for op21plus@gmail.com' });
+    return res.json({ success: true, verified: true, message: 'Admin Identity Verified' });
   }
   return res.status(403).json({ error: 'Incorrect Master Security PIN. Access denied.' });
 });

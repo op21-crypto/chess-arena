@@ -263,7 +263,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, isLight = false }) {
 
     // Strict identity verification for op21plus@gmail.com
     if (isOp && !adminPin.trim()) {
-      setError('Master PIN is required to verify ownership of op21plus@gmail.com.');
+      setError('Admin PIN is required for this account.');
       setLoading(false);
       return;
     }
@@ -292,9 +292,9 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, isLight = false }) {
         }
 
         if (isOp) {
-          const validPin = safeStorage.getItem('chess_arena_admin_pin') || '212121';
-          if (adminPin.trim() !== validPin && adminPin.trim() !== '212121') {
-            throw new Error('❌ Master PIN Verification Failed. You are not authorized to access op21plus@gmail.com.');
+          const validPin = safeStorage.getItem('chess_arena_admin_pin') || '';
+          if (!validPin || (adminPin.trim() !== validPin)) {
+            throw new Error('❌ PIN Verification Failed. Access denied.');
           }
         }
 
@@ -533,7 +533,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, isLight = false }) {
                     <span>Admin Security Verification</span>
                   </div>
                   <p className={`text-[11px] leading-snug font-semibold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
-                    Enter Master PIN to verify ownership of op21plus@gmail.com:
+                    Enter Security PIN to verify admin ownership:
                   </p>
                   <div className="relative">
                     <input

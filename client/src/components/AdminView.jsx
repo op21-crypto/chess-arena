@@ -68,9 +68,6 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
     if (isOpEmail || isAdminRole) {
       try {
         sessionStorage.setItem('chess_arena_admin_verified', 'true');
-        if (!sessionStorage.getItem('chess_arena_admin_pin')) {
-          sessionStorage.setItem('chess_arena_admin_pin', '212121');
-        }
       } catch {}
       return true;
     }
@@ -85,9 +82,6 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
       setIsAdminUnlocked(true);
       try {
         sessionStorage.setItem('chess_arena_admin_verified', 'true');
-        if (!sessionStorage.getItem('chess_arena_admin_pin')) {
-          sessionStorage.setItem('chess_arena_admin_pin', '212121');
-        }
       } catch {}
     }
   }, [currentUser]);
@@ -125,7 +119,7 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
     announcement: '',
     maintenanceMode: false,
     brandTitle: 'CHESS',
-    adminMasterPin: '212121',
+    adminMasterPin: '',
     buttons: {
       headerMusic: true,
       headerSound: true,
@@ -194,13 +188,13 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
   };
 
   const getAdminPin = () => {
-    return sessionStorage.getItem('chess_arena_admin_pin') || safeStorage.getItem('chess_arena_admin_pin') || '212121';
+    return sessionStorage.getItem('chess_arena_admin_pin') || safeStorage.getItem('chess_arena_admin_pin') || '';
   };
 
   const getAdminHeaders = () => {
     const pin = getAdminPin();
     const token = safeStorage.getItem('token') || '';
-    const email = currentUser?.email || 'op21plus@gmail.com';
+    const email = currentUser?.email || '';
     return {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
@@ -273,7 +267,7 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
   // Save Config as Global App Defaults & Broadcast
   const handleSaveConfig = () => {
     const pin = getAdminPin();
-    const email = currentUser?.email || 'op21plus@gmail.com';
+    const email = currentUser?.email || '';
     const payload = {
       ...configForm,
       adminPin: pin,
@@ -476,15 +470,15 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
         sessionStorage.setItem('chess_arena_admin_pin', gatePinInput.trim());
         safeStorage.setItem('chess_arena_admin_pin', gatePinInput.trim());
         setIsAdminUnlocked(true);
-        notify('✓ Master Admin Identity Verified (op21plus@gmail.com)');
+        notify('✓ Admin Identity Verified');
         fetchStats();
       } else {
         throw new Error(data.error || 'Invalid PIN');
       }
     } catch (err) {
-      // Offline fallback: check against stored PIN or 212121
-      const stored = safeStorage.getItem('chess_arena_admin_pin') || configForm.adminMasterPin || '212121';
-      if (gatePinInput.trim() === stored || gatePinInput.trim() === '212121') {
+      // Offline fallback: check against stored PIN
+      const stored = safeStorage.getItem('chess_arena_admin_pin') || configForm.adminMasterPin;
+      if (stored && gatePinInput.trim() === stored) {
         sessionStorage.setItem('chess_arena_admin_verified', 'true');
         sessionStorage.setItem('chess_arena_admin_pin', gatePinInput.trim());
         safeStorage.setItem('chess_arena_admin_pin', gatePinInput.trim());
@@ -492,7 +486,7 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
         notify('✓ Master Admin Identity Verified');
         fetchStats();
       } else {
-        setGatePinError(err.message || '❌ Invalid Master Security PIN. Only the authorized owner of op21plus@gmail.com is permitted.');
+        setGatePinError(err.message || '❌ Invalid Security PIN. Access denied.');
       }
     } finally {
       setGateVerifying(false);
@@ -631,7 +625,7 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
   // Delete User Permanently
   const handleDeleteUser = (user) => {
     if (user.email?.toLowerCase().trim() === 'op21plus@gmail.com') {
-      alert('Cannot delete primary administrator account (op21plus@gmail.com).');
+      alert('Cannot delete the primary administrator account.');
       return;
     }
     if (!window.confirm(`Permanently delete account for "${user.username}" (${user.email || 'Guest'})? This cannot be undone.`)) return;
@@ -810,7 +804,7 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
       <div className="p-12 text-center space-y-3">
         <RefreshCw className="w-8 h-8 text-amber-500 animate-spin mx-auto" />
         <p className="text-slate-500 text-xs sm:text-sm font-semibold">
-          Connecting to Administrator Command Center (op21plus@gmail.com)...
+          Connecting to Administrator Command Center...
         </p>
       </div>
     );
@@ -831,9 +825,9 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase tracking-widest">
               Security Gate Active
             </span>
-            <h2 className="text-xl font-black tracking-tight mt-2">Master Administrator Authorization</h2>
+            <h2 className="text-xl font-black tracking-tight mt-2">Administrator Authorization</h2>
             <p className="text-xs text-slate-400">
-              Identity verification required for <span className="text-amber-400 font-bold">op21plus@gmail.com</span>
+              Enter your security PIN to access the admin console
             </p>
           </div>
 
@@ -1429,14 +1423,14 @@ export function AdminView({ onBack, currentUser, isLight = false, onUpdateGlobal
                 <div>
                   <span className="text-xs font-extrabold flex items-center gap-1.5 text-amber-400">
                     <ShieldCheck className="w-4 h-4" />
-                    <span>Protected Account: op21plus@gmail.com</span>
+                    <span>Protected Admin Account</span>
                   </span>
                   <p className="text-[11px] text-slate-400 mt-0.5">
-                    Your Master PIN protects this console so nobody else typing op21plus@gmail.com can become admin without authorization.
+                    Your Security PIN protects this console from unauthorized access.
                   </p>
                 </div>
                 <div className="px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-[11px] font-mono text-amber-400 shrink-0">
-                  Default PIN: 212121
+                  PIN Protected
                 </div>
               </div>
 
