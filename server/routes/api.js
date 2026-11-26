@@ -752,12 +752,15 @@ router.post(['/rooms/move', '/rooms/:id/move'], async (req, res) => {
   if (!room) {
     room = {
       id: roomId,
+      isRoom: true,
       whitePlayer: { id: `host_${roomId}`, username: 'Player 1', elo: 1200 },
       blackPlayer: { id: `guest_${roomId}`, username: 'Player 2', elo: 1200 },
       timeControl: { baseMinutes: 10, incrementSeconds: 0 },
       whiteTime: 600000,
       blackTime: 600000,
       fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+      turn: 'w',
+      turnStartedAt: Date.now(),
       status: 'active',
       moveHistory: [],
       capturedPieces: { white: [], black: [] },
@@ -766,17 +769,37 @@ router.post(['/rooms/move', '/rooms/:id/move'], async (req, res) => {
     };
   }
 
-  const { move, fen, turn, whiteTime, blackTime, capturedPieces, status, winner, winReason } = req.body;
+  room.isRoom = true;
+  const { move, fen, turn, whiteTime, blackTime, capturedPieces, status, winner, winReason, turnStartedAt, moveCount } = req.body;
+  const existingMoveCount = room.moveHistory?.length || 0;
+
+  // Reject stale out-of-order move writes if Firestore already has more moves
+  if (typeof moveCount === 'number' && existingMoveCount > moveCount) {
+    return res.json({ success: true, room, staleIgnored: true });
+  }
+
   if (fen) {
     room.fen = fen;
     room.turn = turn || (fen.split(' ')[1] || 'w');
+  } else if (turn) {
+    room.turn = turn;
   }
   if (move) {
     if (!room.moveHistory) room.moveHistory = [];
-    room.moveHistory.push(move);
+    const lastMove = room.moveHistory[room.moveHistory.length - 1];
+    if (!lastMove || lastMove.fen !== move.fen || lastMove.san !== move.san) {
+      room.moveHistory.push(move);
+    }
   }
-  if (whiteTime !== undefined && whiteTime !== null) room.whiteTime = Number(whiteTime);
-  if (blackTime !== undefined && blackTime !== null) room.blackTime = Number(blackTime);
+  if (whiteTime !== undefined && whiteTime !== null && Number.isFinite(Number(whiteTime))) {
+    room.whiteTime = Math.max(0, Number(whiteTime));
+  }
+  if (blackTime !== undefined && blackTime !== null && Number.isFinite(Number(blackTime))) {
+    room.blackTime = Math.max(0, Number(blackTime));
+  }
+  if (turnStartedAt !== undefined && turnStartedAt !== null && Number.isFinite(Number(turnStartedAt))) {
+    room.turnStartedAt = Number(turnStartedAt);
+  }
   if (capturedPieces) room.capturedPieces = capturedPieces;
   if (status) room.status = status;
   if (winner !== undefined) room.winner = winner;

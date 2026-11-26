@@ -275,19 +275,22 @@ export function setupSocketHandler(io) {
     // 3. Private Rooms
     socket.on('create_room', (config) => {
       if (!currentUser) return;
-      const roomId = `room_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`;
+      const roomId = config?.roomId || `room_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`;
       
-      const timeControl = config.timeControl || { baseMinutes: 10, incrementSeconds: 0 };
-      const format = config.format || (timeControl.baseMinutes <= 2 ? 'bullet' : (timeControl.baseMinutes <= 5 ? 'blitz' : 'rapid'));
+      const timeControl = config?.timeControl || { baseMinutes: 10, incrementSeconds: 0 };
+      const format = config?.format || (timeControl.baseMinutes <= 2 ? 'bullet' : (timeControl.baseMinutes <= 5 ? 'blitz' : 'rapid'));
       
-      // Strictly random 50/50 color allocation for private rooms
-      const isWhite = Math.random() < 0.5;
+      let isWhite = Math.random() < 0.5;
+      if (config?.colorPreference === 'w') isWhite = true;
+      else if (config?.colorPreference === 'b') isWhite = false;
+
       const session = new ChessGameSession({
         id: roomId,
+        isRoom: true,
         whitePlayer: isWhite ? currentUser : null,
         blackPlayer: isWhite ? null : currentUser,
         timeControl,
-        isRated: config.isRated !== false,
+        isRated: config?.isRated !== false,
         format
       });
 
@@ -324,6 +327,10 @@ export function setupSocketHandler(io) {
         socket.emit('spectator_joined', { game: game.getState() });
         io.to(`game:${roomId}`).emit('spectator_count', { count: game.spectators.size });
         return;
+      }
+
+      if (game.whitePlayer && game.blackPlayer && !game.timerStarted) {
+        game.startClock();
       }
 
       // Notify all players in room that both are ready

@@ -1,8 +1,9 @@
 import { Chess } from 'chess.js';
 
 export class ChessGameSession {
-  constructor({ id, whitePlayer, blackPlayer, timeControl, isRated = true, format = 'rapid' }) {
+  constructor({ id, whitePlayer, blackPlayer, timeControl, isRated = true, format = 'rapid', isRoom = false }) {
     this.id = id;
+    this.isRoom = Boolean(isRoom);
     this.whitePlayer = whitePlayer; // { id, username, avatar, elo, country }
     this.blackPlayer = blackPlayer;
     this.chess = new Chess();
@@ -200,6 +201,7 @@ export class ChessGameSession {
     this.updateClocks();
     return {
       id: this.id,
+      isRoom: this.isRoom,
       whitePlayer: this.whitePlayer,
       blackPlayer: this.blackPlayer,
       fen: this.chess.fen(),

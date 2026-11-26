@@ -736,6 +736,36 @@ export default function App() {
   // Socket reference
   const socketRef = useRef(null);
   const processedGameOverGamesRef = useRef(new Set());
+  // Wall-clock anchor for active multiplayer turn: { roomId, moveCount, turn, startedAt, whiteTime, blackTime }
+  const turnAnchorRef = useRef(null);
+
+  const resolveSessionTurn = (session) => {
+    if (!session) return 'w';
+    if (session.turn === 'w' || session.turn === 'b') return session.turn;
+    try {
+      return new Chess(session.fen || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1').turn();
+    } catch {
+      return 'w';
+    }
+  };
+
+  const syncTurnAnchor = (session, startedAt = Date.now()) => {
+    if (!session?.id || session.isGameOver || session.status !== 'active' || !session.whitePlayer || !session.blackPlayer) {
+      turnAnchorRef.current = null;
+      return;
+    }
+    const baseMs = (session.timeControl?.baseMinutes || 10) * 60 * 1000;
+    const whiteTime = typeof session.whiteTime === 'number' && Number.isFinite(session.whiteTime) ? Math.max(0, session.whiteTime) : baseMs;
+    const blackTime = typeof session.blackTime === 'number' && Number.isFinite(session.blackTime) ? Math.max(0, session.blackTime) : baseMs;
+    turnAnchorRef.current = {
+      roomId: session.id,
+      moveCount: session.moveHistory?.length || 0,
+      turn: resolveSessionTurn(session),
+      startedAt,
+      whiteTime,
+      blackTime
+    };
+  };
 
   // Initialize Audio & Music Settings
   useEffect(() => {
@@ -929,7 +959,9 @@ export default function App() {
       setIsSearchingMatch(false);
       setShowMatchmakingModal(false);
       setShowGameOverModal(false);
+      gameSessionRef.current = game;
       setGameSession(game);
+      syncTurnAnchor(game);
       setPlayerColor(side);
       setChatMessages([]);
       setIsAIGame(false);
@@ -939,13 +971,30 @@ export default function App() {
     });
 
     socket.on('room_created', (data) => {
-      setCreatedRoomInfo(data);
-      setGameSession(data.game);
-      setPlayerColor(data.game.whitePlayer?.id === currentUser?.id ? 'w' : 'b');
+      const curr = gameSessionRef.current;
+      // Do not overwrite an existing room session with a mismatched socket-generated room ID
+      if (curr?.id && data?.roomId && curr.id !== data.roomId) return;
+      const roomGame = data?.game ? { ...data.game, isRoom: true } : null;
+      if (roomGame) {
+        setCreatedRoomInfo(data);
+        gameSessionRef.current = roomGame;
+        setGameSession(roomGame);
+        setPlayerColor(roomGame.whitePlayer?.id === currentUser?.id ? 'w' : 'b');
+      }
     });
 
     socket.on('room_updated', ({ game, ready }) => {
-      setGameSession(game);
+      const curr = gameSessionRef.current;
+      if (curr?.id && game?.id && curr.id !== game.id) return;
+      if (curr && game && (game.moveHistory?.length || 0) < (curr.moveHistory?.length || 0)) return;
+      const normalized = game ? { ...game, isRoom: true, turn: resolveSessionTurn(game) } : null;
+      if (normalized) {
+        gameSessionRef.current = normalized;
+        setGameSession(normalized);
+        if (ready || (normalized.status === 'active' && normalized.whitePlayer && normalized.blackPlayer)) {
+          syncTurnAnchor(normalized);
+        }
+      }
       if (ready) {
         setShowFriendRoomModal(false);
         setShowGameOverModal(false);
@@ -993,16 +1042,28 @@ export default function App() {
 
     // Move synchronization
     socket.on('move_made', (data) => {
-      setGameSession(prev => prev ? {
-        ...prev,
-        fen: data.fen,
-        inCheck: data.inCheck,
-        whiteTime: data.whiteTime,
-        blackTime: data.blackTime,
-        capturedPieces: data.capturedPieces,
-        moveHistory: data.moveHistory,
-        turn: new Chess(data.fen).turn()
-      } : null);
+      const curr = gameSessionRef.current;
+      const incomingMoves = data.moveHistory?.length || 0;
+      const currentMoves = curr?.moveHistory?.length || 0;
+      if (curr && incomingMoves < currentMoves) return;
+
+      const nextTurn = new Chess(data.fen).turn();
+      setGameSession(prev => {
+        if (!prev) return null;
+        const updated = {
+          ...prev,
+          fen: data.fen,
+          inCheck: data.inCheck,
+          whiteTime: typeof data.whiteTime === 'number' ? data.whiteTime : prev.whiteTime,
+          blackTime: typeof data.blackTime === 'number' ? data.blackTime : prev.blackTime,
+          capturedPieces: data.capturedPieces,
+          moveHistory: data.moveHistory,
+          turn: nextTurn
+        };
+        gameSessionRef.current = updated;
+        syncTurnAnchor(updated);
+        return updated;
+      });
 
       // Sounds, Haptics & Voice Commentary for Opponent's Move
       const lastMoveObj = data.moveHistory?.[data.moveHistory.length - 1];
@@ -1033,12 +1094,18 @@ export default function App() {
     });
 
     socket.on('clock_sync', (data) => {
-      setGameSession(prev => prev ? {
-        ...prev,
-        whiteTime: data.whiteTime,
-        blackTime: data.blackTime,
-        turn: data.turn
-      } : null);
+      setGameSession(prev => {
+        if (!prev) return null;
+        const updated = {
+          ...prev,
+          whiteTime: data.whiteTime,
+          blackTime: data.blackTime,
+          turn: data.turn || prev.turn
+        };
+        gameSessionRef.current = updated;
+        syncTurnAnchor(updated);
+        return updated;
+      });
     });
 
     socket.on('game_over', (data) => {
@@ -1094,23 +1161,46 @@ export default function App() {
     const roomParam = params.get('room');
     if (roomParam) {
       const activeUser = getOrCreateUser();
-      // Join in Firestore first for instant real-time synchronization
-      firebaseRoomService.joinRoom(roomParam, activeUser).then(room => {
-        if (room) {
-          setGameSession(room);
-          const isWhite = room.whitePlayer && (
-            room.whitePlayer.id === activeUser.id ||
-            room.whitePlayer.username === activeUser.username
-          );
-          const isBlack = room.blackPlayer && (
-            room.blackPlayer.id === activeUser.id ||
-            room.blackPlayer.username === activeUser.username
-          );
-          setPlayerColor(isBlack ? 'b' : (isWhite ? 'w' : 'b'));
-          setActiveTab('game');
-          sound.playMatchStart();
+      setIsAIGame(false);
+      setBoardFlipped(false);
+      setChatMessages([]);
+
+      const applyJoinedRoom = (rawRoom) => {
+        if (!rawRoom) return;
+        const curr = gameSessionRef.current;
+        if (curr && curr.id === rawRoom.id && (rawRoom.moveHistory?.length || 0) < (curr.moveHistory?.length || 0)) {
+          return;
         }
-      }).catch(() => {});
+        const normalized = {
+          ...rawRoom,
+          isRoom: true,
+          turn: resolveSessionTurn(rawRoom)
+        };
+        gameSessionRef.current = normalized;
+        setGameSession(normalized);
+        if (normalized.status === 'active' && normalized.whitePlayer && normalized.blackPlayer) {
+          // Only seed turn anchor if not already anchored for this room & move count
+          if (!turnAnchorRef.current || turnAnchorRef.current.roomId !== normalized.id || turnAnchorRef.current.moveCount !== (normalized.moveHistory?.length || 0)) {
+            syncTurnAnchor(normalized);
+          }
+        }
+        const isWhite = normalized.whitePlayer && (
+          normalized.whitePlayer.id === activeUser.id ||
+          normalized.whitePlayer.username === activeUser.username
+        );
+        const isBlack = normalized.blackPlayer && (
+          normalized.blackPlayer.id === activeUser.id ||
+          normalized.blackPlayer.username === activeUser.username
+        );
+        setPlayerColor(isBlack ? 'b' : (isWhite ? 'w' : 'b'));
+        setActiveTab('game');
+        sound.playMatchStart();
+      };
+
+      // Join in Firestore first for instant real-time synchronization, then sync backend
+      firebaseRoomService.joinRoom(roomParam, activeUser)
+        .then(room => { if (room) applyJoinedRoom(room); })
+        .catch(() => {});
 
       fetch('/api/rooms/join', {
         method: 'POST',
@@ -1118,22 +1208,7 @@ export default function App() {
         body: JSON.stringify({ roomId: roomParam, user: activeUser })
       })
         .then(r => r.json())
-        .then(data => {
-          if (data?.room) {
-            setGameSession(data.room);
-            const isWhite = data.room.whitePlayer && (
-              data.room.whitePlayer.id === activeUser.id ||
-              data.room.whitePlayer.username === activeUser.username
-            );
-            const isBlack = data.room.blackPlayer && (
-              data.room.blackPlayer.id === activeUser.id ||
-              data.room.blackPlayer.username === activeUser.username
-            );
-            setPlayerColor(isBlack ? 'b' : (isWhite ? 'w' : 'b'));
-            setActiveTab('game');
-            sound.playMatchStart();
-          }
-        })
+        .then(data => { if (data?.room) applyJoinedRoom(data.room); })
         .catch(() => {});
 
       setTimeout(() => {
@@ -1225,12 +1300,20 @@ export default function App() {
         setPlayerColor('b');
       }
 
-      const movesDiffer = (r.moveHistory?.length || 0) !== (curr?.moveHistory?.length || 0);
-      const fenDiffers = r.fen && r.fen !== curr?.fen;
-      const statusDiffers = r.status && r.status !== curr?.status;
-      const opponentJoined = (curr?.status === 'waiting' && r.status === 'active') ||
+      const remoteMoves = r.moveHistory?.length || 0;
+      const localMoves = curr?.moveHistory?.length || 0;
+      const hasNewMoves = remoteMoves > localMoves;
+      const isStaleSnapshot = Boolean(curr && curr.id === r.id && remoteMoves < localMoves);
+      const isTerminalRemote = ['checkmate', 'resigned', 'stalemate', 'draw', 'timeout'].includes(r.status);
+
+      const movesDiffer = hasNewMoves;
+      const fenDiffers = !isStaleSnapshot && Boolean(r.fen && r.fen !== curr?.fen);
+      const statusDiffers = Boolean(r.status && r.status !== curr?.status && (!isStaleSnapshot || isTerminalRemote));
+      const opponentJoined = Boolean(
+        (curr?.status === 'waiting' && (r.status === 'active' || (r.whitePlayer && r.blackPlayer))) ||
         (!curr?.blackPlayer && r.blackPlayer) ||
-        (!curr?.whitePlayer && r.whitePlayer);
+        (!curr?.whitePlayer && r.whitePlayer)
+      );
       const voiceCallDiffers = JSON.stringify(r.voiceCall || null) !== JSON.stringify(curr?.voiceCall || null);
       const voiceSignalsDiffers = (r.voiceSignals?.length || 0) !== (curr?.voiceSignals?.length || 0);
       const lastUpdatedDiffers = r.lastUpdated && r.lastUpdated !== curr?.lastUpdated;
@@ -1284,31 +1367,82 @@ export default function App() {
       }
 
       if (movesDiffer || fenDiffers || statusDiffers || opponentJoined || voiceCallDiffers || voiceSignalsDiffers || lastUpdatedDiffers) {
-        const captured = getCapturedPieces(r.fen || curr?.fen);
+        const nextFen = isStaleSnapshot ? (curr?.fen || r.fen) : (r.fen || curr?.fen);
+        const captured = getCapturedPieces(nextFen);
         setGameSession(prev => {
-          if (!prev) return r;
-          // CRITICAL: Prevent clock from renewing to initial base minutes on polling or typing updates!
-          // Only adopt remote clock if a new move occurred; otherwise preserve locally ticking clock.
-          const whiteT = (movesDiffer && typeof r.whiteTime === 'number')
-            ? r.whiteTime
-            : (prev.whiteTime ?? r.whiteTime);
-          const blackT = (movesDiffer && typeof r.blackTime === 'number')
-            ? r.blackTime
-            : (prev.blackTime ?? r.blackTime);
+          if (!prev) {
+            const normalized = {
+              ...r,
+              isRoom: true,
+              turn: resolveSessionTurn(r),
+              capturedPieces: { white: captured.byWhite, black: captured.byBlack }
+            };
+            gameSessionRef.current = normalized;
+            if (normalized.status === 'active' && normalized.whitePlayer && normalized.blackPlayer) {
+              syncTurnAnchor(normalized);
+            }
+            return normalized;
+          }
 
-          const resolvedStatus = (opponentJoined || (r.whitePlayer && r.blackPlayer && (r.status === 'active' || prev?.status === 'active')))
-            ? 'active'
-            : (r.status || prev?.status);
+          if (isStaleSnapshot) {
+            // Do NOT revert moves, FEN, or clocks from an older snapshot!
+            const merged = {
+              ...prev,
+              whitePlayer: r.whitePlayer || prev.whitePlayer,
+              blackPlayer: r.blackPlayer || prev.blackPlayer,
+              voiceCall: r.voiceCall !== undefined ? r.voiceCall : prev.voiceCall,
+              voiceSignals: r.voiceSignals || prev.voiceSignals,
+              chatMessages: r.chatMessages || prev.chatMessages,
+              typingUsers: r.typingUsers || prev.typingUsers,
+              ...(isTerminalRemote ? {
+                status: r.status,
+                winner: r.winner,
+                winReason: r.winReason,
+                isGameOver: true
+              } : {})
+            };
+            gameSessionRef.current = merged;
+            return merged;
+          }
 
-          return {
+          // CRITICAL: Only adopt remote clock when a new move or terminal event arrives;
+          // NEVER reset locally ticking clocks on polls, typing, or chat updates!
+          const whiteT = ((hasNewMoves || isTerminalRemote) && typeof r.whiteTime === 'number' && Number.isFinite(r.whiteTime))
+            ? Math.max(0, r.whiteTime)
+            : (typeof prev.whiteTime === 'number' ? prev.whiteTime : r.whiteTime);
+          const blackT = ((hasNewMoves || isTerminalRemote) && typeof r.blackTime === 'number' && Number.isFinite(r.blackTime))
+            ? Math.max(0, r.blackTime)
+            : (typeof prev.blackTime === 'number' ? prev.blackTime : r.blackTime);
+
+          const hasBothPlayers = Boolean((r.whitePlayer || prev.whitePlayer) && (r.blackPlayer || prev.blackPlayer));
+          const resolvedStatus = isTerminalRemote
+            ? r.status
+            : ((opponentJoined || (hasBothPlayers && (r.status === 'active' || prev?.status === 'active'))) ? 'active' : (r.status || prev?.status));
+
+          const resolvedFen = r.fen || prev?.fen || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+          const resolvedTurn = new Chess(resolvedFen).turn();
+
+          const nextSession = {
             ...prev,
             ...r,
+            isRoom: true,
             whiteTime: whiteT,
             blackTime: blackT,
             status: resolvedStatus,
-            turn: new Chess(r.fen || prev?.fen || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1').turn(),
+            isGameOver: isTerminalRemote || Boolean(prev.isGameOver),
+            turn: resolvedTurn,
             capturedPieces: { white: captured.byWhite, black: captured.byBlack }
           };
+
+          // Re-anchor local wall-clock timer whenever move progresses or match first becomes active
+          if (hasNewMoves || (opponentJoined && resolvedStatus === 'active')) {
+            syncTurnAnchor(nextSession, Date.now());
+          } else if (isTerminalRemote) {
+            turnAnchorRef.current = null;
+          }
+
+          gameSessionRef.current = nextSession;
+          return nextSession;
         });
 
         if (movesDiffer) {
@@ -1405,6 +1539,8 @@ export default function App() {
       whiteTime: baseMinutes * 60 * 1000,
       blackTime: baseMinutes * 60 * 1000,
       fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+      turn: 'w',
+      turnStartedAt: null,
       status: 'waiting',
       moveHistory: [],
       capturedPieces: { white: [], black: [] },
@@ -1416,14 +1552,20 @@ export default function App() {
     };
 
     // Immediately set createdRoomInfo so the share link is instantly available!
+    setIsAIGame(false);
+    setBoardFlipped(false);
+    setChatMessages([]);
+    turnAnchorRef.current = null;
+    processedGameOverGamesRef.current.delete(roomId);
     setCreatedRoomInfo({ roomId, game: initialGame });
+    gameSessionRef.current = initialGame;
     setGameSession(initialGame);
     setPlayerColor(isWhite ? 'w' : 'b');
 
     // 1. Create in Firestore directly for instant real-time synchronization
     firebaseRoomService.createRoom(initialGame).catch(() => {});
 
-    // 2. Sync room with backend REST endpoint
+    // 2. Sync room with backend REST endpoint (send resolved 'w'/'b' so server never re-rolls color)
     try {
       await fetch('/api/rooms/create', {
         method: 'POST',
@@ -1431,7 +1573,7 @@ export default function App() {
         body: JSON.stringify({
           roomId,
           timeControl: config?.timeControl,
-          colorPreference: config?.colorPreference,
+          colorPreference: isWhite ? 'w' : 'b',
           user: activeUser
         })
       });
@@ -1440,7 +1582,7 @@ export default function App() {
     }
 
     // Also emit to socket if gateway connected
-    socketRef.current?.emit('create_room', { ...config, roomId });
+    socketRef.current?.emit('create_room', { ...config, colorPreference: isWhite ? 'w' : 'b', roomId });
     return { roomId, game: initialGame };
   };
 
@@ -1449,24 +1591,48 @@ export default function App() {
     if (!cleanId) return;
     const activeUser = getOrCreateUser();
 
+    setIsAIGame(false);
+    setBoardFlipped(false);
+    setChatMessages([]);
+
+    const applyJoined = (rawRoom) => {
+      if (!rawRoom) return;
+      const curr = gameSessionRef.current;
+      if (curr && curr.id === rawRoom.id && (rawRoom.moveHistory?.length || 0) < (curr.moveHistory?.length || 0)) {
+        return;
+      }
+      const normalized = {
+        ...rawRoom,
+        isRoom: true,
+        turn: resolveSessionTurn(rawRoom)
+      };
+      gameSessionRef.current = normalized;
+      setGameSession(normalized);
+      if (normalized.status === 'active' && normalized.whitePlayer && normalized.blackPlayer) {
+        if (!turnAnchorRef.current || turnAnchorRef.current.roomId !== normalized.id || turnAnchorRef.current.moveCount !== (normalized.moveHistory?.length || 0)) {
+          syncTurnAnchor(normalized);
+        }
+      }
+      const isWhite = normalized.whitePlayer && (
+        normalized.whitePlayer.id === activeUser.id ||
+        normalized.whitePlayer.username === activeUser.username
+      );
+      const isBlack = normalized.blackPlayer && (
+        normalized.blackPlayer.id === activeUser.id ||
+        normalized.blackPlayer.username === activeUser.username
+      );
+      setPlayerColor(isBlack ? 'b' : (isWhite ? 'w' : 'b'));
+      setShowFriendRoomModal(false);
+      setShowGameOverModal(false);
+      setActiveTab('game');
+      sound.playMatchStart();
+    };
+
     try {
       // 1. Direct real-time Firestore join
       const joinedRoom = await firebaseRoomService.joinRoom(cleanId, activeUser);
       if (joinedRoom) {
-        setGameSession(joinedRoom);
-        const isWhite = joinedRoom.whitePlayer && (
-          joinedRoom.whitePlayer.id === activeUser.id ||
-          joinedRoom.whitePlayer.username === activeUser.username
-        );
-        const isBlack = joinedRoom.blackPlayer && (
-          joinedRoom.blackPlayer.id === activeUser.id ||
-          joinedRoom.blackPlayer.username === activeUser.username
-        );
-        setPlayerColor(isBlack ? 'b' : (isWhite ? 'w' : 'b'));
-        setShowFriendRoomModal(false);
-        setShowGameOverModal(false);
-        setActiveTab('game');
-        sound.playMatchStart();
+        applyJoined(joinedRoom);
       }
 
       // 2. Backend REST join
@@ -1477,20 +1643,7 @@ export default function App() {
       });
       const data = await res.json();
       if (data?.room) {
-        setGameSession(data.room);
-        const isWhite = data.room.whitePlayer && (
-          data.room.whitePlayer.id === activeUser.id ||
-          data.room.whitePlayer.username === activeUser.username
-        );
-        const isBlack = data.room.blackPlayer && (
-          data.room.blackPlayer.id === activeUser.id ||
-          data.room.blackPlayer.username === activeUser.username
-        );
-        setPlayerColor(isBlack ? 'b' : (isWhite ? 'w' : 'b'));
-        setShowFriendRoomModal(false);
-        setShowGameOverModal(false);
-        setActiveTab('game');
-        sound.playMatchStart();
+        applyJoined(data.room);
       }
     } catch {
       // Socket fallback
@@ -1640,19 +1793,36 @@ export default function App() {
 
   // Multiplayer Room Game Clock Timer (Runs only after friend joins: status === 'active')
   useEffect(() => {
-    if (isAIGame || !gameSession || !gameSession.isRoom || gameSession.isGameOver || gameSession.status !== 'active') return;
+    if (isAIGame || !gameSession || gameSession.isGameOver || gameSession.status !== 'active') return;
     if (!gameSession.whitePlayer || !gameSession.blackPlayer) return;
     // Unlimited time / casual mode
     if (gameSession.timeControl?.baseMinutes === 0) return;
 
+    const currentMovesCount = gameSession.moveHistory?.length || 0;
+    const currentTurnVal = resolveSessionTurn(gameSession);
+    const existingAnchor = turnAnchorRef.current;
+    if (!existingAnchor || existingAnchor.roomId !== gameSession.id || existingAnchor.moveCount !== currentMovesCount || existingAnchor.turn !== currentTurnVal) {
+      syncTurnAnchor(gameSession, Date.now());
+    }
+
     const interval = setInterval(() => {
       setGameSession(prev => {
         if (!prev || prev.isGameOver || prev.status !== 'active') return prev;
+        if (!prev.whitePlayer || !prev.blackPlayer) return prev;
         if (prev.timeControl?.baseMinutes === 0) return prev;
 
-        const isWhiteTurn = prev.turn === 'w';
-        const newWhiteTime = isWhiteTurn ? Math.max(0, prev.whiteTime - 100) : prev.whiteTime;
-        const newBlackTime = !isWhiteTurn ? Math.max(0, prev.blackTime - 100) : prev.blackTime;
+        const prevTurn = resolveSessionTurn(prev);
+        const prevMoves = prev.moveHistory?.length || 0;
+        let anchor = turnAnchorRef.current;
+        if (!anchor || anchor.roomId !== prev.id || anchor.moveCount !== prevMoves || anchor.turn !== prevTurn) {
+          syncTurnAnchor(prev, Date.now());
+          anchor = turnAnchorRef.current;
+        }
+
+        const elapsed = Math.max(0, Date.now() - anchor.startedAt);
+        const isWhiteTurn = prevTurn === 'w';
+        const newWhiteTime = isWhiteTurn ? Math.max(0, anchor.whiteTime - elapsed) : anchor.whiteTime;
+        const newBlackTime = !isWhiteTurn ? Math.max(0, anchor.blackTime - elapsed) : anchor.blackTime;
 
         if (newWhiteTime <= 0 || newBlackTime <= 0) {
           const winner = newWhiteTime <= 0 ? 'black' : 'white';
@@ -1674,9 +1844,22 @@ export default function App() {
                 whiteTime: newWhiteTime,
                 blackTime: newBlackTime
               }).catch(() => {});
+              fetch('/api/rooms/move', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  roomId: prev.id,
+                  status: 'timeout',
+                  winner,
+                  winReason: 'timeout',
+                  whiteTime: newWhiteTime,
+                  blackTime: newBlackTime
+                })
+              }).catch(() => {});
             }
           }
-          return {
+          turnAnchorRef.current = null;
+          const timedOut = {
             ...prev,
             whiteTime: newWhiteTime,
             blackTime: newBlackTime,
@@ -1685,13 +1868,17 @@ export default function App() {
             winner,
             winReason: 'timeout'
           };
+          gameSessionRef.current = timedOut;
+          return timedOut;
         }
 
-        return {
+        const updated = {
           ...prev,
           whiteTime: newWhiteTime,
           blackTime: newBlackTime
         };
+        gameSessionRef.current = updated;
+        return updated;
       });
     }, 100);
 
@@ -1878,7 +2065,7 @@ export default function App() {
             winner,
             status,
             winReason,
-            currentSession: { ...(session || gameSession), moveHistory: updatedMoves }
+            currentSession: { ...gameSession, moveHistory: updatedHistory }
           });
         }
 
@@ -1963,15 +2150,34 @@ export default function App() {
           const captured = getCapturedPieces(chess.fen());
           const incMs = (gameSession.timeControl?.incrementSeconds || 0) * 1000;
           const wasWhiteTurn = res.color === 'w';
+          const fallbackBaseMs = (gameSession.timeControl?.baseMinutes || 10) * 60 * 1000;
+          const anchor = turnAnchorRef.current;
+          const moveCountBefore = gameSession.moveHistory?.length || 0;
+          const nowTs = Date.now();
+
+          let currentWhiteTime = typeof gameSession.whiteTime === 'number' ? gameSession.whiteTime : fallbackBaseMs;
+          let currentBlackTime = typeof gameSession.blackTime === 'number' ? gameSession.blackTime : fallbackBaseMs;
+          if (anchor && anchor.roomId === gameSession.id && anchor.moveCount === moveCountBefore && gameSession.status === 'active') {
+            const elapsed = Math.max(0, nowTs - anchor.startedAt);
+            if (wasWhiteTurn) {
+              currentWhiteTime = Math.max(0, anchor.whiteTime - elapsed);
+              currentBlackTime = anchor.blackTime;
+            } else {
+              currentBlackTime = Math.max(0, anchor.blackTime - elapsed);
+              currentWhiteTime = anchor.whiteTime;
+            }
+          }
+
           const newWhiteTime = wasWhiteTurn
-            ? Math.max(0, (gameSession.whiteTime ?? 600000) + incMs)
-            : (gameSession.whiteTime ?? 600000);
+            ? Math.max(0, currentWhiteTime + incMs)
+            : currentWhiteTime;
           const newBlackTime = !wasWhiteTurn
-            ? Math.max(0, (gameSession.blackTime ?? 600000) + incMs)
-            : (gameSession.blackTime ?? 600000);
+            ? Math.max(0, currentBlackTime + incMs)
+            : currentBlackTime;
 
           const updatedSession = {
             ...gameSession,
+            isRoom: gameSession.isRoom ?? true,
             fen: chess.fen(),
             turn: chess.turn(),
             inCheck: chess.inCheck(),
@@ -1981,9 +2187,16 @@ export default function App() {
             winReason: isOver ? winReason : null,
             whiteTime: newWhiteTime,
             blackTime: newBlackTime,
+            turnStartedAt: isOver ? null : nowTs,
             moveHistory: updatedHistory,
             capturedPieces: { white: captured.byWhite, black: captured.byBlack }
           };
+          gameSessionRef.current = updatedSession;
+          if (isOver) {
+            turnAnchorRef.current = null;
+          } else {
+            syncTurnAnchor(updatedSession, nowTs);
+          }
           setGameSession(updatedSession);
 
           // Sync room moves with Firestore and REST
@@ -2006,6 +2219,7 @@ export default function App() {
               winReason: isOver ? winReason : null,
               whiteTime: newWhiteTime,
               blackTime: newBlackTime,
+              turnStartedAt: isOver ? null : nowTs,
               capturedPieces: { white: captured.byWhite, black: captured.byBlack }
             }).catch(() => {});
 
@@ -2015,10 +2229,12 @@ export default function App() {
               body: JSON.stringify({
                 roomId: gameSession.id,
                 move: moveData,
+                moveCount: updatedHistory.length,
                 fen: chess.fen(),
                 turn: chess.turn(),
                 whiteTime: newWhiteTime,
                 blackTime: newBlackTime,
+                turnStartedAt: isOver ? null : nowTs,
                 status: isOver ? status : 'active',
                 winner: isOver ? winner : null,
                 winReason: isOver ? winReason : null
@@ -2038,6 +2254,7 @@ export default function App() {
   };
 
   const handleResign = () => {
+    turnAnchorRef.current = null;
     const oppWinner = playerColor === 'w' ? 'black' : 'white';
     if (isAIGame) {
       setGameSession(prev => ({
@@ -2093,6 +2310,7 @@ export default function App() {
 
   const handleExitGame = () => {
     sound.playClick();
+    turnAnchorRef.current = null;
     if (!isAIGame && gameSession && !gameSession.isGameOver) {
       socketRef.current?.emit('resign_game', { gameId: gameSession.id });
     }
@@ -2942,7 +3160,7 @@ export default function App() {
                     color={isWhite ? 'b' : 'w'}
                     isTurn={currentTurn === (isWhite ? 'b' : 'w')}
                     timeMs={isWhite ? gameSession.blackTime : gameSession.whiteTime}
-                    isActive={!gameSession.isGameOver && gameSession.status !== 'waiting'}
+                    isActive={!gameSession.isGameOver && gameSession.status === 'active' && Boolean(gameSession.whitePlayer && gameSession.blackPlayer)}
                     capturedPieces={isButtonVisible('gameCapturedPieces') ? (isWhite ? gameSession.capturedPieces?.black : gameSession.capturedPieces?.white) : []}
                     opponentCaptured={isButtonVisible('gameCapturedPieces') ? (isWhite ? gameSession.capturedPieces?.white : gameSession.capturedPieces?.black) : []}
                   />
@@ -3035,7 +3253,7 @@ export default function App() {
                     color={isWhite ? 'w' : 'b'}
                     isTurn={currentTurn === (isWhite ? 'w' : 'b')}
                     timeMs={isWhite ? gameSession.whiteTime : gameSession.blackTime}
-                    isActive={!gameSession.isGameOver && gameSession.status !== 'waiting'}
+                    isActive={!gameSession.isGameOver && gameSession.status === 'active' && Boolean(gameSession.whitePlayer && gameSession.blackPlayer)}
                     capturedPieces={isButtonVisible('gameCapturedPieces') ? (isWhite ? gameSession.capturedPieces?.white : gameSession.capturedPieces?.black) : []}
                     opponentCaptured={isButtonVisible('gameCapturedPieces') ? (isWhite ? gameSession.capturedPieces?.black : gameSession.capturedPieces?.white) : []}
                   />
