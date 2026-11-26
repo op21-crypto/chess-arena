@@ -113,6 +113,9 @@ export const firebaseRoomService = {
     if (!room?.id) return false;
     const cleanRoom = {
       ...room,
+      isRoom: true,
+      turn: room.turn || (room.fen ? room.fen.split(' ')[1] : 'w'),
+      turnStartedAt: room.turnStartedAt ?? null,
       chatMessages: room.chatMessages || [],
       moveHistory: room.moveHistory || [],
       capturedPieces: room.capturedPieces || { white: [], black: [] },
@@ -158,10 +161,16 @@ export const firebaseRoomService = {
     if (!roomId || !activeUser) return null;
     const current = (await this.getRoom(roomId)) || {
       id: roomId,
+      isRoom: true,
       whitePlayer: null,
       blackPlayer: null,
+      timeControl: { baseMinutes: 10, incrementSeconds: 0 },
+      whiteTime: 600000,
+      blackTime: 600000,
       fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-      status: 'active',
+      turn: 'w',
+      turnStartedAt: null,
+      status: 'waiting',
       moveHistory: [],
       capturedPieces: { white: [], black: [] },
       chatMessages: [],
@@ -170,11 +179,14 @@ export const firebaseRoomService = {
       lastUpdated: Date.now()
     };
 
-    let updated = { ...current };
+    let updated = { ...current, isRoom: true };
     if (!updated.chatMessages) updated.chatMessages = [];
     if (!updated.moveHistory) updated.moveHistory = [];
     if (!updated.typingUsers) updated.typingUsers = {};
     if (!updated.voiceSignals) updated.voiceSignals = [];
+    if (!updated.turn) {
+      updated.turn = updated.fen ? (updated.fen.split(' ')[1] || 'w') : 'w';
+    }
 
     // Assign open player seat
     const isHostWhite = updated.whitePlayer && (updated.whitePlayer.id === activeUser.id || updated.whitePlayer.username === activeUser.username);
@@ -182,12 +194,20 @@ export const firebaseRoomService = {
 
     if (!updated.whitePlayer && !isHostBlack) {
       updated.whitePlayer = activeUser;
-      updated.status = 'active';
     } else if (!updated.blackPlayer && !isHostWhite) {
       updated.blackPlayer = activeUser;
-      updated.status = 'active';
-    } else if (updated.whitePlayer && updated.blackPlayer) {
-      updated.status = 'active';
+    }
+
+    const isTerminal = ['checkmate', 'resigned', 'stalemate', 'draw', 'timeout'].includes(updated.status);
+    if (!isTerminal) {
+      if (updated.whitePlayer && updated.blackPlayer) {
+        updated.status = 'active';
+        if (!updated.turnStartedAt) {
+          updated.turnStartedAt = Date.now();
+        }
+      } else {
+        updated.status = 'waiting';
+      }
     }
 
     updated.lastUpdated = Date.now();
@@ -195,7 +215,7 @@ export const firebaseRoomService = {
     return updated;
   },
 
-  async updateRoomMove(roomId, { fen, move, turn, status, winner, winReason, whiteTime, blackTime, capturedPieces }) {
+  async updateRoomMove(roomId, { fen, move, turn, status, winner, winReason, whiteTime, blackTime, capturedPieces, turnStartedAt }) {
     if (!roomId) return false;
     try {
       const inst = await getFirestoreInstance();
@@ -203,16 +223,22 @@ export const firebaseRoomService = {
         const { db, doc, setDoc, arrayUnion } = inst;
         const ref = doc(db, 'rooms', roomId);
         const updates = {
-          fen,
-          turn: turn || (fen ? fen.split(' ')[1] : 'w'),
+          isRoom: true,
           status: status || 'active',
           lastUpdated: Date.now()
         };
+        if (fen !== undefined) {
+          updates.fen = fen;
+          updates.turn = turn || (fen ? fen.split(' ')[1] : 'w');
+        } else if (turn !== undefined) {
+          updates.turn = turn;
+        }
         if (move) updates.moveHistory = arrayUnion(move);
         if (winner !== undefined) updates.winner = winner;
         if (winReason !== undefined) updates.winReason = winReason;
-        if (whiteTime !== undefined) updates.whiteTime = whiteTime;
-        if (blackTime !== undefined) updates.blackTime = blackTime;
+        if (typeof whiteTime === 'number' && Number.isFinite(whiteTime)) updates.whiteTime = whiteTime;
+        if (typeof blackTime === 'number' && Number.isFinite(blackTime)) updates.blackTime = blackTime;
+        if (turnStartedAt !== undefined) updates.turnStartedAt = turnStartedAt;
         if (capturedPieces) updates.capturedPieces = capturedPieces;
         await setDoc(ref, updates, { merge: true });
         return true;
@@ -225,18 +251,25 @@ export const firebaseRoomService = {
       if (!current) return false;
 
       const history = current.moveHistory ? [...current.moveHistory] : [];
-      if (move) history.push(move);
+      if (move) {
+        const last = history[history.length - 1];
+        if (!last || last.fen !== move.fen || last.san !== move.san) {
+          history.push(move);
+        }
+      }
 
       const updates = {
         ...current,
+        isRoom: true,
         fen: fen || current.fen,
-        turn: turn || current.turn,
+        turn: turn || (fen ? fen.split(' ')[1] : current.turn),
         status: status || current.status,
         winner: winner !== undefined ? winner : current.winner,
         winReason: winReason !== undefined ? winReason : current.winReason,
         moveHistory: history,
-        whiteTime: whiteTime !== undefined ? whiteTime : current.whiteTime,
-        blackTime: blackTime !== undefined ? blackTime : current.blackTime,
+        whiteTime: typeof whiteTime === 'number' && Number.isFinite(whiteTime) ? whiteTime : current.whiteTime,
+        blackTime: typeof blackTime === 'number' && Number.isFinite(blackTime) ? blackTime : current.blackTime,
+        turnStartedAt: turnStartedAt !== undefined ? turnStartedAt : current.turnStartedAt,
         capturedPieces: capturedPieces || current.capturedPieces,
         lastUpdated: Date.now()
       };
@@ -283,11 +316,27 @@ export const firebaseRoomService = {
 
   async sendRoomTyping(roomId, user, isTyping) {
     if (!roomId || !user) return false;
+    const uid = user.id || user.username;
+    try {
+      const inst = await getFirestoreInstance();
+      if (inst) {
+        const { db, doc, setDoc, deleteField } = inst;
+        const ref = doc(db, 'rooms', roomId);
+        await setDoc(ref, {
+          typingUsers: {
+            [uid]: isTyping ? { id: uid, username: user.username, timestamp: Date.now() } : deleteField()
+          },
+          lastUpdated: Date.now()
+        }, { merge: true });
+        return true;
+      }
+    } catch (e) {
+      console.warn('[FirebaseRoomService] sendRoomTyping direct merge fallback:', e);
+    }
     try {
       const current = await this.getRoom(roomId);
       if (!current) return false;
       const typing = { ...(current.typingUsers || {}) };
-      const uid = user.id || user.username;
       if (isTyping) {
         typing[uid] = { id: uid, username: user.username, timestamp: Date.now() };
       } else {

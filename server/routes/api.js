@@ -463,12 +463,15 @@ router.post('/rooms/create', async (req, res) => {
 
   const room = {
     id,
+    isRoom: true,
     whitePlayer: isWhite ? hostPlayer : null,
     blackPlayer: isWhite ? null : hostPlayer,
     timeControl: { baseMinutes, incrementSeconds: timeControl?.incrementSeconds || 0 },
     whiteTime: baseMinutes * 60 * 1000,
     blackTime: baseMinutes * 60 * 1000,
     fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+    turn: 'w',
+    turnStartedAt: null,
     status: 'waiting',
     moveHistory: [],
     capturedPieces: { white: [], black: [] },
@@ -499,12 +502,15 @@ router.get(['/rooms/get', '/rooms/:id'], async (req, res) => {
   if (!room) {
     room = {
       id: roomId,
+      isRoom: true,
       whitePlayer: { id: `host_${roomId}`, username: 'Host Player', elo: 1200 },
       blackPlayer: null,
       timeControl: { baseMinutes: 10, incrementSeconds: 0 },
       whiteTime: 600000,
       blackTime: 600000,
       fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+      turn: 'w',
+      turnStartedAt: null,
       status: 'waiting',
       moveHistory: [],
       capturedPieces: { white: [], black: [] },
@@ -518,6 +524,8 @@ router.get(['/rooms/get', '/rooms/:id'], async (req, res) => {
     await firestoreRestService.saveRoom(room);
   } else {
     // Ensure room fields are initialized
+    room.isRoom = true;
+    if (!room.turn) room.turn = room.fen ? (room.fen.split(' ')[1] || 'w') : 'w';
     if (!room.chatMessages) room.chatMessages = [];
     if (!room.typingUsers) room.typingUsers = {};
     if (!room.voiceSignals) room.voiceSignals = [];
@@ -549,12 +557,15 @@ router.post(['/rooms/join', '/rooms/:id/join'], async (req, res) => {
   if (!room) {
     room = {
       id: roomId,
+      isRoom: true,
       whitePlayer: { id: `host_${roomId}`, username: 'Host Player', elo: 1200 },
       blackPlayer: joiningPlayer,
       timeControl: { baseMinutes: 10, incrementSeconds: 0 },
       whiteTime: 600000,
       blackTime: 600000,
       fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+      turn: 'w',
+      turnStartedAt: Date.now(),
       status: 'active',
       moveHistory: [],
       capturedPieces: { white: [], black: [] },
@@ -570,6 +581,8 @@ router.post(['/rooms/join', '/rooms/:id/join'], async (req, res) => {
     return res.json({ success: true, room });
   }
 
+  room.isRoom = true;
+  if (!room.turn) room.turn = room.fen ? (room.fen.split(' ')[1] || 'w') : 'w';
   if (!room.chatMessages) room.chatMessages = [];
   if (!room.typingUsers) room.typingUsers = {};
   if (!room.voiceSignals) room.voiceSignals = [];
@@ -580,13 +593,20 @@ router.post(['/rooms/join', '/rooms/:id/join'], async (req, res) => {
 
   if (!room.whitePlayer && !isHostBlack) {
     room.whitePlayer = joiningPlayer;
-    room.status = 'active';
   } else if (!room.blackPlayer && !isHostWhite) {
     room.blackPlayer = joiningPlayer;
-    room.status = 'active';
-  } else if (room.whitePlayer && room.blackPlayer) {
-    // Both seats occupied; activate room
-    room.status = 'active';
+  }
+
+  const isTerminal = ['checkmate', 'resigned', 'stalemate', 'draw', 'timeout'].includes(room.status);
+  if (!isTerminal) {
+    if (room.whitePlayer && room.blackPlayer) {
+      room.status = 'active';
+      if (!room.turnStartedAt) {
+        room.turnStartedAt = Date.now();
+      }
+    } else {
+      room.status = 'waiting';
+    }
   }
 
   room.lastUpdated = Date.now();

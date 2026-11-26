@@ -1,35 +1,45 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Timer } from 'lucide-react';
 import { sound } from '../utils/audio.js';
 
 export function Clock({ timeMs, isTurn, isActive, isLight = false }) {
-  const [displayTime, setDisplayTime] = useState(timeMs);
+  const safeTimeMs = typeof timeMs === 'number' && Number.isFinite(timeMs) ? Math.max(0, timeMs) : 0;
+  const [displayTime, setDisplayTime] = useState(safeTimeMs);
+  const syncRef = useRef({ baseMs: safeTimeMs, syncedAt: Date.now() });
+  const lowTimePlayedRef = useRef({ ten: false, five: false });
 
   useEffect(() => {
-    setDisplayTime(timeMs);
-  }, [timeMs, isActive]);
+    syncRef.current = { baseMs: safeTimeMs, syncedAt: Date.now() };
+    setDisplayTime(safeTimeMs);
+    if (safeTimeMs > 10000) {
+      lowTimePlayedRef.current.ten = false;
+      lowTimePlayedRef.current.five = false;
+    }
+  }, [safeTimeMs, isTurn, isActive]);
 
-  // Local tick interpolation
+  // Smooth wall-clock interpolation between parent/server clock syncs
   useEffect(() => {
-    if (!isTurn || !isActive || displayTime <= 0) {
-      if (!isActive) {
-        setDisplayTime(timeMs);
-      }
+    if (!isTurn || !isActive || safeTimeMs <= 0) {
+      setDisplayTime(safeTimeMs);
       return;
     }
 
     const interval = setInterval(() => {
-      setDisplayTime((prev) => {
-        const next = Math.max(0, prev - 100);
-        if (next === 10000 || next === 5000) {
-          sound.playLowTime();
-        }
-        return next;
-      });
+      const elapsed = Math.max(0, Date.now() - syncRef.current.syncedAt);
+      const next = Math.max(0, syncRef.current.baseMs - elapsed);
+      setDisplayTime(next);
+
+      if (next <= 10000 && next > 5000 && !lowTimePlayedRef.current.ten) {
+        lowTimePlayedRef.current.ten = true;
+        sound.playLowTime();
+      } else if (next <= 5000 && next > 0 && !lowTimePlayedRef.current.five) {
+        lowTimePlayedRef.current.five = true;
+        sound.playLowTime();
+      }
     }, 100);
 
     return () => clearInterval(interval);
-  }, [isTurn, isActive]);
+  }, [isTurn, isActive, safeTimeMs]);
 
   const totalSeconds = Math.floor(displayTime / 1000);
   const minutes = Math.floor(totalSeconds / 60);
