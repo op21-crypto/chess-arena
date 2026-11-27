@@ -132,7 +132,10 @@ export const BLOCKED_STORAGE_KEY = 'chess_arena_blocked_friends_v4';
 export function getDismissedNotifications() {
   try {
     const raw = safeStorage.getItem(DISMISSED_NOTIFS_KEY) || safeStorage.getItem('chess_arena_dismissed_notifs_v3') || safeStorage.getItem('chess_arena_dismissed_notifications_v3');
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    }
   } catch {}
   return [];
 }

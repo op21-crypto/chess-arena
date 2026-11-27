@@ -4264,13 +4264,13 @@
       },
       "ratingHistory": [
         {
-          "date": "2026-11-25",
+          "date": "2026-11-27",
           "rating": 1200,
           "format": "rapid"
         }
       ],
       "achievements": [],
-      "createdAt": "2026-11-25T11:58:05.080Z",
+      "createdAt": "2026-11-27T15:23:05.695Z",
       "isOnline": false,
       "banned": false,
       "id": "user_op_test",

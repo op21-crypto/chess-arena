@@ -547,18 +547,19 @@ export default function App() {
         if (!res.ok) return;
         const data = await res.json();
         if (isMounted && data?.notifications && Array.isArray(data.notifications) && data.notifications.length > 0) {
-          const dismissedSet = getDismissedNotifications();
+          const rawDismissed = getDismissedNotifications();
+          const dismissedSet = new Set(Array.isArray(rawDismissed) ? rawDismissed : []);
 
           // Auto-sync mutual friends when friend_accepted arrives
           data.notifications.forEach(notif => {
-            if (notif.type === 'friend_accepted' && notif.fromUser) {
+            if (notif?.type === 'friend_accepted' && notif.fromUser) {
               addFriendPermanently(notif.fromUser, userToSync);
             }
           });
 
           setNotifications(prev => {
             const existingIds = new Set(prev.map(n => n.id));
-            const fresh = data.notifications.filter(n => !existingIds.has(n.id) && !dismissedSet.has(n.id));
+            const fresh = data.notifications.filter(n => n && n.id && !existingIds.has(n.id) && !dismissedSet.has(n.id));
             if (fresh.length === 0) return prev;
             return [...fresh, ...prev];
           });
